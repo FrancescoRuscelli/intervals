@@ -1,0 +1,91 @@
+# Intervals: design decisions and plan
+
+This file is the source of truth for what was agreed so far (2026-11-16).
+Read it before continuing work on another PC or in a new session.
+
+Mockups (all screens, dark + light): https://claude.ai/artifact/9xv7NeynQZCu85moHtEfav
+A copy of the mockup source is in `docs/mockups/` (open the `.dc.html` files on the canvas link above to see them rendered).
+
+## What the app is
+
+An Android interval timer, replacing **Hybrid Interval Timer** (`com.hybrid.intervaltimer`), for hangboard / HIIT workouts.
+Target: Pixel 8a. UI language: English. Native Android (Kotlin + Jetpack Compose).
+
+## Workout model
+
+- **Workout**: name, tags, warm-up, rounds, **rest between rounds**, list of blocks.
+- **No cool-down** (removed on purpose).
+- **Rest between rounds** is played only *between* rounds, never after the last one
+  (the old app's final rest was useless and inflated the total).
+- **Block** = a single series, or a **repeat group** ("Repeat ×N" of a few series).
+- **Series**: name, duration, color (12 Material colors from the old app), icon
+  (jump, run, stand, weight, warm-up, cool), optional **per side** (left → change N s → right).
+
+Implemented in `core/` (`Model.kt`, `Timeline.kt`), with tests.
+
+## Import from the old app
+
+CSV backup, no header, no quoting, two row types (see `HybridImport.kt`):
+- workout: `id,name,warmupSec,cooldownSec,totalSec,rounds`
+- interval: `id,workoutId,name,durationSec,,,0,icon,color(signed ARGB int)`
+
+Rules:
+- If the last series of a workout is named *rest* / *change*, it becomes **rest between rounds** (19 of the 26 workouts; ~31 min of useless rest removed in total).
+- Repeated patterns become **repeat groups** automatically (e.g. hang/rest ×3 + hang).
+- Cool-down column is ignored (always 0 in the real export).
+- Verified on the real export: 26 workouts, every new total = old total − final rest.
+  Run: `./gradlew :core:test -Pintervals.csv=/path/to/tutto_hiit_hybridInterval.csv`
+  (the real export is NOT in the repo; a 4-workout sample is in `core/src/test/resources`).
+
+## Screens (see mockups)
+
+Bottom bar: **Workouts · Journal · Stats · Settings**.
+
+1. **Workouts list**: search, tag filter chips, cards with name, total, mini colored bar of one round, play button, "New workout".
+2. **Edit workout**: name, tags, warm-up, rounds (− / +), rest between rounds, one-round and total time, series list with repeat groups.
+   Swipe a series to delete; long-press to select → *Repeat ×…*, *Duplicate*, *Delete*. Quick add *Work* / *Rest*.
+   Duplicate a whole workout (from the list menu).
+3. **Edit series**: header in the series color, name, big duration with ± , color, icon, **per side** (change time), sound switches.
+4. **Player** (chosen: **big concentric disc**):
+   outer ring = series of the current round as segments sized by length (done = grey, current thicker, dot marker,
+   rest between rounds = thin grey arc); inner disc filled with the series color showing icon, name and the time.
+   Round x/y, remaining, series x/y, "Next" card, whole-workout progress bar, previous / pause / next.
+   **Landscape layout** for viewing from far away. **3-2-1 countdown** before start. **Color flash** between series.
+   **No extra disc animations** in v1 (demos kept on the canvas; "Liquid" maybe later).
+5. **Import**: file card, summary, list with new total and old total struck through, "Import N workouts".
+6. **Journal**: month calendar (Monday first), dots per session, month totals, sessions of the selected day
+   (time, length, completed / stopped in round x, **note**). Sessions are logged automatically. No manual sessions, no RPE / weight.
+7. **Stats**: Week / Month / Year; time, sessions, completed; minutes per week chart; most done workouts.
+8. **Settings**: theme (System / Light / Dark), accent color (purple default), voice names + language, beeps, volume,
+   lower music during cues, 3-2-1 countdown, color flash, keep screen on, lock controls; import, **backup to file**, **restore**.
+9. **Finished**: completed disc, time / rounds / series, note for the journal, *Repeat*, *Save to journal*.
+
+Style: purple accent (`#7C3AED` dark, `#6D28D9` light), **pure black** backgrounds in dark mode (OLED), Space Grotesk-like numbers.
+
+Not wanted (for now): sharing workouts, reminders, home-screen widget, smartwatch, Health Connect.
+
+## Energy efficiency (agreed goal: very efficient)
+
+- Pure black in dark mode; screen kept on only during a workout.
+- No polling: the timer sleeps until the next event (series change, beep, voice); based on `SystemClock.elapsedRealtime`.
+- Foreground service + partial wake lock only while a workout runs; released on pause / finish; long pause auto-stops.
+- Voice lines pre-synthesized at start (TextToSpeech → files), SoundPool for beeps, audio focus "duck".
+- Redraw only the disc; ~1 update per second when no animation.
+- No network, no analytics, no background jobs. Measure with Android Studio Energy Profiler.
+
+## Tech stack
+
+- Kotlin 2.4, Jetpack Compose (BOM 2026.09.00), Material 3, AGP 9.5 (built-in Kotlin), Gradle 9.9 wrapper.
+- `core/`: plain Kotlin/JVM (model, timeline, importer), unit-tested.
+- `app/`: Android, minSdk 26, compile/target 37.
+- Planned: Room (database), foreground service (timer), TextToSpeech, SoundPool, Storage Access Framework (import / backup JSON).
+
+## Plan / status
+
+- [x] Mockups agreed
+- [x] Step 2: project setup, data model, timeline, CSV importer + tests (all passing)
+- [ ] Step 3: Room database + repository; backup / restore JSON
+- [ ] Step 4: screens (list, editor, series, import, journal, stats, settings, finished)
+- [ ] Step 5: player screen + foreground timer service, voice, beeps, countdown, flash, landscape
+- [ ] Step 6: install on the Pixel 8a, real workout test, energy profiling
+- [ ] App icon (to decide: e.g. purple disc with segmented ring)

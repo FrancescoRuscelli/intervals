@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Workout list</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#7C3AED}a:hover{color:#6D28D9}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: {{t.bg}}; color: {{t.text}}; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; position: relative; overflow: hidden">
+  <header style="display: flex; align-items: center; justify-content: space-between; padding: 20px 16px 8px 20px">
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <h1 style="margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 30px; font-weight: 700; letter-spacing: -0.5px">Workouts</h1>
+      <span style="font-size: 13px; color: {{t.muted}}">26 workouts</span>
+    </div>
+    <div style="display: flex; gap: 4px">
+      <button aria-label="Import" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: transparent; color: {{t.text}}; display: flex; align-items: center; justify-content: center">
+        <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"></path></svg>
+      </button>
+      <button aria-label="More options" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: transparent; color: {{t.text}}; display: flex; align-items: center; justify-content: center">
+        <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="12" cy="19" r="1.8"></circle></svg>
+      </button>
+    </div>
+  </header>
+
+  <div style="padding: 8px 16px 12px">
+    <label style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 14px; border-radius: 12px; background: {{t.surface}}; border: 1px solid {{t.line}}; color: {{t.muted}}">
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+      <input placeholder="Search workouts" style="flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: {{t.text}}; font: inherit; font-size: 15px">
+    </label>
+  </div>
+
+  <div role="group" aria-label="Filter by tag" style="display: flex; gap: 6px; padding: 0 16px 12px; overflow: hidden">
+    <sc-for list="{{tags}}" as="g" hint-placeholder-count="5">
+      <button aria-pressed="{{g.on}}" style="flex: none; height: 34px; padding: 0 14px; border-radius: 17px; border: 1px solid {{g.border}}; background: {{g.bg}}; color: {{g.fg}}; font-size: 13px; font-weight: 600">{{g.label}}</button>
+    </sc-for>
+  </div>
+
+  <div style="flex: 1; overflow: hidden; display: flex; flex-direction: column; gap: 10px; padding: 0 16px">
+    <sc-for list="{{workouts}}" as="w" hint-placeholder-count="6">
+      <div style="display: flex; align-items: center; gap: 14px; padding: 14px 12px 14px 16px; border-radius: 16px; background: {{t.surface}}; border: 1px solid {{t.line}}">
+        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+            <span style="font-size: 17px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{w.name}}</span>
+            <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums">{{w.total}}</span>
+          </div>
+          <div style="display: flex; gap: 2px; height: 6px">
+            <sc-for list="{{w.bar}}" as="s" hint-placeholder-count="4">
+              <div style="flex: {{s.d}} 1 0; min-width: 2px; border-radius: 3px; background: {{s.c}}"></div>
+            </sc-for>
+          </div>
+          <span style="font-size: 13px; color: {{t.muted}}">{{w.meta}}</span>
+        </div>
+        <button aria-label="Start {{w.name}}" style="flex: none; width: 48px; height: 48px; border: 0; border-radius: 24px; background: {{t.accent}}; color: {{t.onAccent}}; display: flex; align-items: center; justify-content: center">
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"></path></svg>
+        </button>
+      </div>
+    </sc-for>
+  </div>
+
+  <nav aria-label="Main" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 8px 8px 18px; margin-top: 10px; border-top: 1px solid {{t.line}}; background: {{t.sheet}}">
+    <a href="Main.dc.html" aria-current="page" style="height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: {{t.accentText}}; text-decoration: none; font-size: 12px; font-weight: 700">
+      <span style="width: 56px; height: 30px; border-radius: 15px; background: {{t.tint}}; display: flex; align-items: center; justify-content: center">
+        <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12"></path></svg>
+      </span>Workouts
+    </a>
+    <a href="Journal.dc.html" style="height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: {{t.muted}}; text-decoration: none; font-size: 12px; font-weight: 600">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path></svg>Journal
+    </a>
+    <a href="Stats.dc.html" style="height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: {{t.muted}}; text-decoration: none; font-size: 12px; font-weight: 600">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 20v-8M12 20V5M19 20v-5"></path></svg>Stats
+    </a>
+    <a href="Settings.dc.html" style="height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: {{t.muted}}; text-decoration: none; font-size: 12px; font-weight: 600">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"></path></svg>Settings
+    </a>
+  </nav>
+
+  <button style="position: absolute; right: 16px; bottom: 106px; height: 56px; padding: 0 22px 0 18px; border: 0; border-radius: 18px; background: {{t.accent}}; color: {{t.onAccent}}; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; box-shadow: 0 8px 24px {{t.shadow}}">
+    <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+    New workout
+  </button>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"mode":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dark = { bg: '#000000', surface: '#1A1C21', sheet: '#16181C', line: '#23262C', text: '#F2F3F5', muted: '#9AA0AA', accent: '#7C3AED', onAccent: '#FFFFFF', accentText: '#C4B1FF', tint: '#2A2340', shadow: 'rgba(0,0,0,0.5)' };
+    const light = { bg: '#F6F5FA', surface: '#FFFFFF', sheet: '#FFFFFF', line: '#E2E0EA', text: '#17151F', muted: '#5E5A6B', accent: '#6D28D9', onAccent: '#FFFFFF', accentText: '#5B21B6', tint: '#EDE7FB', shadow: 'rgba(60,30,120,0.22)' };
+    const t = (this.props.mode ?? 'dark') === 'light' ? light : dark;
+    const R = '#F44336', G = '#4CAF50', O = '#FF9800', P = '#E91E63', A = '#FFC107', L = '#CDDC39', D = '#FF5722', C = '#00BCD4', I = '#3F51B5';
+    const rep = (arr, n) => Array.from({ length: n }).flatMap(() => arr);
+    const s = (d, c) => ({ d, c });
+    return {
+      t,
+      tags: [['All', 26], ['Hangboard', 14], ['HIIT', 3], ['Rehab', 4], ['Core', 2]].map(([n, k], i) => ({ label: n + ' ' + k, on: i === 0 ? 'true' : 'false', bg: i === 0 ? t.accent : 'transparent', fg: i === 0 ? t.onAccent : t.muted, border: i === 0 ? t.accent : t.line })),
+      workouts: [
+        { name: 'hangboard 70%', total: '5:25', meta: 'Hangboard · 4 rounds · 1:00 between', bar: [...rep([s(5, P), s(5, A)], 3), s(5, P)] },
+        { name: 'max hang 20mm', total: '26:29', meta: 'Hangboard · 2 rounds · 5:00 between', bar: [...rep([s(7, D), s(120, C)], 5), s(7, D)] },
+        { name: 'finger strenght v2', total: '11:35', meta: 'Hangboard · 6 rounds · per side', bar: [s(5, R), s(5, G), s(5, R)] },
+        { name: 'hiit', total: '30:30', meta: 'HIIT · 3 rounds · warm-up 1:00', bar: [...rep([s(30, R), s(10, '#8BC34A')], 14), s(30, R)] },
+        { name: '10x15″:30″', total: '7:07', meta: 'Hangboard · 10 rounds · 0:30 between', bar: [s(15, R)] },
+        { name: 'millinger abs', total: '16:00', meta: 'Core · 1 round · 22 series', bar: [s(180, O), ...rep([s(30, O)], 21)] }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

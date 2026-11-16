@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Player, live animation demo</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #000000; color: #F2F3F5; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; position: relative; overflow: hidden">
+  <header style="display: flex; align-items: center; justify-content: space-between; padding: 12px 8px 0">
+    <button aria-label="Restart demo" onClick="{{restart}}" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: transparent; color: inherit; display: flex; align-items: center; justify-content: center">
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.5-5.8M4 4v4h4"></path></svg>
+    </button>
+    <span style="font-size: 16px; font-weight: 600">hangboard 70%</span>
+    <span style="width: 44px; font-size: 11px; font-weight: 700; color: #C4B1FF; text-align: center">LIVE</span>
+  </header>
+
+  <div role="group" aria-label="Animation style" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; padding: 6px 12px 0">
+    <sc-for list="{{looks}}" as="l" hint-placeholder-count="4">
+      <button onClick="{{l.pick}}" aria-pressed="{{l.on}}" style="height: 34px; padding: 0 12px; border-radius: 17px; border: 1px solid {{l.border}}; background: {{l.bg}}; color: {{l.fg}}; font-size: 13px; font-weight: 600">{{l.label}}</button>
+    </sc-for>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 12px 20px 0; text-align: center">
+    <div style="display: flex; flex-direction: column"><span style="font-size: 12px; color: #9AA0AA">Round</span><span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 24px; font-weight: 600">{{stat.round}}</span></div>
+    <div style="display: flex; flex-direction: column"><span style="font-size: 12px; color: #9AA0AA">Remaining</span><span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 24px; font-weight: 600">{{stat.left}}</span></div>
+    <div style="display: flex; flex-direction: column"><span style="font-size: 12px; color: #9AA0AA">Series</span><span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 24px; font-weight: 600">{{stat.series}}</span></div>
+  </div>
+
+  <div style="flex: 1; display: flex; align-items: center; justify-content: center">
+    <div style="position: relative; width: 374px; height: 374px">
+      <svg aria-hidden="true" width="374" height="374" viewBox="0 0 374 374" style="position: absolute; left: 0; top: 0">
+        <sc-for list="{{arcs}}" as="a" hint-placeholder-count="8">
+          <path d="{{a.d}}" fill="none" stroke="{{a.c}}" stroke-width="{{a.w}}"></path>
+        </sc-for>
+      </svg>
+      <div style="position: absolute; left: 31px; top: 31px; width: 312px; height: 312px; border-radius: 50%; background: {{ghost}}"></div>
+      <div style="position: absolute; left: {{rip.pos}}; top: {{rip.pos}}; width: {{rip.size}}; height: {{rip.size}}; box-sizing: border-box; border-radius: 50%; border: 5px solid {{rip.c}}; opacity: {{rip.o}}"></div>
+      <div style="position: absolute; left: {{disc.pos}}; top: {{disc.pos}}; width: {{disc.size}}; height: {{disc.size}}; border-radius: {{disc.radius}}; overflow: hidden; background: {{disc.bg}}; transform: scale({{disc.scale}})">
+        <svg aria-hidden="true" width="312" height="312" viewBox="0 0 312 312" style="position: absolute; left: 0; top: 0"><path d="{{wave}}" fill="{{liq.c}}"></path></svg>
+        <sc-for list="{{rings}}" as="q" hint-placeholder-count="0">
+          <div style="position: absolute; left: {{q.pos}}; top: {{q.pos}}; width: {{q.size}}; height: {{q.size}}; box-sizing: border-box; border-radius: 50%; border: 4px solid rgba(255,255,255,0.7); opacity: {{q.o}}"></div>
+        </sc-for>
+        <div style="position: absolute; left: 0; right: 0; bottom: 0; height: {{liq.h}}; background: {{liq.c}}; border-top: 6px solid {{liq.top}}"></div>
+        <sc-for list="{{bubbles}}" as="b" hint-placeholder-count="0">
+          <div style="position: absolute; left: {{b.x}}; top: {{b.y}}; width: {{b.s}}; height: {{b.s}}; border-radius: 50%; background: {{b.c}}"></div>
+        </sc-for>
+      </div>
+      <svg aria-hidden="true" width="374" height="374" viewBox="0 0 374 374" style="position: absolute; left: 0; top: 0">
+        <sc-if value="{{dot.show}}" hint-placeholder-val="{{ true }}">
+          <circle cx="{{dot.x}}" cy="{{dot.y}}" r="11" fill="#F2F3F5" stroke="#000000" stroke-width="4"></circle>
+        </sc-if>
+      </svg>
+      <div role="timer" aria-label="{{aria}}" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: {{ink}}; text-shadow: {{shadow}}">
+        <span style="font-size: 28px; font-weight: 800; text-transform: uppercase; letter-spacing: 3px; text-align: center; max-width: 260px; line-height: 1.1">{{name}}</span>
+        <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: {{timeSize}}; font-weight: 600; line-height: 1; letter-spacing: -4px; font-variant-numeric: tabular-nums">{{time}}</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin: 0 16px; padding: 12px 16px; border-radius: 14px; background: #1A1C21; display: flex; align-items: center; gap: 12px">
+    <span style="font-size: 13px; color: #9AA0AA">Next</span>
+    <span style="width: 14px; height: 14px; border-radius: 7px; background: {{next.c}}"></span>
+    <span style="flex: 1; font-size: 17px; font-weight: 600">{{next.name}}</span>
+    <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 17px; font-weight: 600">{{next.t}}</span>
+  </div>
+
+  <div style="display: flex; align-items: center; justify-content: center; gap: 36px; padding: 18px 0 30px">
+    <button aria-label="Previous series" onClick="{{prev}}" style="width: 56px; height: 56px; border: 0; border-radius: 28px; background: #1F2127; color: #F2F3F5; display: flex; align-items: center; justify-content: center">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM20 5.5v13a.8.8 0 0 1-1.2.7L9.5 12.7a.8.8 0 0 1 0-1.4l9.3-6.5a.8.8 0 0 1 1.2.7z"></path></svg>
+    </button>
+    <button aria-label="{{pauseLabel}}" onClick="{{toggle}}" style="width: 84px; height: 84px; border: 0; border-radius: 42px; background: #7C3AED; color: #FFFFFF; display: flex; align-items: center; justify-content: center">
+      <sc-if value="{{paused}}" hint-placeholder-val="{{ false }}">
+        <svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"></path></svg>
+      </sc-if>
+      <sc-if value="{{running}}" hint-placeholder-val="{{ true }}">
+        <svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4.5" width="4" height="15" rx="1"></rect><rect x="14" y="4.5" width="4" height="15" rx="1"></rect></svg>
+      </sc-if>
+    </button>
+    <button aria-label="Next series" onClick="{{skip}}" style="width: 56px; height: 56px; border: 0; border-radius: 28px; background: #1F2127; color: #F2F3F5; display: flex; align-items: center; justify-content: center">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M16 5h2v14h-2zM4 5.5v13a.8.8 0 0 0 1.2.7l9.3-6.5a.8.8 0 0 0 0-1.4L5.2 4.8A.8.8 0 0 0 4 5.5z"></path></svg>
+    </button>
+  </div>
+
+  <div aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none; background: {{flash.c}}; opacity: {{flash.o}}"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"look":{"editor":"enum","options":["bubbles","breathe","ripple","grow","blob","sweep","orbit","sonar"],"default":"bubbles"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  componentDidMount() {
+    this.last = Date.now();
+    this.timer = setInterval(() => {
+      const n = Date.now(), dt = n - this.last;
+      this.last = n;
+      const s = this.state || {};
+      if (!s.paused) this.setState({ el: Math.min(this.totalSec() * 1000, (s.el || 0) + dt) });
+    }, 50);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+  segs() {
+    if (this._segs) return this._segs;
+    const P = '#E91E63', A = '#FFC107';
+    const round = [['hang', 5, P], ['rest', 5, A], ['hang', 5, P], ['rest', 5, A], ['hang', 5, P], ['rest', 5, A], ['hang', 5, P]];
+    const out = [{ name: 'Get ready', d: 3, c: '#7C3AED', cd: true, round: 1, idx: -1 }];
+    for (let r = 1; r <= 4; r++) {
+      round.forEach(([name, d, c], idx) => out.push({ name, d, c, round: r, idx }));
+      if (r < 4) out.push({ name: 'rest between rounds', d: 60, c: '#9AA0AA', brk: true, round: r, idx: 7 });
+    }
+    let t = 0;
+    out.forEach((g) => { g.start = t; t += g.d; });
+    this._total = t;
+    this._segs = out;
+    return out;
+  }
+  totalSec() { this.segs(); return this._total; }
+  renderVals() {
+    const s = this.state || {};
+    const segs = this.segs(), total = this._total;
+    const look = s.look || this.props.look || 'bubbles';
+    const el = Math.min(total, (s.el || 0) / 1000);
+    const finished = el >= total - 0.001;
+    let i = segs.findIndex((g) => el < g.start + g.d);
+    if (i < 0) i = segs.length - 1;
+    const g = segs[i];
+    const into = Math.min(g.d, Math.max(0, el - g.start));
+    const left = g.d - into, p = into / g.d, fracSec = into - Math.floor(into);
+    const secLeft = Math.max(0, Math.ceil(left - 1e-6));
+    const mmss = (x) => Math.floor(x / 60) + ':' + String(x % 60).padStart(2, '0');
+
+    // outer ring: the series of the current round (+ the rest between rounds)
+    const cx = 187, cy = 187, r = 174, gap = 3;
+    const rs = segs.filter((x) => x.round === g.round && !x.cd);
+    const rtot = rs.reduce((a, x) => a + x.d, 0), span = 360 - gap * rs.length;
+    const pt = (deg) => { const a = deg * Math.PI / 180; return { x: +(cx + r * Math.sin(a)).toFixed(2), y: +(cy - r * Math.cos(a)).toFixed(2) }; };
+    const arc = (a0, a1) => { const q0 = pt(a0), q1 = pt(Math.max(a0 + 0.01, a1)); return 'M' + q0.x + ' ' + q0.y + ' A' + r + ' ' + r + ' 0 ' + (a1 - a0 > 180 ? 1 : 0) + ' 1 ' + q1.x + ' ' + q1.y; };
+    const arcs = [];
+    let a = gap / 2, dot = { show: false, x: 0, y: 0 };
+    rs.forEach((x) => {
+      const len = span * x.d / rtot, end = a + len;
+      const col = x.brk ? '#9AA0AA' : x.c, w = x.brk ? 5 : 16;
+      if (!g.cd && el >= x.start + x.d) arcs.push({ d: arc(a, end), c: '#2A2D34', w });
+      else if (x === g) {
+        const mid = a + len * p;
+        if (p > 0.001) arcs.push({ d: arc(a, mid), c: '#2A2D34', w });
+        arcs.push({ d: arc(mid, end), c: col, w: x.brk ? 7 : 24 });
+        const q = pt(mid); dot = { show: true, x: q.x, y: q.y };
+      } else arcs.push({ d: arc(a, end), c: col, w });
+      a = end + gap;
+    });
+
+    // the disc and its animation
+    const D = 312;
+    let size = D, scale = 1, bg = g.c, ghost = 'transparent';
+    let liq = { h: '0%', c: 'transparent', top: 'transparent' }, bubbles = [];
+    let rip = { size: '0px', pos: '187px', o: 0, c: g.c };
+    let radius = '50%', wave = 'M0 0', rings = [];
+    const urgent = secLeft <= 3 && !g.cd;
+    if (look === 'bubbles') {
+      bg = g.c + '40';
+      const lh = (1 - p) * D, top = D - lh;
+      liq = { h: '0px', c: g.c, top: 'transparent' };
+      let w = 'M0 ' + D + ' L0 ' + top.toFixed(1);
+      for (let x = 0; x <= D; x += 8) w += ' L' + x + ' ' + (top + 6 * Math.sin(x / 26 + el * 4)).toFixed(1);
+      wave = w + ' L' + D + ' ' + D + ' Z';
+      for (let k = 0; k < 11; k++) {
+        const sz = 6 + (k * 7) % 14, sp = 26 + (k * 19) % 46;
+        const yb = ((el * sp + k * 61) % (lh + 20)) - 10;
+        if (lh > 20 && yb < lh - sz - 6) bubbles.push({ x: (28 + (k * 53) % 250) + 'px', y: (D - yb - sz) + 'px', s: sz + 'px', c: 'rgba(255,255,255,0.45)' });
+      }
+    } else if (look === 'blob') {
+      const sp = urgent ? 5 : 2, a = urgent ? 9 : 6, v = (k) => (50 + a * Math.sin(el * sp + k * 1.7)).toFixed(1) + '%';
+      radius = v(0) + ' ' + v(1) + ' ' + v(2) + ' ' + v(3) + ' / ' + v(4) + ' ' + v(5) + ' ' + v(6) + ' ' + v(7);
+    } else if (look === 'sweep') {
+      const deg = ((1 - p) * 360).toFixed(1);
+      bg = 'conic-gradient(' + g.c + ' 0deg ' + deg + 'deg, ' + g.c + '33 ' + deg + 'deg 360deg)';
+    } else if (look === 'orbit') {
+      const speed = urgent ? 220 : 60;
+      for (let k = 0; k < 10; k++) {
+        const ang = (k * 36 + el * speed) * Math.PI / 180, rr = 132, sz = k === 0 ? 16 : 9;
+        bubbles.push({ x: (156 + rr * Math.sin(ang) - sz / 2) + 'px', y: (156 - rr * Math.cos(ang) - sz / 2) + 'px', s: sz + 'px', c: 'rgba(20,8,12,0.55)' });
+      }
+    } else if (look === 'sonar') {
+      for (let k = 0; k < 3; k++) {
+        const f = (el * (urgent ? 1.4 : 0.6) + k / 3) % 1, sz = f * D;
+        rings.push({ size: sz + 'px', pos: (156 - sz / 2) + 'px', o: (1 - f).toFixed(2) });
+      }
+    } else if (look === 'breathe') {
+      const amp = secLeft <= 3 ? 0.08 : 0.035;
+      scale = 1 + amp * Math.exp(-fracSec * 5);
+    } else if (look === 'ripple') {
+      const rsz = D + fracSec * 64;
+      rip = { size: rsz + 'px', pos: (187 - rsz / 2) + 'px', o: (1 - fracSec) * 0.75, c: g.c };
+    } else if (look === 'grow') {
+      size = 110 + p * (D - 110);
+      ghost = g.c + '2E';
+    }
+    const disc = { size: size + 'px', pos: (187 - size / 2) + 'px', bg, scale, radius };
+
+    const nx = segs[i + 1];
+    const next = finished ? { name: 'nothing, all done', t: '', c: '#7C3AED' } : nx ? { name: nx.name, t: mmss(nx.d), c: nx.c } : { name: 'finish', t: '', c: '#7C3AED' };
+    const flashO = (!finished && i > 0 && into < 0.45) ? 0.55 * (1 - into / 0.45) : 0;
+    const light = look === 'bubbles' || look === 'sweep' || g.cd;
+    const paused = !!s.paused;
+    const go = (sec) => this.setState({ el: Math.max(0, Math.min(total, sec)) * 1000 });
+    return {
+      looks: [['bubbles', 'Liquid'], ['breathe', 'Breathe'], ['ripple', 'Ripple'], ['grow', 'Grow'], ['blob', 'Blob'], ['sweep', 'Sweep'], ['orbit', 'Orbit'], ['sonar', 'Sonar']].map(([id, label]) => ({
+        label, on: look === id ? 'true' : 'false',
+        bg: look === id ? '#7C3AED' : 'transparent', fg: look === id ? '#FFFFFF' : '#C9CDD3', border: look === id ? '#7C3AED' : '#2A2D34',
+        pick: () => this.setState({ look: id })
+      })),
+      stat: { round: g.round + '/4', left: mmss(Math.ceil(total - el)), series: g.cd ? '–' : g.brk ? 'break' : (g.idx + 1) + '/7' },
+      arcs, dot, disc, liq, bubbles, rip, ghost, wave, rings,
+      name: finished ? 'done' : g.name,
+      time: finished ? '✓' : g.cd ? String(secLeft) : mmss(secLeft),
+      timeSize: g.cd ? '150px' : (g.brk ? '96px' : '112px'),
+      ink: light ? '#FFFFFF' : '#14080C',
+      shadow: light ? '0 2px 10px rgba(0,0,0,0.45)' : 'none',
+      aria: g.name + ', ' + secLeft + ' seconds left',
+      next,
+      flash: { c: g.c, o: flashO },
+      paused, running: !paused, pauseLabel: paused ? 'Play' : 'Pause',
+      toggle: () => this.setState({ paused: !paused }),
+      restart: () => this.setState({ el: 0, paused: false }),
+      skip: () => go(g.start + g.d),
+      prev: () => go(into > 1 ? g.start : (segs[i - 1] ? segs[i - 1].start : 0))
+    };
+  }
+}
+</script>
+</body>
+</html>

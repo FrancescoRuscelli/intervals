@@ -1,0 +1,282 @@
+{
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-11-16T18:30:00Z"
+  },
+  "title": "Interval Workout App Mockups",
+  "launch": {
+    "view": "canvas"
+  },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "1 · Workout list"
+    },
+    "Editor.dc.html": {
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "2 · Edit workout"
+    },
+    "Series.dc.html": {
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 1040,
+      "title": "3 · Edit series"
+    },
+    "Player.dc.html": {
+      "x": 1410,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "4 · Player (big disc)"
+    },
+    "Import.dc.html": {
+      "x": 1880,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "5 · Import from old app"
+    },
+    "MainLight.dc.html": {
+      "x": 0,
+      "y": 1400,
+      "w": 390,
+      "h": 844,
+      "title": "1 · Workout list (light)"
+    },
+    "EditorLight.dc.html": {
+      "x": 470,
+      "y": 1400,
+      "w": 390,
+      "h": 844,
+      "title": "2 · Edit workout (light)"
+    },
+    "SeriesLight.dc.html": {
+      "x": 940,
+      "y": 1400,
+      "w": 390,
+      "h": 1040,
+      "title": "3 · Edit series (light)"
+    },
+    "PlayerLight.dc.html": {
+      "x": 1410,
+      "y": 1400,
+      "w": 390,
+      "h": 844,
+      "title": "4 · Player (light)"
+    },
+    "ImportLight.dc.html": {
+      "x": 1880,
+      "y": 1400,
+      "w": 390,
+      "h": 844,
+      "title": "5 · Import (light)"
+    },
+    "PlayerDiscLandscape.dc.html": {
+      "x": 0,
+      "y": 2800,
+      "w": 844,
+      "h": 390,
+      "title": "4 · Player landscape (dark)"
+    },
+    "PlayerDiscLandscapeLight.dc.html": {
+      "x": 924,
+      "y": 2800,
+      "w": 844,
+      "h": 390,
+      "title": "4 · Player landscape (light)"
+    },
+    "Journal.dc.html": {
+      "x": 2350,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "6 · Journal"
+    },
+    "JournalLight.dc.html": {
+      "x": 2350,
+      "y": 1400,
+      "w": 390,
+      "h": 844,
+      "title": "6 · Journal (light)"
+    },
+    "Stats.dc.html": {
+      "x": 2820,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "7 · Stats"
+    },
+    "Settings.dc.html": {
+      "x": 3290,
+      "y": 0,
+      "w": 390,
+      "h": 1060,
+      "title": "8 · Settings"
+    },
+    "Finish.dc.html": {
+      "x": 3760,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "9 · Finished"
+    },
+    "StatsLight.dc.html": {
+      "x": 2820,
+      "y": 1400,
+      "w": 390,
+      "h": 844,
+      "title": "7 · Stats (light)"
+    },
+    "SettingsLight.dc.html": {
+      "x": 3290,
+      "y": 1400,
+      "w": 390,
+      "h": 1060,
+      "title": "8 · Settings (light)"
+    },
+    "FinishLight.dc.html": {
+      "x": 3760,
+      "y": 1400,
+      "w": 390,
+      "h": 844,
+      "title": "9 · Finished (light)"
+    },
+    "PlayerLive.dc.html": {
+      "x": 1848,
+      "y": 2800,
+      "w": 390,
+      "h": 844,
+      "title": "Live · Liquid (also: 3-2-1 countdown + color flash)",
+      "is_interactive": true
+    },
+    "PlayerLiveBreathe.dc.html": {
+      "x": 2318,
+      "y": 2800,
+      "w": 390,
+      "h": 844,
+      "title": "Live · Breathe",
+      "is_interactive": true
+    },
+    "PlayerLiveRipple.dc.html": {
+      "x": 2788,
+      "y": 2800,
+      "w": 390,
+      "h": 844,
+      "title": "Live · Ripple",
+      "is_interactive": true
+    },
+    "PlayerLiveGrow.dc.html": {
+      "x": 3258,
+      "y": 2800,
+      "w": 390,
+      "h": 844,
+      "title": "Live · Grow",
+      "is_interactive": true
+    },
+    "PlayerLiveBlob.dc.html": {
+      "x": 3728,
+      "y": 2800,
+      "w": 390,
+      "h": 844,
+      "title": "Live · Blob",
+      "is_interactive": true
+    },
+    "PlayerLiveSweep.dc.html": {
+      "x": 4198,
+      "y": 2800,
+      "w": 390,
+      "h": 844,
+      "title": "Live · Sweep",
+      "is_interactive": true
+    },
+    "PlayerLiveOrbit.dc.html": {
+      "x": 4668,
+      "y": 2800,
+      "w": 390,
+      "h": 844,
+      "title": "Live · Orbit",
+      "is_interactive": true
+    },
+    "PlayerLiveSonar.dc.html": {
+      "x": 5138,
+      "y": 2800,
+      "w": 390,
+      "h": 844,
+      "title": "Live · Sonar",
+      "is_interactive": true
+    },
+    "EditorSelect.dc.html": {
+      "x": 470,
+      "y": -1400,
+      "w": 390,
+      "h": 844,
+      "title": "2b · Edit workout: selecting series"
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Editor.dc.html",
+    "Series.dc.html",
+    "Player.dc.html",
+    "Import.dc.html",
+    "Journal.dc.html",
+    "MainLight.dc.html",
+    "EditorLight.dc.html",
+    "SeriesLight.dc.html",
+    "PlayerLight.dc.html",
+    "ImportLight.dc.html",
+    "JournalLight.dc.html",
+    "PlayerDiscLandscape.dc.html",
+    "PlayerDiscLandscapeLight.dc.html",
+    "Stats.dc.html",
+    "Settings.dc.html",
+    "Finish.dc.html",
+    "StatsLight.dc.html",
+    "SettingsLight.dc.html",
+    "FinishLight.dc.html",
+    "PlayerLive.dc.html",
+    "PlayerLiveBreathe.dc.html",
+    "PlayerLiveRipple.dc.html",
+    "PlayerLiveGrow.dc.html",
+    "PlayerLiveBlob.dc.html",
+    "PlayerLiveSweep.dc.html",
+    "PlayerLiveOrbit.dc.html",
+    "PlayerLiveSonar.dc.html",
+    "EditorSelect.dc.html"
+  ],
+  "notes": {
+    "head": {
+      "x": 0,
+      "y": -260,
+      "text": "Dark mode",
+      "kind": "title1",
+      "maxW": 4150,
+      "w": 240
+    },
+    "lighthead": {
+      "x": 0,
+      "y": 1120,
+      "text": "Light mode",
+      "kind": "title1",
+      "maxW": 4150
+    },
+    "discland": {
+      "x": 0,
+      "y": 2520,
+      "text": "Player: landscape and live demo",
+      "kind": "title1",
+      "maxW": 5528
+    }
+  },
+  "designSystems": [],
+  "attachments": {}
+}
