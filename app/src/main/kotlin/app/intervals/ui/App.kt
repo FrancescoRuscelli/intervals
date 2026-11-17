@@ -65,7 +65,7 @@ fun App(vm: AppViewModel) {
                         Tab.INTERVALS -> IntervalsListScreen(vm)
                         Tab.GYM -> ComingSoon("Gym", "The strength log comes after the interval screens.")
                         Tab.JOURNAL -> app.intervals.ui.journal.JournalScreen(vm)
-                        Tab.STATS -> ComingSoon("Stats", "Coming with the journal.")
+                        Tab.STATS -> app.intervals.ui.stats.StatsScreen(vm)
                         Tab.SETTINGS -> app.intervals.ui.settings.SettingsScreen(vm)
                     }
                 }
