@@ -68,6 +68,13 @@ import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.intervals.core.Block
 import app.intervals.core.SavedWorkout
+import app.intervals.core.Session
+import app.intervals.core.day
+import app.intervals.core.valuesLine
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
+import java.util.Locale
 import app.intervals.core.Workout
 import app.intervals.core.formatDuration
 import app.intervals.core.roundBar
@@ -83,6 +90,7 @@ import kotlin.math.roundToInt
 fun IntervalsListScreen(vm: AppViewModel) {
     val p = LocalPalette.current
     val all by vm.workouts.collectAsStateWithLifecycle()
+    val lastRuns by vm.lastByWorkout.collectAsStateWithLifecycle()
     var query by rememberSaveable { mutableStateOf("") }
     var tag by rememberSaveable { mutableStateOf<String?>(null) }
     var selected by remember { mutableStateOf(setOf<Long>()) }
@@ -162,6 +170,7 @@ fun IntervalsListScreen(vm: AppViewModel) {
                 items(shown, key = { it.id }) { w ->
                     WorkoutCard(
                         w,
+                        last = lastRuns[w.id],
                         selecting = selecting,
                         selected = w.id in selected,
                         onOpen = {
@@ -387,6 +396,7 @@ private fun TagChip(label: String, on: Boolean, onClick: () -> Unit) {
 @Composable
 private fun WorkoutCard(
     saved: SavedWorkout,
+    last: Session?,
     selecting: Boolean,
     selected: Boolean,
     onOpen: () -> Unit,
@@ -412,6 +422,13 @@ private fun WorkoutCard(
             }
             RoundBar(w, 6)
             Text(meta(w), color = p.muted, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(6.dp).clip(CircleShape).background(
+                    when { last == null -> Color.Transparent; last.completed -> p.pink; else -> p.yellow },
+                ))
+                Spacer(Modifier.width(6.dp))
+                Text(lastLine(last), color = p.soft, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
         }
         if (!selecting) {
             Spacer(Modifier.width(14.dp))
@@ -432,6 +449,23 @@ fun RoundBar(w: Workout, heightDp: Int) {
             Box(Modifier.weight(sec.toFloat().coerceAtLeast(0.5f)).fillMaxSize().clip(RoundedCornerShape(3.dp)).background(Color(color)))
         }
     }
+}
+
+/** "Last: Tue · 4/4 · hang · Load L 10 · R 8 kg", or "Never done yet". */
+private fun lastLine(s: Session?): String {
+    if (s == null) return "Never done yet"
+    val zone = ZoneId.systemDefault()
+    val d = s.day(zone)
+    val today = LocalDate.now(zone)
+    val days = ChronoUnit.DAYS.between(d, today)
+    val whenText = when {
+        days == 0L -> "today"
+        days == 1L -> "yesterday"
+        days < 7 -> d.dayOfWeek.getDisplayName(java.time.format.TextStyle.SHORT, Locale.ENGLISH)
+        else -> "${d.dayOfMonth} " + d.month.getDisplayName(java.time.format.TextStyle.SHORT, Locale.ENGLISH)
+    }
+    val rounds = if (s.completed) "${s.roundsTotal}/${s.roundsTotal}" else "stopped in round ${(s.roundsDone + 1).coerceAtMost(s.roundsTotal)}/${s.roundsTotal}"
+    return listOfNotNull("Last: $whenText", rounds, s.valuesLine()).joinToString(" · ")
 }
 
 private fun meta(w: Workout): String = buildList {

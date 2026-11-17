@@ -26,6 +26,7 @@ import app.intervals.core.Workout
 import app.intervals.core.addSeries
 import app.intervals.core.replaceSeries
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -116,6 +117,12 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     // ---- journal ----
+
+    /** Latest session of each workout (by workout id), for the "last time" line on the cards. */
+    val lastByWorkout: StateFlow<Map<Long, Session>> =
+        repo.sessionsBetween(0, Long.MAX_VALUE)
+            .map { list -> list.filter { it.workoutId != null }.groupBy { it.workoutId!! }.mapValues { (_, s) -> s.maxBy { it.startedAt } } }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
     fun sessions(fromMillis: Long, toMillis: Long) = repo.sessionsBetween(fromMillis, toMillis)
 
