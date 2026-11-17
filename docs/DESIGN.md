@@ -60,7 +60,11 @@ yellow dot if stopped); **Finished** compares each logged value with last time (
 new **Progress** screen per workout: a graph per logged field (left vs right) and records.
 
 1. **Workouts list**: search, tag filter chips, cards with name, total, mini colored bar of one round, play button, "New workout".
-2. **Edit workout**: name, tags, warm-up, rounds (− / +), rest between rounds, one-round and total time, series list with repeat groups.
+2. **Edit workout** (v2, agreed 2026-11-17, mockup "Edit workout v2"): in **play order**: name, tags, big total; **Warm-up** row;
+   the box **Each round ×N** (rounds stepper on the box) with the series and repeat groups inside (group header: Repeat ×N ▾,
+   "0:15 each · 0:57 in all", menu: skip the last series the last time / ungroup); a skipped series says "not the last time";
+   per-side series shown as left · change side · right; + Work / + Rest / + Other at the bottom of the box (selection actions there too);
+   then **Rest between rounds** ("3 times · never after the last round"); the round as a colored bar at the end.
    Swipe a series to delete; long-press to select → *Repeat ×…*, *Duplicate*, *Delete*. Quick add *Work* / *Rest*.
    Duplicate a whole workout (from the list menu).
 3. **Edit series**: header in the series color, name, big duration with ± , color, icon, **per side** (change time), **Log** (own fields, left/right apart, add field), sound switches.
