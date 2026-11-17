@@ -45,9 +45,9 @@ button{font-family:inherit}
     <div style="flex: 1; display: flex; align-items: center; justify-content: center; position: relative">
       <svg role="img" aria-label="Round 2: series 3 of 7, hang, 3 seconds left" width="374" height="374" viewBox="0 0 374 374">
         <sc-for list="{{arcs}}" as="a" hint-placeholder-count="9">
-          <path d="{{a.d}}" fill="none" stroke="{{a.c}}" stroke-width="{{a.w}}" stroke-linecap="butt"></path>
+          <path d="{{a.d}}" fill="none" stroke="{{a.c}}" stroke-width="{{a.w}}" stroke-linecap="round"></path>
         </sc-for>
-        <circle cx="187" cy="187" r="156" fill="{{color}}"></circle>
+        <circle cx="187" cy="187" r="144" fill="{{color}}"></circle>
         <circle cx="{{dot.x}}" cy="{{dot.y}}" r="11" fill="{{page.text}}" stroke="{{page.bg}}" stroke-width="4"></circle>
       </svg>
       <div style="position: absolute; display: flex; flex-direction: column; align-items: center; gap: 2px; color: #14080C">
@@ -103,7 +103,7 @@ button{font-family:inherit}
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"mode":{"editor":"enum","options":["dark","light"],"default":"dark"},"look":{"editor":"enum","options":["disc","full"],"default":"disc"},"color":{"editor":"color","default":"#E91E63","options":["#E91E63","#FFC107","#03A9F4","#8BC34A"]},"$preview":{"width":390,"height":844}}'>
+<script type="text/x-dc" data-dc-script data-props='{"mode":{"editor":"enum","options":["dark","light"],"default":"dark"},"look":{"editor":"enum","options":["disc","full"],"default":"disc"},"color":{"editor":"color","default":"#E91E63","options":["#E91E63","#FFC107","#00BFA5","#7C3AED"]},"$preview":{"width":390,"height":844}}'>
 class Component extends DCLogic {
   renderVals() {
     const color = this.props.color ?? '#E91E63';
@@ -119,21 +119,38 @@ class Component extends DCLogic {
     const cx = 187, cy = 187, r = 174, gap = 3;
     const total = series.reduce((s, x) => s + x[0], 0);
     const span = 360 - gap * series.length;
-    const pt = (deg) => { const a = deg * Math.PI / 180; return { x: +(cx + r * Math.sin(a)).toFixed(2), y: +(cy - r * Math.cos(a)).toFixed(2) }; };
-    const arc = (a0, a1) => { const p = pt(a0), q = pt(a1); return 'M' + p.x + ' ' + p.y + ' A' + r + ' ' + r + ' 0 ' + (a1 - a0 > 180 ? 1 : 0) + ' 1 ' + q.x + ' ' + q.y; };
+    const pt = (deg, rr) => { const a = deg * Math.PI / 180; return { x: +(cx + rr * Math.sin(a)).toFixed(2), y: +(cy - rr * Math.cos(a)).toFixed(2) }; };
+    // rounded ends: each end is pulled in by the cap's angle so the gaps between segments stay visible
     const arcs = [];
-    let a = gap / 2, dot = pt(0);
+    const seg = (a0, a1, rr, w, c, t0 = true, t1 = true) => {
+      const cap = (w / 2) / rr * 180 / Math.PI;
+      const b0 = a0 + (t0 ? cap : 0), b1 = Math.max(b0 + 0.01, a1 - (t1 ? cap : 0));
+      const p = pt(b0, rr), q = pt(b1, rr);
+      arcs.push({ d: 'M' + p.x + ' ' + p.y + ' A' + rr + ' ' + rr + ' 0 ' + (b1 - b0 > 180 ? 1 : 0) + ' 1 ' + q.x + ' ' + q.y, c, w });
+    };
+    let a = gap / 2, dot = pt(0, r), roundDone = 0;
     series.forEach(([d, c, brk], i) => {
       const len = span * d / total, end = a + len;
-      if (i < current) arcs.push({ d: arc(a, end), c: page.done, w: 16 });
+      if (i < current) { seg(a, end, r, 16, page.done); roundDone += d; }
       else if (i === current) {
         const mid = a + len * doneFrac;
-        arcs.push({ d: arc(a, mid), c: page.done, w: 16 });
-        arcs.push({ d: arc(mid, end), c, w: 24 });
-        dot = pt(mid);
-      } else arcs.push({ d: arc(a, end), c: brk ? page.muted : c, w: brk ? 5 : 16 });
+        seg(a, mid, r, 16, page.done, true, false);
+        seg(mid, end, r, 22, c, false, true);
+        dot = pt(mid, r);
+        roundDone += d * doneFrac;
+      } else seg(a, end, r, brk ? 5 : 16, brk ? '#00BFA5' : c);
       a = end + gap;
     });
+
+    // inner thin ring, between the series and the disc: the rounds (done = grey, left = purple)
+    const rounds = 4, curRound = 2, rr = 154, rgap = 6;
+    const rlen = (360 - rgap * rounds) / rounds, rp = roundDone / total;
+    for (let k = 1; k <= rounds; k++) {
+      const s0 = rgap / 2 + (k - 1) * (rlen + rgap), s1 = s0 + rlen, m = s0 + rlen * rp;
+      if (k < curRound) seg(s0, s1, rr, 7, page.done);
+      else if (k === curRound) { seg(s0, m, rr, 7, page.done, true, false); seg(m, s1, rr, 7, page.main, false, true); }
+      else seg(s0, s1, rr, 7, page.main);
+    }
     return { page, color, arcs, dot, isDisc: look !== 'full', isFull: look === 'full' };
   }
 }

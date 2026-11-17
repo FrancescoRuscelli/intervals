@@ -64,8 +64,6 @@ button{font-family:inherit}
       <div style="border-radius: 16px; background: {{t.surface}}; border: 1px solid {{t.line}}; padding: 4px 14px">
         <label style="display: flex; align-items: center; justify-content: space-between; min-height: 52px"><span style="font-size: 15px">3-2-1 countdown before start</span><input type="checkbox" checked style="width: 22px; height: 22px; accent-color: {{t.accent}}"></label>
         <div style="height: 1px; background: {{t.line}}"></div>
-        <label style="display: flex; align-items: center; justify-content: space-between; min-height: 52px"><span style="font-size: 15px">Flash color between series</span><input type="checkbox" checked style="width: 22px; height: 22px; accent-color: {{t.accent}}"></label>
-        <div style="height: 1px; background: {{t.line}}"></div>
         <label style="display: flex; align-items: center; justify-content: space-between; min-height: 52px"><span style="font-size: 15px">Keep screen on</span><input type="checkbox" checked style="width: 22px; height: 22px; accent-color: {{t.accent}}"></label>
         <div style="height: 1px; background: {{t.line}}"></div>
         <label style="display: flex; align-items: center; justify-content: space-between; min-height: 52px"><span style="display: flex; flex-direction: column"><span style="font-size: 15px">Lock controls</span><span style="font-size: 12px; color: {{t.muted}}">Hold the pause button to unlock</span></span><input type="checkbox" style="width: 22px; height: 22px; accent-color: {{t.accent}}"></label>
@@ -108,7 +106,7 @@ class Component extends DCLogic {
     const dark = { bg: '#000000', surface: '#1A1C21', sheet: '#16181C', line: '#23262C', text: '#F2F3F5', muted: '#9AA0AA', accent: '#7C3AED', accentText: '#C4B1FF', tint: '#2A2340', sel: '#F2F3F5' };
     const light = { bg: '#F6F5FA', surface: '#FFFFFF', sheet: '#FFFFFF', line: '#E2E0EA', text: '#17151F', muted: '#5E5A6B', accent: '#6D28D9', accentText: '#5B21B6', tint: '#EDE7FB', sel: '#17151F' };
     const t = (this.props.mode ?? 'dark') === 'light' ? light : dark;
-    const list = [['purple', '#7C3AED'], ['blue', '#2563EB'], ['teal', '#0F8A80'], ['orange', '#E8590C'], ['pink', '#C2185B']];
+    const list = [['purple', '#7C3AED'], ['pink', '#D81B60'], ['teal', '#00897B'], ['blue', '#2563EB']];
     return { t, accents: list.map(([name, hex], i) => ({ name, hex, ring: i === 0 ? '3px solid ' + t.sel : '3px solid transparent' })) };
   }
 }

@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Palette</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 900px; height: 1220px; box-sizing: border-box; display: flex; flex-direction: column; font-family: Inter, system-ui, sans-serif; background: #000000">
+  <div style="display: grid; grid-template-columns: 1fr 1fr">
+    <sc-for list="{{modes}}" as="m" hint-placeholder-count="2">
+      <section style="background: {{m.bg}}; color: {{m.text}}; padding: 32px 28px; display: flex; flex-direction: column; gap: 18px">
+        <h2 style="margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 26px; font-weight: 700">{{m.title}}</h2>
+
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <sc-for list="{{m.colors}}" as="c" hint-placeholder-count="4">
+            <div style="display: flex; align-items: center; gap: 14px">
+              <div style="flex: none; width: 64px; height: 64px; border-radius: 18px; background: {{c.hex}}"></div>
+              <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+                <span style="font-size: 17px; font-weight: 700">{{c.name}} <span style="font-weight: 500; color: {{m.muted}}; font-size: 13px">{{c.hex}}</span></span>
+                <span style="font-size: 13px; color: {{m.muted}}; line-height: 1.35">{{c.role}}</span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 18px; margin-top: 4px">
+          <svg role="img" aria-label="Player disc in the palette" width="150" height="150" viewBox="0 0 150 150">
+            <path d="M75 6 A69 69 0 0 1 140.6 53.7" fill="none" stroke="#E91E63" stroke-width="9" stroke-linecap="round"></path>
+            <path d="M143.6 66 A69 69 0 0 1 120.3 127" fill="none" stroke="#FFC107" stroke-width="9" stroke-linecap="round"></path>
+            <path d="M110.6 133.4 A69 69 0 0 1 45 137.4" fill="none" stroke="#E91E63" stroke-width="9" stroke-linecap="round"></path>
+            <path d="M33.5 131 A69 69 0 0 1 9 85" fill="none" stroke="{{fourth.hex}}" stroke-width="5" stroke-linecap="round"></path>
+            <path d="M7.5 70 A69 69 0 0 1 63 7" fill="none" stroke="{{m.done}}" stroke-width="9" stroke-linecap="round"></path>
+            <path d="M75 17 A58 58 0 0 1 133 75" fill="none" stroke="{{m.done}}" stroke-width="4" stroke-linecap="round"></path>
+            <path d="M133 75 A58 58 0 1 1 75 17" fill="none" stroke="{{m.primary}}" stroke-width="4" stroke-linecap="round" stroke-dasharray="80 11"></path>
+            <circle cx="75" cy="75" r="50" fill="#E91E63"></circle>
+            <text x="75" y="88" text-anchor="middle" font-family="Space Grotesk, Inter, sans-serif" font-size="38" font-weight="700" fill="#14080C">0:07</text>
+          </svg>
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <button style="height: 44px; padding: 0 20px; border: 0; border-radius: 22px; background: {{m.primary}}; color: #FFFFFF; font-family: inherit; font-size: 15px; font-weight: 600">Start workout</button>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap">
+              <span style="padding: 5px 11px; border-radius: 14px; background: {{m.primary}}; color: #FFFFFF; font-size: 13px; font-weight: 600">hangboard</span>
+              <span style="padding: 5px 11px; border-radius: 14px; border: 1px solid {{m.line}}; font-size: 13px; font-weight: 600">hiit</span>
+            </div>
+            <div style="display: flex; gap: 6px; align-items: flex-end; height: 48px" aria-label="Minutes per week chart" role="img">
+              <div style="width: 14px; height: 40%; border-radius: 4px 4px 0 0; background: #E91E63"></div>
+              <div style="width: 14px; height: 70%; border-radius: 4px 4px 0 0; background: #E91E63"></div>
+              <div style="width: 14px; height: 55%; border-radius: 4px 4px 0 0; background: {{fourth.hex}}"></div>
+              <div style="width: 14px; height: 100%; border-radius: 4px 4px 0 0; background: {{m.primary}}"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </sc-for>
+  </div>
+
+  <section style="flex: 1; padding: 28px; display: flex; flex-direction: column; gap: 16px; color: #F2F3F5; border-top: 1px solid #2A2D34">
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <h2 style="margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 26px; font-weight: 700">Fourth color: candidates</h2>
+      <span style="font-size: 14px; color: #9AA0AA">For the breaks (warm-up, rest between rounds, get ready). Each one next to purple, pink and yellow. Pick one with the "fourth" tweak to see it above.</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px">
+      <sc-for list="{{candidates}}" as="k" hint-placeholder-count="4">
+        <div style="border-radius: 18px; background: #111216; border: 2px solid {{k.border}}; padding: 16px 12px; display: flex; flex-direction: column; align-items: center; gap: 12px">
+          <svg role="img" aria-label="{{k.name}} next to the palette" width="130" height="130" viewBox="0 0 150 150">
+            <path d="M75 6 A69 69 0 0 1 140.6 53.7" fill="none" stroke="#E91E63" stroke-width="9" stroke-linecap="round"></path>
+            <path d="M143.6 66 A69 69 0 0 1 120.3 127" fill="none" stroke="#FFC107" stroke-width="9" stroke-linecap="round"></path>
+            <path d="M110.6 133.4 A69 69 0 0 1 45 137.4" fill="none" stroke="#E91E63" stroke-width="9" stroke-linecap="round"></path>
+            <path d="M33.5 131 A69 69 0 0 1 9 85" fill="none" stroke="{{k.hex}}" stroke-width="9" stroke-linecap="round"></path>
+            <path d="M7.5 70 A69 69 0 0 1 63 7" fill="none" stroke="#7C3AED" stroke-width="9" stroke-linecap="round"></path>
+            <circle cx="75" cy="75" r="52" fill="{{k.hex}}"></circle>
+            <text x="75" y="88" text-anchor="middle" font-family="Space Grotesk, Inter, sans-serif" font-size="36" font-weight="700" fill="#14080C">1:00</text>
+          </svg>
+          <div style="display: flex; gap: 0; border-radius: 10px; overflow: hidden; width: 100%; height: 22px">
+            <div style="flex: 1; background: #7C3AED"></div>
+            <div style="flex: 1; background: #E91E63"></div>
+            <div style="flex: 1; background: #FFC107"></div>
+            <div style="flex: 1; background: {{k.hex}}"></div>
+          </div>
+          <span style="font-size: 16px; font-weight: 700">{{k.name}} <span style="font-size: 12px; font-weight: 500; color: #9AA0AA">{{k.hex}}</span></span>
+          <span style="font-size: 12px; color: #9AA0AA; text-align: center; line-height: 1.35">{{k.note}}</span>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"fourth":{"editor":"enum","options":["azure","teal","lime","orange"],"default":"teal"},"$preview":{"width":900,"height":1220}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const cands = {
+      azure: { name: 'Azure', hex: '#03A9F4', note: 'Cool and calm; the furthest from pink and yellow, a bit "default blue".' },
+      teal: { name: 'Teal', hex: '#00BFA5', note: 'Fresh, opposite of pink on the wheel; reads as "breathe". My pick.' },
+      lime: { name: 'Lime', hex: '#AEEA00', note: 'Very energetic and bright; close to yellow in lightness.' },
+      orange: { name: 'Orange', hex: '#FF9100', note: 'Warm, sits between pink and yellow; less contrast with both.' }
+    };
+    const pick = this.props.fourth ?? 'teal';
+    const fourth = cands[pick] || cands.teal;
+    const colors = (dark) => [
+      { name: 'Purple', hex: dark ? '#7C3AED' : '#6D28D9', role: 'The app: buttons, selected tabs and chips, rounds left (inner ring), this week in charts.' },
+      { name: 'Pink', hex: '#E91E63', role: 'Work: default color of new work series, time in Stats, completed sessions in the Journal.' },
+      { name: 'Yellow', hex: '#FFC107', role: 'Rest: default color of new rest series, stopped sessions, notes.' },
+      { name: fourth.name, hex: fourth.hex, role: 'Breaks: warm-up and rest between rounds (today grey), get ready, second series in charts.' }
+    ];
+    const dark = { title: 'Dark', bg: '#000000', text: '#F2F3F5', muted: '#9AA0AA', done: '#2A2D34', primary: '#7C3AED', line: '#2A2D34', colors: colors(true) };
+    const light = { title: 'Light', bg: '#F6F5FA', text: '#17151F', muted: '#5E5A6B', done: '#DEDBE7', primary: '#6D28D9', line: '#DEDBE7', colors: colors(false) };
+    const candidates = Object.keys(cands).map((id) => Object.assign({}, cands[id], { border: id === pick ? '#7C3AED' : '#1F2127' }));
+    return { modes: [dark, light], fourth, candidates };
+  }
+}
+</script>
+</body>
+</html>

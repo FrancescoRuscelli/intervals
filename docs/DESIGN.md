@@ -57,20 +57,33 @@ Bottom bar: **Workouts · Journal · Stats · Settings**.
 3. **Edit series**: header in the series color, name, big duration with ± , color, icon, **per side** (change time), **Log** (own fields, left/right apart, add field), sound switches.
 4. **Player** (chosen: **big concentric disc**):
    outer ring = series of the current round as segments sized by length (done = grey, current thicker, dot marker,
-   rest between rounds = thin grey arc); inner disc filled with the series color showing icon, name and the time.
+   rest between rounds = thin teal arc); **inner thin ring = the rounds** (done = grey, left = purple, the current one
+   empties as it runs); inner disc filled with the series color showing icon, name and the time.
+   All ring segments have **rounded ends** (gaps kept the same width).
+   **Last 3 seconds**: the time becomes a big 3 / 2 / 1; each number starts huge and higher up and drops down,
+   shrinking to its size in ~0.4 s (also for the 3-2-1 "Get ready"). Live demo: 4c on the canvas.
    Round x/y, remaining, series x/y, "Next" card, whole-workout progress bar, previous / pause / next.
-   **Landscape layout** for viewing from far away. **3-2-1 countdown** before start. **Color flash** between series.
-   **No extra disc animations** in v1 (demos kept on the canvas; "Liquid" maybe later).
+   **Landscape layout** for viewing from far away. **3-2-1 countdown** before start. **No color flash** (removed).
+   **No extra disc animations** in v1; only the "Liquid / bubbles" demo is kept on the canvas, maybe later.
    **Rest between rounds**: countdown plus − / + for the logged fields of the next round (4b on the canvas).
 5. **Import**: file card, summary, list with new total and old total struck through, "Import N workouts".
 6. **Journal**: month calendar (Monday first), dots per session, month totals, sessions of the selected day
    (time, length, completed / stopped in round x, **note**). Sessions are logged automatically, with their logged field values (load, edge…). No manual sessions, no RPE.
 7. **Stats**: Week / Month / Year; time, sessions, completed; minutes per week chart; most done workouts.
 8. **Settings**: theme (System / Light / Dark), accent color (purple default), voice names + language, beeps, volume,
-   lower music during cues, 3-2-1 countdown, color flash, keep screen on, lock controls; import, **backup to file**, **restore**.
+   lower music during cues, 3-2-1 countdown, keep screen on, lock controls; import, **backup to file**, **restore**.
 9. **Finished**: completed disc, time / rounds / series, **logged values to confirm** (per side, *Set per round*), note for the journal, *Repeat*, *Save to journal*.
 
-Style: purple accent (`#7C3AED` dark, `#6D28D9` light), **pure black** backgrounds in dark mode (OLED), Space Grotesk-like numbers.
+Style: **pure black** backgrounds in dark mode (OLED), Space Grotesk-like numbers, and a four-color palette (agreed 2026-11-17, "Palette" board):
+
+| Color | Hex | Role |
+|---|---|---|
+| Purple | `#7C3AED` (light `#6D28D9`) | The app: buttons, selected tabs/chips, rounds left, this week in charts |
+| Pink | `#E91E63` | Work: default for new work series, minutes in Stats, completed sessions and journal dots |
+| Yellow | `#FFC107` | Rest: default for new rest series, stopped sessions (fill only in light mode, with dark text) |
+| Teal | `#00BFA5` (light text/icons `#00897B`) | Breaks: warm-up, rest between rounds, change side, get ready; second series in charts |
+
+The series color picker shows these four first, then the other Material colors.
 
 Not wanted (for now): sharing workouts, reminders, home-screen widget, smartwatch, Health Connect.
 
@@ -95,6 +108,7 @@ Not wanted (for now): sharing workouts, reminders, home-screen widget, smartwatc
 - [x] Mockups agreed
 - [x] Step 2: project setup, data model, timeline, CSV importer + tests (all passing)
 - [x] Mockups for logged fields (series editor, rest between rounds, finished)
+- [x] Player details: rounds ring, rounded segments, last 3 s drop-in, no flash; palette (purple, pink, yellow, teal)
 - [ ] Step 3: Room database + repository (with logged fields per round and side); backup / restore JSON
 - [ ] Step 4: screens (list, editor, series, import, journal, stats, settings, finished)
 - [ ] Step 5: player screen + foreground timer service, voice, beeps, countdown, flash, landscape

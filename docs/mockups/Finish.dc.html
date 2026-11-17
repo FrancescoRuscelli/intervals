@@ -23,7 +23,7 @@ button{font-family:inherit}
 
   <svg role="img" aria-label="All 4 rounds done" width="150" height="150" viewBox="0 0 230 230">
     <sc-for list="{{arcs}}" as="a" hint-placeholder-count="4">
-      <path d="{{a.d}}" fill="none" stroke="{{t.accent}}" stroke-width="12" stroke-linecap="round"></path>
+      <path d="{{a.d}}" fill="none" stroke="{{a.c}}" stroke-width="12" stroke-linecap="round"></path>
     </sc-for>
     <circle cx="115" cy="115" r="88" fill="{{t.accent}}"></circle>
     <path d="M78 117l25 25 50-52" fill="none" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"></path>
@@ -87,7 +87,7 @@ class Component extends DCLogic {
     const t = (this.props.mode ?? 'dark') === 'light' ? light : dark;
     const cx = 115, cy = 115, r = 108;
     const pt = (deg) => { const a = deg * Math.PI / 180; return (cx + r * Math.sin(a)).toFixed(2) + ' ' + (cy - r * Math.cos(a)).toFixed(2); };
-    const arcs = [0, 1, 2, 3].map((i) => { const a0 = i * 90 + 8, a1 = i * 90 + 82; return { d: 'M' + pt(a0) + ' A' + r + ' ' + r + ' 0 0 1 ' + pt(a1) }; });
+    const arcs = [0, 1, 2, 3].map((i) => { const a0 = i * 90 + 8, a1 = i * 90 + 82; return { d: 'M' + pt(a0) + ' A' + r + ' ' + r + ' 0 0 1 ' + pt(a1), c: [t.accent, '#E91E63', '#FFC107', '#00BFA5'][i] }; });
     const loadRows = [{ side: 'Left', value: '+10 kg' }, { side: 'Right', value: '+8 kg' }];
     return { t, arcs, loadRows };
   }

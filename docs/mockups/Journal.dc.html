@@ -106,8 +106,8 @@ button{font-family:inherit}
 <script type="text/x-dc" data-dc-script data-props='{"mode":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":390,"height":844}}'>
 class Component extends DCLogic {
   renderVals() {
-    const dark = { bg: '#000000', surface: '#1A1C21', sheet: '#16181C', line: '#23262C', text: '#F2F3F5', muted: '#9AA0AA', soft: '#C9CDD3', accent: '#7C3AED', accentText: '#C4B1FF', tint: '#2A2340', ok: '#7FD99A', warn: '#FFB86B' };
-    const light = { bg: '#F6F5FA', surface: '#FFFFFF', sheet: '#FFFFFF', line: '#E2E0EA', text: '#17151F', muted: '#5E5A6B', soft: '#3A3646', accent: '#6D28D9', accentText: '#5B21B6', tint: '#EDE7FB', ok: '#1D7A3A', warn: '#B45309' };
+    const dark = { bg: '#000000', surface: '#1A1C21', sheet: '#16181C', line: '#23262C', text: '#F2F3F5', muted: '#9AA0AA', soft: '#C9CDD3', accent: '#7C3AED', accentText: '#C4B1FF', tint: '#2A2340', ok: '#F48FB1', warn: '#FFC107', dotc: '#E91E63' };
+    const light = { bg: '#F6F5FA', surface: '#FFFFFF', sheet: '#FFFFFF', line: '#E2E0EA', text: '#17151F', muted: '#5E5A6B', soft: '#3A3646', accent: '#6D28D9', accentText: '#5B21B6', tint: '#EDE7FB', ok: '#AD1457', warn: '#8A5A00', dotc: '#E91E63' };
     const t = (this.props.mode ?? 'dark') === 'light' ? light : dark;
     // example sessions per day (count) for November 2026; Nov 1 is a Sunday
     const sessions = { 2: 1, 4: 2, 6: 1, 9: 1, 11: 1, 13: 1, 14: 1, 16: 2 };
@@ -122,7 +122,7 @@ class Component extends DCLogic {
         dots: Array.from({ length: n }).map(() => ({})),
         bg: sel ? t.accent : 'transparent',
         fg: sel ? '#FFFFFF' : (future ? t.muted : t.text),
-        dot: sel ? '#FFFFFF' : t.accentText,
+        dot: sel ? '#FFFFFF' : t.dotc,
         ring: d === today && !sel ? '2px solid ' + t.accent : '2px solid transparent',
         fw: n || sel ? 700 : 500
       });

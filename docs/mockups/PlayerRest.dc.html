@@ -43,11 +43,14 @@ button{font-family:inherit}
   <div style="display: flex; align-items: center; justify-content: center; position: relative; padding-top: 10px">
     <svg role="img" aria-label="Rest between rounds, 42 seconds left" width="250" height="250" viewBox="0 0 250 250">
       <circle cx="125" cy="125" r="116" fill="none" stroke="{{t.track}}" stroke-width="10"></circle>
-      <path d="{{restArc}}" fill="none" stroke="{{t.text}}" stroke-width="10" stroke-linecap="round"></path>
-      <circle cx="125" cy="125" r="100" fill="{{t.disc}}"></circle>
+      <path d="{{restArc}}" fill="none" stroke="{{t.teal}}" stroke-width="10" stroke-linecap="round"></path>
+      <sc-for list="{{rounds}}" as="q" hint-placeholder-count="4">
+        <path d="{{q.d}}" fill="none" stroke="{{q.c}}" stroke-width="6" stroke-linecap="round"></path>
+      </sc-for>
+      <circle cx="125" cy="125" r="92" fill="{{t.disc}}"></circle>
     </svg>
     <div style="position: absolute; display: flex; flex-direction: column; align-items: center; gap: 2px; top: 74px">
-      <span style="font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; color: {{t.muted}}">Rest</span>
+      <span style="font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; color: {{t.teal}}">Rest</span>
       <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 76px; font-weight: 600; line-height: 1; letter-spacing: -3px; font-variant-numeric: tabular-nums">0:42</span>
     </div>
   </div>
@@ -85,8 +88,8 @@ button{font-family:inherit}
 <script type="text/x-dc" data-dc-script data-props='{"mode":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":390,"height":844}}'>
 class Component extends DCLogic {
   renderVals() {
-    const dark = { bg: '#000000', surface: '#1A1C21', text: '#F2F3F5', muted: '#9AA0AA', track: '#2A2D34', disc: '#1A1C21', accent: '#7C3AED', accentText: '#C4B1FF', tint: '#2A2340', ctl: '#1F2127', ctlText: '#F2F3F5' };
-    const light = { bg: '#F6F5FA', surface: '#FFFFFF', text: '#17151F', muted: '#5E5A6B', track: '#DEDBE7', disc: '#FFFFFF', accent: '#6D28D9', accentText: '#5B21B6', tint: '#EDE7FB', ctl: '#EDE7FB', ctlText: '#5B21B6' };
+    const dark = { bg: '#000000', surface: '#1A1C21', text: '#F2F3F5', muted: '#9AA0AA', track: '#2A2D34', disc: '#1A1C21', teal: '#00BFA5', done: '#2A2D34', accent: '#7C3AED', accentText: '#C4B1FF', tint: '#2A2340', ctl: '#1F2127', ctlText: '#F2F3F5' };
+    const light = { bg: '#F6F5FA', surface: '#FFFFFF', text: '#17151F', muted: '#5E5A6B', track: '#DEDBE7', disc: '#FFFFFF', teal: '#00897B', done: '#DEDBE7', accent: '#6D28D9', accentText: '#5B21B6', tint: '#EDE7FB', ctl: '#EDE7FB', ctlText: '#5B21B6' };
     const t = (this.props.mode ?? 'dark') === 'light' ? light : dark;
     // remaining rest: 42 of 60 s, drawn clockwise from the top
     const cx = 125, cy = 125, r = 116, end = 360 * 42 / 60;
@@ -97,7 +100,11 @@ class Component extends DCLogic {
       { field: 'Load', side: 'R', value: '+10 kg' },
       { field: 'Edge', side: '', value: '20 mm' }
     ];
-    return { t, restArc, rows };
+    // inner thin ring: rounds 1-2 done (grey), 3-4 left (purple)
+    const ptr = (deg, rr) => { const a = deg * Math.PI / 180; return (cx + rr * Math.sin(a)).toFixed(2) + ' ' + (cy - rr * Math.cos(a)).toFixed(2); };
+    const rr = 101, cap = 3 / rr * 180 / Math.PI;
+    const rounds = [0, 1, 2, 3].map((k) => { const a0 = k * 90 + 4 + cap, a1 = k * 90 + 86 - cap; return { d: 'M' + ptr(a0, rr) + ' A' + rr + ' ' + rr + ' 0 0 1 ' + ptr(a1, rr), c: k < 2 ? t.done : t.accent }; });
+    return { t, restArc, rows, rounds };
   }
 }
 </script>

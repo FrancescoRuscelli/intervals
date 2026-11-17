@@ -54,7 +54,7 @@ button{font-family:inherit}
     <sc-for list="{{top}}" as="w" hint-placeholder-count="5">
       <div style="display: grid; grid-template-columns: 128px minmax(0, 1fr) 20px; align-items: center; gap: 10px; font-size: 13px">
         <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{w.name}}</span>
-        <div style="height: 10px; border-radius: 0 4px 4px 0; background: {{t.accent}}; width: {{w.w}}"></div>
+        <div style="height: 10px; border-radius: 0 4px 4px 0; background: {{t.teal}}; width: {{w.w}}"></div>
         <span style="text-align: right; font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 600">{{w.n}}</span>
       </div>
     </sc-for>
@@ -83,8 +83,8 @@ button{font-family:inherit}
 <script type="text/x-dc" data-dc-script data-props='{"mode":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":390,"height":844}}'>
 class Component extends DCLogic {
   renderVals() {
-    const dark = { bg: '#000000', surface: '#1A1C21', sheet: '#16181C', line: '#23262C', text: '#F2F3F5', muted: '#9AA0AA', accent: '#8B5CF6', accentText: '#C4B1FF', tint: '#2A2340', grid: '#23262C', axis: '#3A3E46', partial: '#5B4596' };
-    const light = { bg: '#F6F5FA', surface: '#FFFFFF', sheet: '#FFFFFF', line: '#E2E0EA', text: '#17151F', muted: '#5E5A6B', accent: '#6D28D9', accentText: '#5B21B6', tint: '#EDE7FB', grid: '#ECEAF2', axis: '#C9C5D6', partial: '#B9A3EE' };
+    const dark = { bg: '#000000', surface: '#1A1C21', sheet: '#16181C', line: '#23262C', text: '#F2F3F5', muted: '#9AA0AA', accent: '#7C3AED', accentText: '#C4B1FF', tint: '#2A2340', grid: '#23262C', axis: '#3A3E46', bar: '#E91E63', partial: '#7C3AED', teal: '#00BFA5' };
+    const light = { bg: '#F6F5FA', surface: '#FFFFFF', sheet: '#FFFFFF', line: '#E2E0EA', text: '#17151F', muted: '#5E5A6B', accent: '#6D28D9', accentText: '#5B21B6', tint: '#EDE7FB', grid: '#ECEAF2', axis: '#C9C5D6', bar: '#D81B60', partial: '#6D28D9', teal: '#00897B' };
     const t = (this.props.mode ?? 'dark') === 'light' ? light : dark;
     const weeks = [['28 Sep', 40], ['5 Oct', 55], ['12', 30], ['19', 62], ['26', 48], ['2 Nov', 84], ['9', 67], ['16', 22]];
     const base = 140, top = 10, max = 90, x0 = 34, slot = 37, bw = 24, r = 4;
@@ -92,7 +92,7 @@ class Component extends DCLogic {
     const bars = weeks.map(([label, v], i) => {
       const x = x0 + i * slot, y = yOf(v);
       const d = 'M' + x + ' ' + base + ' V' + (y + r) + ' Q' + x + ' ' + y + ' ' + (x + r) + ' ' + y + ' H' + (x + bw - r) + ' Q' + (x + bw) + ' ' + y + ' ' + (x + bw) + ' ' + (y + r) + ' V' + base + ' Z';
-      return { d, label, cx: x + bw / 2, fill: i === weeks.length - 1 ? t.partial : t.accent };
+      return { d, label, cx: x + bw / 2, fill: i === weeks.length - 1 ? t.partial : t.bar };
     });
     const grid = [30, 60, 90].map((v) => ({ y: yOf(v), ty: yOf(v) + 3, label: v + 'm' }));
     const lastBar = bars[bars.length - 1];
