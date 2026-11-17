@@ -20,15 +20,16 @@ button{font-family:inherit}
       <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
     </a>
     <span style="font-size: 17px; font-weight: 700">{{ex.name}}</span>
-    <a href="GymNewExercise.dc.html" aria-label="Edit exercise" style="width: 44px; height: 44px; border-radius: 22px; color: inherit; display: flex; align-items: center; justify-content: center">
+    <a href="GymEditExercise.dc.html" aria-label="Edit exercise" style="width: 44px; height: 44px; border-radius: 22px; color: inherit; display: flex; align-items: center; justify-content: center">
       <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"></path></svg>
     </a>
   </header>
 
-  <div role="tablist" style="display: flex; gap: 6px; padding: 8px 16px 0">
-    <button role="tab" aria-selected="true" style="flex: 1; height: 38px; border: 0; border-radius: 12px; background: #2A2340; color: #C4B1FF; font-size: 14px; font-weight: 700">Log</button>
-    <a href="GymHistory.dc.html" role="tab" aria-selected="false" style="flex: 1; height: 38px; border-radius: 12px; color: #9AA0AA; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; text-decoration: none">Graph</a>
-    <a href="GymRecords.dc.html" role="tab" aria-selected="false" style="flex: 1; height: 38px; border-radius: 12px; color: #9AA0AA; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; text-decoration: none">Records</a>
+  <div role="tablist" style="display: flex; gap: 4px; padding: 8px 16px 0">
+    <a href="GymExercise.dc.html" role="tab" aria-selected="true" style="flex: 1; height: 38px; border-radius: 12px; background: #2A2340; color: #C4B1FF; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; text-decoration: none">Log</a>
+    <a href="GymExHistory.dc.html" role="tab" aria-selected="false" style="flex: 1; height: 38px; border-radius: 12px; background: transparent; color: #9AA0AA; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; text-decoration: none">History</a>
+    <a href="GymHistory.dc.html" role="tab" aria-selected="false" style="flex: 1; height: 38px; border-radius: 12px; background: transparent; color: #9AA0AA; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; text-decoration: none">Graph</a>
+    <a href="GymRecords.dc.html" role="tab" aria-selected="false" style="flex: 1; height: 38px; border-radius: 12px; background: transparent; color: #9AA0AA; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; text-decoration: none">Records</a>
   </div>
 
   <sc-if value="{{ex.perSide}}" hint-placeholder-val="{{ false }}">
@@ -96,7 +97,7 @@ button{font-family:inherit}
   </section>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"exercise":{"editor":"enum","options":["pistol squat","deloaded one-arm","pull up","block pulls"],"default":"pistol squat"},"side":{"editor":"enum","options":["left","right","both"],"default":"left"},"$preview":{"width":390,"height":844}}'>
+<script type="text/x-dc" data-dc-script data-props='{"exercise":{"editor":"enum","options":["pistol squat","deadlift","deloaded one-arm","pull up","block pulls"],"default":"pistol squat"},"side":{"editor":"enum","options":["left","right","both"],"default":"left"},"$preview":{"width":390,"height":844}}'>
 class Component extends DCLogic {
   renderVals() {
     const B = { g: ['#43A047', '#43A047'], p: ['#8E44D8', '#8E44D8'], r: ['#E53935', '#E53935'], k: ['#16181C', '#5A5F68'], y: ['#FFC107', '#FFC107'] };
@@ -118,6 +119,12 @@ class Component extends DCLogic {
         fields: [bandField('gppr', 'tap to add · again for ×2'), step('Reps', '± 1', '5', '')],
         today: [set('L', '🟢🟣🟣🔴 × 5'), set('R', '🟢🟣🟣🔴 × 5', { rest: '1:05' }), set('L', '🟢🟣🔴 × 5', { rest: '3:10', pr: true, note: 'bad form' })],
         lastDay: 'Wednesday 11', lastSets: 'L 🟢🟣🟣🔴 × 5, 5 · R 🟢🟣🟣🔴 × 5, 4'
+      },
+      'deadlift': {
+        name: 'Deadlift', perSide: false, rest: '3:00',
+        fields: [step('Weight', '± 2.5 kg', '110', 'kg'), step('Reps', '± 1', '5', '')],
+        today: [set('1', '70 kg × 5'), set('2', '90 kg × 5', { rest: '2:10' }), set('3', '110 kg × 5', { rest: '3:20' })],
+        lastDay: 'Wednesday 11 November', lastSets: '70 × 5 · 90 × 5 · 110 × 5 · 110 × 5'
       },
       'deloaded one-arm': {
         name: 'Deloaded One Arm Pull-Up', perSide: true, rest: '3:00',

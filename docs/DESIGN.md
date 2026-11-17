@@ -106,10 +106,12 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
   - **Rest clock counts up** (not a countdown), starts when a set is logged. Each exercise has its own rest target:
     at the target it buzzes / notifies, then keeps counting so you see how long you really rested.
     The real rest before each set is saved; shown on the set ("rested 3:25"), in history and in Stats (average vs target).
+- **Edit exercise**: rename (history kept), notes, fields, **step for − / +** per field (weight 0.5 / 1 / 1.25 / 2.5 / 5 kg,
+  default 2.5, imported from FitNotes), left/right, rest, groups; **merge** another exercise into it (backup first); delete (asks first).
 - **Quick notes per set**: tags (Max, Bad form, Assisted, Failed, +½ rep, your own) + free note.
 - **Variants stay separate exercises** (Block Pulls Squeezed, Pull Up (Second Half)…).
 - **Groups** of exercises (Pull day, Legs…), started from Today.
-- Per exercise: **Log · Graph · Records** (graphs and records as in FitNotes, only those that fit the exercise):
+- Per exercise: **Log · History · Graph · Records** (History = every workout, newest first, tap to edit) (graphs and records as in FitNotes, only those that fit the exercise):
   - Graphs per workout: estimated 1RM (Epley, sets ≤ 12 reps), max weight, volume, total reps, max reps,
     weight for N reps, max time / distance; plus ours: left vs right on one graph, real rest vs target.
     Periods 3 M / 6 M / 1 Y / All, trend line, tap a point to open that workout; chosen graph remembered per exercise.
@@ -154,6 +156,6 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
 - [ ] Step 4: screens (list, editor, series, import, journal, stats, settings, finished)
 - [ ] Step 5: player screen + foreground timer service, voice, beeps, countdown, flash, landscape
 - [ ] Step 6: install on the Pixel 8a, real workout test, energy profiling
-- [x] Gym mockups G1–G14 (placement: own tab)
+- [x] Gym mockups G1–G16 (placement: own tab)
 - [ ] Gym: data model, database, screens, FitNotes importer (after the interval screens? to decide)
 - [ ] App icon (to decide: e.g. purple disc with segmented ring)

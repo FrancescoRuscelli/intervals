@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gym, edit exercise</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 1240px; box-sizing: border-box; background: #000000; color: #F2F3F5; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden; position: relative">
+  <header style="display: flex; align-items: center; justify-content: space-between; padding: 12px 8px">
+    <a href="GymExHistory.dc.html" aria-label="Close without saving" style="width: 44px; height: 44px; border-radius: 22px; color: inherit; display: flex; align-items: center; justify-content: center">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+    </a>
+    <span style="font-size: 16px; font-weight: 600">Edit exercise</span>
+    <button style="height: 40px; padding: 0 18px; border: 0; border-radius: 20px; background: #7C3AED; color: #FFFFFF; font-size: 15px; font-weight: 600">Save</button>
+  </header>
+
+  <div style="display: flex; flex-direction: column; gap: 16px; padding: 4px 20px 0">
+    <label style="display: flex; flex-direction: column; gap: 4px">
+      <span style="font-size: 12px; color: #9AA0AA">Name · renaming keeps all your history</span>
+      <input value="Block Pulls" style="border: 0; border-bottom: 2px solid #7C3AED; outline: 0; background: transparent; color: #F2F3F5; font: inherit; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 26px; font-weight: 600; padding: 4px 0 6px">
+    </label>
+    <label style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 12px; color: #9AA0AA">Notes (how you do it)</span>
+      <textarea rows="2" style="resize: none; border: 0; border-radius: 14px; background: #1A1C21; color: #F2F3F5; font: inherit; font-size: 15px; padding: 10px 14px; outline: 0">Pull a weight from above, 20mm</textarea>
+    </label>
+
+    <section style="display: flex; flex-direction: column; gap: 8px">
+      <h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: #9AA0AA">What you write down · step for − / +</h2>
+      <sc-for list="{{fields}}" as="f" hint-placeholder-count="2">
+        <div style="padding: 12px 14px; border-radius: 16px; background: #1A1C21; display: flex; flex-direction: column; gap: 10px">
+          <div style="display: flex; align-items: center; justify-content: space-between">
+            <span style="display: flex; flex-direction: column"><span style="font-size: 16px; font-weight: 700">{{f.name}}</span><span style="font-size: 12px; color: #9AA0AA">{{f.hint}}</span></span>
+            <button aria-label="Remove {{f.name}}" style="width: 40px; height: 40px; border: 0; border-radius: 20px; background: transparent; color: #9AA0AA; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+          </div>
+          <div role="group" aria-label="{{f.name}} step" style="display: flex; gap: 6px; flex-wrap: wrap">
+            <sc-for list="{{f.steps}}" as="s" hint-placeholder-count="5">
+              <button aria-pressed="{{s.on}}" onClick="{{s.pick}}" style="height: 36px; min-width: 52px; padding: 0 10px; border-radius: 12px; border: 1px solid {{s.border}}; background: {{s.bg}}; color: {{s.fg}}; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 14px; font-weight: 600">{{s.t}}</button>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+      <button style="height: 46px; border: 2px dashed #2A2D34; border-radius: 14px; background: transparent; color: #C4B1FF; font-size: 14px; font-weight: 600">+ Add a field (time, distance, bands, your own)</button>
+    </section>
+
+    <section style="border-radius: 16px; background: #1A1C21; padding: 4px 14px">
+      <label style="display: flex; align-items: center; justify-content: space-between; min-height: 56px">
+        <span style="display: flex; flex-direction: column"><span style="font-size: 15px">Left and right apart</span><span style="font-size: 12px; color: #9AA0AA">turning it off keeps old sets with their side</span></span>
+        <input type="checkbox" checked style="width: 22px; height: 22px; accent-color: #7C3AED">
+      </label>
+      <div style="height: 1px; background: #23262C"></div>
+      <div style="display: flex; align-items: center; justify-content: space-between; min-height: 52px">
+        <span style="font-size: 15px">Rest: buzz me after</span>
+        <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 18px; font-weight: 600; color: #00BFA5">2:00</span>
+      </div>
+      <div style="height: 1px; background: #23262C"></div>
+      <div style="display: flex; align-items: center; justify-content: space-between; min-height: 52px">
+        <span style="font-size: 15px">In groups</span>
+        <span style="height: 30px; padding: 0 12px; border-radius: 15px; background: #2A2340; color: #C4B1FF; font-size: 13px; font-weight: 600; display: flex; align-items: center">Fingers ›</span>
+      </div>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 8px">
+      <span style="font-size: 12px; color: #9AA0AA; padding: 0 4px">In your log: 57 workouts · 720 sets · since 2 Oct 2025</span>
+      <button onClick="{{openMerge}}" style="height: 54px; border: 0; border-radius: 16px; background: #1A1C21; color: #F2F3F5; font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 12px; padding: 0 16px; text-align: left">
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C4B1FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4v5a5 5 0 0 0 5 5h7M18 4v0M6 20v-6M15 11l3 3-3 3"></path></svg>
+        <span style="flex: 1; display: flex; flex-direction: column"><span>Merge another exercise into this</span><span style="font-size: 12px; color: #9AA0AA; font-weight: 500">its sets move here, then it's gone</span></span>
+      </button>
+      <button style="height: 54px; border: 0; border-radius: 16px; background: #1A1C21; color: #FF8A80; font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 12px; padding: 0 16px">
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"></path></svg>
+        Delete exercise and its 720 sets…
+      </button>
+    </section>
+  </div>
+
+  <sc-if value="{{merge}}" hint-placeholder-val="{{ false }}">
+    <div aria-hidden="true" onClick="{{closeMerge}}" style="position: absolute; inset: 0; background: rgba(0,0,0,0.6)"></div>
+    <section role="dialog" aria-label="Merge into Block Pulls" style="position: absolute; left: 0; right: 0; bottom: 0; padding: 10px 16px 24px; border-radius: 28px 28px 0 0; background: #16181C; display: flex; flex-direction: column; gap: 12px">
+      <span aria-hidden="true" style="align-self: center; width: 40px; height: 4px; border-radius: 2px; background: #3A3E46"></span>
+      <span style="font-size: 18px; font-weight: 700">Merge into Block Pulls</span>
+      <span style="font-size: 13px; color: #9AA0AA">Only if it is really the same exercise (variants stay separate unless you merge them). Similar names first.</span>
+      <sc-for list="{{cands}}" as="c" hint-placeholder-count="3">
+        <label style="display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 14px; border-radius: 14px; background: {{c.bg}}; border: 1px solid {{c.border}}">
+          <span aria-hidden="true" style="width: 20px; height: 20px; flex: none; border-radius: 10px; border: 2px solid {{c.ring}}; box-sizing: border-box; display: flex; align-items: center; justify-content: center"><span style="width: 10px; height: 10px; border-radius: 5px; background: {{c.dot}}"></span></span>
+          <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 15px; font-weight: 600">{{c.name}}</span><span style="font-size: 12px; color: #9AA0AA">{{c.n}}</span></span>
+        </label>
+      </sc-for>
+      <span style="font-size: 12px; color: #9AA0AA">Block Pulls (5sec): 3 sets move here, keep their side and notes. You can't undo this, but a backup is made first.</span>
+      <div style="display: flex; gap: 10px">
+        <button onClick="{{closeMerge}}" style="height: 54px; padding: 0 20px; border: 0; border-radius: 16px; background: #23262C; color: #F2F3F5; font-size: 15px; font-weight: 600">Cancel</button>
+        <button style="flex: 1; height: 54px; border: 0; border-radius: 16px; background: #7C3AED; color: #FFFFFF; font-size: 16px; font-weight: 700">Merge 3 sets</button>
+      </div>
+    </section>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"sheet":{"editor":"enum","options":["closed","merge open"],"default":"closed"},"$preview":{"width":390,"height":1240}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const steps = st.steps || { Weight: '1', Reps: '1' };
+    const mk = (name, hint, opts) => ({
+      name, hint,
+      steps: opts.map((t) => {
+        const on = steps[name] === t;
+        return { t: t + (name === 'Weight' ? ' kg' : ''), on: on ? 'true' : 'false', bg: on ? '#2A2340' : '#111216', border: on ? '#7C3AED' : '#2A2D34', fg: on ? '#C4B1FF' : '#C9CDD3',
+          pick: () => this.setState({ steps: Object.assign({}, steps, { [name]: t }) }) };
+      })
+    });
+    const merge = st.merge ?? ((this.props.sheet ?? 'closed') === 'merge open');
+    const cand = (name, n, on) => ({ name, n, ring: on ? '#7C3AED' : '#4A4F58', dot: on ? '#7C3AED' : 'transparent', bg: on ? '#1C1828' : '#1A1C21', border: on ? '#7C3AED' : '#1A1C21' });
+    return {
+      fields: [
+        mk('Weight', 'kg · from FitNotes: 1 kg', ['0.5', '1', '1.25', '2.5', '5']),
+        mk('Reps', 'whole reps', ['1', '2', '5'])
+      ],
+      merge,
+      openMerge: () => this.setState({ merge: true }),
+      closeMerge: () => this.setState({ merge: false }),
+      cands: [
+        cand('Block Pull (5sec)', '1 workout · 3 sets', true),
+        cand('Block Pulls 2 Fingers', '1 workout · 1 set · left', false),
+        cand('Block Pull Endurance', '1 workout · 1 set · right', false)
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

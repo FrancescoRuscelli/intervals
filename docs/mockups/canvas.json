@@ -293,6 +293,28 @@
       "w": 390,
       "h": 1000,
       "title": "G14 · Records: real rep maxes + estimated"
+    },
+    "GymExHistory.dc.html": {
+      "x": 4230,
+      "y": -2900,
+      "w": 390,
+      "h": 1000,
+      "title": "G15 · Exercise history: every workout, your real Deadlift"
+    },
+    "GymEditExercise.dc.html": {
+      "x": 4700,
+      "y": -2900,
+      "w": 390,
+      "h": 1240,
+      "title": "G16 · Edit exercise: steps, merge, delete (tweak: sheet)",
+      "is_interactive": true
+    },
+    "GymExerciseNormal.dc.html": {
+      "x": 940,
+      "y": -1950,
+      "w": 390,
+      "h": 844,
+      "title": "G2b · Log a normal set (Deadlift: weight × reps)"
     }
   },
   "order": [
@@ -335,7 +357,10 @@
     "GymFinish.dc.html",
     "GymJournal.dc.html",
     "GymStats.dc.html",
-    "GymRecords.dc.html"
+    "GymRecords.dc.html",
+    "GymExHistory.dc.html",
+    "GymEditExercise.dc.html",
+    "GymExerciseNormal.dc.html"
   ],
   "notes": {
     "head": {
@@ -365,7 +390,7 @@
       "y": -3200,
       "text": "Gym: strength log (proposal)",
       "kind": "title1",
-      "maxW": 4150
+      "maxW": 5090
     },
     "gymhead2": {
       "x": 0,
