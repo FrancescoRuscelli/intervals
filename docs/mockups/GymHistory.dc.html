@@ -87,7 +87,7 @@ button{font-family:inherit}
   <span style="padding: 12px 20px 0; font-size: 12px; color: #9AA0AA">Only the graphs that fit the exercise appear. The one you pick is remembered per exercise.</span>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"graph":{"editor":"enum","options":["estimated 1RM","max weight","volume","total reps","max reps","left vs right","bands","rest"],"default":"estimated 1RM"},"$preview":{"width":390,"height":1000}}'>
+<script type="text/x-dc" data-dc-script data-props='{"graph":{"editor":"enum","options":["estimated 1RM","max weight","volume","total reps","max reps","left vs right","rest"],"default":"estimated 1RM"},"$preview":{"width":390,"height":1000}}'>
 class Component extends DCLogic {
   renderVals() {
     const graph = this.props.graph ?? 'estimated 1RM';
@@ -130,25 +130,6 @@ class Component extends DCLogic {
         tapDay: 'Tue 7 Jul', tapSets: 'R 52 kg × 5 · L 50 kg × 5: left caught up',
         stats: [{ l: 'Gap in March', v: '37 kg' }, { l: 'Gap now', v: '0–5 kg' }, { l: 'Workouts', v: '57' }]
       };
-    } else if (graph === 'bands') {
-      const lab = ['4 Sep', '9 Sep', '13 Sep', '18 Sep', '22 Sep', '1 Oct', '14 Oct', '21 Oct', '25 Oct', '29 Oct'];
-      const combos = ['gpr', 'gpr', 'gpr', 'gpr', 'gppr', 'gppr', 'gppr', 'gppr', 'gpprr', 'ggppk'];
-      const col = { g: ['#43A047', '#43A047'], p: ['#8E44D8', '#8E44D8'], k: ['#16181C', '#5A5F68'], r: ['#E53935', '#E53935'], y: ['#FFC107', '#FFC107'] };
-      const order = 'gpkry';
-      const xf = xs(combos.length), bh = 22, blocks = [];
-      combos.forEach((s, i) => {
-        const sorted = s.split('').sort((a, b) => order.indexOf(a) - order.indexOf(b));
-        sorted.forEach((ch, j) => blocks.push({ x: xf(i) - 9, y: base - (j + 1) * (bh + 3), w: 18, h: bh, fill: col[ch][0], edge: col[ch][1] }));
-      });
-      c = {
-        exercise: 'Pistol Squat', title: 'Bands used (left side)', sub: 'one column per workout · strongest at the bottom', big: '× 5 reps',
-        aria: 'Pistol Squat bands per workout: ' + combos.join(', '),
-        grid: [], blocks, lines: [], pts: [],
-        xl: [0, 3, 6, 9].map((i) => ({ x: xf(i), t: lab[i] })),
-        legend: [{ c: '#43A047', t: 'green' }, { c: '#8E44D8', t: 'purple' }, { c: '#5A5F68', t: 'black' }, { c: '#E53935', t: 'red' }],
-        tapDay: 'Wed 29 Oct 2025', tapSets: 'L 🟢🟢🟣🟣⚫ × 5 · R 🟢🟢🟣🟣⚫ × 5',
-        stats: [{ l: 'Bands then', v: '3' }, { l: 'Bands last', v: '5' }, { l: 'Workouts', v: '25' }]
-      };
     } else {
       const m = DL[graph] || DL['estimated 1RM'];
       const xf = xs(m.v.length), yf = (v) => base - ((v - m.min) / (m.max - m.min)) * (base - top);
@@ -166,7 +147,7 @@ class Component extends DCLogic {
         stats: [{ l: 'Best 1RM est.', v: '140 kg' }, { l: 'Max weight', v: '120 kg' }, { l: 'Workouts', v: '55' }]
       };
     }
-    const all = ['estimated 1RM', 'max weight', 'volume', 'total reps', 'max reps', 'left vs right', 'bands', 'rest'];
+    const all = ['estimated 1RM', 'max weight', 'volume', 'total reps', 'max reps', 'left vs right', 'rest'];
     const names = { 'estimated 1RM': '1RM est.', 'max weight': 'Max weight', 'volume': 'Volume', 'total reps': 'Total reps', 'max reps': 'Max reps', 'left vs right': 'Left vs right', 'bands': 'Bands', 'rest': 'Rest' };
     const chips = all.map((k) => ({ label: names[k], bg: k === graph ? '#2A2340' : '#111216', border: k === graph ? '#7C3AED' : '#2A2D34', fg: k === graph ? '#C4B1FF' : '#C9CDD3' }));
     const periods = ['3 M', '6 M', '1 Y', 'All'].map((t) => ({ t, bg: t === '6 M' ? '#F2F3F5' : '#1A1C21', fg: t === '6 M' ? '#000000' : '#C9CDD3' }));

@@ -237,16 +237,8 @@
       "h": 1000,
       "title": "G5 · Graphs per exercise (tweak: graph · your real data)"
     },
-    "GymBands.dc.html": {
-      "x": 2820,
-      "y": -2900,
-      "w": 390,
-      "h": 844,
-      "title": "G6 · Pick bands: stack a combination (try it in Play)",
-      "is_interactive": true
-    },
     "GymSetNote.dc.html": {
-      "x": 3290,
+      "x": 2820,
       "y": -2900,
       "w": 390,
       "h": 844,
@@ -254,7 +246,7 @@
       "is_interactive": true
     },
     "GymImport.dc.html": {
-      "x": 3760,
+      "x": 3290,
       "y": -2900,
       "w": 390,
       "h": 1300,
@@ -296,7 +288,7 @@
       "title": "G13 · Stats: Gym tab, records, real rest vs target"
     },
     "GymRecords.dc.html": {
-      "x": 4230,
+      "x": 3760,
       "y": -2900,
       "w": 390,
       "h": 1000,
@@ -336,7 +328,6 @@
     "GymNewExercise.dc.html",
     "GymGroup.dc.html",
     "GymHistory.dc.html",
-    "GymBands.dc.html",
     "GymSetNote.dc.html",
     "GymImport.dc.html",
     "GymPick.dc.html",
@@ -374,7 +365,7 @@
       "y": -3200,
       "text": "Gym: strength log (proposal)",
       "kind": "title1",
-      "maxW": 4620
+      "maxW": 4150
     },
     "gymhead2": {
       "x": 0,

@@ -44,14 +44,11 @@ button{font-family:inherit}
       <div style="padding: 8px 10px 8px 16px; border-radius: 18px; background: #1A1C21; display: flex; align-items: center; gap: 8px; min-height: 68px; box-sizing: border-box">
         <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 13px; color: #9AA0AA">{{f.label}}</span><span style="font-size: 12px; color: #6E747E">{{f.step}}</span></span>
         <sc-if value="{{f.isBands}}" hint-placeholder-val="{{ false }}">
-          <a href="GymBands.dc.html" aria-label="Change bands" style="display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 8px 0 14px; border-radius: 16px; background: #23262C; color: inherit; text-decoration: none">
-            <span style="display: flex; gap: 4px">
-              <sc-for list="{{f.bands}}" as="b" hint-placeholder-count="4">
-                <span style="width: 12px; height: 32px; border-radius: 6px; background: {{b.c}}; box-shadow: inset 0 0 0 1px {{b.edge}}"></span>
-              </sc-for>
-            </span>
-            <span style="font-size: 13px; color: #C4B1FF; font-weight: 600">change ›</span>
-          </a>
+          <span role="group" aria-label="Bands: tap to add, tap again for a second" style="display: flex; gap: 6px">
+            <sc-for list="{{f.bands}}" as="b" hint-placeholder-count="5">
+              <span aria-label="{{b.name}} {{b.n}}" style="position: relative; width: 34px; height: 34px; border-radius: 17px; background: {{b.c}}; box-shadow: inset 0 0 0 1px {{b.edge}}; opacity: {{b.op}}; display: flex; align-items: center; justify-content: center; color: {{b.fg}}; font-size: 13px; font-weight: 800">{{b.label}}</span>
+            </sc-for>
+          </span>
         </sc-if>
         <sc-if value="{{f.isStep}}" hint-placeholder-val="{{ true }}">
           <button aria-label="{{f.label}} less" style="width: 52px; height: 52px; border: 0; border-radius: 16px; background: #2A2340; color: #C4B1FF; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
@@ -103,7 +100,11 @@ button{font-family:inherit}
 class Component extends DCLogic {
   renderVals() {
     const B = { g: ['#43A047', '#43A047'], p: ['#8E44D8', '#8E44D8'], r: ['#E53935', '#E53935'], k: ['#16181C', '#5A5F68'], y: ['#FFC107', '#FFC107'] };
-    const bands = (s) => s.split('').map((ch) => ({ c: B[ch][0], edge: B[ch][1] }));
+    const NAMES = { g: 'green', p: 'purple', k: 'black', r: 'red', y: 'yellow' };
+    const bands = (s) => 'gpkry'.split('').map((ch) => {
+      const n = s.split('').filter((x) => x === ch).length;
+      return { name: NAMES[ch], n, c: B[ch][0], edge: B[ch][1], op: n ? 1 : 0.28, label: n > 1 ? '×' + n : '', fg: ch === 'y' ? '#1A1200' : '#FFFFFF' };
+    });
     const step = (label, stepTxt, value, unit) => ({ label, step: stepTxt, value, unit, isStep: true, isBands: false });
     const bandField = (s, txt) => ({ label: 'Bands', step: txt, isStep: false, isBands: true, bands: bands(s) });
     const set = (badge, text, o = {}) => {
@@ -114,7 +115,7 @@ class Component extends DCLogic {
     const all = {
       'pistol squat': {
         name: 'Pistol Squat', perSide: true, rest: '3:00',
-        fields: [bandField('gppr', 'green · purple ×2 · red'), step('Reps', '± 1', '5', '')],
+        fields: [bandField('gppr', 'tap to add · again for ×2'), step('Reps', '± 1', '5', '')],
         today: [set('L', '🟢🟣🟣🔴 × 5'), set('R', '🟢🟣🟣🔴 × 5', { rest: '1:05' }), set('L', '🟢🟣🔴 × 5', { rest: '3:10', pr: true, note: 'bad form' })],
         lastDay: 'Wednesday 11', lastSets: 'L 🟢🟣🟣🔴 × 5, 5 · R 🟢🟣🟣🔴 × 5, 4'
       },

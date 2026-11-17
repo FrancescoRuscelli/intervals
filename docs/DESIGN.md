@@ -101,8 +101,8 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
   - Weight can be **+ added** or **− assist** (e.g. Deloaded One Arm Pull-Up: weight taken off).
   - **Left and right apart**: one exercise, each set is L or R; "Both" logs one set per side with the same values;
     after a set it switches side. Never separate "(Left)" / "(Right)" exercises.
-  - **Bands**: a combination, how many of each color; order does not matter, always shown strongest → lightest
-    (strongest → lightest: green, purple, black, red, yellow; shown in that order, like your comments).
+  - **Bands** (kept simple, not used often): one row of color dots on the log screen, tap to add, tap again for ×2;
+    shown strongest → lightest (green, purple, black, red, yellow). No band picker screen, no bands graph or records.
   - **Rest clock counts up** (not a countdown), starts when a set is logged. Each exercise has its own rest target:
     at the target it buzzes / notifies, then keeps counting so you see how long you really rested.
     The real rest before each set is saved; shown on the set ("rested 3:25"), in history and in Stats (average vs target).
@@ -111,7 +111,7 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
 - **Groups** of exercises (Pull day, Legs…), started from Today.
 - Per exercise: **Log · Graph · Records** (graphs and records as in FitNotes, only those that fit the exercise):
   - Graphs per workout: estimated 1RM (Epley, sets ≤ 12 reps), max weight, volume, total reps, max reps,
-    weight for N reps, max time / distance; plus ours: left vs right on one graph, bands used, real rest vs target.
+    weight for N reps, max time / distance; plus ours: left vs right on one graph, real rest vs target.
     Periods 3 M / 6 M / 1 Y / All, trend line, tap a point to open that workout; chosen graph remembered per exercise.
   - Records: real heaviest weight per rep count (beaten ones faded) + estimated 2–10RM from the best 1RM.
 - **Import from FitNotes**: from the `.fitnotes` backup (SQLite; the CSV export has no comments).
