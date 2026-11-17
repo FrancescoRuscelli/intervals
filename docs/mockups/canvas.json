@@ -234,8 +234,8 @@
       "x": 2350,
       "y": -2900,
       "w": 390,
-      "h": 844,
-      "title": "G5 · Exercise history"
+      "h": 1000,
+      "title": "G5 · Graphs per exercise (tweak: graph · your real data)"
     },
     "GymBands.dc.html": {
       "x": 2820,
@@ -294,6 +294,13 @@
       "w": 390,
       "h": 1250,
       "title": "G13 · Stats: Gym tab, records, real rest vs target"
+    },
+    "GymRecords.dc.html": {
+      "x": 4230,
+      "y": -2900,
+      "w": 390,
+      "h": 1000,
+      "title": "G14 · Records: real rep maxes + estimated"
     }
   },
   "order": [
@@ -336,7 +343,8 @@
     "GymSession.dc.html",
     "GymFinish.dc.html",
     "GymJournal.dc.html",
-    "GymStats.dc.html"
+    "GymStats.dc.html",
+    "GymRecords.dc.html"
   ],
   "notes": {
     "head": {
@@ -366,7 +374,7 @@
       "y": -3200,
       "text": "Gym: strength log (proposal)",
       "kind": "title1",
-      "maxW": 4150
+      "maxW": 4620
     },
     "gymhead2": {
       "x": 0,

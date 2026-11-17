@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Gym, exercise history</title>
+<title>Gym, exercise graphs</title>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -14,74 +14,163 @@ body{margin:0}
 button{font-family:inherit}
 </style>
 </helmet>
-<div style="width: 390px; height: 844px; box-sizing: border-box; background: #000000; color: #F2F3F5; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+<div style="width: 390px; height: 1000px; box-sizing: border-box; background: #000000; color: #F2F3F5; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
   <header style="display: flex; align-items: center; justify-content: space-between; padding: 12px 8px 0">
     <a href="GymToday.dc.html" aria-label="Back to today" style="width: 44px; height: 44px; border-radius: 22px; color: inherit; display: flex; align-items: center; justify-content: center">
       <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
     </a>
-    <span style="font-size: 17px; font-weight: 700">Pull-ups</span>
+    <span style="font-size: 17px; font-weight: 700">{{c.exercise}}</span>
     <span style="width: 44px"></span>
   </header>
 
   <div role="tablist" style="display: flex; gap: 6px; padding: 8px 16px 0">
     <a href="GymExercise.dc.html" role="tab" aria-selected="false" style="flex: 1; height: 38px; border-radius: 12px; color: #9AA0AA; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; text-decoration: none">Log</a>
-    <button role="tab" aria-selected="true" style="flex: 1; height: 38px; border: 0; border-radius: 12px; background: #2A2340; color: #C4B1FF; font-size: 14px; font-weight: 700">History</button>
+    <button role="tab" aria-selected="true" style="flex: 1; height: 38px; border: 0; border-radius: 12px; background: #2A2340; color: #C4B1FF; font-size: 14px; font-weight: 700">Graph</button>
+    <a href="GymRecords.dc.html" role="tab" aria-selected="false" style="flex: 1; height: 38px; border-radius: 12px; color: #9AA0AA; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; text-decoration: none">Records</a>
   </div>
 
-  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 14px 16px 0">
-    <div style="padding: 10px 12px; border-radius: 14px; background: #1A1C21; display: flex; flex-direction: column"><span style="font-size: 12px; color: #9AA0AA">Best set</span><span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 19px; font-weight: 700">+10 × 8</span></div>
-    <div style="padding: 10px 12px; border-radius: 14px; background: #1A1C21; display: flex; flex-direction: column"><span style="font-size: 12px; color: #9AA0AA">Most reps</span><span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 19px; font-weight: 700">14</span></div>
-    <div style="padding: 10px 12px; border-radius: 14px; background: #1A1C21; display: flex; flex-direction: column"><span style="font-size: 12px; color: #9AA0AA">Sessions</span><span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 19px; font-weight: 700">23</span></div>
-  </div>
-
-  <section style="margin: 12px 16px 0; padding: 14px 14px 8px; border-radius: 18px; background: #1A1C21">
-    <h2 style="margin: 0; font-size: 15px; font-weight: 600">Added weight, best set per day</h2>
-    <span style="font-size: 12px; color: #9AA0AA">Last 8 times · yellow = record</span>
-    <svg role="img" aria-label="Best added weight per session: 5, 5, 7.5, 7.5, 7.5, 8.75, 7.5, 10 kg" width="330" height="140" viewBox="0 0 330 140" style="display: block; margin-top: 8px">
-      <sc-for list="{{grid}}" as="g" hint-placeholder-count="2">
-        <line x1="30" x2="330" y1="{{g.y}}" y2="{{g.y}}" stroke="#2A2D34" stroke-width="1"></line>
-        <text x="0" y="{{g.ty}}" font-size="10" fill="#9AA0AA" font-family="Inter, sans-serif">{{g.label}}</text>
-      </sc-for>
-      <line x1="30" x2="330" y1="116" y2="116" stroke="#3A3E46" stroke-width="1"></line>
-      <sc-for list="{{bars}}" as="b" hint-placeholder-count="8">
-        <path d="{{b.d}}" fill="{{b.fill}}"></path>
-        <text x="{{b.cx}}" y="132" text-anchor="middle" font-size="10" fill="#9AA0AA" font-family="Inter, sans-serif">{{b.label}}</text>
-      </sc-for>
-    </svg>
-  </section>
-
-  <div style="flex: 1; overflow: hidden; display: flex; flex-direction: column; gap: 8px; padding: 14px 16px 0">
-    <sc-for list="{{days}}" as="d" hint-placeholder-count="4">
-      <div style="padding: 10px 14px; border-radius: 14px; border: 1px solid #23262C; display: flex; flex-direction: column; gap: 4px">
-        <span style="font-size: 12px; color: #9AA0AA">{{d.day}}</span>
-        <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 16px; font-weight: 600">{{d.sets}}</span>
-        <span style="font-size: 12px; color: #6E747E">{{d.rest}}</span>
-      </div>
+  <div style="display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 16px 0">
+    <sc-for list="{{chips}}" as="g" hint-placeholder-count="6">
+      <span style="height: 32px; padding: 0 12px; border-radius: 16px; border: 1px solid {{g.border}}; background: {{g.bg}}; color: {{g.fg}}; font-size: 13px; font-weight: 600; display: flex; align-items: center">{{g.label}}</span>
     </sc-for>
   </div>
+
+  <section style="margin: 12px 16px 0; padding: 14px 12px 10px; border-radius: 18px; background: #1A1C21">
+    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 0 4px">
+      <span style="display: flex; flex-direction: column"><span style="font-size: 15px; font-weight: 600">{{c.title}}</span><span style="font-size: 12px; color: #9AA0AA">{{c.sub}}</span></span>
+      <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 20px; font-weight: 700; white-space: nowrap">{{c.big}}</span>
+    </div>
+    <svg role="img" aria-label="{{c.aria}}" width="342" height="180" viewBox="0 0 342 180" style="display: block; margin-top: 8px">
+      <sc-for list="{{c.grid}}" as="g" hint-placeholder-count="3">
+        <line x1="40" x2="338" y1="{{g.y}}" y2="{{g.y}}" stroke="#2A2D34" stroke-width="1"></line>
+        <text x="0" y="{{g.ty}}" font-size="10" fill="#9AA0AA" font-family="Inter, sans-serif">{{g.label}}</text>
+      </sc-for>
+      <line x1="40" x2="338" y1="150" y2="150" stroke="#3A3E46" stroke-width="1"></line>
+      <sc-for list="{{c.blocks}}" as="b" hint-placeholder-count="0">
+        <rect x="{{b.x}}" y="{{b.y}}" width="{{b.w}}" height="{{b.h}}" rx="3" fill="{{b.fill}}" stroke="{{b.edge}}" stroke-width="1"></rect>
+      </sc-for>
+      <sc-for list="{{c.lines}}" as="l" hint-placeholder-count="1">
+        <path d="{{l.d}}" fill="none" stroke="{{l.color}}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="{{l.dash}}"></path>
+      </sc-for>
+      <sc-for list="{{c.pts}}" as="p" hint-placeholder-count="12">
+        <circle cx="{{p.x}}" cy="{{p.y}}" r="{{p.r}}" fill="{{p.fill}}" stroke="#1A1C21" stroke-width="2"></circle>
+      </sc-for>
+      <sc-for list="{{c.xl}}" as="x" hint-placeholder-count="4">
+        <text x="{{x.x}}" y="168" text-anchor="middle" font-size="10" fill="#9AA0AA" font-family="Inter, sans-serif">{{x.t}}</text>
+      </sc-for>
+    </svg>
+    <div style="display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 2px 4px 0; font-size: 12px; color: #9AA0AA">
+      <sc-for list="{{c.legend}}" as="k" hint-placeholder-count="2">
+        <span style="display: flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 5px; background: {{k.c}}"></span>{{k.t}}</span>
+      </sc-for>
+    </div>
+  </section>
+
+  <div style="display: flex; align-items: center; gap: 6px; padding: 10px 16px 0">
+    <sc-for list="{{periods}}" as="p" hint-placeholder-count="4">
+      <span style="height: 30px; padding: 0 12px; border-radius: 15px; background: {{p.bg}}; color: {{p.fg}}; font-size: 12px; font-weight: 600; display: flex; align-items: center">{{p.t}}</span>
+    </sc-for>
+    <span style="flex: 1"></span>
+    <span style="font-size: 12px; color: #9AA0AA">per workout · trend on</span>
+  </div>
+
+  <a href="GymFinish.dc.html" style="margin: 12px 16px 0; padding: 12px 14px; border-radius: 16px; border: 1px solid #7C3AED; background: #120F1C; color: inherit; text-decoration: none; display: flex; flex-direction: column; gap: 3px">
+    <span style="font-size: 12px; color: #C4B1FF">Tapped point · {{c.tapDay}} · open the workout ›</span>
+    <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 15px; font-weight: 600">{{c.tapSets}}</span>
+  </a>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 12px 16px 0">
+    <sc-for list="{{c.stats}}" as="s" hint-placeholder-count="3">
+      <div style="padding: 10px 12px; border-radius: 14px; background: #1A1C21; display: flex; flex-direction: column"><span style="font-size: 12px; color: #9AA0AA">{{s.l}}</span><span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 17px; font-weight: 700">{{s.v}}</span></div>
+    </sc-for>
+  </div>
+  <span style="padding: 12px 20px 0; font-size: 12px; color: #9AA0AA">Only the graphs that fit the exercise appear. The one you pick is remembered per exercise.</span>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+<script type="text/x-dc" data-dc-script data-props='{"graph":{"editor":"enum","options":["estimated 1RM","max weight","volume","total reps","max reps","left vs right","bands","rest"],"default":"estimated 1RM"},"$preview":{"width":390,"height":1000}}'>
 class Component extends DCLogic {
   renderVals() {
-    const data = [['20 Oct', 5], ['24', 5], ['27', 7.5], ['31', 7.5], ['3 Nov', 7.5], ['7', 8.75, true], ['13', 7.5], ['17', 10, true]];
-    const base = 116, top = 10, max = 12, x0 = 38, slot = 37, bw = 24, r = 4;
-    const yOf = (v) => base - (v / max) * (base - top);
-    const bars = data.map(([label, v, pr], i) => {
-      const x = x0 + i * slot, y = yOf(v);
-      const d = 'M' + x + ' ' + base + ' V' + (y + r) + ' Q' + x + ' ' + y + ' ' + (x + r) + ' ' + y + ' H' + (x + bw - r) + ' Q' + (x + bw) + ' ' + y + ' ' + (x + bw) + ' ' + (y + r) + ' V' + base + ' Z';
-      return { d, label, cx: x + bw / 2, fill: pr ? '#FFC107' : '#E91E63' };
-    });
-    const grid = [5, 10].map((v) => ({ y: yOf(v), ty: yOf(v) + 3, label: '+' + v }));
-    return {
-      bars, grid,
-      days: [
-        { day: 'Today · Tuesday 17', sets: '+10 × 8 · +10 × 7 · +10 × 6', rest: 'rests 3:05 · 3:40 (target 3:00)' },
-        { day: 'Friday 13', sets: '+7.5 × 8 · +7.5 × 8 · +7.5 × 7', rest: 'rests 2:50 · 3:20' },
-        { day: 'Saturday 7', sets: '+8.75 × 6 · +7.5 × 7 · +7.5 × 6', rest: 'rests 4:10 · 3:30' },
-        { day: 'Tuesday 3', sets: '+7.5 × 7 · +7.5 × 7 · +5 × 9', rest: 'rests 3:00 · 2:45' }
-      ]
+    const graph = this.props.graph ?? 'estimated 1RM';
+    // Deadlift, your last 12 workouts (from the FitNotes backup)
+    const days = ['30 Jul', '5 Aug', '27 Aug', '2 Sep', '9 Sep', '15 Sep', '28 Sep', '13 Oct', '20 Oct', '28 Oct', '4 Nov', '11 Nov'];
+    const DL = {
+      'estimated 1RM': { v: [128.3, 133.3, 128.3, 128.3, 128.3, 128.3, 128.3, 124.7, 128.3, 140, 128.3, 128.3], min: 110, max: 145, step: 10, unit: 'kg', title: 'Estimated 1RM', sub: 'best set of each workout', big: '140 kg', rec: [1, 9] },
+      'max weight': { v: [120, 100, 110, 110, 110, 120, 110, 110, 120, 120, 110, 110], min: 90, max: 125, step: 10, unit: 'kg', title: 'Max weight', sub: 'heaviest single set', big: '120 kg', rec: [] },
+      'volume': { v: [2570, 3000, 2450, 2450, 2450, 2690, 2450, 1240, 2570, 5300, 2450, 1900], min: 0, max: 6000, step: 2000, unit: 'kg', title: 'Workout volume', sub: 'weight × reps, all sets', big: '5.3 t', rec: [9] },
+      'total reps': { v: [26, 32, 25, 25, 25, 27, 25, 14, 26, 55, 25, 20], min: 0, max: 60, step: 20, unit: '', title: 'Total reps', sub: 'all sets of the workout', big: '55', rec: [9] },
+      'max reps': { v: [5, 10, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5], min: 0, max: 12, step: 4, unit: '', title: 'Max reps', sub: 'most reps in one set', big: '10', rec: [] },
+      'rest': { v: [205, 230, 190, 200, 215, 240, 195, 180, 210, 260, 200, 205], min: 120, max: 300, step: 60, unit: 's', title: 'Rest between sets', sub: 'example numbers · teal dashes = your 3:00', big: '3:25', rec: [], target: 180 }
     };
+    const W = 338, x0 = 52, top = 10, base = 150;
+    const xs = (n) => (i) => x0 + i * ((W - x0 - 8) / (n - 1));
+    const fmt = (v, unit) => unit === 's' ? Math.floor(v / 60) + ':' + String(v % 60).padStart(2, '0') : (unit === 'kg' && v >= 1000 ? (v / 1000) + ' t' : String(v) + (unit === 'kg' ? ' kg' : ''));
+    const lineD = (pts) => pts.map((p, i) => (i ? 'L' : 'M') + p.x.toFixed(1) + ' ' + p.y.toFixed(1)).join(' ');
+    const trend = (vals, xf, yf) => {
+      const n = vals.length, mx = (n - 1) / 2, my = vals.reduce((a, b) => a + b, 0) / n;
+      let num = 0, den = 0;
+      vals.forEach((v, i) => { num += (i - mx) * (v - my); den += (i - mx) * (i - mx); });
+      const k = num / den, a = my - k * mx;
+      return 'M' + xf(0) + ' ' + yf(a).toFixed(1) + ' L' + xf(n - 1) + ' ' + yf(a + k * (n - 1)).toFixed(1);
+    };
+    let c;
+
+    if (graph === 'left vs right') {
+      const lab = ['10 Mar', '24 Mar', '27 Mar', '18 Jun', '30 Jun', '7 Jul', '14 Jul', '24 Jul', '29 Jul', '8 Sep'];
+      const R = [47, 52, 52, 48, 55, 52, 52, 52, 50, 40], L = [10, 20, 22, 38.5, 45, 50, 50, 50, 50, 40];
+      const xf = xs(R.length), yf = (v) => base - (v / 60) * (base - top);
+      const pr = R.map((v, i) => ({ x: xf(i), y: yf(v) })), pl = L.map((v, i) => ({ x: xf(i), y: yf(v) }));
+      c = {
+        exercise: 'Block Pulls', title: 'Max weight, left vs right', sub: 'one exercise, both sides on one graph', big: 'L 50 · R 55',
+        aria: 'Block Pulls max weight. Right: ' + R.join(', ') + '. Left: ' + L.join(', '),
+        grid: [20, 40, 60].map((v) => ({ y: yf(v), ty: yf(v) + 3, label: v + ' kg' })), blocks: [],
+        lines: [{ d: lineD(pr), color: '#E91E63', dash: '' }, { d: lineD(pl), color: '#00BFA5', dash: '' }],
+        pts: pr.map((p) => ({ x: p.x, y: p.y, r: 3.5, fill: '#E91E63' })).concat(pl.map((p) => ({ x: p.x, y: p.y, r: 3.5, fill: '#00BFA5' }))),
+        xl: [0, 3, 6, 9].map((i) => ({ x: xf(i), t: lab[i] })),
+        legend: [{ c: '#E91E63', t: 'Right' }, { c: '#00BFA5', t: 'Left' }],
+        tapDay: 'Tue 7 Jul', tapSets: 'R 52 kg × 5 · L 50 kg × 5: left caught up',
+        stats: [{ l: 'Gap in March', v: '37 kg' }, { l: 'Gap now', v: '0–5 kg' }, { l: 'Workouts', v: '57' }]
+      };
+    } else if (graph === 'bands') {
+      const lab = ['4 Sep', '9 Sep', '13 Sep', '18 Sep', '22 Sep', '1 Oct', '14 Oct', '21 Oct', '25 Oct', '29 Oct'];
+      const combos = ['gpr', 'gpr', 'gpr', 'gpr', 'gppr', 'gppr', 'gppr', 'gppr', 'gpprr', 'ggppk'];
+      const col = { g: ['#43A047', '#43A047'], p: ['#8E44D8', '#8E44D8'], k: ['#16181C', '#5A5F68'], r: ['#E53935', '#E53935'], y: ['#FFC107', '#FFC107'] };
+      const order = 'gpkry';
+      const xf = xs(combos.length), bh = 22, blocks = [];
+      combos.forEach((s, i) => {
+        const sorted = s.split('').sort((a, b) => order.indexOf(a) - order.indexOf(b));
+        sorted.forEach((ch, j) => blocks.push({ x: xf(i) - 9, y: base - (j + 1) * (bh + 3), w: 18, h: bh, fill: col[ch][0], edge: col[ch][1] }));
+      });
+      c = {
+        exercise: 'Pistol Squat', title: 'Bands used (left side)', sub: 'one column per workout · strongest at the bottom', big: '× 5 reps',
+        aria: 'Pistol Squat bands per workout: ' + combos.join(', '),
+        grid: [], blocks, lines: [], pts: [],
+        xl: [0, 3, 6, 9].map((i) => ({ x: xf(i), t: lab[i] })),
+        legend: [{ c: '#43A047', t: 'green' }, { c: '#8E44D8', t: 'purple' }, { c: '#5A5F68', t: 'black' }, { c: '#E53935', t: 'red' }],
+        tapDay: 'Wed 29 Oct 2025', tapSets: 'L 🟢🟢🟣🟣⚫ × 5 · R 🟢🟢🟣🟣⚫ × 5',
+        stats: [{ l: 'Bands then', v: '3' }, { l: 'Bands last', v: '5' }, { l: 'Workouts', v: '25' }]
+      };
+    } else {
+      const m = DL[graph] || DL['estimated 1RM'];
+      const xf = xs(m.v.length), yf = (v) => base - ((v - m.min) / (m.max - m.min)) * (base - top);
+      const pts = m.v.map((v, i) => ({ x: xf(i), y: yf(v), r: m.rec.includes(i) ? 5 : 3.5, fill: m.rec.includes(i) ? '#FFC107' : '#E91E63' }));
+      const grid = [];
+      for (let v = Math.ceil(m.min / m.step) * m.step; v <= m.max; v += m.step) if (v > m.min) grid.push({ y: yf(v), ty: yf(v) + 3, label: fmt(v, m.unit) });
+      const lines = [{ d: lineD(pts), color: '#E91E63', dash: '' }, { d: trend(m.v, xf, yf), color: '#9AA0AA', dash: '4 4' }];
+      if (m.target) lines.push({ d: 'M' + x0 + ' ' + yf(m.target) + ' L' + (W - 8) + ' ' + yf(m.target), color: '#00BFA5', dash: '6 4' });
+      c = {
+        exercise: 'Deadlift', title: m.title, sub: m.sub, big: m.big,
+        aria: m.title + ' per workout: ' + m.v.join(', '),
+        grid, blocks: [], lines, pts, xl: [0, 3, 6, 9, 11].map((i) => ({ x: xf(i), t: days[i] })),
+        legend: [{ c: '#E91E63', t: 'per workout' }, { c: '#FFC107', t: 'record' }, { c: '#9AA0AA', t: 'trend' }],
+        tapDay: 'Wed 28 Oct', tapSets: '60 × 5 ×2 · 80 · 90 · 110 × 5 · 120 × 5 ×3 · 100 × 5 ×3',
+        stats: [{ l: 'Best 1RM est.', v: '140 kg' }, { l: 'Max weight', v: '120 kg' }, { l: 'Workouts', v: '55' }]
+      };
+    }
+    const all = ['estimated 1RM', 'max weight', 'volume', 'total reps', 'max reps', 'left vs right', 'bands', 'rest'];
+    const names = { 'estimated 1RM': '1RM est.', 'max weight': 'Max weight', 'volume': 'Volume', 'total reps': 'Total reps', 'max reps': 'Max reps', 'left vs right': 'Left vs right', 'bands': 'Bands', 'rest': 'Rest' };
+    const chips = all.map((k) => ({ label: names[k], bg: k === graph ? '#2A2340' : '#111216', border: k === graph ? '#7C3AED' : '#2A2D34', fg: k === graph ? '#C4B1FF' : '#C9CDD3' }));
+    const periods = ['3 M', '6 M', '1 Y', 'All'].map((t) => ({ t, bg: t === '6 M' ? '#F2F3F5' : '#1A1C21', fg: t === '6 M' ? '#000000' : '#C9CDD3' }));
+    return { c, chips, periods };
   }
 }
 </script>

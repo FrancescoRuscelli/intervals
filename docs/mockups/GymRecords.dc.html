@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gym, exercise records</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 1000px; box-sizing: border-box; background: #000000; color: #F2F3F5; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+  <header style="display: flex; align-items: center; justify-content: space-between; padding: 12px 8px 0">
+    <a href="GymToday.dc.html" aria-label="Back to today" style="width: 44px; height: 44px; border-radius: 22px; color: inherit; display: flex; align-items: center; justify-content: center">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+    </a>
+    <span style="font-size: 17px; font-weight: 700">Deadlift</span>
+    <span style="width: 44px"></span>
+  </header>
+
+  <div role="tablist" style="display: flex; gap: 6px; padding: 8px 16px 0">
+    <a href="GymExercise.dc.html" role="tab" aria-selected="false" style="flex: 1; height: 38px; border-radius: 12px; color: #9AA0AA; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; text-decoration: none">Log</a>
+    <a href="GymHistory.dc.html" role="tab" aria-selected="false" style="flex: 1; height: 38px; border-radius: 12px; color: #9AA0AA; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; text-decoration: none">Graph</a>
+    <button role="tab" aria-selected="true" style="flex: 1; height: 38px; border: 0; border-radius: 12px; background: #2A2340; color: #C4B1FF; font-size: 14px; font-weight: 700">Records</button>
+  </div>
+
+  <section style="margin: 14px 16px 0; padding: 14px; border-radius: 18px; background: #1A1C21; display: flex; flex-direction: column; gap: 10px">
+    <div style="display: flex; justify-content: space-between; align-items: baseline">
+      <h2 style="margin: 0; font-size: 15px; font-weight: 600">Real records</h2>
+      <span style="font-size: 12px; color: #9AA0AA">heaviest for each number of reps</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px">
+      <sc-for list="{{actual}}" as="a" hint-placeholder-count="10">
+        <div style="height: 58px; border-radius: 12px; background: {{a.bg}}; border: 1px solid {{a.border}}; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: {{a.op}}">
+          <span style="font-size: 11px; color: {{a.sub}}">{{a.r}} rep{{a.s}}</span>
+          <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 17px; font-weight: 700; color: {{a.fg}}">{{a.w}}</span>
+        </div>
+      </sc-for>
+    </div>
+    <span style="font-size: 12px; color: #9AA0AA">Faded = beaten by more reps at the same or more weight (120 × 5 beats 120 × 1, 2, 3). Tap one to see its history.</span>
+  </section>
+
+  <section style="margin: 12px 16px 0; padding: 14px; border-radius: 18px; background: #1A1C21; display: flex; flex-direction: column; gap: 8px">
+    <div style="display: flex; justify-content: space-between; align-items: baseline">
+      <h2 style="margin: 0; font-size: 15px; font-weight: 600">Estimated maximums</h2>
+      <span style="font-size: 12px; color: #9AA0AA">from 120 × 5 · 28 Oct</span>
+    </div>
+    <div style="display: flex; align-items: baseline; gap: 10px">
+      <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 40px; font-weight: 700">140 kg</span>
+      <span style="font-size: 13px; color: #9AA0AA">estimated 1RM</span>
+    </div>
+    <div style="display: flex; flex-direction: column">
+      <sc-for list="{{est}}" as="e" hint-placeholder-count="7">
+        <div style="display: flex; align-items: center; gap: 12px; min-height: 34px; border-bottom: 1px solid #23262C">
+          <span style="width: 54px; font-size: 13px; color: #9AA0AA">{{e.r}} reps</span>
+          <span style="flex: 1; height: 8px; border-radius: 4px; background: #23262C"><span style="display: block; width: {{e.pct}}; height: 8px; border-radius: 4px; background: #7C3AED"></span></span>
+          <span style="width: 64px; text-align: right; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums">{{e.w}}</span>
+        </div>
+      </sc-for>
+    </div>
+    <span style="font-size: 12px; color: #9AA0AA">Only sets up to 12 reps count (changeable). A guide for choosing weights, not a test.</span>
+  </section>
+
+  <section style="margin: 12px 16px 0; padding: 12px 14px; border-radius: 16px; border: 1px solid #23262C; display: flex; flex-direction: column; gap: 4px">
+    <span style="font-size: 13px; font-weight: 600">Other exercises show what fits them</span>
+    <span style="font-size: 12px; color: #9AA0AA">Holds: longest time · assist: least assist for each reps · bands: strongest combo for each reps · per side: left and right side by side</span>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    // Deadlift actual rep maxes from your FitNotes data; live = not beaten by a higher rep count
+    const data = [[1, 120], [2, 120], [3, 120], [4, 110], [5, 120, true], [6, 100], [7, 100], [8, 50], [10, 100, true], [11, 90, true]];
+    const actual = data.map(([r, w, live]) => ({
+      r, s: r === 1 ? '' : 's', w: w + '',
+      bg: live ? '#2E2410' : '#111216', border: live ? '#FFC107' : '#23262C',
+      fg: live ? '#FFC107' : '#C9CDD3', sub: live ? '#FFD966' : '#9AA0AA', op: live ? 1 : 0.45
+    }));
+    const one = 140;
+    const est = [2, 3, 4, 5, 6, 8, 10].map((r) => {
+      const w = one / (1 + r / 30);
+      return { r, w: (Math.round(w * 2) / 2) + ' kg', pct: Math.round((w / one) * 100) + '%' };
+    });
+    return { actual, est };
+  }
+}
+</script>
+</body>
+</html>

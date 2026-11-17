@@ -109,7 +109,11 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
 - **Quick notes per set**: tags (Max, Bad form, Assisted, Failed, +½ rep, your own) + free note.
 - **Variants stay separate exercises** (Block Pulls Squeezed, Pull Up (Second Half)…).
 - **Groups** of exercises (Pull day, Legs…), started from Today.
-- History per exercise: best set, records, chart, past days.
+- Per exercise: **Log · Graph · Records** (graphs and records as in FitNotes, only those that fit the exercise):
+  - Graphs per workout: estimated 1RM (Epley, sets ≤ 12 reps), max weight, volume, total reps, max reps,
+    weight for N reps, max time / distance; plus ours: left vs right on one graph, bands used, real rest vs target.
+    Periods 3 M / 6 M / 1 Y / All, trend line, tap a point to open that workout; chosen graph remembered per exercise.
+  - Records: real heaviest weight per rep count (beaten ones faded) + estimated 2–10RM from the best 1RM.
 - **Import from FitNotes**: from the `.fitnotes` backup (SQLite; the CSV export has no comments).
   - Merge "(Left)"/"(Right)" pairs into one per-side exercise (11 pairs; one-side-only ones become per-side too).
   - Comments become data: "L"/"R" → side, band emojis (🟢🟣🔴⚫🟡, "nero", "green+purple"…) → bands,
@@ -150,6 +154,6 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
 - [ ] Step 4: screens (list, editor, series, import, journal, stats, settings, finished)
 - [ ] Step 5: player screen + foreground timer service, voice, beeps, countdown, flash, landscape
 - [ ] Step 6: install on the Pixel 8a, real workout test, energy profiling
-- [x] Gym mockups G1–G13 (placement: own tab)
+- [x] Gym mockups G1–G14 (placement: own tab)
 - [ ] Gym: data model, database, screens, FitNotes importer (after the interval screens? to decide)
 - [ ] App icon (to decide: e.g. purple disc with segmented ring)
