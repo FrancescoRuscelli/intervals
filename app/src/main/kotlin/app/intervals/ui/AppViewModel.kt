@@ -95,6 +95,29 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         message = "Deleted “$name” · its journal entries stay"
     }
 
+    /** Gives [add] and takes away [remove] tags on all the [ids] workouts. */
+    fun retag(ids: Set<Long>, add: Set<String>, remove: Set<String>) = viewModelScope.launch {
+        val list = workouts.value.orEmpty().filter { it.id in ids }
+        list.forEach { sw ->
+            val tags = sw.workout.tags - remove + add
+            if (tags != sw.workout.tags) repo.updateWorkout(sw.id, sw.workout.copy(tags = tags))
+        }
+        message = "Tags updated on ${list.size} workouts"
+    }
+
+    fun duplicateMany(ids: Set<Long>) = viewModelScope.launch {
+        ids.forEach { repo.duplicateWorkout(it) }
+        message = "Duplicated ${ids.size}"
+    }
+
+    fun deleteMany(ids: Set<Long>) = viewModelScope.launch {
+        ids.forEach { repo.deleteWorkout(it) }
+        message = "Deleted ${ids.size} · their journal entries stay"
+    }
+
+    /** Saves a new order of the whole list. */
+    fun reorder(ids: List<Long>) = viewModelScope.launch { repo.reorderWorkouts(ids) }
+
     fun move(ids: List<Long>, from: Int, to: Int) = viewModelScope.launch {
         if (to !in ids.indices) return@launch
         val list = ids.toMutableList()
