@@ -61,7 +61,7 @@ fun Workout.timeline(): Timeline {
             } else {
                 add(SegmentKind.SERIES, s.name, s.durationSec, s.color, s.icon, r, Side.LEFT)
                 add(SegmentKind.CHANGE_SIDE, "change side", ps.changeSec, CHANGE_COLOR, SeriesIcon.STAND, r)
-                add(SegmentKind.SERIES, s.name, s.durationSec, s.color, s.icon, r, Side.RIGHT)
+                add(SegmentKind.SERIES, s.name, s.durationSec, ps.rightColor ?: s.color, s.icon, r, Side.RIGHT)
             }
         }
         if (r < rounds) {

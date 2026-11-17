@@ -9,7 +9,11 @@ enum class SeriesIcon { JUMP, RUN, STAND, WEIGHT, WARMUP, COOL }
 
 /** A series done once per side: left, a pause to change side, then right. */
 @Serializable
-data class PerSide(val changeSec: Int) {
+data class PerSide(
+    val changeSec: Int,
+    /** Color of the right side (0xAARRGGBB); null = same as the left. */
+    val rightColor: Long? = null,
+) {
     init {
         require(changeSec >= 0) { "changeSec must be >= 0" }
     }

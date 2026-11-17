@@ -120,12 +120,13 @@ class HybridImportTest {
         val pull = Series("pull", 5, 0xFFE91E63L, SeriesIcon.JUMP)
         val change = Series("change", 2, 0xFF9E9E9EL)
         val rest = Series("rest", 3, 0xFFFFC107L)
-        val flat = List(3) { listOf(pull, change, pull, rest) }.flatten() + listOf(pull, change, pull)
+        val pullR = pull.copy(color = 0xFF9C27B0L) // the right side had another color in the old app
+        val flat = List(3) { listOf(pull, change, pullR, rest) }.flatten() + listOf(pull, change, pullR)
         val blocks = HybridImport.groupRepeats(HybridImport.mergeSides(flat))
         val rep = blocks.single() as Block.Repeat
         assertEquals(4, rep.times)
         assertTrue(rep.skipLast)
-        assertEquals(PerSide(2), rep.series[0].perSide)
+        assertEquals(PerSide(2, rightColor = 0xFF9C27B0L), rep.series[0].perSide)
         val w = Workout("bp", rounds = 1, blocks = blocks)
         assertEquals(flat.sumOf { it.durationSec }, w.totalSec) // same timing as before
         // a single "A, rest, A" also folds

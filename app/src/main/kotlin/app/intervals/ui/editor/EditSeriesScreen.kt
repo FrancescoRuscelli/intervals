@@ -154,6 +154,24 @@ fun EditSeriesScreen(vm: AppViewModel, target: Overlay.EditSeries) {
                                 Text("Time to change side", color = p.text, fontSize = 15.sp, modifier = Modifier.weight(1f))
                                 Text(formatDuration(ps.changeSec), color = p.text, style = NumberStyle, fontSize = 17.sp)
                             }
+                            Text("Right side color", color = p.text, fontSize = 15.sp, modifier = Modifier.padding(top = 6.dp))
+                            Text("Left uses the color above", color = p.muted, fontSize = 12.sp)
+                            Row(Modifier.padding(vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                val same = ps.rightColor == null
+                                Box(
+                                    Modifier.height(36.dp).clip(RoundedCornerShape(10.dp)).background(Color(s.color))
+                                        .border(3.dp, if (same) p.text else Color.Transparent, RoundedCornerShape(10.dp))
+                                        .clickable { s = s.copy(perSide = ps.copy(rightColor = null)) }.padding(horizontal = 10.dp),
+                                    contentAlignment = Alignment.Center,
+                                ) { Text("Same", color = Color(0xFF14080C), fontSize = 13.sp, fontWeight = FontWeight.SemiBold) }
+                                SERIES_COLORS.filter { it != s.color }.take(7).forEach { c ->
+                                    Box(
+                                        Modifier.weight(1f).height(36.dp).clip(RoundedCornerShape(10.dp)).background(Color(c))
+                                            .border(3.dp, if (ps.rightColor == c) p.text else Color.Transparent, RoundedCornerShape(10.dp))
+                                            .clickable(onClickLabel = "Right side color") { s = s.copy(perSide = ps.copy(rightColor = c)) },
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -195,7 +213,7 @@ fun EditSeriesScreen(vm: AppViewModel, target: Overlay.EditSeries) {
     when (ask) {
         SeriesAsk.TIME -> DurationDialog("Time", s.durationSec, 1, { ask = SeriesAsk.NONE }) { s = s.copy(durationSec = it); ask = SeriesAsk.NONE }
         SeriesAsk.CHANGE -> DurationDialog("Time to change side", s.perSide?.changeSec ?: 5, 0, { ask = SeriesAsk.NONE }) {
-            s = s.copy(perSide = PerSide(it)); ask = SeriesAsk.NONE
+            s = s.copy(perSide = (s.perSide ?: PerSide(5)).copy(changeSec = it)); ask = SeriesAsk.NONE
         }
         SeriesAsk.NONE -> Unit
     }

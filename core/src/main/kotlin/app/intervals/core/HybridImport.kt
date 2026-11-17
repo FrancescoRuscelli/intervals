@@ -115,7 +115,7 @@ object HybridImport {
 
     /**
      * The old app had no "per side": it was written as X, change, X.
-     * Those three become one per-side series X (change time from the middle one).
+     * Those three become one per-side series X (change time from the middle one; color and icon of the left one).
      */
     fun mergeSides(series: List<Series>): List<Series> {
         val out = mutableListOf<Series>()
@@ -124,8 +124,9 @@ object HybridImport {
             val a = series[i]
             val mid = series.getOrNull(i + 1)
             val b = series.getOrNull(i + 2)
-            if (mid != null && b != null && a == b && a.perSide == null && isChangeName(mid.name)) {
-                out += a.copy(perSide = PerSide(mid.durationSec))
+            // same name and time is enough: the old app often had a different color per side
+            if (mid != null && b != null && a.name == b.name && a.durationSec == b.durationSec && a.perSide == null && b.perSide == null && isChangeName(mid.name)) {
+                out += a.copy(perSide = PerSide(mid.durationSec, rightColor = b.color.takeIf { it != a.color }))
                 i += 3
             } else {
                 out += a

@@ -135,7 +135,7 @@ fun Workout.roundBar(): List<Pair<Int, Long>> = blocks.flatMap { b ->
     val one = { s: Series ->
         val ps = s.perSide
         if (ps == null) listOf(s.durationSec to s.color)
-        else listOfNotNull(s.durationSec to s.color, (ps.changeSec to 0xFF00BFA5L).takeIf { ps.changeSec > 0 }, s.durationSec to s.color)
+        else listOfNotNull(s.durationSec to s.color, (ps.changeSec to 0xFF00BFA5L).takeIf { ps.changeSec > 0 }, s.durationSec to (ps.rightColor ?: s.color))
     }
     when (b) {
         is Block.Single -> one(b.series)

@@ -39,7 +39,8 @@ CSV backup, no header, no quoting, two row types (see `HybridImport.kt`):
 - interval: `id,workoutId,name,durationSec,,,0,icon,color(signed ARGB int)`
 
 Rules:
-- **X · change · X** (same series, a *change* in the middle) becomes **one per-side series** X with that change time.
+- **X · change · X** (same name and time, a *change* in the middle) becomes **one per-side series** X with that change time;
+  if the two sides had different colors, the right one is kept as the series' **right side color** (per-side series can have one).
 - **"A, rest" repeated + a last "A"** becomes **Repeat ×N with "skip the last rest"** (repeat groups have `skipLast`:
   the last time through, the group's last series is not played). Timing is unchanged.
 - **Import again** updates the workouts you never edited (same name, same place, journal links kept); edited ones are added as new.
