@@ -40,7 +40,7 @@ button{font-family:inherit}
         <sc-if value="{{e.hasSets}}" hint-placeholder-val="{{ true }}">
           <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding-left: 44px; ">
             <sc-for list="{{e.sets}}" as="s" hint-placeholder-count="3">
-              <span style="height: 46px; min-width: 0; border-radius: 11px; background: {{s.bg}}; color: {{s.fg}}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px"><span style="font-size: 10px; font-weight: 700; opacity: 0.75">{{s.lab}}</span><span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 14px; font-weight: 600; white-space: nowrap">{{s.val}}</span></span>
+              <span style="position: relative; height: 46px; min-width: 0; box-sizing: border-box; border-radius: 11px; background: {{s.bg}}; border: 1px solid {{s.border}}; color: {{s.fg}}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px"><span style="font-size: 10px; font-weight: 700; opacity: 0.75">{{s.lab}}</span><span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: {{s.fs}}; font-weight: 600; white-space: nowrap">{{s.val}}</span><sc-if value="{{s.count}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; top: -6px; right: -4px; height: 18px; padding: 0 6px; border-radius: 9px; background: #F2F3F5; color: #000000; font-size: 11px; font-weight: 800; display: flex; align-items: center">{{s.count}}</span></sc-if></span>
             </sc-for>
           </div>
         </sc-if>
@@ -69,16 +69,36 @@ button{font-family:inherit}
 class Component extends DCLogic {
   renderVals() {
     const v = this._vals();
-    const cells = (arr) => arr.map((s, i) => {
-      let t = s.text ?? s.t, tag = '';
-      if (t.endsWith(' ✓')) { t = t.slice(0, -2); tag = ' ✓'; }
-      if (t.endsWith(' PR')) { t = t.slice(0, -3); tag = ' · PR'; }
-      let lab = String(i + 1);
-      const m = t.match(/^([LR]) (.*)$/);
-      if (m) { lab = m[1]; t = m[2]; }
-      return Object.assign({}, s, { lab: lab + tag, val: t.replace(' kg', '') });
-    });
-    v.items.forEach((e) => { e.sets = cells(e.sets); });
+    const cells = (arr) => {
+      const one = arr.map((s, i) => {
+        let t = s.text ?? s.t, tag = '';
+        if (t.endsWith(' ✓')) { t = t.slice(0, -2); tag = ' ✓'; }
+        if (t.endsWith(' PR')) { t = t.slice(0, -3); tag = ' · PR'; }
+        let side = '';
+        const m = t.match(/^([LR]) (.*)$/);
+        if (m) { side = m[1]; t = m[2]; }
+        return { n: i + 1, side, tag, val: t.replace(' kg', ''), bg: s.bg, fg: s.fg };
+      });
+      // group identical sets that follow each other
+      const out = [];
+      one.forEach((s) => {
+        const p = out[out.length - 1];
+        if (p && !s.side && p.val === s.val && p.tag === s.tag && p.bg === s.bg) { p.to = s.n; p.k++; }
+        else out.push(Object.assign({ to: s.n, k: 1 }, s));
+      });
+      return out.map((s) => ({
+        lab: (s.side || (s.k > 1 ? s.n + '–' + s.to : String(s.n))) + s.tag,
+        val: s.val, count: s.k > 1 ? '×' + s.k : '', bg: s.bg, fg: s.fg, border: s.bg,
+        fs: [...s.val].length > 9 ? '12px' : '14px'
+      }));
+    };
+    const cap = (boxes, max, total) => {
+      if (!max || boxes.length <= max) return boxes;
+      const shown = boxes.slice(0, max - 1);
+      const hidden = total - shown.reduce((a, b) => a + (b.count ? parseInt(b.count.slice(1), 10) : 1), 0);
+      return shown.concat([{ lab: 'tap to see', val: '+' + hidden + ' more', count: '', bg: 'transparent', fg: '#C4B1FF', border: '#3A2F5C', fs: '13px' }]);
+    };
+    v.items.forEach((e) => { e.sets = cap(cells(e.sets), 0, e.sets.length); });
     return v;
   }
   _vals() {
