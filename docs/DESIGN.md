@@ -62,6 +62,7 @@ Bottom bar: **Workouts · Journal · Stats · Settings**.
    All ring segments have **rounded ends** (gaps kept the same width).
    **Last 3 seconds**: the time becomes a big 3 / 2 / 1; each number starts huge and higher up and drops down,
    shrinking to its size in ~0.4 s (also for the 3-2-1 "Get ready"). Live demo: 4c on the canvas.
+   **New series**: the disc inflates from the center, fast (~0.25 s, tiny overshoot), with its text.
    Round x/y, remaining, series x/y, "Next" card, whole-workout progress bar, previous / pause / next.
    **Landscape layout** for viewing from far away. **3-2-1 countdown** before start. **No color flash** (removed).
    **No extra disc animations** in v1; only the "Liquid / bubbles" demo is kept on the canvas, maybe later.
