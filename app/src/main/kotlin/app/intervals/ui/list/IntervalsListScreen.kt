@@ -423,10 +423,10 @@ private fun WorkoutCard(
             RoundBar(w, 6)
             Text(meta(w), color = p.muted, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(6.dp).clip(CircleShape).background(
-                    when { last == null -> Color.Transparent; last.completed -> p.pink; else -> p.yellow },
-                ))
-                Spacer(Modifier.width(6.dp))
+                if (last != null) {
+                    Box(Modifier.size(6.dp).clip(CircleShape).background(if (last.completed) p.pink else p.yellow))
+                    Spacer(Modifier.width(6.dp))
+                }
                 Text(lastLine(last), color = p.soft, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }

@@ -179,7 +179,7 @@ private fun Bars(bars: List<Pair<String, Int>>, currentIndex: Int) {
         }
     }
     Row(Modifier.fillMaxWidth().padding(top = 4.dp)) {
-        val step = when { bars.size > 20 -> 7; bars.size > 12 -> 3; else -> 1 }
+        val step = when { bars.size > 20 -> 7; bars.size > 6 -> 3; else -> 1 }
         bars.forEachIndexed { i, (label, _) ->
             Text(if (i % step == 0) label else "", color = p.muted, fontSize = 10.sp, textAlign = TextAlign.Center, maxLines = 1, modifier = Modifier.weight(1f))
         }
