@@ -315,6 +315,13 @@
       "w": 390,
       "h": 900,
       "title": "Intervals: progress of a logged value (Load L vs R, records)"
+    },
+    "EditorV2.dc.html": {
+      "x": 940,
+      "y": -6400,
+      "w": 390,
+      "h": 1000,
+      "title": "2 · Edit workout v2: in play order (tweak: workout)"
     }
   },
   "order": [
@@ -360,7 +367,8 @@
     "GymExHistory.dc.html",
     "GymEditExercise.dc.html",
     "GymVisual3.dc.html",
-    "IntervalsProgress.dc.html"
+    "IntervalsProgress.dc.html",
+    "EditorV2.dc.html"
   ],
   "notes": {
     "head": {
@@ -403,6 +411,13 @@
       "x": 0,
       "y": -6700,
       "text": "Gym: what you trained",
+      "kind": "title1",
+      "maxW": 400
+    },
+    "editorv2": {
+      "x": 940,
+      "y": -6700,
+      "text": "Edit workout: proposal",
       "kind": "title1",
       "maxW": 400
     }

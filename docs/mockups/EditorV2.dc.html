@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Edit workout, play order</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 1000px; box-sizing: border-box; background: #000000; color: #F2F3F5; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+  <header style="display: flex; align-items: center; justify-content: space-between; padding: 12px 8px">
+    <span style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></span>
+    <span style="font-size: 16px; font-weight: 600">Edit workout</span>
+    <span style="height: 40px; padding: 0 18px; border-radius: 20px; background: #7C3AED; color: #FFFFFF; font-size: 15px; font-weight: 600; display: flex; align-items: center">Save</span>
+  </header>
+
+  <div style="padding: 0 20px; display: flex; flex-direction: column; gap: 10px">
+    <div style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 26px; font-weight: 600; padding-bottom: 6px; border-bottom: 2px solid #7C3AED">{{w.name}}</div>
+    <div style="display: flex; align-items: baseline; gap: 10px">
+      <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 32px; font-weight: 700">{{w.total}}</span>
+      <span style="font-size: 13px; color: #9AA0AA">total · {{w.rounds}} rounds of {{w.roundTime}}</span>
+    </div>
+  </div>
+
+  <div style="flex: 1; overflow: hidden; display: flex; flex-direction: column; padding: 14px 16px 0">
+    <!-- 1 warm-up -->
+    <div style="display: flex; align-items: center; gap: 12px; height: 48px; padding: 0 14px; border-radius: 14px; background: #1A1C21">
+      <span style="width: 26px; height: 26px; border-radius: 13px; background: #FF9800"></span>
+      <span style="flex: 1; font-size: 15px">Warm-up <span style="color: #9AA0AA; font-size: 12px">· once, at the start</span></span>
+      <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 17px; font-weight: 600">{{w.warm}}</span>
+    </div>
+    <div style="width: 2px; height: 14px; background: #2A2D34; margin-left: 27px"></div>
+
+    <!-- 2 the round -->
+    <div style="border: 2px solid #3B2F63; border-radius: 18px; background: #110E1A; overflow: hidden">
+      <div style="display: flex; align-items: center; gap: 10px; padding: 10px 8px 10px 14px; background: #1C1828">
+        <span style="flex: 1; display: flex; flex-direction: column">
+          <span style="font-size: 15px; font-weight: 700; color: #C4B1FF">Each round</span>
+          <span style="font-size: 12px; color: #9AA0AA">{{w.roundTime}} · played {{w.rounds}} times</span>
+        </span>
+        <span style="width: 40px; height: 40px; border-radius: 12px; background: #2A2340; color: #C4B1FF; display: flex; align-items: center; justify-content: center; font-size: 20px">−</span>
+        <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 22px; font-weight: 700; color: #C4B1FF; min-width: 40px; text-align: center">×{{w.rounds}}</span>
+        <span style="width: 40px; height: 40px; border-radius: 12px; background: #2A2340; color: #C4B1FF; display: flex; align-items: center; justify-content: center; font-size: 20px">+</span>
+      </div>
+
+      <div style="padding: 8px 10px 10px">
+        <!-- repeat group inside the round -->
+        <div style="border-left: 3px solid #7C3AED; border-radius: 4px; padding: 2px 0 2px 10px">
+          <div style="display: flex; align-items: center; gap: 8px; min-height: 40px">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C4B1FF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3"></path></svg>
+            <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 14px; font-weight: 600; color: #C4B1FF">Repeat ×{{w.times}}</span><span style="font-size: 11px; color: #9AA0AA">{{w.each}} each</span></span>
+            <span style="font-size: 18px; color: #C4B1FF; padding: 0 6px">− ＋</span>
+          </div>
+          <sc-for list="{{w.rows}}" as="r" hint-placeholder-count="4">
+            <div style="display: flex; align-items: center; gap: 12px; min-height: {{r.h}}; opacity: {{r.op}}">
+              <span style="width: 28px; display: flex; justify-content: center"><span style="width: {{r.dot}}; height: {{r.dotH}}; border-radius: 14px; background: {{r.c}}"></span></span>
+              <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: {{r.fs}}; color: {{r.fg}}">{{r.name}}</span><sc-if value="{{r.note}}" hint-placeholder-val="{{ false }}"><span style="font-size: 11px; color: #9AA0AA">{{r.note}}</span></sc-if></span>
+              <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: {{r.fs}}; color: {{r.fg}}">{{r.t}}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display: flex; gap: 8px; padding-top: 10px">
+          <span style="flex: 1; height: 40px; border-radius: 12px; background: #3A1428; color: #FF8AB3; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center">+ Work</span>
+          <span style="flex: 1; height: 40px; border-radius: 12px; background: #3A2E0A; color: #FFD54F; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center">+ Rest</span>
+          <span style="flex: 1; height: 40px; border-radius: 12px; background: #2A2340; color: #C4B1FF; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center">+ Other</span>
+        </div>
+      </div>
+    </div>
+    <div style="width: 2px; height: 14px; background: #2A2D34; margin-left: 27px"></div>
+
+    <!-- 3 rest between rounds -->
+    <div style="display: flex; align-items: center; gap: 12px; height: 52px; padding: 0 14px; border-radius: 14px; background: #1A1C21">
+      <span style="width: 26px; height: 6px; border-radius: 3px; background: #00BFA5"></span>
+      <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 15px">Rest between rounds</span><span style="font-size: 12px; color: #9AA0AA">{{w.betweenNote}}</span></span>
+      <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 17px; font-weight: 600">{{w.between}}</span>
+    </div>
+
+    <div style="margin-top: 16px; padding: 10px 12px; border-radius: 12px; border: 1px solid #23262C; display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 12px; color: #9AA0AA">In the player</span>
+      <div style="display: flex; gap: 2px; height: 8px">
+        <sc-for list="{{w.bar}}" as="b" hint-placeholder-count="12">
+          <span style="flex: {{b.d}} 1 0; min-width: 2px; border-radius: 3px; background: {{b.c}}"></span>
+        </sc-for>
+      </div>
+      <span style="font-size: 12px; color: #6E747E">warm-up · round 1 · rest · round 2 · … · round {{w.rounds}} (no rest after it)</span>
+    </div>
+  </div>
+  <span style="padding: 10px 20px 16px; font-size: 12px; color: #6E747E">Tap a line to edit it · long-press to select (repeat, duplicate, move, delete)</span>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"workout":{"editor":"enum","options":["block pulls 60%","hangboard 70%"],"default":"block pulls 60%"},"$preview":{"width":390,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const big = (name, t, c, note) => ({ name, t, c, note: note || '', h: '44px', fs: '15px', fg: '#F2F3F5', dot: '26px', dotH: '26px', op: 1 });
+    const small = (name, t, c) => ({ name, t, c, note: '', h: '30px', fs: '13px', fg: '#00BFA5', dot: '14px', dotH: '6px', op: 1 });
+    const skipped = (r) => Object.assign(r, { note: 'not the last time' });
+    const W = {
+      'block pulls 60%': {
+        name: 'block pulls 60%', total: '9:53', rounds: 4, roundTime: '0:57', warm: '0:05', times: 4, each: '0:15',
+        between: '2:00', betweenNote: '3 times · never after the last round',
+        rows: [big('pull · left', '0:05', '#9C27B0'), small('change side', '0:02', '#00BFA5'), big('pull · right', '0:05', '#E91E63'), skipped(big('rest', '0:03', '#FFC107'))],
+        bar: [[5, '#FF9800'], ...Array.from({ length: 4 }).flatMap((_, r) => [[5, '#9C27B0'], [2, '#00BFA5'], [5, '#E91E63'], [3, '#FFC107']]).slice(0, -1), [20, '#00BFA5']]
+      },
+      'hangboard 70%': {
+        name: 'hangboard 70%', total: '5:25', rounds: 4, roundTime: '0:35', warm: '0:05', times: 4, each: '0:10',
+        between: '1:00', betweenNote: '3 times · never after the last round',
+        rows: [big('hang', '0:05', '#E91E63'), skipped(big('rest', '0:05', '#FFC107'))],
+        bar: [[5, '#FF9800'], [5, '#E91E63'], [5, '#FFC107'], [5, '#E91E63'], [5, '#FFC107'], [5, '#E91E63'], [5, '#FFC107'], [5, '#E91E63'], [20, '#00BFA5']]
+      }
+    };
+    const w = W[this.props.workout ?? 'block pulls 60%'] || W['block pulls 60%'];
+    return { w: Object.assign({}, w, { bar: w.bar.map(([d, c]) => ({ d, c })) }) };
+  }
+}
+</script>
+</body>
+</html>
