@@ -23,11 +23,7 @@ button{font-family:inherit}
     </span>
   </header>
 
-  <div aria-label="Progress: 7 of 13 planned sets" style="display: flex; gap: 4px; padding: 6px 20px 0">
-    <sc-for list="{{bar}}" as="b" hint-placeholder-count="13">
-      <span style="flex: 1; height: 6px; border-radius: 3px; background: {{b.c}}"></span>
-    </sc-for>
-  </div>
+
 
   <div style="flex: 1; overflow: hidden; display: flex; flex-direction: column; gap: 10px; padding: 16px 16px 0">
     <sc-for list="{{items}}" as="e" hint-placeholder-count="3">
@@ -88,7 +84,7 @@ class Component extends DCLogic {
       });
       return out.map((s) => ({
         lab: (s.side || (s.k > 1 ? s.n + '–' + s.to : String(s.n))) + s.tag,
-        val: s.val, count: s.k > 1 ? '×' + s.k : '', bg: s.bg, fg: s.fg, border: s.bg,
+        val: s.val, count: s.k > 1 ? '×' + s.k : '', bg: s.bg, fg: s.fg, border: s.bg === 'transparent' ? '#3A3E46' : s.bg,
         fs: [...s.val].length > 9 ? '12px' : '14px'
       }));
     };
@@ -109,18 +105,16 @@ class Component extends DCLogic {
       : { bg: '#0E3B35', fg: '#E6FFFA', line: '#00BFA5', pct: '70%', time: '2:07', title: 'Resting · next: Deadlift set 3', sub: 'counts up · buzz at 3:00', icon: 'M12 8v5l3 2M12 3.5a9 9 0 1 0 0 18a9 9 0 0 0 0-18', aria: 'Rest 2 minutes 7 seconds, buzz at 3 minutes' };
     const done = (t) => ({ t: t + ' ✓', bg: '#3A1428', fg: '#FF8AB3' });
     const pr = (t) => ({ t: t + ' PR', bg: '#FFC107', fg: '#1A1200' });
-    const todo = (t) => ({ t, bg: '#23262C', fg: '#9AA0AA' });
-    const bar = [];
-    for (let i = 0; i < 13; i++) bar.push({ c: i < 7 ? '#E91E63' : i === 7 ? '#7C3AED' : '#23262C' });
+    const todo = (t) => ({ t, bg: 'transparent', fg: '#6E747E' }); // planned, not done yet (only with a plan)
     return {
-      bar, r,
+      r,
       items: [
-        { num: '✓', name: 'Barbell Deep Squat', sub: '5 sets · 80 kg', state: 'done', stateFg: '#FF8AB3', bg: '#0B0C0E', border: '#0B0C0E', numBg: '#3A1428', numFg: '#FF8AB3', hasSets: true,
+        { num: '✓', name: 'Barbell Deep Squat', sub: 'no plan · 5 sets today · last time 4', state: 'done', stateFg: '#FF8AB3', bg: '#0B0C0E', border: '#0B0C0E', numBg: '#3A1428', numFg: '#FF8AB3', hasSets: true,
           sets: [done('80 × 5'), done('80 × 5'), done('80 × 5'), done('80 × 5'), pr('85 × 3')] },
-        { num: '2', name: 'Deadlift', sub: 'plan 4 sets · last 110 × 5, 5, 3', state: 'now', stateFg: '#C4B1FF', bg: '#1A1C21', border: '#7C3AED', numBg: '#7C3AED', numFg: '#FFFFFF', hasSets: true,
+        { num: '2', name: 'Deadlift', sub: 'plan: 4 sets (outlines) · last 110 × 5, 5, 3', state: 'now', stateFg: '#C4B1FF', bg: '#1A1C21', border: '#7C3AED', numBg: '#7C3AED', numFg: '#FFFFFF', hasSets: true,
           sets: [done('110 × 5'), done('110 × 5'), todo('110 × 5'), todo('110 × 5')] },
-        { num: '3', name: 'Bulgarian Bar Squat', sub: 'plan 4 sets · per side · last 70 × 5', state: 'next', stateFg: '#9AA0AA', bg: '#1A1C21', border: '#1A1C21', numBg: '#23262C', numFg: '#C9CDD3', hasSets: true,
-          sets: [todo('L 70 × 5'), todo('R 70 × 5'), todo('L 70 × 5'), todo('R 70 × 5')] }
+        { num: '3', name: 'Bulgarian Bar Squat', sub: 'no plan · per side · last L 70 × 5, R 70 × 5', state: 'next', stateFg: '#9AA0AA', bg: '#1A1C21', border: '#1A1C21', numBg: '#23262C', numFg: '#C9CDD3', hasSets: false,
+          sets: [] }
       ]
     };
   }

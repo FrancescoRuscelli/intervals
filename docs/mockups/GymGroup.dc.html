@@ -45,7 +45,7 @@ button{font-family:inherit}
       </div>
     </sc-for>
     <button style="height: 52px; border: 2px dashed #2A2D34; border-radius: 16px; background: transparent; color: #C4B1FF; font-size: 15px; font-weight: 600">+ Add exercise (yours or new)</button>
-    <span style="padding: 4px 4px 0; font-size: 12px; color: #9AA0AA">Drag to reorder · the plan (3 sets…) is just a reminder</span>
+    <span style="padding: 4px 4px 0; font-size: 12px; color: #9AA0AA">Drag to reorder · a plan is optional: tap an exercise to add one (sets, or sets × reps @ weight). Going over or stopping early is fine.</span>
   </div>
 
   <div style="padding: 12px 16px 26px">
@@ -60,10 +60,10 @@ class Component extends DCLogic {
   renderVals() {
     return {
       items: [
-        { n: 1, name: 'Pull-ups', plan: '3 sets · weight · reps' },
-        { n: 2, name: 'One-arm hang', plan: '4 sets · per side · weight · time' },
-        { n: 3, name: 'Rows', plan: '3 sets · weight · reps' },
-        { n: 4, name: 'Band face pulls', plan: '2 sets · band · reps' }
+        { n: 1, name: 'Pull-ups', plan: 'plan: 3 sets' },
+        { n: 2, name: 'One-arm hang', plan: 'no plan · per side' },
+        { n: 3, name: 'Rows', plan: 'plan: 3 × 8 @ 40 kg' },
+        { n: 4, name: 'Band face pulls', plan: 'no plan' }
       ]
     };
   }

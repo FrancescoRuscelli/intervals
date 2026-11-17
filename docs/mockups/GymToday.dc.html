@@ -27,7 +27,7 @@ button{font-family:inherit}
   <header style="display: flex; align-items: center; justify-content: space-between; padding: 16px 12px 12px 20px">
     <div style="display: flex; flex-direction: column; gap: 2px">
       <h1 style="margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 30px; font-weight: 700; letter-spacing: -0.5px">Today</h1>
-      <span style="font-size: 13px; color: #9AA0AA">Tuesday 17 November · 3 exercises · 8 sets</span>
+      <span style="font-size: 13px; color: #9AA0AA">Tuesday 17 November · 3 exercises · 7 sets</span>
     </div>
     <button aria-label="Other days" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: transparent; color: #F2F3F5; display: flex; align-items: center; justify-content: center">
       <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path></svg>
@@ -129,7 +129,7 @@ class Component extends DCLogic {
       ? [['Workouts', I.gym, 'Main.dc.html', true], ['Journal', I.journal, 'Journal.dc.html'], ['Stats', I.stats, 'Stats.dc.html'], ['Settings', I.settings, 'Settings.dc.html']]
       : [['Intervals', I.timer, 'Main.dc.html'], ['Gym', I.gym, 'GymToday.dc.html', true], ['Journal', I.journal, 'Journal.dc.html'], ['Stats', I.stats, 'Stats.dc.html'], ['Settings', I.settings, 'Settings.dc.html']];
     const nav = tabs.map(([label, icon, href, on]) => ({ label, icon, href, color: on ? '#C4B1FF' : '#9AA0AA', bg: on ? '#2A2340' : 'transparent', fw: on ? 700 : 600 }));
-    const done = (text) => ({ text: text + ' ✓', bg: '#3A1428', fg: '#FF8AB3' });
+    const done = (text) => ({ text, bg: '#3A1428', fg: '#FF8AB3' });
     const todo = (text) => ({ text, bg: '#23262C', fg: '#C9CDD3' });
     if ((this.props.day ?? 'normal') !== 'normal') {
       const rep = (t, n, f) => Array.from({ length: n }, () => f(t));
@@ -138,15 +138,15 @@ class Component extends DCLogic {
         exercises: [
           { name: 'Dips', fields: 'weight · reps', last: 'your real 29 May: 24 sets', sets: [...rep('+25 kg × 10', 15, done), done('+25 kg × 8'), ...rep('+25 kg × 7', 2, done), ...rep('+25 kg × 5', 3, done), done('+25 kg × 4'), done('+25 kg × 6'), done('+25 kg × 5')] },
           { name: 'Pike Push Up', fields: 'reps', last: 'your real 1 Jul: 24 sets', sets: ['9', '4', '5', '4', '5', '4', '4', '4', '4', '4', '4', '5', '4', '3', '4', '3', '4', '4', '4', '4', '3', '4', '3', '4'].map((x) => done(x + ' reps')) },
-          { name: 'Pistol Squat', fields: 'bands · reps · per side', last: 'long values get smaller text', sets: [done('L 🟢🟣🟣🔴 × 15'), done('R 🟢🟣🟣🔴 × 15'), todo('L 🟢🟣🟣🔴 × 15')] }
+          { name: 'Pistol Squat', fields: 'bands · reps · per side', last: 'long values get smaller text', sets: [done('L 🟢🟣🟣🔴 × 15'), done('R 🟢🟣🟣🔴 × 15')] }
         ]
       };
     }
     return {
       isSwitch, nav, cols: tabs.length, r,
       exercises: [
-        { name: 'Barbell Deep Squat', fields: 'weight · reps', sets: [done('80 kg × 5'), done('80 kg × 5'), todo('80 kg × 5')], last: 'Last time (Wed 11): 80 kg × 5, 5, 5, 5' },
-        { name: 'Pistol Squat', fields: 'bands · reps · per side', sets: [done('L 🟢🟣🔴 × 5'), done('R 🟢🟣🔴 × 5'), todo('L 🟢🟣🔴 × 5')], last: 'Last time: L 🟢🟣🟣🔴 × 5 · R 🟢🟣🟣🔴 × 5' },
+        { name: 'Barbell Deep Squat', fields: 'weight · reps', sets: [done('80 kg × 5'), done('80 kg × 5'), done('80 kg × 5')], last: '3 sets · last time (Wed 11) 4 sets: 80 kg × 5, 5, 5, 5' },
+        { name: 'Pistol Squat', fields: 'bands · reps · per side', sets: [done('L 🟢🟣🔴 × 5'), done('R 🟢🟣🔴 × 5')], last: '2 sets · last time: L 🟢🟣🟣🔴 × 5 · R 🟢🟣🟣🔴 × 5' },
         { name: 'Deloaded One Arm Pull-Up', fields: 'assist · reps · per side', sets: [done('R −20 kg × 3'), done('L −25 kg × 3')], last: 'Last time: R −20 kg × 3 · L −25 kg × 2' }
       ]
     };

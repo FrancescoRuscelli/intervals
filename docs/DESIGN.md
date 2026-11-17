@@ -111,6 +111,9 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
 - **Log screen (G2, agreed clean style)**: header shows last time; text tabs with underline; big tiles side by side
   (weight | reps, big − / +); one "Log set" button + note button; small teal rest pill; sets as plain rows
   (number, value, rest on the right), tap a row to edit / add a note. Bands = full-width row of dots.
+- **Free logging by default**: no targets, no "3 / 4", no empty "to do" sets; an exercise shows the sets done and
+  "last time N sets" as information. **Plans are optional**, per exercise inside a group ("4 sets" or "3 × 8 @ 40 kg"):
+  only then planned sets show as grey outlines; going over or stopping early is fine, no warnings.
 - **Swipe between days** on Today (← yesterday, the day before…; arrows too), past days open the same way, editable.
 - Today layout: options A–E on the canvas, to choose.
 - **Set boxes** (Today, group in progress, history): equal grid boxes, label on top (set number / L / R, ✓, PR), value below;
