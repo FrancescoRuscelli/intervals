@@ -185,7 +185,15 @@
       "y": -1400,
       "w": 900,
       "h": 1220,
-      "title": "Palette: purple, pink, yellow + a fourth"
+      "title": "Palette: purple, pink, yellow, teal"
+    },
+    "PlayerLiveSpin.dc.html": {
+      "x": 3330,
+      "y": -1400,
+      "w": 390,
+      "h": 844,
+      "title": "4d · Live: crazy spin (whirl on change / always spin)",
+      "is_interactive": true
     }
   },
   "order": [
@@ -213,7 +221,8 @@
     "EditorSelect.dc.html",
     "PlayerRest.dc.html",
     "PlayerLiveRounds.dc.html",
-    "Palette.dc.html"
+    "Palette.dc.html",
+    "PlayerLiveSpin.dc.html"
   ],
   "notes": {
     "head": {
