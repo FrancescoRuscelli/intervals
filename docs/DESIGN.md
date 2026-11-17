@@ -92,6 +92,29 @@ The series color picker shows these four first, then the other Material colors.
 
 Not wanted (for now): sharing workouts, reminders, home-screen widget, smartwatch, Health Connect.
 
+## Gym: strength log (mockups G1–G8, agreed so far 2026-11-17, not implemented)
+
+Replaces FitNotes. Same look as the rest of the app, as simple as possible.
+- **Placement: own Gym tab** (G1). Tabs: Intervals · Gym · Journal · Stats · Settings. (G1b switch rejected.)
+- **No preset list, no categories**: you create your own exercises.
+- **Exercise = name + what you write down**: weight, reps, time, distance, or your own field.
+  - Weight can be **+ added** or **− assist** (e.g. Deloaded One Arm Pull-Up: weight taken off).
+  - **Left and right apart**: one exercise, each set is L or R; "Both" logs one set per side with the same values;
+    after a set it switches side. Never separate "(Left)" / "(Right)" exercises.
+  - **Bands**: a combination, how many of each color; order does not matter, always shown lightest → strongest
+    (assumed green < yellow < purple < red < black, to confirm).
+  - Rest after each set (teal timer), starts automatically when a set is logged.
+- **Quick notes per set**: tags (Max, Bad form, Assisted, Failed, +½ rep, your own) + free note.
+- **Variants stay separate exercises** (Block Pulls Squeezed, Pull Up (Second Half)…).
+- **Groups** of exercises (Pull day, Legs…), started from Today.
+- History per exercise: best set, records, chart, past days.
+- **Import from FitNotes**: from the `.fitnotes` backup (SQLite; the CSV export has no comments).
+  - Merge "(Left)"/"(Right)" pairs into one per-side exercise (11 pairs; one-side-only ones become per-side too).
+  - Comments become data: "L"/"R" → side, band emojis (🟢🟣🔴⚫🟡, "nero", "green+purple"…) → bands,
+    the rest kept as notes **exactly as written (Italian)**.
+  - Suggest groups from exercises done on the same day; skip unused exercises and categories; recompute records.
+- Not wanted (from your FitNotes data, never used): routines, body weight, measurements, goals, plate calculator.
+
 ## Energy efficiency (agreed goal: very efficient)
 
 - Pure black in dark mode; screen kept on only during a workout.
@@ -125,4 +148,6 @@ Not wanted (for now): sharing workouts, reminders, home-screen widget, smartwatc
 - [ ] Step 4: screens (list, editor, series, import, journal, stats, settings, finished)
 - [ ] Step 5: player screen + foreground timer service, voice, beeps, countdown, flash, landscape
 - [ ] Step 6: install on the Pixel 8a, real workout test, energy profiling
+- [x] Gym mockups G1–G8 (placement: own tab)
+- [ ] Gym: data model, database, screens, FitNotes importer (after the interval screens? to decide)
 - [ ] App icon (to decide: e.g. purple disc with segmented ring)
