@@ -101,8 +101,8 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
   - Weight can be **+ added** or **− assist** (e.g. Deloaded One Arm Pull-Up: weight taken off).
   - **Left and right apart**: one exercise, each set is L or R; "Both" logs one set per side with the same values;
     after a set it switches side. Never separate "(Left)" / "(Right)" exercises.
-  - **Bands**: a combination, how many of each color; order does not matter, always shown lightest → strongest
-    (assumed green < yellow < purple < red < black, to confirm).
+  - **Bands**: a combination, how many of each color; order does not matter, always shown strongest → lightest
+    (strongest → lightest: green, purple, black, red, yellow; shown in that order, like your comments).
   - Rest after each set (teal timer), starts automatically when a set is logged.
 - **Quick notes per set**: tags (Max, Bad form, Assisted, Failed, +½ rep, your own) + free note.
 - **Variants stay separate exercises** (Block Pulls Squeezed, Pull Up (Second Half)…).
@@ -148,6 +148,6 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
 - [ ] Step 4: screens (list, editor, series, import, journal, stats, settings, finished)
 - [ ] Step 5: player screen + foreground timer service, voice, beeps, countdown, flash, landscape
 - [ ] Step 6: install on the Pixel 8a, real workout test, energy profiling
-- [x] Gym mockups G1–G8 (placement: own tab)
+- [x] Gym mockups G1–G13 (placement: own tab)
 - [ ] Gym: data model, database, screens, FitNotes importer (after the interval screens? to decide)
 - [ ] App icon (to decide: e.g. purple disc with segmented ring)

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gym, group in progress</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #000000; color: #F2F3F5; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+  <header style="display: flex; align-items: center; justify-content: space-between; padding: 12px 8px 4px 20px">
+    <span style="display: flex; flex-direction: column"><span style="font-size: 12px; color: #9AA0AA">Group · started 18:05</span><span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 28px; font-weight: 700">Legs</span></span>
+    <span style="display: flex; align-items: center; gap: 4px">
+      <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; color: #C9CDD3">38:12</span>
+      <button aria-label="More" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: transparent; color: inherit; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="12" cy="19" r="1.8"></circle></svg></button>
+    </span>
+  </header>
+
+  <div aria-label="Progress: 7 of 13 planned sets" style="display: flex; gap: 4px; padding: 6px 20px 0">
+    <sc-for list="{{bar}}" as="b" hint-placeholder-count="13">
+      <span style="flex: 1; height: 6px; border-radius: 3px; background: {{b.c}}"></span>
+    </sc-for>
+  </div>
+
+  <div style="flex: 1; overflow: hidden; display: flex; flex-direction: column; gap: 10px; padding: 16px 16px 0">
+    <sc-for list="{{items}}" as="e" hint-placeholder-count="3">
+      <a href="GymExercise.dc.html" style="display: flex; flex-direction: column; gap: 10px; padding: 14px 14px 14px 14px; border-radius: 20px; background: {{e.bg}}; border: 2px solid {{e.border}}; color: inherit; text-decoration: none">
+        <div style="display: flex; align-items: center; gap: 12px">
+          <span style="width: 32px; height: 32px; flex: none; border-radius: 16px; background: {{e.numBg}}; color: {{e.numFg}}; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{e.num}}</span>
+          <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 17px; font-weight: 700">{{e.name}}</span><span style="font-size: 12px; color: #9AA0AA">{{e.sub}}</span></span>
+          <span style="font-size: 13px; font-weight: 700; color: {{e.stateFg}}">{{e.state}}</span>
+        </div>
+        <sc-if value="{{e.hasSets}}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; flex-wrap: wrap; gap: 6px; padding-left: 44px">
+            <sc-for list="{{e.sets}}" as="s" hint-placeholder-count="3">
+              <span style="height: 28px; padding: 0 9px; border-radius: 9px; background: {{s.bg}}; color: {{s.fg}}; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 13px; font-weight: 600; display: flex; align-items: center">{{s.t}}</span>
+            </sc-for>
+          </div>
+        </sc-if>
+      </a>
+    </sc-for>
+    <button style="height: 48px; border: 2px dashed #2A2D34; border-radius: 16px; background: transparent; color: #C4B1FF; font-size: 14px; font-weight: 600">+ Add an exercise just for today</button>
+  </div>
+
+  <div style="margin: 10px 16px 0; padding: 10px 10px 10px 16px; border-radius: 18px; background: #00BFA5; color: #04221E; display: flex; align-items: center; gap: 10px">
+    <span style="display: flex; flex-direction: column"><span style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px">Rest</span><span style="font-size: 12px; font-weight: 600">next: Deadlift set 3</span></span>
+    <span style="flex: 1; text-align: right; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums">2:07</span>
+    <button aria-label="Add 30 seconds" style="height: 40px; padding: 0 12px; border: 0; border-radius: 12px; background: rgba(4,34,30,0.16); color: inherit; font-size: 14px; font-weight: 700">+30 s</button>
+  </div>
+
+  <div style="display: flex; gap: 10px; padding: 12px 16px 26px">
+    <a href="GymExercise.dc.html" style="flex: 1; height: 58px; border-radius: 18px; background: #7C3AED; color: #FFFFFF; font-size: 17px; font-weight: 700; display: flex; align-items: center; justify-content: center; text-decoration: none">Go to Deadlift</a>
+    <a href="GymFinish.dc.html" style="height: 58px; padding: 0 20px; border-radius: 18px; background: #1A1C21; color: #F2F3F5; font-size: 16px; font-weight: 600; display: flex; align-items: center; text-decoration: none">Finish</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const done = (t) => ({ t: t + ' ✓', bg: '#3A1428', fg: '#FF8AB3' });
+    const pr = (t) => ({ t: t + ' PR', bg: '#FFC107', fg: '#1A1200' });
+    const todo = (t) => ({ t, bg: '#23262C', fg: '#9AA0AA' });
+    const bar = [];
+    for (let i = 0; i < 13; i++) bar.push({ c: i < 7 ? '#E91E63' : i === 7 ? '#7C3AED' : '#23262C' });
+    return {
+      bar,
+      items: [
+        { num: '✓', name: 'Barbell Deep Squat', sub: '5 sets · 80 kg', state: 'done', stateFg: '#FF8AB3', bg: '#0B0C0E', border: '#0B0C0E', numBg: '#3A1428', numFg: '#FF8AB3', hasSets: true,
+          sets: [done('80 × 5'), done('80 × 5'), done('80 × 5'), done('80 × 5'), pr('85 × 3')] },
+        { num: '2', name: 'Deadlift', sub: 'plan 4 sets · last 110 × 5, 5, 3', state: 'now', stateFg: '#C4B1FF', bg: '#1A1C21', border: '#7C3AED', numBg: '#7C3AED', numFg: '#FFFFFF', hasSets: true,
+          sets: [done('110 × 5'), done('110 × 5'), todo('110 × 5'), todo('110 × 5')] },
+        { num: '3', name: 'Bulgarian Bar Squat', sub: 'plan 4 sets · per side · last 70 × 5', state: 'next', stateFg: '#9AA0AA', bg: '#1A1C21', border: '#1A1C21', numBg: '#23262C', numFg: '#C9CDD3', hasSets: true,
+          sets: [todo('L 70 × 5'), todo('R 70 × 5'), todo('L 70 × 5'), todo('R 70 × 5')] }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

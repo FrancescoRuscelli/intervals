@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gym, workout done</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #000000; color: #F2F3F5; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+  <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 34px 20px 12px">
+    <div style="width: 128px; height: 128px; border-radius: 64px; background: #7C3AED; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #FFFFFF; box-shadow: 0 0 0 8px #1C1828">
+      <span style="font-size: 15px; font-weight: 600; opacity: 0.85">done</span>
+      <svg aria-hidden="true" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+    </div>
+    <h1 style="margin: 6px 0 0; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 30px; font-weight: 700">Legs</h1>
+    <span style="font-size: 13px; color: #9AA0AA">Tuesday 17 November · 18:05 – 18:58</span>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 6px 16px 0">
+    <div style="padding: 10px 12px; border-radius: 14px; background: #1A1C21; display: flex; flex-direction: column"><span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 22px; font-weight: 700">53 min</span><span style="font-size: 12px; color: #9AA0AA">time</span></div>
+    <div style="padding: 10px 12px; border-radius: 14px; background: #1A1C21; display: flex; flex-direction: column"><span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 22px; font-weight: 700">13</span><span style="font-size: 12px; color: #9AA0AA">sets</span></div>
+    <div style="padding: 10px 12px; border-radius: 14px; background: #FFC107; color: #1A1200; display: flex; flex-direction: column"><span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 22px; font-weight: 700">2</span><span style="font-size: 12px; font-weight: 600">records</span></div>
+  </div>
+
+  <div style="flex: 1; overflow: hidden; display: flex; flex-direction: column; gap: 8px; padding: 14px 16px 0">
+    <sc-for list="{{rows}}" as="r" hint-placeholder-count="3">
+      <div style="padding: 12px 14px; border-radius: 16px; background: #1A1C21; display: flex; flex-direction: column; gap: 4px">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+          <span style="font-size: 15px; font-weight: 700">{{r.name}}</span>
+          <sc-if value="{{r.pr}}" hint-placeholder-val="{{ false }}"><span style="height: 22px; padding: 0 8px; border-radius: 11px; background: #FFC107; color: #1A1200; font-size: 11px; font-weight: 800; display: flex; align-items: center">PR {{r.pr}}</span></sc-if>
+        </div>
+        <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 14px; color: #C9CDD3">{{r.sets}}</span>
+        <span style="font-size: 12px; color: #9AA0AA">{{r.vs}}</span>
+      </div>
+    </sc-for>
+    <label style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px">
+      <span style="font-size: 12px; color: #9AA0AA">Note for the day</span>
+      <input placeholder="come è andata…" style="height: 48px; border: 0; border-radius: 14px; background: #1A1C21; color: #F2F3F5; font: inherit; font-size: 15px; padding: 0 14px; outline: 0">
+    </label>
+  </div>
+
+  <div style="padding: 12px 16px 26px">
+    <a href="Journal.dc.html" style="height: 58px; border-radius: 18px; background: #7C3AED; color: #FFFFFF; font-size: 17px; font-weight: 700; display: flex; align-items: center; justify-content: center; text-decoration: none">Save to journal</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      rows: [
+        { name: 'Barbell Deep Squat', sets: '80 × 5 · 5 · 5 · 5 · 85 × 3', vs: 'vs Wed 11: 80 × 5 × 4', pr: '85 kg' },
+        { name: 'Deadlift', sets: '110 × 5 · 5 · 5 · 120 × 2', vs: 'vs Wed 11: 110 × 5, 5, 3', pr: '120 × 2' },
+        { name: 'Bulgarian Bar Squat', sets: 'L 70 × 5 · R 70 × 5 · L 70 × 5 · R 70 × 4', vs: 'vs Wed 11: same weight, 1 rep less on R', pr: '' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

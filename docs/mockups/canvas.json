@@ -259,6 +259,41 @@
       "w": 390,
       "h": 1300,
       "title": "G8 · Import from FitNotes (with your real numbers)"
+    },
+    "GymPick.dc.html": {
+      "x": 0,
+      "y": -4500,
+      "w": 390,
+      "h": 844,
+      "title": "G9 · Add exercise: recent first, search, or create (tweak: typing)"
+    },
+    "GymSession.dc.html": {
+      "x": 470,
+      "y": -4500,
+      "w": 390,
+      "h": 844,
+      "title": "G10 · Group in progress (Legs)"
+    },
+    "GymFinish.dc.html": {
+      "x": 940,
+      "y": -4500,
+      "w": 390,
+      "h": 844,
+      "title": "G11 · Gym workout done"
+    },
+    "GymJournal.dc.html": {
+      "x": 1410,
+      "y": -4500,
+      "w": 390,
+      "h": 844,
+      "title": "G12 · Journal: gym (purple) + intervals (pink)"
+    },
+    "GymStats.dc.html": {
+      "x": 1880,
+      "y": -4500,
+      "w": 390,
+      "h": 1000,
+      "title": "G13 · Stats: Gym tab, records, most trained"
     }
   },
   "order": [
@@ -296,7 +331,12 @@
     "GymHistory.dc.html",
     "GymBands.dc.html",
     "GymSetNote.dc.html",
-    "GymImport.dc.html"
+    "GymImport.dc.html",
+    "GymPick.dc.html",
+    "GymSession.dc.html",
+    "GymFinish.dc.html",
+    "GymJournal.dc.html",
+    "GymStats.dc.html"
   ],
   "notes": {
     "head": {
@@ -327,6 +367,13 @@
       "text": "Gym: strength log (proposal)",
       "kind": "title1",
       "maxW": 4150
+    },
+    "gymhead2": {
+      "x": 0,
+      "y": -4800,
+      "text": "Gym: more screens",
+      "kind": "title1",
+      "maxW": 2740
     }
   },
   "designSystems": [],

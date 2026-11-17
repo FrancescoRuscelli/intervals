@@ -54,7 +54,7 @@ button{font-family:inherit}
         </div>
       </sc-for>
     </div>
-    <span style="font-size: 12px; color: #9AA0AA">Order doesn't matter: always shown lightest → strongest · your bands are set once in the exercise</span>
+    <span style="font-size: 12px; color: #9AA0AA">Order doesn't matter: always shown strongest → lightest · your bands are set once in the exercise</span>
 
     <button style="height: 56px; border: 0; border-radius: 18px; background: #7C3AED; color: #FFFFFF; font-size: 17px; font-weight: 700">Done · {{summary}}</button>
   </section>
@@ -64,11 +64,11 @@ button{font-family:inherit}
 class Component extends DCLogic {
   renderVals() {
     const defs = [
-      { k: 'g', name: 'Green', hint: 'lightest', c: '#43A047', edge: '#43A047', e: '🟢' },
-      { k: 'y', name: 'Yellow', hint: '', c: '#FFC107', edge: '#FFC107', e: '🟡' },
+      { k: 'g', name: 'Green', hint: 'strongest', c: '#43A047', edge: '#43A047', e: '🟢' },
       { k: 'p', name: 'Purple', hint: '', c: '#8E44D8', edge: '#8E44D8', e: '🟣' },
+      { k: 'k', name: 'Black', hint: '', c: '#16181C', edge: '#5A5F68', e: '⚫' },
       { k: 'r', name: 'Red', hint: '', c: '#E53935', edge: '#E53935', e: '🔴' },
-      { k: 'k', name: 'Black', hint: 'strongest', c: '#16181C', edge: '#5A5F68', e: '⚫' }
+      { k: 'y', name: 'Yellow', hint: 'lightest', c: '#FFC107', edge: '#FFC107', e: '🟡' }
     ];
     const st = this.state || {};
     const n = st.n || { g: 1, y: 0, p: 2, r: 1, k: 0 };
