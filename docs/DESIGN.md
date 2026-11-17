@@ -63,6 +63,8 @@ Bottom bar: **Workouts · Journal · Stats · Settings**.
    **Last 3 seconds**: the time becomes a big 3 / 2 / 1; each number starts huge and higher up and drops down,
    shrinking to its size in ~0.4 s (also for the 3-2-1 "Get ready"). Live demo: 4c on the canvas.
    **New series**: the disc inflates from the center, fast (~0.25 s, tiny overshoot), with its text.
+   **Crazy spin** (optional, Settings, off by default): at every new series the disc with its name and time whirls
+   1.5 turns and settles (~0.7 s), the series ring swings back and the rounds ring the other way. No always-spinning mode. Demo: 4d.
    Round x/y, remaining, series x/y, "Next" card, whole-workout progress bar, previous / pause / next.
    **Landscape layout** for viewing from far away. **3-2-1 countdown** before start. **No color flash** (removed).
    **No extra disc animations** in v1; only the "Liquid / bubbles" demo is kept on the canvas, maybe later.
@@ -72,7 +74,7 @@ Bottom bar: **Workouts · Journal · Stats · Settings**.
    (time, length, completed / stopped in round x, **note**). Sessions are logged automatically, with their logged field values (load, edge…). No manual sessions, no RPE.
 7. **Stats**: Week / Month / Year; time, sessions, completed; minutes per week chart; most done workouts.
 8. **Settings**: theme (System / Light / Dark), accent color (purple default), voice names + language, beeps, volume,
-   lower music during cues, 3-2-1 countdown, keep screen on, lock controls; import, **backup to file**, **restore**.
+   lower music during cues, 3-2-1 countdown, crazy spin, keep screen on, lock controls; import, **backup to file**, **restore**.
 9. **Finished**: completed disc, time / rounds / series, **logged values to confirm** (per side, *Set per round*), note for the journal, *Repeat*, *Save to journal*.
 
 Style: **pure black** backgrounds in dark mode (OLED), Space Grotesk-like numbers, and a four-color palette (agreed 2026-11-17, "Palette" board):

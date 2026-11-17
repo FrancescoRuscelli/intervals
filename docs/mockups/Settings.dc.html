@@ -15,7 +15,7 @@ a{color:#7C3AED}a:hover{color:#6D28D9}
 button{font-family:inherit}
 </style>
 </helmet>
-<div style="width: 390px; height: 1060px; box-sizing: border-box; background: {{t.bg}}; color: {{t.text}}; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+<div style="width: 390px; height: 1120px; box-sizing: border-box; background: {{t.bg}}; color: {{t.text}}; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
   <header style="padding: 20px 20px 4px">
     <h1 style="margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 30px; font-weight: 700; letter-spacing: -0.5px">Settings</h1>
   </header>
@@ -64,6 +64,8 @@ button{font-family:inherit}
       <div style="border-radius: 16px; background: {{t.surface}}; border: 1px solid {{t.line}}; padding: 4px 14px">
         <label style="display: flex; align-items: center; justify-content: space-between; min-height: 52px"><span style="font-size: 15px">3-2-1 countdown before start</span><input type="checkbox" checked style="width: 22px; height: 22px; accent-color: {{t.accent}}"></label>
         <div style="height: 1px; background: {{t.line}}"></div>
+        <label style="display: flex; align-items: center; justify-content: space-between; min-height: 56px"><span style="display: flex; flex-direction: column"><span style="font-size: 15px">Crazy spin</span><span style="font-size: 12px; color: {{t.muted}}">The disc whirls at every new series</span></span><input type="checkbox" style="width: 22px; height: 22px; accent-color: {{t.accent}}"></label>
+        <div style="height: 1px; background: {{t.line}}"></div>
         <label style="display: flex; align-items: center; justify-content: space-between; min-height: 52px"><span style="font-size: 15px">Keep screen on</span><input type="checkbox" checked style="width: 22px; height: 22px; accent-color: {{t.accent}}"></label>
         <div style="height: 1px; background: {{t.line}}"></div>
         <label style="display: flex; align-items: center; justify-content: space-between; min-height: 52px"><span style="display: flex; flex-direction: column"><span style="font-size: 15px">Lock controls</span><span style="font-size: 12px; color: {{t.muted}}">Hold the pause button to unlock</span></span><input type="checkbox" style="width: 22px; height: 22px; accent-color: {{t.accent}}"></label>
@@ -100,7 +102,7 @@ button{font-family:inherit}
   </nav>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"mode":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":390,"height":1060}}'>
+<script type="text/x-dc" data-dc-script data-props='{"mode":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":390,"height":1120}}'>
 class Component extends DCLogic {
   renderVals() {
     const dark = { bg: '#000000', surface: '#1A1C21', sheet: '#16181C', line: '#23262C', text: '#F2F3F5', muted: '#9AA0AA', accent: '#7C3AED', accentText: '#C4B1FF', tint: '#2A2340', sel: '#F2F3F5' };
