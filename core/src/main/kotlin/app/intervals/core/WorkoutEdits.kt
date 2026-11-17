@@ -11,7 +11,11 @@ sealed interface EditorRow {
     val block: Int
 
     data class SingleRow(override val block: Int, val series: Series) : EditorRow
-    data class RepeatHeader(override val block: Int, val times: Int, val size: Int, val skipLast: Boolean = false, val lastName: String = "") : EditorRow
+    data class RepeatHeader(
+        override val block: Int, val times: Int, val size: Int, val skipLast: Boolean = false, val lastName: String = "",
+        /** One time through the group, and the whole group (all repetitions, last rest skipped if so). */
+        val cycleSec: Int = 0, val totalSec: Int = 0,
+    ) : EditorRow
     data class InRepeat(override val block: Int, val inner: Int, val series: Series) : EditorRow
 }
 
@@ -27,7 +31,8 @@ fun Workout.editorRows(): List<EditorRow> = buildList {
         when (block) {
             is Block.Single -> add(EditorRow.SingleRow(b, block.series))
             is Block.Repeat -> {
-                add(EditorRow.RepeatHeader(b, block.times, block.series.size, block.skipLast, block.series.last().name))
+                add(EditorRow.RepeatHeader(b, block.times, block.series.size, block.skipLast, block.series.last().name,
+                    block.series.sumOf { it.playSec }, block.unrolled().sumOf { it.playSec }))
                 block.series.forEachIndexed { i, s -> add(EditorRow.InRepeat(b, i, s)) }
             }
         }
@@ -129,6 +134,9 @@ fun Workout.moveBlock(block: Int, by: Int): Workout {
     list.add(to, b)
     return copy(blocks = list)
 }
+
+/** Time one series really takes: both sides and the change for a per-side series. */
+val Series.playSec: Int get() = perSide?.let { 2 * durationSec + it.changeSec } ?: durationSec
 
 /** The colors of one round, as (seconds, color) pieces: what the mini bars in the list and editor draw. */
 fun Workout.roundBar(): List<Pair<Int, Long>> = blocks.flatMap { b ->

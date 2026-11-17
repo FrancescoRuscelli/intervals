@@ -301,7 +301,11 @@ private fun RepeatHeader(row: EditorRow.RepeatHeader, onTimes: (Int) -> Unit, on
         Spacer(Modifier.width(10.dp))
         Column(Modifier.weight(1f).clickable { menu = true }) {
             Text("Repeat ▾", color = p.accentText, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-            if (row.skipLast) Text("no “${row.lastName}” after the last", color = p.muted, fontSize = 11.sp)
+            Text(
+                "${formatDuration(row.cycleSec)} each · ${formatDuration(row.totalSec)} in all" +
+                    if (row.skipLast) " · no “${row.lastName}” after the last" else "",
+                color = p.muted, fontSize = 11.sp,
+            )
             DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                 if (row.size >= 2) {
                     DropdownMenuItem(

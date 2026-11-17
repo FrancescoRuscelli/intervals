@@ -66,6 +66,8 @@ class WorkoutEditsTest {
         val rows = g.editorRows()
         assertEquals(4, rows.size) // header + 2 inside + single
         assertTrue(rows[0] is EditorRow.RepeatHeader)
+        assertEquals(10, (rows[0] as EditorRow.RepeatHeader).cycleSec)
+        assertEquals(30, (rows[0] as EditorRow.RepeatHeader).totalSec)
         assertEquals(7, g.roundBar().size)
         assertEquals(7, g.seriesCount)
         val perSide = Workout("p", blocks = listOf(Block.Single(hang.copy(perSide = PerSide(5)))))
