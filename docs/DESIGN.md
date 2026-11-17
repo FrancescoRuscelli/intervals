@@ -23,6 +23,15 @@ Target: Pixel 8a. UI language: English. Native Android (Kotlin + Jetpack Compose
 
 Implemented in `core/` (`Model.kt`, `Timeline.kt`), with tests.
 
+### Logged fields (agreed 2026-11-17, not implemented yet)
+
+- A series can **log values**: a list of fields the user defines (name + unit), e.g. **Load kg**, **Edge mm**.
+- A field can be **left and right apart** (one value per side, e.g. Load L +10 / R +8), else one value for both.
+- Values start from the last session, can be changed **in the rest between rounds** (timer keeps running)
+  and are confirmed on the **Finished** screen. Saved **per round** in the journal entry.
+- Interval series are **not linked** to a FitNotes-style exercise library (different in nature);
+  a manual strength log (FitNotes-like) in the same journal is an idea for later.
+
 ## Import from the old app
 
 CSV backup, no header, no quoting, two row types (see `HybridImport.kt`):
@@ -45,20 +54,21 @@ Bottom bar: **Workouts · Journal · Stats · Settings**.
 2. **Edit workout**: name, tags, warm-up, rounds (− / +), rest between rounds, one-round and total time, series list with repeat groups.
    Swipe a series to delete; long-press to select → *Repeat ×…*, *Duplicate*, *Delete*. Quick add *Work* / *Rest*.
    Duplicate a whole workout (from the list menu).
-3. **Edit series**: header in the series color, name, big duration with ± , color, icon, **per side** (change time), sound switches.
+3. **Edit series**: header in the series color, name, big duration with ± , color, icon, **per side** (change time), **Log** (own fields, left/right apart, add field), sound switches.
 4. **Player** (chosen: **big concentric disc**):
    outer ring = series of the current round as segments sized by length (done = grey, current thicker, dot marker,
    rest between rounds = thin grey arc); inner disc filled with the series color showing icon, name and the time.
    Round x/y, remaining, series x/y, "Next" card, whole-workout progress bar, previous / pause / next.
    **Landscape layout** for viewing from far away. **3-2-1 countdown** before start. **Color flash** between series.
    **No extra disc animations** in v1 (demos kept on the canvas; "Liquid" maybe later).
+   **Rest between rounds**: countdown plus − / + for the logged fields of the next round (4b on the canvas).
 5. **Import**: file card, summary, list with new total and old total struck through, "Import N workouts".
 6. **Journal**: month calendar (Monday first), dots per session, month totals, sessions of the selected day
-   (time, length, completed / stopped in round x, **note**). Sessions are logged automatically. No manual sessions, no RPE / weight.
+   (time, length, completed / stopped in round x, **note**). Sessions are logged automatically, with their logged field values (load, edge…). No manual sessions, no RPE.
 7. **Stats**: Week / Month / Year; time, sessions, completed; minutes per week chart; most done workouts.
 8. **Settings**: theme (System / Light / Dark), accent color (purple default), voice names + language, beeps, volume,
    lower music during cues, 3-2-1 countdown, color flash, keep screen on, lock controls; import, **backup to file**, **restore**.
-9. **Finished**: completed disc, time / rounds / series, note for the journal, *Repeat*, *Save to journal*.
+9. **Finished**: completed disc, time / rounds / series, **logged values to confirm** (per side, *Set per round*), note for the journal, *Repeat*, *Save to journal*.
 
 Style: purple accent (`#7C3AED` dark, `#6D28D9` light), **pure black** backgrounds in dark mode (OLED), Space Grotesk-like numbers.
 
@@ -84,7 +94,8 @@ Not wanted (for now): sharing workouts, reminders, home-screen widget, smartwatc
 
 - [x] Mockups agreed
 - [x] Step 2: project setup, data model, timeline, CSV importer + tests (all passing)
-- [ ] Step 3: Room database + repository; backup / restore JSON
+- [x] Mockups for logged fields (series editor, rest between rounds, finished)
+- [ ] Step 3: Room database + repository (with logged fields per round and side); backup / restore JSON
 - [ ] Step 4: screens (list, editor, series, import, journal, stats, settings, finished)
 - [ ] Step 5: player screen + foreground timer service, voice, beeps, countdown, flash, landscape
 - [ ] Step 6: install on the Pixel 8a, real workout test, energy profiling

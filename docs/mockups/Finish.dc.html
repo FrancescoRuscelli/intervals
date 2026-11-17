@@ -14,14 +14,14 @@ body{margin:0}
 button{font-family:inherit}
 </style>
 </helmet>
-<div style="width: 390px; height: 844px; box-sizing: border-box; background: {{t.bg}}; color: {{t.text}}; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; overflow: hidden">
+<div style="width: 390px; height: 960px; box-sizing: border-box; background: {{t.bg}}; color: {{t.text}}; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; overflow: hidden">
   <header style="align-self: stretch; display: flex; justify-content: flex-end; padding: 12px 8px 0">
     <button aria-label="Close" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: transparent; color: inherit; display: flex; align-items: center; justify-content: center">
       <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
     </button>
   </header>
 
-  <svg role="img" aria-label="All 4 rounds done" width="230" height="230" viewBox="0 0 230 230" style="margin-top: 4px">
+  <svg role="img" aria-label="All 4 rounds done" width="150" height="150" viewBox="0 0 230 230">
     <sc-for list="{{arcs}}" as="a" hint-placeholder-count="4">
       <path d="{{a.d}}" fill="none" stroke="{{t.accent}}" stroke-width="12" stroke-linecap="round"></path>
     </sc-for>
@@ -29,18 +29,44 @@ button{font-family:inherit}
     <path d="M78 117l25 25 50-52" fill="none" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"></path>
   </svg>
 
-  <h1 style="margin: 18px 0 0; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 34px; font-weight: 700">Well done</h1>
+  <h1 style="margin: 12px 0 0; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 30px; font-weight: 700">Well done</h1>
   <span style="font-size: 16px; color: {{t.muted}}">hangboard 70% · completed</span>
 
-  <div style="align-self: stretch; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 22px 16px 0">
-    <div style="padding: 12px; border-radius: 14px; background: {{t.surface}}; border: 1px solid {{t.line}}; display: flex; flex-direction: column; align-items: center"><span style="font-size: 12px; color: {{t.muted}}">Time</span><span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 24px; font-weight: 600">5:25</span></div>
-    <div style="padding: 12px; border-radius: 14px; background: {{t.surface}}; border: 1px solid {{t.line}}; display: flex; flex-direction: column; align-items: center"><span style="font-size: 12px; color: {{t.muted}}">Rounds</span><span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 24px; font-weight: 600">4/4</span></div>
-    <div style="padding: 12px; border-radius: 14px; background: {{t.surface}}; border: 1px solid {{t.line}}; display: flex; flex-direction: column; align-items: center"><span style="font-size: 12px; color: {{t.muted}}">Series</span><span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 24px; font-weight: 600">28</span></div>
+  <div style="align-self: stretch; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 18px 16px 0">
+    <div style="padding: 10px; border-radius: 14px; background: {{t.surface}}; border: 1px solid {{t.line}}; display: flex; flex-direction: column; align-items: center"><span style="font-size: 12px; color: {{t.muted}}">Time</span><span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 22px; font-weight: 600">5:25</span></div>
+    <div style="padding: 10px; border-radius: 14px; background: {{t.surface}}; border: 1px solid {{t.line}}; display: flex; flex-direction: column; align-items: center"><span style="font-size: 12px; color: {{t.muted}}">Rounds</span><span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 22px; font-weight: 600">4/4</span></div>
+    <div style="padding: 10px; border-radius: 14px; background: {{t.surface}}; border: 1px solid {{t.line}}; display: flex; flex-direction: column; align-items: center"><span style="font-size: 12px; color: {{t.muted}}">Series</span><span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 22px; font-weight: 600">28</span></div>
   </div>
 
-  <label style="align-self: stretch; display: flex; flex-direction: column; gap: 6px; padding: 18px 16px 0">
+  <section style="align-self: stretch; margin: 16px 16px 0; padding: 12px 14px 6px; border-radius: 14px; background: {{t.surface}}; border: 1px solid {{t.line}}; display: flex; flex-direction: column">
+    <div style="display: flex; align-items: center; justify-content: space-between; min-height: 32px">
+      <h2 style="margin: 0; font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px"><span style="width: 12px; height: 12px; border-radius: 6px; background: #E91E63"></span>hang</h2>
+      <span style="font-size: 12px; color: {{t.muted}}">same in all 4 rounds</span>
+    </div>
+
+    <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: {{t.muted}}; padding-top: 6px">Load</span>
+    <sc-for list="{{loadRows}}" as="r" hint-placeholder-count="2">
+      <div style="display: flex; align-items: center; gap: 8px; min-height: 50px">
+        <span style="flex: 1; font-size: 15px">{{r.side}}</span>
+        <button aria-label="{{r.side}} load less" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: {{t.tint}}; color: {{t.accentText}}; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
+        <span style="width: 96px; text-align: center; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums">{{r.value}}</span>
+        <button aria-label="{{r.side}} load more" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: {{t.tint}}; color: {{t.accentText}}; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+      </div>
+    </sc-for>
+
+    <div style="display: flex; align-items: center; gap: 8px; min-height: 50px; border-top: 1px solid {{t.line}}; margin-top: 4px">
+      <span style="flex: 1; font-size: 12px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: {{t.muted}}">Edge</span>
+      <button aria-label="Edge smaller" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: {{t.tint}}; color: {{t.accentText}}; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
+      <span style="width: 96px; text-align: center; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums">20 mm</span>
+      <button aria-label="Edge bigger" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: {{t.tint}}; color: {{t.accentText}}; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+    </div>
+
+    <button style="align-self: flex-start; min-height: 44px; border: 0; background: transparent; color: {{t.accentText}}; font-size: 14px; font-weight: 600; padding: 0">Set per round</button>
+  </section>
+
+  <label style="align-self: stretch; display: flex; flex-direction: column; gap: 6px; padding: 14px 16px 0">
     <span style="font-size: 13px; font-weight: 600; color: {{t.muted}}">Note for the journal</span>
-    <textarea rows="3" placeholder="How did it go?" style="resize: none; border-radius: 14px; border: 1px solid {{t.line}}; background: {{t.surface}}; color: {{t.text}}; font: inherit; font-size: 15px; padding: 12px 14px; outline: 0"></textarea>
+    <textarea rows="2" placeholder="How did it go?" style="resize: none; border-radius: 14px; border: 1px solid {{t.line}}; background: {{t.surface}}; color: {{t.text}}; font: inherit; font-size: 15px; padding: 12px 14px; outline: 0"></textarea>
   </label>
 
   <div style="flex: 1"></div>
@@ -53,7 +79,7 @@ button{font-family:inherit}
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"mode":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":390,"height":844}}'>
+<script type="text/x-dc" data-dc-script data-props='{"mode":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":390,"height":960}}'>
 class Component extends DCLogic {
   renderVals() {
     const dark = { bg: '#000000', surface: '#1A1C21', line: '#23262C', text: '#F2F3F5', muted: '#9AA0AA', accent: '#7C3AED', accentText: '#C4B1FF', tint: '#2A2340' };
@@ -62,7 +88,8 @@ class Component extends DCLogic {
     const cx = 115, cy = 115, r = 108;
     const pt = (deg) => { const a = deg * Math.PI / 180; return (cx + r * Math.sin(a)).toFixed(2) + ' ' + (cy - r * Math.cos(a)).toFixed(2); };
     const arcs = [0, 1, 2, 3].map((i) => { const a0 = i * 90 + 8, a1 = i * 90 + 82; return { d: 'M' + pt(a0) + ' A' + r + ' ' + r + ' 0 0 1 ' + pt(a1) }; });
-    return { t, arcs };
+    const loadRows = [{ side: 'Left', value: '+10 kg' }, { side: 'Right', value: '+8 kg' }];
+    return { t, arcs, loadRows };
   }
 }
 </script>

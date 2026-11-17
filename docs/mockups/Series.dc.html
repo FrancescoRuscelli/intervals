@@ -15,7 +15,7 @@ a{color:#7C3AED}a:hover{color:#6D28D9}
 button{font-family:inherit}
 </style>
 </helmet>
-<div style="width: 390px; height: 1040px; box-sizing: border-box; background: {{t.bg}}; color: {{t.text}}; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; position: relative; overflow: hidden">
+<div style="width: 390px; height: 1420px; box-sizing: border-box; background: {{t.bg}}; color: {{t.text}}; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; position: relative; overflow: hidden">
   <div style="background: {{color}}; color: #1A0A10; padding: 12px 8px 26px; border-radius: 0 0 28px 28px; display: flex; flex-direction: column; gap: 10px">
     <div style="display: flex; align-items: center; justify-content: space-between">
       <button aria-label="Back" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: transparent; color: inherit; display: flex; align-items: center; justify-content: center">
@@ -85,6 +85,65 @@ button{font-family:inherit}
       </div>
     </section>
 
+    <section style="display: flex; flex-direction: column; gap: 8px">
+      <h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: {{t.muted}}">Log</h2>
+      <div style="border-radius: 14px; background: {{t.surface}}; padding: 4px 14px 14px; display: flex; flex-direction: column">
+        <label style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px">
+          <span style="display: flex; flex-direction: column"><span style="font-size: 15px">Log values for this series</span><span style="font-size: 12px; color: {{t.muted}}">Asked in the rest between rounds and at the end · starts from last time</span></span>
+          <input type="checkbox" checked style="width: 22px; height: 22px; flex: none; accent-color: {{t.accent}}">
+        </label>
+
+        <div style="border-top: 1px solid {{t.line}}; padding-top: 10px; display: flex; flex-direction: column; gap: 4px">
+          <div style="display: flex; align-items: flex-end; gap: 10px">
+            <label style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+              <span style="font-size: 12px; color: {{t.muted}}">Field</span>
+              <input value="Load" style="border: 0; border-bottom: 2px solid {{t.line}}; outline: 0; background: transparent; color: inherit; font: inherit; font-size: 17px; font-weight: 600; padding: 4px 0 6px; min-width: 0">
+            </label>
+            <label style="width: 64px; display: flex; flex-direction: column; gap: 2px">
+              <span style="font-size: 12px; color: {{t.muted}}">Unit</span>
+              <input value="kg" style="border: 0; border-bottom: 2px solid {{t.line}}; outline: 0; background: transparent; color: inherit; font: inherit; font-size: 17px; font-weight: 600; padding: 4px 0 6px; min-width: 0">
+            </label>
+            <button aria-label="Remove field Load" style="width: 44px; height: 44px; flex: none; border: 0; border-radius: 22px; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center">
+              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+            </button>
+          </div>
+          <label style="display: flex; align-items: center; justify-content: space-between; min-height: 48px">
+            <span style="display: flex; flex-direction: column"><span style="font-size: 15px">Left and right apart</span><span style="font-size: 12px; color: {{t.muted}}">One value per side</span></span>
+            <input type="checkbox" checked style="width: 22px; height: 22px; accent-color: {{t.accent}}">
+          </label>
+        </div>
+
+        <div style="border-top: 1px solid {{t.line}}; padding-top: 10px; display: flex; flex-direction: column; gap: 4px">
+          <div style="display: flex; align-items: flex-end; gap: 10px">
+            <label style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+              <span style="font-size: 12px; color: {{t.muted}}">Field</span>
+              <input value="Edge" style="border: 0; border-bottom: 2px solid {{t.line}}; outline: 0; background: transparent; color: inherit; font: inherit; font-size: 17px; font-weight: 600; padding: 4px 0 6px; min-width: 0">
+            </label>
+            <label style="width: 64px; display: flex; flex-direction: column; gap: 2px">
+              <span style="font-size: 12px; color: {{t.muted}}">Unit</span>
+              <input value="mm" style="border: 0; border-bottom: 2px solid {{t.line}}; outline: 0; background: transparent; color: inherit; font: inherit; font-size: 17px; font-weight: 600; padding: 4px 0 6px; min-width: 0">
+            </label>
+            <button aria-label="Remove field Edge" style="width: 44px; height: 44px; flex: none; border: 0; border-radius: 22px; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center">
+              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+            </button>
+          </div>
+          <label style="display: flex; align-items: center; justify-content: space-between; min-height: 48px">
+            <span style="display: flex; flex-direction: column"><span style="font-size: 15px">Left and right apart</span><span style="font-size: 12px; color: {{t.muted}}">Same value for both sides</span></span>
+            <input type="checkbox" style="width: 22px; height: 22px; accent-color: {{t.accent}}">
+          </label>
+        </div>
+
+        <button style="margin-top: 8px; height: 48px; border: 2px dashed {{t.line}}; border-radius: 12px; background: transparent; color: {{t.accentText}}; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px">
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Add field
+        </button>
+
+        <div style="margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: {{t.tint}}; display: flex; flex-direction: column; gap: 2px">
+          <span style="font-size: 12px; color: {{t.muted}}">In the journal</span>
+          <span style="font-size: 14px; font-weight: 600">hang · Load L +10 kg · R +8 kg · Edge 20 mm</span>
+        </div>
+      </div>
+    </section>
+
     <section style="display: flex; flex-direction: column; gap: 2px">
       <h2 style="margin: 0 0 6px; font-size: 13px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: {{t.muted}}">Sound</h2>
       <label style="display: flex; align-items: center; justify-content: space-between; height: 48px">
@@ -103,11 +162,11 @@ button{font-family:inherit}
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"mode":{"editor":"enum","options":["dark","light"],"default":"dark"},"color":{"editor":"color","default":"#E91E63","options":["#E91E63","#FFC107","#03A9F4","#8BC34A"]},"$preview":{"width":390,"height":1040}}'>
+<script type="text/x-dc" data-dc-script data-props='{"mode":{"editor":"enum","options":["dark","light"],"default":"dark"},"color":{"editor":"color","default":"#E91E63","options":["#E91E63","#FFC107","#03A9F4","#8BC34A"]},"$preview":{"width":390,"height":1420}}'>
 class Component extends DCLogic {
   renderVals() {
-    const dark = { bg: '#000000', surface: '#1A1C21', text: '#F2F3F5', muted: '#9AA0AA', accent: '#7C3AED', onAccent: '#FFFFFF', tint: '#2A2340', sel: '#F2F3F5' };
-    const light = { bg: '#F6F5FA', surface: '#FFFFFF', text: '#17151F', muted: '#5E5A6B', accent: '#6D28D9', onAccent: '#FFFFFF', tint: '#EDE7FB', sel: '#17151F' };
+    const dark = { bg: '#000000', surface: '#1A1C21', line: '#2A2D34', text: '#F2F3F5', muted: '#9AA0AA', accent: '#7C3AED', accentText: '#C4B1FF', onAccent: '#FFFFFF', tint: '#2A2340', sel: '#F2F3F5' };
+    const light = { bg: '#F6F5FA', surface: '#FFFFFF', line: '#E2E0EA', text: '#17151F', muted: '#5E5A6B', accent: '#6D28D9', accentText: '#5B21B6', onAccent: '#FFFFFF', tint: '#EDE7FB', sel: '#17151F' };
     const t = (this.props.mode ?? 'dark') === 'light' ? light : dark;
     const color = this.props.color ?? '#E91E63';
     const hexes = ['#F44336', '#E91E63', '#9C27B0', '#3F51B5', '#03A9F4', '#00BCD4', '#4CAF50', '#8BC34A', '#CDDC39', '#FFC107', '#FF9800', '#FF5722'];

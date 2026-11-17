@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Player, rest between rounds</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: {{t.bg}}; color: {{t.text}}; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+  <header style="display: flex; align-items: center; justify-content: space-between; padding: 12px 8px 0">
+    <button aria-label="Stop workout" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: transparent; color: inherit; display: flex; align-items: center; justify-content: center">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+    </button>
+    <span style="font-size: 16px; font-weight: 600">hangboard 70%</span>
+    <button aria-label="Sound on" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: transparent; color: inherit; display: flex; align-items: center; justify-content: center">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4zM16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"></path></svg>
+    </button>
+  </header>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 10px 20px 0; text-align: center">
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span style="font-size: 12px; font-weight: 500; color: {{t.muted}}">Round</span>
+      <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 24px; font-weight: 600">2<span style="color: {{t.muted}}">/4</span> done</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span style="font-size: 12px; font-weight: 500; color: {{t.muted}}">Remaining</span>
+      <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 24px; font-weight: 600">3:03</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span style="font-size: 12px; font-weight: 500; color: {{t.muted}}">Next</span>
+      <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 24px; font-weight: 600">hang</span>
+    </div>
+  </div>
+
+  <div style="display: flex; align-items: center; justify-content: center; position: relative; padding-top: 10px">
+    <svg role="img" aria-label="Rest between rounds, 42 seconds left" width="250" height="250" viewBox="0 0 250 250">
+      <circle cx="125" cy="125" r="116" fill="none" stroke="{{t.track}}" stroke-width="10"></circle>
+      <path d="{{restArc}}" fill="none" stroke="{{t.text}}" stroke-width="10" stroke-linecap="round"></path>
+      <circle cx="125" cy="125" r="100" fill="{{t.disc}}"></circle>
+    </svg>
+    <div style="position: absolute; display: flex; flex-direction: column; align-items: center; gap: 2px; top: 74px">
+      <span style="font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; color: {{t.muted}}">Rest</span>
+      <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 76px; font-weight: 600; line-height: 1; letter-spacing: -3px; font-variant-numeric: tabular-nums">0:42</span>
+    </div>
+  </div>
+
+  <section style="margin: 14px 16px 0; padding: 10px 14px 6px; border-radius: 14px; background: {{t.surface}}; display: flex; flex-direction: column">
+    <div style="display: flex; align-items: center; justify-content: space-between; min-height: 30px">
+      <h2 style="margin: 0; font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px"><span style="width: 12px; height: 12px; border-radius: 6px; background: #E91E63"></span>hang · from round 3</h2>
+      <span style="font-size: 12px; color: {{t.muted}}">timer keeps going</span>
+    </div>
+    <sc-for list="{{rows}}" as="r" hint-placeholder-count="3">
+      <div style="display: flex; align-items: center; gap: 8px; min-height: 50px">
+        <span style="flex: 1; font-size: 15px"><span style="color: {{t.muted}}">{{r.field}}</span> {{r.side}}</span>
+        <button aria-label="{{r.field}} {{r.side}} less" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: {{t.tint}}; color: {{t.accentText}}; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
+        <span style="width: 104px; text-align: center; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums">{{r.value}}</span>
+        <button aria-label="{{r.field}} {{r.side}} more" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: {{t.tint}}; color: {{t.accentText}}; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+      </div>
+    </sc-for>
+  </section>
+
+  <div style="flex: 1"></div>
+
+  <div style="display: flex; align-items: center; justify-content: center; gap: 36px; padding: 10px 0 30px">
+    <button aria-label="Previous series" style="width: 58px; height: 58px; border: 0; border-radius: 29px; background: {{t.ctl}}; color: {{t.ctlText}}; display: flex; align-items: center; justify-content: center">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM20 5.5v13a.8.8 0 0 1-1.2.7L9.5 12.7a.8.8 0 0 1 0-1.4l9.3-6.5a.8.8 0 0 1 1.2.7z"></path></svg>
+    </button>
+    <button aria-label="Pause" style="width: 88px; height: 88px; border: 0; border-radius: 44px; background: {{t.accent}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center">
+      <svg aria-hidden="true" width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4.5" width="4" height="15" rx="1"></rect><rect x="14" y="4.5" width="4" height="15" rx="1"></rect></svg>
+    </button>
+    <button aria-label="Skip rest" style="width: 58px; height: 58px; border: 0; border-radius: 29px; background: {{t.ctl}}; color: {{t.ctlText}}; display: flex; align-items: center; justify-content: center">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M16 5h2v14h-2zM4 5.5v13a.8.8 0 0 0 1.2.7l9.3-6.5a.8.8 0 0 0 0-1.4L5.2 4.8A.8.8 0 0 0 4 5.5z"></path></svg>
+    </button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"mode":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dark = { bg: '#000000', surface: '#1A1C21', text: '#F2F3F5', muted: '#9AA0AA', track: '#2A2D34', disc: '#1A1C21', accent: '#7C3AED', accentText: '#C4B1FF', tint: '#2A2340', ctl: '#1F2127', ctlText: '#F2F3F5' };
+    const light = { bg: '#F6F5FA', surface: '#FFFFFF', text: '#17151F', muted: '#5E5A6B', track: '#DEDBE7', disc: '#FFFFFF', accent: '#6D28D9', accentText: '#5B21B6', tint: '#EDE7FB', ctl: '#EDE7FB', ctlText: '#5B21B6' };
+    const t = (this.props.mode ?? 'dark') === 'light' ? light : dark;
+    // remaining rest: 42 of 60 s, drawn clockwise from the top
+    const cx = 125, cy = 125, r = 116, end = 360 * 42 / 60;
+    const pt = (deg) => { const a = deg * Math.PI / 180; return (cx + r * Math.sin(a)).toFixed(2) + ' ' + (cy - r * Math.cos(a)).toFixed(2); };
+    const restArc = 'M' + pt(0) + ' A' + r + ' ' + r + ' 0 ' + (end > 180 ? 1 : 0) + ' 1 ' + pt(end);
+    const rows = [
+      { field: 'Load', side: 'L', value: '+12.5 kg' },
+      { field: 'Load', side: 'R', value: '+10 kg' },
+      { field: 'Edge', side: '', value: '20 mm' }
+    ];
+    return { t, restArc, rows };
+  }
+}
+</script>
+</body>
+</html>
