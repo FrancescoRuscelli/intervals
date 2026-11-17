@@ -200,14 +200,14 @@
       "y": -2900,
       "w": 390,
       "h": 844,
-      "title": "G1 · Gym today (option A: own Gym tab, your groups)"
+      "title": "G1 · Gym today (chosen: own Gym tab)"
     },
     "GymTodaySwitch.dc.html": {
       "x": 470,
       "y": -2900,
       "w": 390,
       "h": 844,
-      "title": "G1b · Gym today (option B: switch inside Workouts)"
+      "title": "G1b · (not chosen) switch inside Workouts"
     },
     "GymExercise.dc.html": {
       "x": 940,
