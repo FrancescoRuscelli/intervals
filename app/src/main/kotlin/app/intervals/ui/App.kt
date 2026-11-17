@@ -56,7 +56,7 @@ fun App(vm: AppViewModel) {
                         Tab.GYM -> ComingSoon("Gym", "The strength log comes after the interval screens.")
                         Tab.JOURNAL -> ComingSoon("Journal", "Sessions appear here once the player is ready.")
                         Tab.STATS -> ComingSoon("Stats", "Coming with the journal.")
-                        Tab.SETTINGS -> ComingSoon("Settings", "Coming in this step.")
+                        Tab.SETTINGS -> app.intervals.ui.settings.SettingsScreen(vm)
                     }
                 }
             }

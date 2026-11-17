@@ -178,7 +178,8 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
   - [x] Edit workout: name, tags, warm-up, rounds, rest between rounds, round bar + totals, series list with repeat groups,
         long-press select → Repeat ×…, duplicate, move, delete; + Work / + Rest / custom; discard / delete confirm
   - [x] Edit series: name, time (± 5 s, tap to type), 12 colors, 6 icons, per side + change time, log fields (unit, left/right apart), sound switches
-  - [ ] Import preview screen, Journal, Stats, Settings, Finished; "last time" on cards; swipe-to-delete in the editor
+  - [x] Settings: theme, disc animation, sound, workout options, import, backup to file, restore (confirm; bad file changes nothing)
+  - [ ] Import preview screen, Journal, Stats, Finished; "last time" on cards; swipe-to-delete in the editor
 - [ ] Step 5: player screen + foreground timer service, voice, beeps, countdown, flash, landscape
 - [ ] Step 6: install on the Pixel 8a, real workout test, energy profiling
 - [x] Gym mockups G1–G16 (placement: own tab)

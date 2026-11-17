@@ -141,4 +141,19 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun saveSettings(s: AppSettings) = viewModelScope.launch { repo.saveSettings(s) }
+
+    /** Writes the backup with [write] (true = written). */
+    fun exportBackup(write: (String) -> Boolean) = viewModelScope.launch {
+        val text = repo.exportBackup()
+        message = if (write(text)) "Backup saved" else "Could not save the backup"
+    }
+
+    fun restoreBackup(text: String) = viewModelScope.launch {
+        message = try {
+            val r = repo.restoreBackup(text)
+            "Restored ${r.workouts} workouts and ${r.sessions} sessions"
+        } catch (e: Exception) {
+            "Not restored: ${e.message ?: "the file is not an Intervals backup"}. Nothing was changed."
+        }
+    }
 }
