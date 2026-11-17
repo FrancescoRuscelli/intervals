@@ -65,6 +65,8 @@ Bottom bar: **Workouts · Journal · Stats · Settings**.
    **New series**: the disc inflates from the center, fast (~0.25 s, tiny overshoot), with its text.
    **Disc animation** setting: **Calm** (default, demo 4c) or **Crazy spin** (demo 4d): at every new series the disc with its name and time whirls
    1.5 turns and settles (~0.7 s), the series ring swings back and the rounds ring the other way. No always-spinning mode. Demo: 4d.
+   **Workout end** (both settings): the disc flips like a tossed coin around its vertical axis (~3.5 turns, ~1.4 s,
+   lifts a little mid-flip) and lands on its back: purple, "done ✓". Then the Finished screen.
    Round x/y, remaining, series x/y, "Next" card, whole-workout progress bar, previous / pause / next.
    **Landscape layout** for viewing from far away. **3-2-1 countdown** before start. **No color flash** (removed).
    **No extra disc animations** in v1; only the "Liquid / bubbles" demo is kept on the canvas, maybe later.
