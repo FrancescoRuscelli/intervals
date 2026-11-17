@@ -30,7 +30,7 @@ button{font-family:inherit}
   </svg>
 
   <h1 style="margin: 12px 0 0; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 30px; font-weight: 700">Well done</h1>
-  <span style="font-size: 16px; color: {{t.muted}}">hangboard 70% · completed</span>
+  <span style="font-size: 16px; color: {{t.muted}}">hangboard 70% · completed · 1 record</span>
 
   <div style="align-self: stretch; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 18px 16px 0">
     <div style="padding: 10px; border-radius: 14px; background: {{t.surface}}; border: 1px solid {{t.line}}; display: flex; flex-direction: column; align-items: center"><span style="font-size: 12px; color: {{t.muted}}">Time</span><span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 22px; font-weight: 600">5:25</span></div>
@@ -47,7 +47,7 @@ button{font-family:inherit}
     <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: {{t.muted}}; padding-top: 6px">Load</span>
     <sc-for list="{{loadRows}}" as="r" hint-placeholder-count="2">
       <div style="display: flex; align-items: center; gap: 8px; min-height: 50px">
-        <span style="flex: 1; font-size: 15px">{{r.side}}</span>
+        <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 15px; display: flex; align-items: center; gap: 6px">{{r.side}}<sc-if value="{{r.pr}}" hint-placeholder-val="{{ false }}"><span style="height: 18px; padding: 0 6px; border-radius: 9px; background: #FFC107; color: #1A1200; font-size: 10px; font-weight: 800; display: flex; align-items: center">PR</span></sc-if></span><span style="font-size: 12px; color: {{r.deltaFg}}">{{r.prev}}</span></span>
         <button aria-label="{{r.side}} load less" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: {{t.tint}}; color: {{t.accentText}}; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
         <span style="width: 96px; text-align: center; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums">{{r.value}}</span>
         <button aria-label="{{r.side}} load more" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: {{t.tint}}; color: {{t.accentText}}; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
@@ -55,7 +55,7 @@ button{font-family:inherit}
     </sc-for>
 
     <div style="display: flex; align-items: center; gap: 8px; min-height: 50px; border-top: 1px solid {{t.line}}; margin-top: 4px">
-      <span style="flex: 1; font-size: 12px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: {{t.muted}}">Edge</span>
+      <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 12px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: {{t.muted}}">Edge</span><span style="font-size: 12px; color: {{t.muted}}">same as last time</span></span>
       <button aria-label="Edge smaller" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: {{t.tint}}; color: {{t.accentText}}; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
       <span style="width: 96px; text-align: center; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums">20 mm</span>
       <button aria-label="Edge bigger" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: {{t.tint}}; color: {{t.accentText}}; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
@@ -88,7 +88,10 @@ class Component extends DCLogic {
     const cx = 115, cy = 115, r = 108;
     const pt = (deg) => { const a = deg * Math.PI / 180; return (cx + r * Math.sin(a)).toFixed(2) + ' ' + (cy - r * Math.cos(a)).toFixed(2); };
     const arcs = [0, 1, 2, 3].map((i) => { const a0 = i * 90 + 8, a1 = i * 90 + 82; return { d: 'M' + pt(a0) + ' A' + r + ' ' + r + ' 0 0 1 ' + pt(a1), c: [t.accent, '#E91E63', '#FFC107', '#00BFA5'][i] }; });
-    const loadRows = [{ side: 'Left', value: '+10 kg' }, { side: 'Right', value: '+8 kg' }];
+    const loadRows = [
+      { side: 'Left', value: '+12.5 kg', prev: 'last time +10 · ▲ 2.5 kg', deltaFg: '#FF8AB3', pr: true },
+      { side: 'Right', value: '+8 kg', prev: 'last time +8 · same', deltaFg: t.muted, pr: false }
+    ];
     return { t, arcs, loadRows };
   }
 }

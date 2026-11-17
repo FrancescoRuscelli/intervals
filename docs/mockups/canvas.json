@@ -15,7 +15,7 @@
       "y": 0,
       "w": 390,
       "h": 844,
-      "title": "1 · Workout list"
+      "title": "1 · Intervals list (5 tabs, last time on each card)"
     },
     "Editor.dc.html": {
       "x": 470,
@@ -127,7 +127,7 @@
       "y": 0,
       "w": 390,
       "h": 960,
-      "title": "9 · Finished (confirm logged values)"
+      "title": "9 · Finished (compare with last time, PR)"
     },
     "StatsLight.dc.html": {
       "x": 2820,
@@ -302,26 +302,19 @@
       "title": "G16 · Edit exercise: steps, merge, delete (tweak: sheet)",
       "is_interactive": true
     },
-    "GymVisual1.dc.html": {
+    "GymVisual3.dc.html": {
       "x": 0,
       "y": -6400,
       "w": 390,
       "h": 1000,
-      "title": "What you trained · 1 a color per group"
+      "title": "What you trained (chosen: day strip)"
     },
-    "GymVisual2.dc.html": {
-      "x": 470,
-      "y": -6400,
+    "IntervalsProgress.dc.html": {
+      "x": 3800,
+      "y": -1400,
       "w": 390,
-      "h": 1000,
-      "title": "What you trained · 2 short exercise tags"
-    },
-    "GymVisual3.dc.html": {
-      "x": 940,
-      "y": -6400,
-      "w": 390,
-      "h": 1000,
-      "title": "What you trained · 3 day strip by sets"
+      "h": 900,
+      "title": "Intervals: progress of a logged value (Load L vs R, records)"
     }
   },
   "order": [
@@ -366,9 +359,8 @@
     "GymRecords.dc.html",
     "GymExHistory.dc.html",
     "GymEditExercise.dc.html",
-    "GymVisual1.dc.html",
-    "GymVisual2.dc.html",
-    "GymVisual3.dc.html"
+    "GymVisual3.dc.html",
+    "IntervalsProgress.dc.html"
   ],
   "notes": {
     "head": {
@@ -410,9 +402,9 @@
     "visual": {
       "x": 0,
       "y": -6700,
-      "text": "Gym: what you trained, 3 options (your real Nov days)",
+      "text": "Gym: what you trained",
       "kind": "title1",
-      "maxW": 1330
+      "maxW": 400
     }
   },
   "designSystems": [],

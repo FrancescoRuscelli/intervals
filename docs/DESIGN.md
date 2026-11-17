@@ -48,7 +48,11 @@ Rules:
 
 ## Screens (see mockups)
 
-Bottom bar: **Workouts · Journal · Stats · Settings**.
+Bottom bar: **Intervals · Gym · Journal · Stats · Settings** (5 tabs).
+
+Improvements (2026-11-17, in the mockups): each workout card shows **last time** (date, rounds, logged values;
+yellow dot if stopped); **Finished** compares each logged value with last time ("▲ 2.5 kg") and marks records (PR);
+new **Progress** screen per workout: a graph per logged field (left vs right) and records.
 
 1. **Workouts list**: search, tag filter chips, cards with name, total, mini colored bar of one round, play button, "New workout".
 2. **Edit workout**: name, tags, warm-up, rounds (− / +), rest between rounds, one-round and total time, series list with repeat groups.
@@ -119,6 +123,7 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
   are one row with a pink ×N ("2–4 · 80 · 5 ×3"), same-value left/right too ("L R … ×2"); pink set count next to the name;
   "last time N sets · top set" under the table; the exercise you're on has a purple outline + "now"; PR rows get a yellow PR.
   Logging happens inside the exercise (tap the card), not from Today.
+- **What you trained** (Journal / calendar): **day strip** chosen: each day a small bar split by exercise, sized by sets, colored by group.
 - **Set boxes** (Today, group in progress, history): equal grid boxes, label on top (set number / L / R, ✓, PR), value below;
   identical sets in a row become one box with a ×N badge ("1–15 · +25 × 10 ×15"); on Today max 2 rows, last box "+N more";
   long values (bands, decimals) get smaller text.
