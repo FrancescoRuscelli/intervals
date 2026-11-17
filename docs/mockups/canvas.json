@@ -317,14 +317,14 @@
       "title": "Today option C · table, same sets grouped (×3)"
     },
     "GymTodayD.dc.html": {
-      "x": 1410,
+      "x": 1880,
       "y": -6200,
       "w": 390,
       "h": 844,
       "title": "Today option D · minimal, dots, no cards"
     },
     "GymTodayE.dc.html": {
-      "x": 1880,
+      "x": 2350,
       "y": -6200,
       "w": 390,
       "h": 844,
@@ -336,6 +336,13 @@
       "w": 390,
       "h": 844,
       "title": "Today option A · current (set boxes)"
+    },
+    "GymTodayCp.dc.html": {
+      "x": 1410,
+      "y": -6200,
+      "w": 390,
+      "h": 844,
+      "title": "Today option C+ · table + count, last time, now + quick log, PR"
     }
   },
   "order": [
@@ -384,7 +391,8 @@
     "GymTodayC.dc.html",
     "GymTodayD.dc.html",
     "GymTodayE.dc.html",
-    "GymTodayA.dc.html"
+    "GymTodayA.dc.html",
+    "GymTodayCp.dc.html"
   ],
   "notes": {
     "head": {
@@ -428,7 +436,7 @@
       "y": -6500,
       "text": "Today: layout options, same workout",
       "kind": "title1",
-      "maxW": 2270
+      "maxW": 2740
     }
   },
   "designSystems": [],
