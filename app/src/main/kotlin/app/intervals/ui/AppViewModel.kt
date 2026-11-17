@@ -115,6 +115,17 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         message = "Deleted ${ids.size} · their journal entries stay"
     }
 
+    // ---- journal ----
+
+    fun sessions(fromMillis: Long, toMillis: Long) = repo.sessionsBetween(fromMillis, toMillis)
+
+    fun setNote(sessionId: Long, note: String) = viewModelScope.launch { repo.setNote(sessionId, note) }
+
+    fun deleteSession(sessionId: Long) = viewModelScope.launch {
+        repo.deleteSession(sessionId)
+        message = "Session deleted"
+    }
+
     /** Saves a new order of the whole list. */
     fun reorder(ids: List<Long>) = viewModelScope.launch { repo.reorderWorkouts(ids) }
 
