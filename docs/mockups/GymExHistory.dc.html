@@ -25,11 +25,12 @@ button{font-family:inherit}
     </a>
   </header>
 
-  <div role="tablist" style="display: flex; gap: 4px; padding: 8px 16px 0">
-    <sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
-      <a href="{{t.href}}" role="tab" aria-selected="{{t.on}}" style="flex: 1; height: 38px; border-radius: 12px; background: {{t.bg}}; color: {{t.fg}}; font-size: 14px; font-weight: {{t.fw}}; display: flex; align-items: center; justify-content: center; text-decoration: none">{{t.label}}</a>
-    </sc-for>
-  </div>
+  <nav role="tablist" style="display: flex; justify-content: center; gap: 22px; padding: 10px 16px 0; border-bottom: 1px solid #1A1C21">
+    <a href="GymExercise.dc.html" role="tab" aria-selected="false" style="padding: 6px 2px 10px; border-bottom: 2px solid transparent; color: #6E747E; font-size: 14px; font-weight: 600; text-decoration: none">Log</a>
+    <a href="GymExHistory.dc.html" role="tab" aria-selected="true" style="padding: 6px 2px 10px; border-bottom: 2px solid #7C3AED; color: #F2F3F5; font-size: 14px; font-weight: 600; text-decoration: none">History</a>
+    <a href="GymHistory.dc.html" role="tab" aria-selected="false" style="padding: 6px 2px 10px; border-bottom: 2px solid transparent; color: #6E747E; font-size: 14px; font-weight: 600; text-decoration: none">Graph</a>
+    <a href="GymRecords.dc.html" role="tab" aria-selected="false" style="padding: 6px 2px 10px; border-bottom: 2px solid transparent; color: #6E747E; font-size: 14px; font-weight: 600; text-decoration: none">Records</a>
+  </nav>
 
   <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 14px 20px 6px">
     <span style="font-size: 13px; color: #9AA0AA">55 workouts · 300 sets · since 25 Nov 2025</span>

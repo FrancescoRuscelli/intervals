@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Gym, log an exercise</title>
+<title>Gym, log a set</title>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -15,146 +15,118 @@ button{font-family:inherit}
 </style>
 </helmet>
 <div style="width: 390px; height: 844px; box-sizing: border-box; background: #000000; color: #F2F3F5; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
-  <header style="display: flex; align-items: center; justify-content: space-between; padding: 12px 8px 0">
-    <a href="GymToday.dc.html" aria-label="Back to today" style="width: 44px; height: 44px; border-radius: 22px; color: inherit; display: flex; align-items: center; justify-content: center">
+  <header style="display: flex; align-items: center; gap: 4px; padding: 12px 8px 0">
+    <a href="GymToday.dc.html" aria-label="Back to today" style="width: 44px; height: 44px; flex: none; border-radius: 22px; color: inherit; display: flex; align-items: center; justify-content: center">
       <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
     </a>
-    <span style="font-size: 17px; font-weight: 700">{{ex.name}}</span>
-    <a href="GymEditExercise.dc.html" aria-label="Edit exercise" style="width: 44px; height: 44px; border-radius: 22px; color: inherit; display: flex; align-items: center; justify-content: center">
+    <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center">
+      <span style="font-size: 17px; font-weight: 700">{{ex.name}}</span>
+      <span style="font-size: 12px; color: #9AA0AA">Last · {{ex.last}}</span>
+    </span>
+    <a href="GymEditExercise.dc.html" aria-label="Edit exercise" style="width: 44px; height: 44px; flex: none; border-radius: 22px; color: #9AA0AA; display: flex; align-items: center; justify-content: center">
       <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"></path></svg>
     </a>
   </header>
 
-  <div role="tablist" style="display: flex; gap: 4px; padding: 8px 16px 0">
-    <a href="GymExercise.dc.html" role="tab" aria-selected="true" style="flex: 1; height: 38px; border-radius: 12px; background: #2A2340; color: #C4B1FF; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; text-decoration: none">Log</a>
-    <a href="GymExHistory.dc.html" role="tab" aria-selected="false" style="flex: 1; height: 38px; border-radius: 12px; background: transparent; color: #9AA0AA; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; text-decoration: none">History</a>
-    <a href="GymHistory.dc.html" role="tab" aria-selected="false" style="flex: 1; height: 38px; border-radius: 12px; background: transparent; color: #9AA0AA; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; text-decoration: none">Graph</a>
-    <a href="GymRecords.dc.html" role="tab" aria-selected="false" style="flex: 1; height: 38px; border-radius: 12px; background: transparent; color: #9AA0AA; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; text-decoration: none">Records</a>
-  </div>
+  <nav role="tablist" style="display: flex; justify-content: center; gap: 22px; padding: 10px 16px 0; border-bottom: 1px solid #1A1C21">
+    <sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+      <a href="{{t.href}}" role="tab" aria-selected="{{t.on}}" style="padding: 6px 2px 10px; border-bottom: 2px solid {{t.line}}; color: {{t.fg}}; font-size: 14px; font-weight: 600; text-decoration: none">{{t.label}}</a>
+    </sc-for>
+  </nav>
 
   <sc-if value="{{ex.perSide}}" hint-placeholder-val="{{ false }}">
-    <div role="group" aria-label="Side" style="display: flex; margin: 12px 16px 0; padding: 4px; border-radius: 14px; background: #1A1C21">
+    <div role="group" aria-label="Side" style="display: flex; align-self: center; margin-top: 14px; padding: 3px; border-radius: 12px; background: #1A1C21">
       <sc-for list="{{sides}}" as="sd" hint-placeholder-count="3">
-        <button aria-pressed="{{sd.on}}" style="flex: 1; height: 40px; border: 0; border-radius: 10px; background: {{sd.bg}}; color: {{sd.fg}}; font-size: 15px; font-weight: 700">{{sd.label}}</button>
+        <button aria-pressed="{{sd.on}}" style="width: 74px; height: 34px; border: 0; border-radius: 9px; background: {{sd.bg}}; color: {{sd.fg}}; font-size: 14px; font-weight: 700">{{sd.label}}</button>
       </sc-for>
     </div>
   </sc-if>
 
-  <div style="display: flex; flex-direction: column; gap: 8px; padding: 12px 16px 0">
-    <sc-for list="{{ex.fields}}" as="f" hint-placeholder-count="2">
-      <div style="padding: 8px 10px 8px 16px; border-radius: 18px; background: #1A1C21; display: flex; align-items: center; gap: 8px; min-height: 68px; box-sizing: border-box">
-        <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 13px; color: #9AA0AA">{{f.label}}</span><span style="font-size: 12px; color: #6E747E">{{f.step}}</span></span>
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 14px 16px 0">
+    <sc-for list="{{ex.tiles}}" as="f" hint-placeholder-count="2">
+      <div style="grid-column: {{f.span}}; padding: 12px 10px 10px; border-radius: 20px; background: #1A1C21; display: flex; flex-direction: column; align-items: center; gap: 8px">
+        <span style="font-size: 12px; color: #9AA0AA; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase">{{f.label}}</span>
         <sc-if value="{{f.isBands}}" hint-placeholder-val="{{ false }}">
-          <span role="group" aria-label="Bands: tap to add, tap again for a second" style="display: flex; gap: 6px">
+          <span style="display: flex; gap: 8px; padding: 6px 0 4px">
             <sc-for list="{{f.bands}}" as="b" hint-placeholder-count="5">
-              <span aria-label="{{b.name}} {{b.n}}" style="position: relative; width: 34px; height: 34px; border-radius: 17px; background: {{b.c}}; box-shadow: inset 0 0 0 1px {{b.edge}}; opacity: {{b.op}}; display: flex; align-items: center; justify-content: center; color: {{b.fg}}; font-size: 13px; font-weight: 800">{{b.label}}</span>
+              <span style="width: 40px; height: 40px; border-radius: 20px; background: {{b.c}}; box-shadow: inset 0 0 0 1px {{b.edge}}; opacity: {{b.op}}; display: flex; align-items: center; justify-content: center; color: {{b.fg}}; font-size: 13px; font-weight: 800">{{b.label}}</span>
             </sc-for>
           </span>
         </sc-if>
         <sc-if value="{{f.isStep}}" hint-placeholder-val="{{ true }}">
-          <button aria-label="{{f.label}} less" style="width: 52px; height: 52px; border: 0; border-radius: 16px; background: #2A2340; color: #C4B1FF; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
-          <span style="min-width: 112px; text-align: center; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 32px; font-weight: 700; font-variant-numeric: tabular-nums">{{f.value}}<span style="font-size: 16px; color: #9AA0AA; margin-left: 3px">{{f.unit}}</span></span>
-          <button aria-label="{{f.label}} more" style="width: 52px; height: 52px; border: 0; border-radius: 16px; background: #2A2340; color: #C4B1FF; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+          <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 44px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums">{{f.value}}<span style="font-size: 16px; color: #9AA0AA; margin-left: 4px">{{f.unit}}</span></span>
+          <span style="display: flex; gap: 8px; width: 100%">
+            <button aria-label="{{f.label}} minus {{f.step}}" style="flex: 1; height: 46px; border: 0; border-radius: 14px; background: #23262C; color: #F2F3F5; font-size: 22px; font-weight: 600">−</button>
+            <button aria-label="{{f.label}} plus {{f.step}}" style="flex: 1; height: 46px; border: 0; border-radius: 14px; background: #23262C; color: #F2F3F5; font-size: 22px; font-weight: 600">+</button>
+          </span>
         </sc-if>
       </div>
     </sc-for>
   </div>
 
-  <div style="display: flex; gap: 8px; padding: 12px 16px 0">
-    <button style="flex: 1; height: 56px; border: 0; border-radius: 18px; background: #7C3AED; color: #FFFFFF; font-size: 17px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px">
-      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>{{logLabel}}
-    </button>
-    <a href="GymSetNote.dc.html" aria-label="Log with a note" style="width: 56px; height: 56px; border-radius: 18px; background: #1A1C21; color: #C4B1FF; display: flex; align-items: center; justify-content: center">
+  <div style="display: flex; gap: 10px; padding: 12px 16px 0">
+    <button style="flex: 1; height: 60px; border: 0; border-radius: 20px; background: #7C3AED; color: #FFFFFF; font-size: 18px; font-weight: 700">{{logLabel}}</button>
+    <a href="GymSetNote.dc.html" aria-label="Add a note to the next set" style="width: 60px; height: 60px; border-radius: 20px; background: #1A1C21; color: #9AA0AA; display: flex; align-items: center; justify-content: center">
       <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H10l-4 4v-4H5.5A1.5 1.5 0 0 1 4 14.5z"></path></svg>
     </a>
   </div>
-  <span style="padding: 8px 20px 0; font-size: 12px; color: #9AA0AA">{{hint}}</span>
 
-  <section style="flex: 1; overflow: hidden; margin-top: 12px; padding: 12px 16px 0; border-top: 1px solid #23262C; display: flex; flex-direction: column; gap: 6px">
-    <h2 style="margin: 0 0 4px; font-size: 13px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: #9AA0AA">Today</h2>
+  <div role="timer" aria-label="Resting 1 minute 12 seconds, buzz at {{ex.rest}}" style="align-self: center; margin-top: 12px; height: 32px; padding: 0 14px; border-radius: 16px; background: #0E3B35; color: #5EEAD4; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600">
+    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v5l3 2M12 3.5a9 9 0 1 0 0 18a9 9 0 0 0 0-18"></path></svg>
+    <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 15px; font-variant-numeric: tabular-nums">1:12</span>
+    <span style="color: #8FD9CC">resting · buzz at {{ex.rest}}</span>
+  </div>
+
+  <section aria-label="Today's sets" style="flex: 1; overflow: hidden; margin-top: 14px; padding: 0 16px; display: flex; flex-direction: column">
     <sc-for list="{{ex.today}}" as="s" hint-placeholder-count="3">
-      <div style="display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 4px 4px 4px 10px; box-sizing: border-box; border-radius: 14px; background: #111216">
-        <span style="width: 26px; height: 26px; flex: none; border-radius: 13px; background: {{s.badgeBg}}; color: {{s.badgeFg}}; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{s.badge}}</span>
+      <a href="GymSetNote.dc.html" style="display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 0 6px; border-bottom: 1px solid #16181C; color: inherit; text-decoration: none">
+        <span style="width: 22px; font-size: 13px; color: #6E747E; font-weight: 600; text-align: right">{{s.n}}</span>
         <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
-          <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 17px; font-weight: 600">{{s.text}}</span>
-          <span style="display: flex; align-items: center; gap: 6px">
-            <span style="font-size: 11px; color: {{s.restFg}}; font-variant-numeric: tabular-nums">{{s.rest}}</span>
-            <sc-if value="{{s.note}}" hint-placeholder-val="{{ false }}">
-              <span style="height: 20px; padding: 0 8px; border-radius: 10px; background: #2A2D34; color: #C9CDD3; font-size: 11px; font-weight: 600; display: flex; align-items: center">{{s.note}}</span>
-            </sc-if>
-          </span>
+          <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 18px; font-weight: 600; color: {{s.fg}}">{{s.text}}</span>
+          <sc-if value="{{s.note}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: #9AA0AA">{{s.note}}</span></sc-if>
         </span>
-        <sc-if value="{{s.pr}}" hint-placeholder-val="{{ false }}">
-          <span style="height: 24px; padding: 0 8px; border-radius: 12px; background: #FFC107; color: #1A1200; font-size: 12px; font-weight: 800; display: flex; align-items: center">PR</span>
-        </sc-if>
-        <a href="GymSetNote.dc.html" aria-label="Edit set" style="width: 40px; height: 40px; border-radius: 12px; color: #6E747E; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="12" cy="19" r="1.8"></circle></svg></a>
-      </div>
+        <sc-if value="{{s.pr}}" hint-placeholder-val="{{ false }}"><span style="height: 20px; padding: 0 7px; border-radius: 10px; background: #FFC107; color: #1A1200; font-size: 11px; font-weight: 800; display: flex; align-items: center">PR</span></sc-if>
+        <span style="font-size: 12px; color: #6E747E; font-variant-numeric: tabular-nums">{{s.rest}}</span>
+      </a>
     </sc-for>
-    <div style="margin-top: 6px; padding: 10px 12px; border-radius: 12px; border: 1px solid #23262C; display: flex; flex-direction: column; gap: 2px">
-      <span style="font-size: 12px; color: #9AA0AA">Last time · {{ex.lastDay}}</span>
-      <span style="font-size: 14px; font-weight: 600">{{ex.lastSets}}</span>
-    </div>
+    <span style="padding: 10px 6px 0; font-size: 12px; color: #4A4F58">tap a set to edit or add a note</span>
   </section>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"exercise":{"editor":"enum","options":["pistol squat","deadlift","deloaded one-arm","pull up","block pulls"],"default":"pistol squat"},"side":{"editor":"enum","options":["left","right","both"],"default":"left"},"$preview":{"width":390,"height":844}}'>
+<script type="text/x-dc" data-dc-script data-props='{"exercise":{"editor":"enum","options":["deadlift","block pulls","pistol squat"],"default":"deadlift"},"$preview":{"width":390,"height":844}}'>
 class Component extends DCLogic {
   renderVals() {
-    const B = { g: ['#43A047', '#43A047'], p: ['#8E44D8', '#8E44D8'], r: ['#E53935', '#E53935'], k: ['#16181C', '#5A5F68'], y: ['#FFC107', '#FFC107'] };
-    const NAMES = { g: 'green', p: 'purple', k: 'black', r: 'red', y: 'yellow' };
+    const B = { g: ['#43A047', '#43A047'], p: ['#8E44D8', '#8E44D8'], k: ['#16181C', '#5A5F68'], r: ['#E53935', '#E53935'], y: ['#FFC107', '#FFC107'] };
     const bands = (s) => 'gpkry'.split('').map((ch) => {
       const n = s.split('').filter((x) => x === ch).length;
-      return { name: NAMES[ch], n, c: B[ch][0], edge: B[ch][1], op: n ? 1 : 0.28, label: n > 1 ? '×' + n : '', fg: ch === 'y' ? '#1A1200' : '#FFFFFF' };
+      return { c: B[ch][0], edge: B[ch][1], op: n ? 1 : 0.25, label: n > 1 ? '×' + n : '', fg: ch === 'y' ? '#1A1200' : '#FFFFFF' };
     });
-    const step = (label, stepTxt, value, unit) => ({ label, step: stepTxt, value, unit, isStep: true, isBands: false });
-    const bandField = (s, txt) => ({ label: 'Bands', step: txt, isStep: false, isBands: true, bands: bands(s) });
-    const set = (badge, text, o = {}) => {
-      const side = badge === 'L' || badge === 'R';
-      const rest = o.rest ? 'rested ' + o.rest : 'first set';
-      return { badge, text, rest, restFg: o.long ? '#FFC107' : '#6E747E', note: o.note || '', pr: !!o.pr, badgeBg: side ? '#0E3B35' : '#3A1428', badgeFg: side ? '#5EEAD4' : '#FF8AB3' };
-    };
+    const step = (label, value, unit, stepTxt) => ({ label, value, unit, step: stepTxt, isStep: true, isBands: false, span: 'auto' });
+    const set = (n, text, o = {}) => ({ n, text, rest: o.rest || '', note: o.note || '', pr: !!o.pr, fg: '#F2F3F5' });
     const all = {
-      'pistol squat': {
-        name: 'Pistol Squat', perSide: true, rest: '3:00',
-        fields: [bandField('gppr', 'tap to add · again for ×2'), step('Reps', '± 1', '5', '')],
-        today: [set('L', '🟢🟣🟣🔴 × 5'), set('R', '🟢🟣🟣🔴 × 5', { rest: '1:05' }), set('L', '🟢🟣🔴 × 5', { rest: '3:10', pr: true, note: 'bad form' })],
-        lastDay: 'Wednesday 11', lastSets: 'L 🟢🟣🟣🔴 × 5, 5 · R 🟢🟣🟣🔴 × 5, 4'
-      },
       'deadlift': {
-        name: 'Deadlift', perSide: false, rest: '3:00',
-        fields: [step('Weight', '± 2.5 kg', '110', 'kg'), step('Reps', '± 1', '5', '')],
-        today: [set('1', '70 kg × 5'), set('2', '90 kg × 5', { rest: '2:10' }), set('3', '110 kg × 5', { rest: '3:20' })],
-        lastDay: 'Wednesday 11 November', lastSets: '70 × 5 · 90 × 5 · 110 × 5 · 110 × 5'
-      },
-      'deloaded one-arm': {
-        name: 'Deloaded One Arm Pull-Up', perSide: true, rest: '3:00',
-        fields: [step('Assist', 'weight taken off · ± 2.5', '−20', 'kg'), step('Reps', '± 1', '3', '')],
-        today: [set('R', '−20 kg × 3'), set('L', '−25 kg × 3', { rest: '1:30', pr: true }), set('R', '−20 kg × 2', { rest: '3:40', note: 'failed the last' })],
-        lastDay: 'Friday 13', lastSets: 'R −22.5 kg × 3 · L −27.5 kg × 3'
-      },
-      'pull up': {
-        name: 'Pull Up', perSide: false, rest: '3:00',
-        fields: [step('Added weight', '± 2.5 kg', '+30', 'kg'), step('Reps', '± 1', '5', '')],
-        today: [set('1', '+30 kg × 5', { pr: true }), set('2', '+30 kg × 5', { rest: '3:05' }), set('3', '+30 kg × 4', { rest: '5:12', long: true, note: 'max' })],
-        lastDay: 'Sunday 15', lastSets: '+27.5 kg × 5 · 5 · 5'
+        name: 'Deadlift', perSide: false, rest: '3:00', last: 'Wed · 110 × 5, 5',
+        tiles: [step('Weight', '110', 'kg', '2.5 kg'), step('Reps', '5', '', '1')],
+        today: [set(1, '70 kg × 5'), set(2, '90 kg × 5', { rest: '2:10' }), set(3, '110 kg × 5', { rest: '3:20' })]
       },
       'block pulls': {
-        name: 'Block Pulls', perSide: true, rest: '2:00',
-        fields: [step('Weight', '± 1 kg', '50', 'kg'), step('Reps', '± 1', '5', '')],
-        today: [set('R', '50 kg × 5'), set('L', '45 kg × 5', { rest: '0:45' }), set('R', '50 kg × 5', { rest: '2:20', note: 'no pinkie' })],
-        lastDay: 'Tuesday 3', lastSets: 'R 50 kg × 5, 5 · L 45 kg × 5, 4'
+        name: 'Block Pulls', perSide: true, rest: '2:00', last: 'Tue · R 50 × 5 · L 45 × 5',
+        tiles: [step('Weight', '50', 'kg', '1 kg'), step('Reps', '5', '', '1')],
+        today: [set('R', '50 kg × 5'), set('L', '45 kg × 5', { rest: '0:45' }), set('R', '50 kg × 5', { rest: '2:20', note: 'senza mignolo' })]
+      },
+      'pistol squat': {
+        name: 'Pistol Squat', perSide: true, rest: '3:00', last: 'Wed · 🟢🟣🟣🔴 × 5',
+        tiles: [{ label: 'Bands', isStep: false, isBands: true, span: '1 / -1', bands: bands('gppr') }, step('Reps', '5', '', '1')],
+        today: [set('L', '🟢🟣🟣🔴 × 5'), set('R', '🟢🟣🟣🔴 × 5', { rest: '1:05' }), set('L', '🟢🟣🔴 × 6', { rest: '3:10', pr: true })]
       }
     };
-    const ex = all[this.props.exercise ?? 'pistol squat'] || all['pistol squat'];
-    const side = ex.perSide ? (this.props.side ?? 'left') : 'none';
-    const sides = [['left', 'Left'], ['right', 'Right'], ['both', 'Both']].map(([k, label]) => ({
-      label, on: k === side ? 'true' : 'false', bg: k === side ? '#F2F3F5' : 'transparent', fg: k === side ? '#000000' : '#9AA0AA'
-    }));
-    const logLabel = side === 'left' ? 'Log left' : side === 'right' ? 'Log right' : side === 'both' ? 'Log both sides' : 'Log set';
-    const hint = side === 'both'
-      ? 'Both = one set for each side with the same values · then rest ' + ex.rest
-      : 'Starts from last time · logging starts the rest clock: counts up, buzz at ' + ex.rest + (ex.perSide ? ' · then switches side' : '');
-    return { ex, sides, logLabel, hint };
+    const ex = all[this.props.exercise ?? 'deadlift'] || all['deadlift'];
+    if (ex.tiles.length === 2 && ex.tiles[0].isBands) ex.tiles[1].span = '1 / -1';
+    const tabs = [['Log', 'GymExercise.dc.html', true], ['History', 'GymExHistory.dc.html'], ['Graph', 'GymHistory.dc.html'], ['Records', 'GymRecords.dc.html']]
+      .map(([label, href, on]) => ({ label, href, on: on ? 'true' : 'false', fg: on ? '#F2F3F5' : '#6E747E', line: on ? '#7C3AED' : 'transparent' }));
+    const sides = ['Left', 'Right', 'Both'].map((label, i) => ({ label, on: i === 1 ? 'true' : 'false', bg: i === 1 ? '#F2F3F5' : 'transparent', fg: i === 1 ? '#000000' : '#9AA0AA' }));
+    const logLabel = ex.perSide ? 'Log right' : 'Log set ' + (ex.today.length + 1);
+    return { ex, tabs, sides, logLabel };
   }
 }
 </script>

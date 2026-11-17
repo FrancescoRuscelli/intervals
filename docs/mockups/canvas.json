@@ -214,7 +214,7 @@
       "y": -2900,
       "w": 390,
       "h": 844,
-      "title": "G2 · Log a set (tweaks: exercise, side L/R/both)"
+      "title": "G2 · Log a set (tweak: exercise: plain / per side / bands)"
     },
     "GymNewExercise.dc.html": {
       "x": 1410,
@@ -308,20 +308,6 @@
       "h": 1240,
       "title": "G16 · Edit exercise: steps, merge, delete (tweak: sheet)",
       "is_interactive": true
-    },
-    "GymExerciseNormal.dc.html": {
-      "x": 5170,
-      "y": -2900,
-      "w": 390,
-      "h": 844,
-      "title": "G2b · Log a normal set (Deadlift: weight × reps)"
-    },
-    "GymLog.dc.html": {
-      "x": 5640,
-      "y": -2900,
-      "w": 390,
-      "h": 844,
-      "title": "G2c · Log a set, cleaner (tweak: exercise)"
     }
   },
   "order": [
@@ -366,9 +352,7 @@
     "GymStats.dc.html",
     "GymRecords.dc.html",
     "GymExHistory.dc.html",
-    "GymEditExercise.dc.html",
-    "GymExerciseNormal.dc.html",
-    "GymLog.dc.html"
+    "GymEditExercise.dc.html"
   ],
   "notes": {
     "head": {
@@ -398,7 +382,7 @@
       "y": -3200,
       "text": "Gym: strength log (proposal)",
       "kind": "title1",
-      "maxW": 6030
+      "maxW": 5090
     },
     "gymhead2": {
       "x": 0,

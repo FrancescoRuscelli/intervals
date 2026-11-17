@@ -108,6 +108,9 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
     The real rest before each set is saved; shown on the set ("rested 3:25"), in history and in Stats (average vs target).
 - **Edit exercise**: rename (history kept), notes, fields, **step for − / +** per field (weight 0.5 / 1 / 1.25 / 2.5 / 5 kg,
   default 2.5, imported from FitNotes), left/right, rest, groups; **merge** another exercise into it (backup first); delete (asks first).
+- **Log screen (G2, agreed clean style)**: header shows last time; text tabs with underline; big tiles side by side
+  (weight | reps, big − / +); one "Log set" button + note button; small teal rest pill; sets as plain rows
+  (number, value, rest on the right), tap a row to edit / add a note. Bands = full-width row of dots.
 - **Quick notes per set**: tags (Max, Bad form, Assisted, Failed, +½ rep, your own) + free note.
 - **Variants stay separate exercises** (Block Pulls Squeezed, Pull Up (Second Half)…).
 - **Groups** of exercises (Pull day, Legs…), started from Today.
