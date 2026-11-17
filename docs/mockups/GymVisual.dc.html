@@ -112,7 +112,8 @@ class Component extends DCLogic {
       4: [['Barbell Deep Squat', 12], ['Bulgarian Bar Squat', 4], ['Deadlift', 5]],
       6: [['Overhead Press', 10], ['Box Pike Push Up', 6]], 8: [['Pull Up', 5], ['Band One Arm Pull Up', 6]],
       9: [['Dips', 12]], 11: [['Barbell Deep Squat', 13], ['Bulgarian Bar Squat', 3], ['Deadlift', 4]],
-      13: [['Overhead Press', 11], ['Box Pike Push Up', 7]], 15: [['Band One Arm Pull Up', 3], ['Pull Up', 5]]
+      13: [['Overhead Press', 11], ['Box Pike Push Up', 7]], 15: [['Band One Arm Pull Up', 3], ['Pull Up', 5]],
+      17: [['Barbell Deep Squat', 5], ['Deadlift', 3], ['Overhead Press', 4], ['Box Pike Push Up', 3]] // example: legs + shoulders the same day
     };
     const intervals = [16];
     const groupOf = (items) => X[items[0][0]][1];
@@ -122,8 +123,8 @@ class Component extends DCLogic {
       const items = log[d];
       const c = { n: d, bg: d === 17 ? '#2A2340' : 'transparent', op: d > 17 ? 0.35 : 1, fw: items ? 700 : 500, fg: '#F2F3F5', dots: false, dotList: [], tag: '', strip: false, segs: [] };
       if (items) {
-        if (S1) { c.dots = true; c.dotList = [G[groupOf(items)]]; }
-        if (S2) { c.tag = items.slice().sort((a, b) => b[1] - a[1])[0] ? X[items.slice().sort((a, b) => b[1] - a[1])[0][0]][0] : ''; }
+        if (S1) { c.dots = true; c.dotList = [...new Set(items.map(([e]) => G[X[e][1]]))]; }
+        if (S2) { const main = [...new Set(items.map(([e]) => X[e][1]))].map((g) => items.filter(([e]) => X[e][1] === g).sort((a, b) => b[1] - a[1])[0][0]); c.tag = main.map((e) => X[e][0]).join('+'); }
         if (S3) { c.strip = true; c.segs = items.map(([e, n]) => ({ f: n, c: G[X[e][1]] })); }
       }
       if (intervals.includes(d)) { c.dots = true; c.dotList = (c.dotList || []).concat(['#E91E63']); }
@@ -131,14 +132,14 @@ class Component extends DCLogic {
     }
     while (cells.length < 42) cells.push({ n: '', bg: 'transparent', op: 1, fw: 500, fg: '#F2F3F5', dots: false, tag: '', strip: false });
 
-    const names = { 15: 'Sun 15', 13: 'Fri 13', 11: 'Wed 11', 9: 'Mon 9' };
-    const days = [15, 13, 11, 9].map((d) => {
-      const items = log[d], g = groupOf(items);
+    const names = { 17: 'Today (example: 2 groups)', 15: 'Sun 15', 13: 'Fri 13', 11: 'Wed 11' };
+    const days = [17, 15, 13, 11].map((d) => {
+      const items = log[d], groups = [...new Set(items.map(([e]) => X[e][1]))], g = groups[0];
       const shade = (hex) => hex + '33';
       return {
         day: names[d], sets: items.reduce((a, b) => a + b[1], 0),
-        bar: S1 ? G[g] : (S3 ? '#2A2D34' : '#7C3AED'),
-        group: S1 ? g : '', groupBg: shade(G[g]), groupFg: G[g],
+        bar: S1 ? (groups.length > 1 ? 'linear-gradient(' + groups.map((x) => G[x]).join(', ') + ')' : G[g]) : (S3 ? '#2A2D34' : '#7C3AED'),
+        group: S1 ? groups.join(' · ') : '', groupBg: shade(G[g]), groupFg: G[g],
         showText: S1, showTags: S2, showStrip: S3,
         text: items.map(([e, n]) => e + ' ' + n).join(' · '),
         items: items.map(([e, n]) => ({ tag: X[e][0], n, c: G[X[e][1]] }))
