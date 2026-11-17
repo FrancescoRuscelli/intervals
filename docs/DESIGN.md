@@ -188,7 +188,9 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
         long-press select → Repeat ×…, duplicate, move, delete; + Work / + Rest / custom; discard / delete confirm
   - [x] Edit series: name, time (± 5 s, tap to type), 12 colors, 6 icons, per side + change time, log fields (unit, left/right apart), sound switches
   - [x] Settings: theme, disc animation, sound, workout options, import, backup to file, restore (confirm; bad file changes nothing)
-  - [ ] Import preview screen, Journal, Stats, Finished; "last time" on cards; swipe-to-delete in the editor
+  - [x] List: multi-select (long-press) → Tag… (tri-state for several workouts), Duplicate, Delete; ⋮ → Reorder (drag handles)
+  - [x] Tested on the Pixel 8a (adb over USB): import of the 26 Hybrid workouts, editor, player, settings
+  - [ ] NEXT: Journal, Stats, import preview screen; "last time" on cards; swipe-to-delete in the editor
 - [ ] Step 5: player (in progress)
   - [x] core: play state at any time, cues (names, 3-2-1 beeps, end), previous / next (tests)
   - [x] player screen: disc (series ring sized by time, rounded ends, current thicker, dot; rounds ring inside emptying;
