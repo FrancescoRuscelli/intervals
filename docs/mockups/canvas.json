@@ -200,45 +200,38 @@
       "y": -2900,
       "w": 390,
       "h": 844,
-      "title": "G1 · Gym today (chosen: own tab · tweak: rest clock)"
-    },
-    "GymTodaySwitch.dc.html": {
-      "x": 470,
-      "y": -2900,
-      "w": 390,
-      "h": 844,
-      "title": "G1b · (not chosen) switch inside Workouts"
+      "title": "G1 · Gym today (tweak: rest clock)"
     },
     "GymExercise.dc.html": {
-      "x": 940,
+      "x": 470,
       "y": -2900,
       "w": 390,
       "h": 844,
       "title": "G2 · Log a set (tweak: exercise: plain / per side / bands)"
     },
     "GymNewExercise.dc.html": {
-      "x": 1410,
+      "x": 940,
       "y": -2900,
       "w": 390,
       "h": 844,
       "title": "G3 · New exercise: what you write down (bands, per side)"
     },
     "GymGroup.dc.html": {
-      "x": 1880,
+      "x": 1410,
       "y": -2900,
       "w": 390,
       "h": 844,
       "title": "G4 · Group of exercises"
     },
     "GymHistory.dc.html": {
-      "x": 2350,
+      "x": 1880,
       "y": -2900,
       "w": 390,
       "h": 1000,
       "title": "G5 · Graphs per exercise (tweak: graph · your real data)"
     },
     "GymSetNote.dc.html": {
-      "x": 2820,
+      "x": 2350,
       "y": -2900,
       "w": 390,
       "h": 844,
@@ -246,7 +239,7 @@
       "is_interactive": true
     },
     "GymImport.dc.html": {
-      "x": 3290,
+      "x": 2820,
       "y": -2900,
       "w": 390,
       "h": 1300,
@@ -257,7 +250,7 @@
       "y": -4900,
       "w": 390,
       "h": 844,
-      "title": "G9 · Add exercise: recent first, search, or create (tweak: typing)"
+      "title": "G9 · Add exercise or start a group (tweak: typing)"
     },
     "GymSession.dc.html": {
       "x": 470,
@@ -288,21 +281,21 @@
       "title": "G13 · Stats: Gym tab, records, real rest vs target"
     },
     "GymRecords.dc.html": {
-      "x": 3760,
+      "x": 3290,
       "y": -2900,
       "w": 390,
       "h": 1000,
       "title": "G14 · Records: real rep maxes + estimated"
     },
     "GymExHistory.dc.html": {
-      "x": 4230,
+      "x": 3760,
       "y": -2900,
       "w": 390,
       "h": 1000,
       "title": "G15 · Exercise history: every workout, your real Deadlift"
     },
     "GymEditExercise.dc.html": {
-      "x": 4700,
+      "x": 4230,
       "y": -2900,
       "w": 390,
       "h": 1240,
@@ -338,7 +331,6 @@
     "Palette.dc.html",
     "PlayerLiveSpin.dc.html",
     "GymToday.dc.html",
-    "GymTodaySwitch.dc.html",
     "GymExercise.dc.html",
     "GymNewExercise.dc.html",
     "GymGroup.dc.html",
@@ -382,7 +374,7 @@
       "y": -3200,
       "text": "Gym: strength log (proposal)",
       "kind": "title1",
-      "maxW": 5090
+      "maxW": 4620
     },
     "gymhead2": {
       "x": 0,

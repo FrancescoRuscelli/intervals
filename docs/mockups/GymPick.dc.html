@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Gym, add exercise</title>
+<title>Gym, add exercise or group</title>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -41,7 +41,19 @@ button{font-family:inherit}
 
   <sc-if value="{{browsing}}" hint-placeholder-val="{{ true }}">
     <div style="flex: 1; overflow: hidden; display: flex; flex-direction: column; padding: 0 16px">
-      <h2 style="margin: 8px 4px 8px; font-size: 13px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: #9AA0AA">Recent</h2>
+      <div style="display: flex; justify-content: space-between; align-items: baseline; margin: 8px 4px 8px">
+        <h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: #9AA0AA">Start a group</h2>
+        <a href="GymGroup.dc.html" style="font-size: 13px; font-weight: 600; color: #C4B1FF; text-decoration: none">+ New group</a>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <sc-for list="{{groups}}" as="g" hint-placeholder-count="5">
+          <a href="GymSession.dc.html" style="display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 0 14px 0 10px; border-radius: 16px; background: #1C1828; color: inherit; text-decoration: none">
+            <span style="width: 34px; height: 34px; flex: none; border-radius: 17px; background: #7C3AED; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"></path></svg></span>
+            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 16px; font-weight: 700">{{g.name}}</span><span style="font-size: 12px; color: #9AA0AA; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{g.ex}}</span></span>
+          </a>
+        </sc-for>
+      </div>
+      <h2 style="margin: 16px 4px 8px; font-size: 13px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: #9AA0AA">Recent exercises</h2>
       <div style="display: flex; flex-direction: column; gap: 6px">
         <sc-for list="{{recent}}" as="e" hint-placeholder-count="6">
           <a href="GymExercise.dc.html" style="display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 0 6px 0 14px; border-radius: 16px; background: #1A1C21; color: inherit; text-decoration: none">
@@ -78,6 +90,13 @@ class Component extends DCLogic {
     return {
       query, searching: !!query, browsing: !query,
       found: db[query] || [],
+      groups: [
+        { name: 'Legs', ex: 'Deep Squat · Deadlift · Bulgarian Bar Squat' },
+        { name: 'Fingers', ex: 'Block Pulls · Squeezed · Rolling Handle · Pinkie' },
+        { name: 'Pistol day', ex: 'Free Squat · Pistol Squat · Band Bulgarian' },
+        { name: 'Shoulders', ex: 'Overhead Press · Box Pike Push Up' },
+        { name: 'One-arm', ex: 'Deloaded OAP · Front Raise · 90° Hold' }
+      ],
       recent: [
         { name: 'Barbell Deep Squat', last: 'Wed 11 · 80 kg × 5 × 4', side: false },
         { name: 'Deadlift', last: 'Wed 11 · 110 kg × 5, 5, 3', side: false },

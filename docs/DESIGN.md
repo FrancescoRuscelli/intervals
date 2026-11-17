@@ -95,7 +95,7 @@ Not wanted (for now): sharing workouts, reminders, home-screen widget, smartwatc
 ## Gym: strength log (mockups G1–G8, agreed so far 2026-11-17, not implemented)
 
 Replaces FitNotes. Same look as the rest of the app, as simple as possible.
-- **Placement: own Gym tab** (G1). Tabs: Intervals · Gym · Journal · Stats · Settings. (G1b switch rejected.)
+- **Placement: own Gym tab** (G1). Tabs: Intervals · Gym · Journal · Stats · Settings. (switch option rejected, removed.)
 - **No preset list, no categories**: you create your own exercises.
 - **Exercise = name + what you write down**: weight, reps, time, distance, or your own field.
   - Weight can be **+ added** or **− assist** (e.g. Deloaded One Arm Pull-Up: weight taken off).
@@ -113,7 +113,7 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
   (number, value, rest on the right), tap a row to edit / add a note. Bands = full-width row of dots.
 - **Quick notes per set**: tags (Max, Bad form, Assisted, Failed, +½ rep, your own) + free note.
 - **Variants stay separate exercises** (Block Pulls Squeezed, Pull Up (Second Half)…).
-- **Groups** of exercises (Pull day, Legs…), started from Today.
+- **Groups** of exercises (Pull day, Legs…), started from **Add exercise or group** (G9, "Start a group" section); Today stays clean.
 - Per exercise: **Log · History · Graph · Records** (History = every workout, newest first, tap to edit) (graphs and records as in FitNotes, only those that fit the exercise):
   - Graphs per workout: estimated 1RM (Epley, sets ≤ 12 reps), max weight, volume, total reps, max reps,
     weight for N reps, max time / distance; plus ours: left vs right on one graph, real rest vs target.
