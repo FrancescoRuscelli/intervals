@@ -301,6 +301,41 @@
       "h": 1240,
       "title": "G16 · Edit exercise: steps, merge, delete (tweak: sheet)",
       "is_interactive": true
+    },
+    "GymTodayB.dc.html": {
+      "x": 470,
+      "y": -6200,
+      "w": 390,
+      "h": 844,
+      "title": "Today option B · lines + progress bar"
+    },
+    "GymTodayC.dc.html": {
+      "x": 940,
+      "y": -6200,
+      "w": 390,
+      "h": 844,
+      "title": "Today option C · table (set / kg / reps)"
+    },
+    "GymTodayD.dc.html": {
+      "x": 1410,
+      "y": -6200,
+      "w": 390,
+      "h": 844,
+      "title": "Today option D · minimal, dots, no cards"
+    },
+    "GymTodayE.dc.html": {
+      "x": 1880,
+      "y": -6200,
+      "w": 390,
+      "h": 844,
+      "title": "Today option E · focus on the current exercise"
+    },
+    "GymTodayA.dc.html": {
+      "x": 0,
+      "y": -6200,
+      "w": 390,
+      "h": 844,
+      "title": "Today option A · current (set boxes)"
     }
   },
   "order": [
@@ -344,7 +379,12 @@
     "GymStats.dc.html",
     "GymRecords.dc.html",
     "GymExHistory.dc.html",
-    "GymEditExercise.dc.html"
+    "GymEditExercise.dc.html",
+    "GymTodayB.dc.html",
+    "GymTodayC.dc.html",
+    "GymTodayD.dc.html",
+    "GymTodayE.dc.html",
+    "GymTodayA.dc.html"
   ],
   "notes": {
     "head": {
@@ -382,6 +422,13 @@
       "text": "Gym: more screens",
       "kind": "title1",
       "maxW": 2740
+    },
+    "todayopts": {
+      "x": 0,
+      "y": -6500,
+      "text": "Today: layout options, same workout",
+      "kind": "title1",
+      "maxW": 2270
     }
   },
   "designSystems": [],
