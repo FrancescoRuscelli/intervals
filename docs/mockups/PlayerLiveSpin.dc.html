@@ -165,11 +165,10 @@ class Component extends DCLogic {
     }
 
 
-    // spin: "whirl" = spins and settles at every new series; "spin" = always turning
     // crazy spin: at every new series the disc (with its name and time) whirls 1.5 turns and settles,
     // the series ring swings back and the rounds ring the other way
-    const tw = finished ? 1 : Math.min(1, into / 0.7), left = Math.pow(1 - tw, 3);
-    const rot = { disc: (540 * left).toFixed(1), series: (-140 * left).toFixed(1), rounds: (220 * left).toFixed(1) };
+    const tw = finished ? 1 : Math.min(1, into / 0.7), spinLeft = Math.pow(1 - tw, 3);
+    const rot = { disc: (540 * spinLeft).toFixed(1), series: (-140 * spinLeft).toFixed(1), rounds: (220 * spinLeft).toFixed(1) };
 
     // last 3 seconds: each number starts huge and higher up, then drops down shrinking to its size
     const zoom = !finished && secLeft <= 3 && secLeft >= 1;
