@@ -45,9 +45,9 @@ button{font-family:inherit}
           <sc-if value="{{d.pr}}" hint-placeholder-val="{{ false }}"><span style="height: 22px; padding: 0 8px; border-radius: 11px; background: #FFC107; color: #1A1200; font-size: 11px; font-weight: 800; display: flex; align-items: center">PR</span></sc-if>
           <a href="GymSetNote.dc.html" aria-label="Edit {{d.day}}" style="width: 40px; height: 40px; border-radius: 12px; color: #9AA0AA; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"></path></svg></a>
         </div>
-        <div style="display: flex; flex-wrap: wrap; gap: 6px; padding-right: 6px">
-          <sc-for list="{{d.sets}}" as="s" hint-placeholder-count="5">
-            <span style="height: 30px; padding: 0 9px; border-radius: 9px; background: {{s.bg}}; color: {{s.fg}}; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 13px; font-weight: 600; display: flex; align-items: center">{{s.t}}</span>
+        <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding-right: 6px; ">
+          <sc-for list="{{d.sets}}" as="s" hint-placeholder-count="3">
+            <span style="height: 46px; min-width: 0; border-radius: 11px; background: {{s.bg}}; color: {{s.fg}}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px"><span style="font-size: 10px; font-weight: 700; opacity: 0.75">{{s.lab}}</span><span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 14px; font-weight: 600; white-space: nowrap">{{s.val}}</span></span>
           </sc-for>
         </div>
         <sc-if value="{{d.note}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: #C9CDD3; font-style: italic">{{d.note}}</span></sc-if>
@@ -60,6 +60,20 @@ button{font-family:inherit}
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1000}}'>
 class Component extends DCLogic {
   renderVals() {
+    const v = this._vals();
+    const cells = (arr) => arr.map((s, i) => {
+      let t = s.text ?? s.t, tag = '';
+      if (t.endsWith(' ✓')) { t = t.slice(0, -2); tag = ' ✓'; }
+      if (t.endsWith(' PR')) { t = t.slice(0, -3); tag = ' · PR'; }
+      let lab = String(i + 1);
+      const m = t.match(/^([LR]) (.*)$/);
+      if (m) { lab = m[1]; t = m[2]; }
+      return Object.assign({}, s, { lab: lab + tag, val: t.replace(' kg', '') });
+    });
+    v.days.forEach((e) => { e.sets = cells(e.sets); });
+    return v;
+  }
+  _vals() {
     const tabs = [['Log', 'GymExercise.dc.html'], ['History', 'GymExHistory.dc.html', true], ['Graph', 'GymHistory.dc.html'], ['Records', 'GymRecords.dc.html']]
       .map(([label, href, on]) => ({ label, href, on: on ? 'true' : 'false', bg: on ? '#2A2340' : 'transparent', fg: on ? '#C4B1FF' : '#9AA0AA', fw: on ? 700 : 600 }));
     const set = (t) => ({ t, bg: '#23262C', fg: '#E3E5E8' });
