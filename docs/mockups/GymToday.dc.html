@@ -11,144 +11,108 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
 <style>
 body{margin:0}
-a{color:#C4B1FF}
 button{font-family:inherit}
 </style>
 </helmet>
-<div style="width: 390px; height: 844px; box-sizing: border-box; background: #000000; color: #F2F3F5; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; position: relative; overflow: hidden">
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #000000; color: #F2F3F5; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+  <header style="padding: 12px 8px 10px; display: flex; align-items: center; gap: 4px">
+    <button aria-label="Previous day: Sunday 15" style="width: 44px; height: 44px; flex: none; border: 0; border-radius: 22px; background: transparent; color: #6E747E; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></button>
+    <span style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px">
+      <h1 style="margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 28px; font-weight: 700; letter-spacing: -0.5px">Today</h1>
+      <span style="font-size: 12px; color: #9AA0AA">Tue 17 Nov · 9 sets · swipe ← → for other days</span>
+    </span>
+    <button aria-label="Next day" disabled style="width: 44px; height: 44px; flex: none; border: 0; border-radius: 22px; background: transparent; color: #2A2D34; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg></button>
+  </header>
 
-  <sc-if value="{{isSwitch}}" hint-placeholder-val="{{ false }}">
-    <div role="group" aria-label="Training type" style="display: flex; margin: 14px 16px 0; padding: 4px; border-radius: 14px; background: #1A1C21">
-      <button style="flex: 1; height: 38px; border: 0; border-radius: 10px; background: transparent; color: #9AA0AA; font-size: 15px; font-weight: 600">Intervals</button>
-      <button aria-pressed="true" style="flex: 1; height: 38px; border: 0; border-radius: 10px; background: #7C3AED; color: #FFFFFF; font-size: 15px; font-weight: 600">Gym</button>
+  <!-- exercises: grouped table, count, last time, now, PR -->
+  <sc-if value="{{isCp}}" hint-placeholder-val="{{ true }}">
+    <div style="flex: 1; overflow: hidden; display: flex; flex-direction: column; gap: 12px; padding: 0 16px">
+      <sc-for list="{{ex}}" as="e" hint-placeholder-count="3">
+        <a href="GymExercise.dc.html" style="position: relative; padding: 12px 14px 10px; border-radius: 18px; background: #1A1C21; border: 1.5px solid {{e.cardBorder}}; color: inherit; text-decoration: none; display: flex; flex-direction: column">
+          <span style="display: flex; align-items: center; gap: 8px; padding-bottom: 6px">
+            <span style="font-size: 16px; font-weight: 700">{{e.name}}</span>
+            <sc-if value="{{e.now}}" hint-placeholder-val="{{ false }}"><span style="height: 20px; padding: 0 7px; border-radius: 10px; background: #2A2340; color: #C4B1FF; font-size: 11px; font-weight: 700; display: flex; align-items: center">now</span></sc-if>
+            <span style="flex: 1"></span>
+            <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 14px; font-weight: 700; color: #FF8AB3">{{e.count}}</span>
+          </span>
+          <span style="display: grid; grid-template-columns: 52px 1fr 1fr 44px; font-size: 11px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: #6E747E; padding: 2px 0 4px">
+            <span>Set</span><span>{{e.col1}}</span><span>{{e.col2}}</span><span></span>
+          </span>
+          <sc-for list="{{e.rows}}" as="r" hint-placeholder-count="3">
+            <span style="display: grid; grid-template-columns: 52px 1fr 1fr 44px; align-items: center; height: 34px; border-top: 1px solid #202227; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 15px; font-weight: 600">
+              <span style="font-size: 13px; color: #9AA0AA">{{r.n}}</span><span>{{r.a}}</span><span>{{r.b}}</span>
+              <span style="justify-self: end; height: 22px; min-width: 22px; padding: 0 6px; box-sizing: border-box; border-radius: 11px; background: {{r.tagBg}}; color: {{r.tagFg}}; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center">{{r.tag}}</span>
+            </span>
+          </sc-for>
+          <span style="display: flex; align-items: center; gap: 8px; padding-top: 8px">
+            <span style="flex: 1; font-size: 12px; color: #6E747E">last time {{e.lastN}} sets · {{e.lastTop}}</span>
+          </span>
+        </a>
+      </sc-for>
     </div>
   </sc-if>
 
-  <header style="display: flex; align-items: center; justify-content: space-between; padding: 16px 12px 12px 20px">
-    <div style="display: flex; flex-direction: column; gap: 2px">
-      <h1 style="margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 30px; font-weight: 700; letter-spacing: -0.5px">Today</h1>
-      <span style="font-size: 13px; color: #9AA0AA">Tuesday 17 November · 3 exercises · 7 sets</span>
-    </div>
-    <button aria-label="Other days" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: transparent; color: #F2F3F5; display: flex; align-items: center; justify-content: center">
-      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path></svg>
-    </button>
-  </header>
+  <a href="GymPick.dc.html" style="margin: 10px 16px 0; height: 48px; border: 2px dashed #2A2D34; border-radius: 16px; color: #C4B1FF; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; text-decoration: none">+ Add exercise or group</a>
 
-  <div style="flex: 1; overflow: hidden; display: flex; flex-direction: column; gap: 10px; padding: 0 16px">
-    <sc-for list="{{exercises}}" as="e" hint-placeholder-count="3">
-      <a href="GymExercise.dc.html" style="display: flex; flex-direction: column; gap: 10px; padding: 14px 14px 12px 16px; border-radius: 18px; background: #1A1C21; color: inherit; text-decoration: none">
-        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
-          <span style="font-size: 17px; font-weight: 700">{{e.name}}</span>
-          <span style="font-size: 12px; color: #9AA0AA">{{e.fields}}</span>
-        </div>
-        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; ">
-          <sc-for list="{{e.sets}}" as="s" hint-placeholder-count="3">
-            <span style="position: relative; height: 46px; min-width: 0; box-sizing: border-box; border-radius: 11px; background: {{s.bg}}; border: 1px solid {{s.border}}; color: {{s.fg}}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px"><span style="font-size: 10px; font-weight: 700; opacity: 0.75">{{s.lab}}</span><span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: {{s.fs}}; font-weight: 600; white-space: nowrap">{{s.val}}</span><sc-if value="{{s.count}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; top: -6px; right: -4px; height: 18px; padding: 0 6px; border-radius: 9px; background: #F2F3F5; color: #000000; font-size: 11px; font-weight: 800; display: flex; align-items: center">{{s.count}}</span></sc-if></span>
-          </sc-for>
-        </div>
-        <span style="font-size: 12px; color: #9AA0AA">{{e.last}}</span>
-      </a>
-    </sc-for>
-    <a href="GymPick.dc.html" style="height: 52px; border: 2px dashed #2A2D34; border-radius: 16px; color: #C4B1FF; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none">
-      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Add exercise or group
-    </a>
+  <div style="margin: 10px 16px 10px; height: 52px; padding: 0 16px; border-radius: 16px; background: #0E3B35; color: #E6FFFA; display: flex; align-items: center; gap: 10px">
+    <span style="font-size: 13px; font-weight: 700">Resting</span><span style="font-size: 12px; color: #8FD9CC">buzz at 3:00</span>
+    <span style="flex: 1; text-align: right; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums">2:07</span>
   </div>
 
-  <div role="timer" aria-label="{{r.aria}}" style="margin: 10px 16px 10px; border-radius: 18px; overflow: hidden; background: {{r.bg}}; color: {{r.fg}}">
-    <div style="display: flex; align-items: center; gap: 12px; min-height: 62px; padding: 0 8px 0 14px">
-      <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="{{r.icon}}"></path></svg>
-      <span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-size: 13px; font-weight: 700">{{r.title}}</span><span style="font-size: 12px; opacity: 0.8">{{r.sub}}</span></span>
-      <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums">{{r.time}}</span>
-      <button aria-label="Stop the rest clock" style="width: 40px; height: 40px; border: 0; border-radius: 12px; background: rgba(127,127,127,0.18); color: inherit; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
-    </div>
-    <div style="height: 4px; background: rgba(127,127,127,0.25)"><div style="width: {{r.pct}}; height: 4px; background: {{r.line}}"></div></div>
-  </div>
-
-  <nav aria-label="Main" style="display: grid; grid-template-columns: repeat({{cols}}, minmax(0, 1fr)); padding: 8px 4px 18px; border-top: 1px solid #23262C; background: #16181C">
+  <nav aria-label="Main" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); padding: 8px 4px 18px; border-top: 1px solid #23262C; background: #16181C">
     <sc-for list="{{nav}}" as="n" hint-placeholder-count="5">
-      <a href="{{n.href}}" style="height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: {{n.color}}; text-decoration: none; font-size: 12px; font-weight: {{n.fw}}">
-        <span style="width: 52px; height: 30px; border-radius: 15px; background: {{n.bg}}; display: flex; align-items: center; justify-content: center">
-          <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{n.icon}}"></path></svg>
-        </span>{{n.label}}
-      </a>
+      <span style="height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: {{n.color}}; font-size: 12px; font-weight: 600">
+        <span style="width: 52px; height: 28px; border-radius: 14px; background: {{n.bg}}"></span>{{n.label}}
+      </span>
     </sc-for>
   </nav>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"day":{"editor":"enum","options":["normal","a lot of sets"],"default":"normal"},"rest":{"editor":"enum","options":["counting","past the target"],"default":"counting"},"nav":{"editor":"enum","options":["tab","switch"],"default":"tab"},"$preview":{"width":390,"height":844}}'>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
 class Component extends DCLogic {
   renderVals() {
-    const v = this._vals();
-    const cells = (arr) => {
-      const one = arr.map((s, i) => {
-        let t = s.text ?? s.t, tag = '';
-        if (t.endsWith(' ✓')) { t = t.slice(0, -2); tag = ' ✓'; }
-        if (t.endsWith(' PR')) { t = t.slice(0, -3); tag = ' · PR'; }
-        let side = '';
-        const m = t.match(/^([LR]) (.*)$/);
-        if (m) { side = m[1]; t = m[2]; }
-        return { n: i + 1, side, tag, val: t.replace(' kg', ''), bg: s.bg, fg: s.fg };
-      });
-      // group identical sets that follow each other
-      const out = [];
-      one.forEach((s) => {
-        const p = out[out.length - 1];
-        if (p && !s.side && p.val === s.val && p.tag === s.tag && p.bg === s.bg) { p.to = s.n; p.k++; }
-        else out.push(Object.assign({ to: s.n, k: 1 }, s));
-      });
-      return out.map((s) => ({
-        lab: (s.side || (s.k > 1 ? s.n + '–' + s.to : String(s.n))) + s.tag,
-        val: s.val, count: s.k > 1 ? '×' + s.k : '', bg: s.bg, fg: s.fg, border: s.bg,
-        fs: [...s.val].length > 9 ? '12px' : '14px'
-      }));
-    };
-    const cap = (boxes, max, total) => {
-      if (!max || boxes.length <= max) return boxes;
-      const shown = boxes.slice(0, max - 1);
-      const hidden = total - shown.reduce((a, b) => a + (b.count ? parseInt(b.count.slice(1), 10) : 1), 0);
-      return shown.concat([{ lab: 'tap to see', val: '+' + hidden + ' more', count: '', bg: 'transparent', fg: '#C4B1FF', border: '#3A2F5C', fs: '13px' }]);
-    };
-    v.exercises.forEach((e) => { e.sets = cap(cells(e.sets), 6, e.sets.length); });
-    return v;
-  }
-  _vals() {
-    const restMode = this.props.rest ?? 'counting';
-    const after = restMode !== 'counting';
-    const r = after
-      ? { bg: '#00BFA5', fg: '#04221E', line: '#04221E', pct: '100%', time: '3:25', title: 'Ready · 3:00 passed (buzzed)', sub: 'still counting, so you know how long you rested', icon: 'M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5h4', aria: 'Rest 3 minutes 25 seconds, past the 3 minute target' }
-      : { bg: '#0E3B35', fg: '#E6FFFA', line: '#00BFA5', pct: '70%', time: '2:07', title: 'Resting · Deep Squat', sub: 'counts up · buzz at 3:00', icon: 'M12 8v5l3 2M12 3.5a9 9 0 1 0 0 18a9 9 0 0 0 0-18', aria: 'Rest 2 minutes 7 seconds, buzz at 3 minutes' };
-    const isSwitch = (this.props.nav ?? 'tab') === 'switch';
-    const I = {
-      timer: 'M12 8v5l3 2M9 2h6M12 4a9 9 0 1 0 0 18a9 9 0 0 0 0-18',
-      gym: 'M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12',
-      journal: 'M3.5 7.5a2.5 2.5 0 0 1 2.5-2.5h12a2.5 2.5 0 0 1 2.5 2.5v10a2.5 2.5 0 0 1-2.5 2.5h-12a2.5 2.5 0 0 1-2.5-2.5zM3.5 10h17M8 3v4M16 3v4',
-      stats: 'M5 20v-8M12 20V5M19 20v-5',
-      settings: 'M12 9a3 3 0 1 0 0 6a3 3 0 0 0 0-6M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1'
-    };
-    const tabs = isSwitch
-      ? [['Workouts', I.gym, 'Main.dc.html', true], ['Journal', I.journal, 'Journal.dc.html'], ['Stats', I.stats, 'Stats.dc.html'], ['Settings', I.settings, 'Settings.dc.html']]
-      : [['Intervals', I.timer, 'Main.dc.html'], ['Gym', I.gym, 'GymToday.dc.html', true], ['Journal', I.journal, 'Journal.dc.html'], ['Stats', I.stats, 'Stats.dc.html'], ['Settings', I.settings, 'Settings.dc.html']];
-    const nav = tabs.map(([label, icon, href, on]) => ({ label, icon, href, color: on ? '#C4B1FF' : '#9AA0AA', bg: on ? '#2A2340' : 'transparent', fw: on ? 700 : 600 }));
-    const done = (text) => ({ text, bg: '#3A1428', fg: '#FF8AB3' });
-    const todo = (text) => ({ text, bg: '#23262C', fg: '#C9CDD3' });
-    if ((this.props.day ?? 'normal') !== 'normal') {
-      const rep = (t, n, f) => Array.from({ length: n }, () => f(t));
+    const layout = 'C+ table plus';
+    const PINK = '#E91E63', GREY = '#2A2D34';
+    const raw = [
+      { name: 'Barbell Deep Squat', col1: 'kg', col2: 'reps', lastN: 4, lastTop: '80 × 5', sets: [['1', '60', '5', 1], ['2', '80', '5', 1], ['3', '80', '5', 1], ['4', '80', '5', 1], ['5', '85', '3', 1, 'pr']] },
+      { name: 'Pistol Squat', col1: 'bands', col2: 'reps', lastN: 4, lastTop: '🟢🟣🟣🔴 × 5', sets: [['L', '🟢🟣🔴', '5', 1], ['R', '🟢🟣🔴', '5', 1]] },
+      { name: 'Deloaded One Arm Pull-Up', col1: 'assist', col2: 'reps', lastN: 2, lastTop: '−22.5 × 3', sets: [['R', '−20', '3', 1], ['L', '−25', '3', 1]] }
+    ];
+    const ex = raw.map((e) => {
+      const done = e.sets.filter((s) => s[3]).length;
+      const next = e.sets.find((s) => !s[3]);
+      const fmt = (s) => (/[LR]/.test(s[0]) ? s[0] + ' ' : '') + s[1] + (e.col1 === 'kg' ? ' kg' : e.col1 === 'assist' ? ' kg' : '') + ' × ' + s[2];
       return {
-        isSwitch, nav, cols: tabs.length, r,
-        exercises: [
-          { name: 'Dips', fields: 'weight · reps', last: 'your real 29 May: 24 sets', sets: [...rep('+25 kg × 10', 15, done), done('+25 kg × 8'), ...rep('+25 kg × 7', 2, done), ...rep('+25 kg × 5', 3, done), done('+25 kg × 4'), done('+25 kg × 6'), done('+25 kg × 5')] },
-          { name: 'Pike Push Up', fields: 'reps', last: 'your real 1 Jul: 24 sets', sets: ['9', '4', '5', '4', '5', '4', '4', '4', '4', '4', '4', '5', '4', '3', '4', '3', '4', '4', '4', '4', '3', '4', '3', '4'].map((x) => done(x + ' reps')) },
-          { name: 'Pistol Squat', fields: 'bands · reps · per side', last: 'long values get smaller text', sets: [done('L 🟢🟣🟣🔴 × 15'), done('R 🟢🟣🟣🔴 × 15')] }
-        ]
+        name: e.name, col1: e.col1, col2: e.col2, done, total: e.sets.length,
+        segs: e.sets.map((s) => ({ c: s[3] ? PINK : 'transparent', ring: s[3] ? PINK : '#4A4F58' })).map((g) => Object.assign(g, { c: g.c === 'transparent' && layout.startsWith('B') ? GREY : g.c })),
+        line: e.sets.map(fmt).join(' · '),
+        next: fmt(e.sets[e.sets.length - 1]),
+        lastN: e.lastN, lastTop: e.lastTop, count: done + (done === 1 ? ' set' : ' sets'),
+        rows: (() => {
+          // same values one after the other = one row with a count
+          const out = [];
+          e.sets.forEach((s) => {
+            const p = out[out.length - 1], side = /[LR]/.test(s[0]);
+            if (p && !p.pr && !s[4] && side === p.side && p.a === s[1] && p.b === s[2]) { p.to = s[0]; p.k++; if (side && !p.sides.includes(s[0])) p.sides.push(s[0]); }
+            else out.push({ from: s[0], to: s[0], k: 1, side, sides: side ? [s[0]] : [], a: s[1], b: s[2], pr: s[4] === 'pr' });
+          });
+          return out.map((r) => ({ n: r.side ? r.sides.join(' ') : (r.k > 1 ? r.from + '–' + r.to : r.from), a: r.a, b: r.b, fg: '#F2F3F5',
+            count: r.k > 1 ? '×' + r.k : '', countBg: r.k > 1 ? '#3A1428' : 'transparent',
+            tag: r.pr ? 'PR' : (r.k > 1 ? '×' + r.k : ''), tagBg: r.pr ? '#FFC107' : (r.k > 1 ? '#3A1428' : 'transparent'), tagFg: r.pr ? '#1A1200' : '#FF8AB3' }));
+        })()
       };
-    }
+    });
+    ex.forEach((e, i) => {
+      e.now = i === 0;
+      e.cardBorder = e.now ? '#7C3AED' : '#1A1C21';
+      e.again = e.next.replace(' kg', '');
+    });
+    const others = ex.slice(1).map((e) => ({ name: e.name, sub: 'last: ' + e.next + ' · last time ' + e.lastN + ' sets', count: e.count }));
+    const focusSegs = ex[0].segs.map((g) => ({ c: g.c === 'transparent' ? GREY : g.c }));
+    const nav = ['Intervals', 'Gym', 'Journal', 'Stats', 'Settings'].map((label) => ({ label, color: label === 'Gym' ? '#C4B1FF' : '#9AA0AA', bg: label === 'Gym' ? '#2A2340' : 'transparent' }));
     return {
-      isSwitch, nav, cols: tabs.length, r,
-      exercises: [
-        { name: 'Barbell Deep Squat', fields: 'weight · reps', sets: [done('80 kg × 5'), done('80 kg × 5'), done('80 kg × 5')], last: '3 sets · last time (Wed 11) 4 sets: 80 kg × 5, 5, 5, 5' },
-        { name: 'Pistol Squat', fields: 'bands · reps · per side', sets: [done('L 🟢🟣🔴 × 5'), done('R 🟢🟣🔴 × 5')], last: '2 sets · last time: L 🟢🟣🟣🔴 × 5 · R 🟢🟣🟣🔴 × 5' },
-        { name: 'Deloaded One Arm Pull-Up', fields: 'assist · reps · per side', sets: [done('R −20 kg × 3'), done('L −25 kg × 3')], last: 'Last time: R −20 kg × 3 · L −25 kg × 2' }
-      ]
+      ex, others, focusSegs, nav,
+      isB: layout.startsWith('B'), isC: layout === 'C table', isCp: layout.startsWith('C+'), isD: layout.startsWith('D'), isE: layout.startsWith('E')
     };
   }
 }

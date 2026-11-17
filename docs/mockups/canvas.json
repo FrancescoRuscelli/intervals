@@ -200,7 +200,7 @@
       "y": -2900,
       "w": 390,
       "h": 844,
-      "title": "G1 · Gym today (tweaks: day = a lot of sets, rest clock)"
+      "title": "G1 · Gym today (table, same sets grouped, swipe for other days)"
     },
     "GymExercise.dc.html": {
       "x": 470,
@@ -301,48 +301,6 @@
       "h": 1240,
       "title": "G16 · Edit exercise: steps, merge, delete (tweak: sheet)",
       "is_interactive": true
-    },
-    "GymTodayB.dc.html": {
-      "x": 470,
-      "y": -6200,
-      "w": 390,
-      "h": 844,
-      "title": "Today option B · lines + progress bar"
-    },
-    "GymTodayC.dc.html": {
-      "x": 940,
-      "y": -6200,
-      "w": 390,
-      "h": 844,
-      "title": "Today option C · table, same sets grouped (×3)"
-    },
-    "GymTodayD.dc.html": {
-      "x": 1880,
-      "y": -6200,
-      "w": 390,
-      "h": 844,
-      "title": "Today option D · minimal, dots, no cards"
-    },
-    "GymTodayE.dc.html": {
-      "x": 2350,
-      "y": -6200,
-      "w": 390,
-      "h": 844,
-      "title": "Today option E · focus on the current exercise"
-    },
-    "GymTodayA.dc.html": {
-      "x": 0,
-      "y": -6200,
-      "w": 390,
-      "h": 844,
-      "title": "Today option A · current (set boxes)"
-    },
-    "GymTodayCp.dc.html": {
-      "x": 1410,
-      "y": -6200,
-      "w": 390,
-      "h": 844,
-      "title": "Today option C+ · table + count, last time, now + quick log, PR"
     }
   },
   "order": [
@@ -386,13 +344,7 @@
     "GymStats.dc.html",
     "GymRecords.dc.html",
     "GymExHistory.dc.html",
-    "GymEditExercise.dc.html",
-    "GymTodayB.dc.html",
-    "GymTodayC.dc.html",
-    "GymTodayD.dc.html",
-    "GymTodayE.dc.html",
-    "GymTodayA.dc.html",
-    "GymTodayCp.dc.html"
+    "GymEditExercise.dc.html"
   ],
   "notes": {
     "head": {
@@ -428,13 +380,6 @@
       "x": 0,
       "y": -5200,
       "text": "Gym: more screens",
-      "kind": "title1",
-      "maxW": 2740
-    },
-    "todayopts": {
-      "x": 0,
-      "y": -6500,
-      "text": "Today: layout options, same workout",
       "kind": "title1",
       "maxW": 2740
     }

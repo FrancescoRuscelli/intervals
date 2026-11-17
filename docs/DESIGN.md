@@ -115,7 +115,10 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
   "last time N sets" as information. **Plans are optional**, per exercise inside a group ("4 sets" or "3 × 8 @ 40 kg"):
   only then planned sets show as grey outlines; going over or stopping early is fine, no warnings.
 - **Swipe between days** on Today (← yesterday, the day before…; arrows too), past days open the same way, editable.
-- Today layout: options A–E on the canvas, to choose.
+- **Today layout (chosen, "C+")**: one card per exercise with a small table Set · kg · reps; identical sets in a row
+  are one row with a pink ×N ("2–4 · 80 · 5 ×3"), same-value left/right too ("L R … ×2"); pink set count next to the name;
+  "last time N sets · top set" under the table; the exercise you're on has a purple outline + "now"; PR rows get a yellow PR.
+  Logging happens inside the exercise (tap the card), not from Today.
 - **Set boxes** (Today, group in progress, history): equal grid boxes, label on top (set number / L / R, ✓, PR), value below;
   identical sets in a row become one box with a ×N badge ("1–15 · +25 × 10 ×15"); on Today max 2 rows, last box "+N more";
   long values (bands, decimals) get smaller text.
