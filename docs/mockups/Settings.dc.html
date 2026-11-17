@@ -64,7 +64,13 @@ button{font-family:inherit}
       <div style="border-radius: 16px; background: {{t.surface}}; border: 1px solid {{t.line}}; padding: 4px 14px">
         <label style="display: flex; align-items: center; justify-content: space-between; min-height: 52px"><span style="font-size: 15px">3-2-1 countdown before start</span><input type="checkbox" checked style="width: 22px; height: 22px; accent-color: {{t.accent}}"></label>
         <div style="height: 1px; background: {{t.line}}"></div>
-        <label style="display: flex; align-items: center; justify-content: space-between; min-height: 56px"><span style="display: flex; flex-direction: column"><span style="font-size: 15px">Crazy spin</span><span style="font-size: 12px; color: {{t.muted}}">The disc whirls at every new series</span></span><input type="checkbox" style="width: 22px; height: 22px; accent-color: {{t.accent}}"></label>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 60px">
+          <span style="display: flex; flex-direction: column"><span style="font-size: 15px">Disc animation</span><span style="font-size: 12px; color: {{t.muted}}">At every new series</span></span>
+          <div role="group" aria-label="Disc animation" style="display: flex; flex: none; padding: 3px; border-radius: 10px; background: {{t.bg}}">
+            <button aria-pressed="true" style="height: 32px; padding: 0 12px; border: 0; border-radius: 8px; background: {{t.accent}}; color: #FFFFFF; font-size: 13px; font-weight: 600">Calm</button>
+            <button aria-pressed="false" style="height: 32px; padding: 0 12px; border: 0; border-radius: 8px; background: transparent; color: {{t.muted}}; font-size: 13px; font-weight: 600">Crazy spin</button>
+          </div>
+        </div>
         <div style="height: 1px; background: {{t.line}}"></div>
         <label style="display: flex; align-items: center; justify-content: space-between; min-height: 52px"><span style="font-size: 15px">Keep screen on</span><input type="checkbox" checked style="width: 22px; height: 22px; accent-color: {{t.accent}}"></label>
         <div style="height: 1px; background: {{t.line}}"></div>
