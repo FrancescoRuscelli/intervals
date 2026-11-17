@@ -31,73 +31,117 @@ button{font-family:inherit}
   </div>
 
   <sc-if value="{{ex.perSide}}" hint-placeholder-val="{{ false }}">
-    <div role="group" aria-label="Side" style="display: flex; margin: 14px 16px 0; padding: 4px; border-radius: 14px; background: #1A1C21">
-      <button aria-pressed="true" style="flex: 1; height: 40px; border: 0; border-radius: 10px; background: #F2F3F5; color: #000000; font-size: 15px; font-weight: 700">Left</button>
-      <button style="flex: 1; height: 40px; border: 0; border-radius: 10px; background: transparent; color: #9AA0AA; font-size: 15px; font-weight: 600">Right</button>
+    <div role="group" aria-label="Side" style="display: flex; margin: 12px 16px 0; padding: 4px; border-radius: 14px; background: #1A1C21">
+      <sc-for list="{{sides}}" as="sd" hint-placeholder-count="3">
+        <button aria-pressed="{{sd.on}}" style="flex: 1; height: 40px; border: 0; border-radius: 10px; background: {{sd.bg}}; color: {{sd.fg}}; font-size: 15px; font-weight: 700">{{sd.label}}</button>
+      </sc-for>
     </div>
   </sc-if>
 
-  <div style="display: flex; flex-direction: column; gap: 10px; padding: 14px 16px 0">
+  <div style="display: flex; flex-direction: column; gap: 8px; padding: 12px 16px 0">
     <sc-for list="{{ex.fields}}" as="f" hint-placeholder-count="2">
-      <div style="padding: 10px 10px 10px 16px; border-radius: 18px; background: #1A1C21; display: flex; align-items: center; gap: 8px">
+      <div style="padding: 8px 10px 8px 16px; border-radius: 18px; background: #1A1C21; display: flex; align-items: center; gap: 8px; min-height: 68px; box-sizing: border-box">
         <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 13px; color: #9AA0AA">{{f.label}}</span><span style="font-size: 12px; color: #6E747E">{{f.step}}</span></span>
-        <button aria-label="{{f.label}} less" style="width: 52px; height: 52px; border: 0; border-radius: 16px; background: #2A2340; color: #C4B1FF; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
-        <span style="min-width: 118px; text-align: center; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums">{{f.value}}<span style="font-size: 16px; color: #9AA0AA; margin-left: 3px">{{f.unit}}</span></span>
-        <button aria-label="{{f.label}} more" style="width: 52px; height: 52px; border: 0; border-radius: 16px; background: #2A2340; color: #C4B1FF; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+        <sc-if value="{{f.isBands}}" hint-placeholder-val="{{ false }}">
+          <a href="GymBands.dc.html" aria-label="Change bands" style="display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 8px 0 14px; border-radius: 16px; background: #23262C; color: inherit; text-decoration: none">
+            <span style="display: flex; gap: 4px">
+              <sc-for list="{{f.bands}}" as="b" hint-placeholder-count="4">
+                <span style="width: 12px; height: 32px; border-radius: 6px; background: {{b.c}}; box-shadow: inset 0 0 0 1px {{b.edge}}"></span>
+              </sc-for>
+            </span>
+            <span style="font-size: 13px; color: #C4B1FF; font-weight: 600">change ›</span>
+          </a>
+        </sc-if>
+        <sc-if value="{{f.isStep}}" hint-placeholder-val="{{ true }}">
+          <button aria-label="{{f.label}} less" style="width: 52px; height: 52px; border: 0; border-radius: 16px; background: #2A2340; color: #C4B1FF; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
+          <span style="min-width: 112px; text-align: center; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 32px; font-weight: 700; font-variant-numeric: tabular-nums">{{f.value}}<span style="font-size: 16px; color: #9AA0AA; margin-left: 3px">{{f.unit}}</span></span>
+          <button aria-label="{{f.label}} more" style="width: 52px; height: 52px; border: 0; border-radius: 16px; background: #2A2340; color: #C4B1FF; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+        </sc-if>
       </div>
     </sc-for>
   </div>
 
-  <div style="display: flex; gap: 10px; padding: 14px 16px 0">
-    <button style="flex: 1; height: 58px; border: 0; border-radius: 18px; background: #7C3AED; color: #FFFFFF; font-size: 17px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px">
-      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>{{ex.logLabel}}
+  <div style="display: flex; gap: 8px; padding: 12px 16px 0">
+    <button style="flex: 1; height: 56px; border: 0; border-radius: 18px; background: #7C3AED; color: #FFFFFF; font-size: 17px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px">
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>{{logLabel}}
     </button>
+    <a href="GymSetNote.dc.html" aria-label="Log with a note" style="width: 56px; height: 56px; border-radius: 18px; background: #1A1C21; color: #C4B1FF; display: flex; align-items: center; justify-content: center">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H10l-4 4v-4H5.5A1.5 1.5 0 0 1 4 14.5z"></path></svg>
+    </a>
   </div>
-  <span style="padding: 8px 20px 0; font-size: 12px; color: #9AA0AA">Starts from last time · logging starts the rest timer ({{ex.rest}})</span>
+  <span style="padding: 8px 20px 0; font-size: 12px; color: #9AA0AA">{{hint}}</span>
 
-  <section style="flex: 1; overflow: hidden; margin-top: 16px; padding: 14px 16px 0; border-top: 1px solid #23262C; display: flex; flex-direction: column; gap: 6px">
+  <section style="flex: 1; overflow: hidden; margin-top: 12px; padding: 12px 16px 0; border-top: 1px solid #23262C; display: flex; flex-direction: column; gap: 6px">
     <h2 style="margin: 0 0 4px; font-size: 13px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: #9AA0AA">Today</h2>
     <sc-for list="{{ex.today}}" as="s" hint-placeholder-count="3">
-      <div style="display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 6px 0 12px; border-radius: 14px; background: #111216">
-        <span style="width: 26px; height: 26px; border-radius: 13px; background: #3A1428; color: #FF8AB3; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{s.n}}</span>
-        <span style="flex: 1; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 18px; font-weight: 600">{{s.text}}</span>
+      <div style="display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 4px 4px 4px 10px; box-sizing: border-box; border-radius: 14px; background: #111216">
+        <span style="width: 26px; height: 26px; flex: none; border-radius: 13px; background: {{s.badgeBg}}; color: {{s.badgeFg}}; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{s.badge}}</span>
+        <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+          <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 17px; font-weight: 600">{{s.text}}</span>
+          <sc-if value="{{s.note}}" hint-placeholder-val="{{ false }}">
+            <span style="align-self: flex-start; height: 20px; padding: 0 8px; border-radius: 10px; background: #2A2D34; color: #C9CDD3; font-size: 11px; font-weight: 600; display: flex; align-items: center">{{s.note}}</span>
+          </sc-if>
+        </span>
         <sc-if value="{{s.pr}}" hint-placeholder-val="{{ false }}">
           <span style="height: 24px; padding: 0 8px; border-radius: 12px; background: #FFC107; color: #1A1200; font-size: 12px; font-weight: 800; display: flex; align-items: center">PR</span>
         </sc-if>
-        <button aria-label="Edit set {{s.n}}" style="width: 40px; height: 40px; border: 0; border-radius: 12px; background: transparent; color: #6E747E; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="12" cy="19" r="1.8"></circle></svg></button>
+        <a href="GymSetNote.dc.html" aria-label="Edit set" style="width: 40px; height: 40px; border-radius: 12px; color: #6E747E; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="12" cy="19" r="1.8"></circle></svg></a>
       </div>
     </sc-for>
-    <div style="margin-top: 8px; padding: 10px 12px; border-radius: 12px; border: 1px solid #23262C; display: flex; flex-direction: column; gap: 2px">
+    <div style="margin-top: 6px; padding: 10px 12px; border-radius: 12px; border: 1px solid #23262C; display: flex; flex-direction: column; gap: 2px">
       <span style="font-size: 12px; color: #9AA0AA">Last time · {{ex.lastDay}}</span>
       <span style="font-size: 14px; font-weight: 600">{{ex.lastSets}}</span>
     </div>
   </section>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"exercise":{"editor":"enum","options":["pull-ups","one-arm hang","band face pulls"],"default":"pull-ups"},"$preview":{"width":390,"height":844}}'>
+<script type="text/x-dc" data-dc-script data-props='{"exercise":{"editor":"enum","options":["pistol squat","deloaded one-arm","pull up","block pulls"],"default":"pistol squat"},"side":{"editor":"enum","options":["left","right","both"],"default":"left"},"$preview":{"width":390,"height":844}}'>
 class Component extends DCLogic {
   renderVals() {
+    const B = { g: ['#43A047', '#43A047'], p: ['#8E44D8', '#8E44D8'], r: ['#E53935', '#E53935'], k: ['#16181C', '#5A5F68'], y: ['#FFC107', '#FFC107'] };
+    const bands = (s) => s.split('').map((ch) => ({ c: B[ch][0], edge: B[ch][1] }));
+    const step = (label, stepTxt, value, unit) => ({ label, step: stepTxt, value, unit, isStep: true, isBands: false });
+    const bandField = (s, txt) => ({ label: 'Bands', step: txt, isStep: false, isBands: true, bands: bands(s) });
+    const set = (badge, text, o = {}) => {
+      const side = badge === 'L' || badge === 'R';
+      return { badge, text, note: o.note || '', pr: !!o.pr, badgeBg: side ? '#0E3B35' : '#3A1428', badgeFg: side ? '#5EEAD4' : '#FF8AB3' };
+    };
     const all = {
-      'pull-ups': {
-        name: 'Pull-ups', perSide: false, rest: '2:00', logLabel: 'Log set 4',
-        fields: [{ label: 'Added weight', step: '± 2.5 kg', value: '+10', unit: 'kg' }, { label: 'Reps', step: '± 1', value: '6', unit: '' }],
-        today: [{ n: 1, text: '+10 kg × 8', pr: true }, { n: 2, text: '+10 kg × 7', pr: false }, { n: 3, text: '+10 kg × 6', pr: false }],
-        lastDay: 'Friday 13', lastSets: '+7.5 kg × 8 · 8 · 7'
+      'pistol squat': {
+        name: 'Pistol Squat', perSide: true, rest: '3:00',
+        fields: [bandField('gppr', 'green · purple ×2 · red'), step('Reps', '± 1', '5', '')],
+        today: [set('L', '🟢🟣🟣🔴 × 5'), set('R', '🟢🟣🟣🔴 × 5'), set('L', '🟢🟣🔴 × 5', { pr: true, note: 'bad form' })],
+        lastDay: 'Wednesday 11', lastSets: 'L 🟢🟣🟣🔴 × 5, 5 · R 🟢🟣🟣🔴 × 5, 4'
       },
-      'one-arm hang': {
-        name: 'One-arm hang', perSide: true, rest: '3:00', logLabel: 'Log left',
-        fields: [{ label: 'Added weight', step: '± 0.5 kg', value: '+10', unit: 'kg' }, { label: 'Time', step: '± 1 s', value: '0:10', unit: '' }],
-        today: [{ n: 1, text: 'L +10 kg · 0:10', pr: true }, { n: 2, text: 'R +8 kg · 0:10', pr: false }],
-        lastDay: 'Thursday 12', lastSets: 'L +7.5 kg · 0:10 · R +7.5 kg · 0:10'
+      'deloaded one-arm': {
+        name: 'Deloaded One Arm Pull-Up', perSide: true, rest: '3:00',
+        fields: [step('Assist', 'weight taken off · ± 2.5', '−20', 'kg'), step('Reps', '± 1', '3', '')],
+        today: [set('R', '−20 kg × 3'), set('L', '−25 kg × 3', { pr: true }), set('R', '−20 kg × 2', { note: 'failed the last' })],
+        lastDay: 'Friday 13', lastSets: 'R −22.5 kg × 3 · L −27.5 kg × 3'
       },
-      'band face pulls': {
-        name: 'Band face pulls', perSide: false, rest: '1:00', logLabel: 'Log set 3',
-        fields: [{ label: 'Band', step: 'yellow · red · black', value: 'red', unit: '' }, { label: 'Reps', step: '± 1', value: '15', unit: '' }],
-        today: [{ n: 1, text: 'red × 15', pr: false }, { n: 2, text: 'red × 15', pr: false }],
-        lastDay: 'Friday 13', lastSets: 'yellow × 15 · 15'
+      'pull up': {
+        name: 'Pull Up', perSide: false, rest: '3:00',
+        fields: [step('Added weight', '± 2.5 kg', '+30', 'kg'), step('Reps', '± 1', '5', '')],
+        today: [set('1', '+30 kg × 5', { pr: true }), set('2', '+30 kg × 5'), set('3', '+30 kg × 4', { note: 'max' })],
+        lastDay: 'Sunday 15', lastSets: '+27.5 kg × 5 · 5 · 5'
+      },
+      'block pulls': {
+        name: 'Block Pulls', perSide: true, rest: '2:00',
+        fields: [step('Weight', '± 1 kg', '50', 'kg'), step('Reps', '± 1', '5', '')],
+        today: [set('R', '50 kg × 5'), set('L', '45 kg × 5'), set('R', '50 kg × 5', { note: 'no pinkie' })],
+        lastDay: 'Tuesday 3', lastSets: 'R 50 kg × 5, 5 · L 45 kg × 5, 4'
       }
     };
-    return { ex: all[this.props.exercise ?? 'pull-ups'] || all['pull-ups'] };
+    const ex = all[this.props.exercise ?? 'pistol squat'] || all['pistol squat'];
+    const side = ex.perSide ? (this.props.side ?? 'left') : 'none';
+    const sides = [['left', 'Left'], ['right', 'Right'], ['both', 'Both']].map(([k, label]) => ({
+      label, on: k === side ? 'true' : 'false', bg: k === side ? '#F2F3F5' : 'transparent', fg: k === side ? '#000000' : '#9AA0AA'
+    }));
+    const logLabel = side === 'left' ? 'Log left' : side === 'right' ? 'Log right' : side === 'both' ? 'Log both sides' : 'Log set';
+    const hint = side === 'both'
+      ? 'Both = one set for each side with the same values · then rest ' + ex.rest
+      : 'Starts from last time · logging starts the rest timer (' + ex.rest + ')' + (ex.perSide ? ' · then switches side' : '');
+    return { ex, sides, logLabel, hint };
   }
 }
 </script>

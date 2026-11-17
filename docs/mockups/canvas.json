@@ -200,7 +200,7 @@
       "y": -2900,
       "w": 390,
       "h": 844,
-      "title": "G1 · Gym today (option A: own Gym tab)"
+      "title": "G1 · Gym today (option A: own Gym tab, your groups)"
     },
     "GymTodaySwitch.dc.html": {
       "x": 470,
@@ -214,14 +214,14 @@
       "y": -2900,
       "w": 390,
       "h": 844,
-      "title": "G2 · Log an exercise (try the exercise tweak)"
+      "title": "G2 · Log a set (tweaks: exercise, side L/R/both)"
     },
     "GymNewExercise.dc.html": {
       "x": 1410,
       "y": -2900,
       "w": 390,
       "h": 844,
-      "title": "G3 · New exercise: what you write down"
+      "title": "G3 · New exercise: what you write down (bands, per side)"
     },
     "GymGroup.dc.html": {
       "x": 1880,
@@ -236,6 +236,29 @@
       "w": 390,
       "h": 844,
       "title": "G5 · Exercise history"
+    },
+    "GymBands.dc.html": {
+      "x": 2820,
+      "y": -2900,
+      "w": 390,
+      "h": 844,
+      "title": "G6 · Pick bands: stack a combination (try it in Play)",
+      "is_interactive": true
+    },
+    "GymSetNote.dc.html": {
+      "x": 3290,
+      "y": -2900,
+      "w": 390,
+      "h": 844,
+      "title": "G7 · A set: quick notes (tap tags in Play)",
+      "is_interactive": true
+    },
+    "GymImport.dc.html": {
+      "x": 3760,
+      "y": -2900,
+      "w": 390,
+      "h": 1300,
+      "title": "G8 · Import from FitNotes (with your real numbers)"
     }
   },
   "order": [
@@ -270,7 +293,10 @@
     "GymExercise.dc.html",
     "GymNewExercise.dc.html",
     "GymGroup.dc.html",
-    "GymHistory.dc.html"
+    "GymHistory.dc.html",
+    "GymBands.dc.html",
+    "GymSetNote.dc.html",
+    "GymImport.dc.html"
   ],
   "notes": {
     "head": {
@@ -300,7 +326,7 @@
       "y": -3200,
       "text": "Gym: strength log (proposal)",
       "kind": "title1",
-      "maxW": 2740
+      "maxW": 4150
     }
   },
   "designSystems": [],

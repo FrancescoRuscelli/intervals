@@ -27,7 +27,7 @@ button{font-family:inherit}
   <header style="display: flex; align-items: center; justify-content: space-between; padding: 16px 12px 4px 20px">
     <div style="display: flex; flex-direction: column; gap: 2px">
       <h1 style="margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 30px; font-weight: 700; letter-spacing: -0.5px">Today</h1>
-      <span style="font-size: 13px; color: #9AA0AA">Tuesday 17 November · 3 exercises · 9 sets</span>
+      <span style="font-size: 13px; color: #9AA0AA">Tuesday 17 November · 3 exercises · 8 sets</span>
     </div>
     <button aria-label="Other days" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: transparent; color: #F2F3F5; display: flex; align-items: center; justify-content: center">
       <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path></svg>
@@ -100,11 +100,11 @@ class Component extends DCLogic {
     const todo = (text) => ({ text, bg: '#23262C', fg: '#C9CDD3' });
     return {
       isSwitch, nav, cols: tabs.length,
-      groups: ['Pull day', 'Fingers', 'Legs'],
+      groups: ['Legs', 'Fingers', 'Pistol day', 'Shoulders', 'One-arm'],
       exercises: [
-        { name: 'Pull-ups', fields: 'weight · reps', sets: [done('+10 kg × 8'), done('+10 kg × 7'), todo('+10 kg × 6')], last: 'Last time (Fri): +7.5 kg × 8, 8, 7' },
-        { name: 'One-arm hang', fields: 'weight · time · per side', sets: [done('L +10 kg · 0:10'), done('R +8 kg · 0:10'), done('L +10 kg · 0:10'), todo('R +8 kg · 0:10')], last: 'Last time (Thu): L +7.5 · R +7.5 kg' },
-        { name: 'Band face pulls', fields: 'band · reps', sets: [done('red × 15'), done('red × 15')], last: 'Last time: yellow × 15, 15' }
+        { name: 'Barbell Deep Squat', fields: 'weight · reps', sets: [done('80 kg × 5'), done('80 kg × 5'), todo('80 kg × 5')], last: 'Last time (Wed 11): 80 kg × 5, 5, 5, 5' },
+        { name: 'Pistol Squat', fields: 'bands · reps · per side', sets: [done('L 🟢🟣🔴 × 5'), done('R 🟢🟣🔴 × 5'), todo('L 🟢🟣🔴 × 5')], last: 'Last time: L 🟢🟣🟣🔴 × 5 · R 🟢🟣🟣🔴 × 5' },
+        { name: 'Deloaded One Arm Pull-Up', fields: 'assist · reps · per side', sets: [done('R −20 kg × 3'), done('L −25 kg × 3')], last: 'Last time: R −20 kg × 3 · L −25 kg × 2' }
       ]
     };
   }

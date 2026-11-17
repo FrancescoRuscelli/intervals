@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gym, set notes</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #000000; color: #F2F3F5; font-family: Inter, system-ui, sans-serif; position: relative; overflow: hidden">
+  <div aria-hidden="true" style="position: absolute; inset: 0; padding: 18px 20px; color: #4A4F58; font-size: 17px; font-weight: 700; background: #050506">Block Pulls</div>
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(0,0,0,0.55)"></div>
+
+  <section role="dialog" aria-label="Set 3" style="position: absolute; left: 0; right: 0; bottom: 0; padding: 10px 16px 24px; border-radius: 28px 28px 0 0; background: #16181C; display: flex; flex-direction: column; gap: 16px">
+    <span aria-hidden="true" style="align-self: center; width: 40px; height: 4px; border-radius: 2px; background: #3A3E46"></span>
+    <div style="display: flex; align-items: center; gap: 12px">
+      <span style="width: 34px; height: 34px; border-radius: 17px; background: #0E3B35; color: #5EEAD4; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center">R</span>
+      <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 12px; color: #9AA0AA">Set 3 · Block Pulls · today 18:42</span><span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 24px; font-weight: 700">50 kg × 5</span></span>
+      <button style="height: 36px; padding: 0 12px; border: 0; border-radius: 18px; background: #23262C; color: #F2F3F5; font-size: 13px; font-weight: 600">Edit values</button>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <span style="font-size: 13px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: #9AA0AA">Quick notes</span>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap">
+        <sc-for list="{{tags}}" as="t" hint-placeholder-count="6">
+          <button aria-pressed="{{t.on}}" onClick="{{t.toggle}}" style="height: 40px; padding: 0 14px; border-radius: 20px; border: 1px solid {{t.border}}; background: {{t.bg}}; color: {{t.fg}}; font-size: 14px; font-weight: 600">{{t.label}}</button>
+        </sc-for>
+        <button style="height: 40px; padding: 0 14px; border-radius: 20px; border: 1px dashed #4A4F58; background: transparent; color: #9AA0AA; font-size: 14px; font-weight: 600">+ tag</button>
+      </div>
+      <span style="font-size: 12px; color: #9AA0AA">Your own tags stay, e.g. "no pinkie", "three fingers"</span>
+    </div>
+
+    <label style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 13px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: #9AA0AA">Note</span>
+      <textarea rows="2" placeholder="anything else…" style="resize: none; border: 0; border-radius: 14px; background: #1A1C21; color: #F2F3F5; font: inherit; font-size: 15px; padding: 12px 14px; outline: 0">ring finger hurt on the last rep</textarea>
+    </label>
+
+    <div style="display: flex; gap: 10px">
+      <button style="height: 56px; padding: 0 18px; border: 0; border-radius: 18px; background: #23262C; color: #FF8A80; font-size: 15px; font-weight: 600">Delete set</button>
+      <button style="flex: 1; height: 56px; border: 0; border-radius: 18px; background: #7C3AED; color: #FFFFFF; font-size: 17px; font-weight: 700">Save</button>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const list = ['Max', 'Bad form', 'Assisted', 'Failed', '+½ rep', 'No pinkie', 'Three fingers'];
+    const st = this.state || {};
+    const on = st.on || { 'No pinkie': true };
+    const tags = list.map((label) => {
+      const sel = !!on[label];
+      return {
+        label, on: sel ? 'true' : 'false',
+        bg: sel ? '#2A2340' : '#111216', border: sel ? '#7C3AED' : '#2A2D34', fg: sel ? '#C4B1FF' : '#C9CDD3',
+        toggle: () => this.setState({ on: Object.assign({}, on, { [label]: !sel }) })
+      };
+    });
+    return { tags };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gym, pick bands</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #000000; color: #F2F3F5; font-family: Inter, system-ui, sans-serif; position: relative; overflow: hidden">
+  <div aria-hidden="true" style="position: absolute; inset: 0; padding: 18px 20px; color: #4A4F58; font-size: 17px; font-weight: 700; background: #050506">Pistol Squat</div>
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(0,0,0,0.55)"></div>
+
+  <section role="dialog" aria-label="Bands" style="position: absolute; left: 0; right: 0; bottom: 0; padding: 10px 16px 24px; border-radius: 28px 28px 0 0; background: #16181C; display: flex; flex-direction: column; gap: 14px">
+    <span aria-hidden="true" style="align-self: center; width: 40px; height: 4px; border-radius: 2px; background: #3A3E46"></span>
+    <div style="display: flex; align-items: center; justify-content: space-between">
+      <span style="display: flex; flex-direction: column"><span style="font-size: 18px; font-weight: 700">Bands</span><span style="font-size: 12px; color: #9AA0AA">Pistol Squat · stack as many as you use</span></span>
+      <button onClick="{{clear}}" style="height: 36px; padding: 0 12px; border: 0; border-radius: 18px; background: transparent; color: #9AA0AA; font-size: 14px; font-weight: 600">Clear</button>
+    </div>
+
+    <div style="height: 92px; border-radius: 18px; background: #0B0C0E; display: flex; align-items: center; justify-content: center; gap: 8px">
+      <sc-for list="{{stack}}" as="b" hint-placeholder-count="4">
+        <span style="width: 18px; height: 60px; border-radius: 9px; background: {{b.c}}; box-shadow: inset 0 0 0 1px {{b.edge}}"></span>
+      </sc-for>
+      <sc-if value="{{empty}}" hint-placeholder-val="{{ false }}">
+        <span style="font-size: 14px; color: #6E747E">No bands: bodyweight only</span>
+      </sc-if>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 12px; color: #9AA0AA">Recent</span>
+      <div style="display: flex; gap: 6px; flex-wrap: wrap">
+        <sc-for list="{{recent}}" as="r" hint-placeholder-count="3">
+          <button onClick="{{r.pick}}" style="height: 34px; padding: 0 12px; border-radius: 17px; border: 1px solid {{r.border}}; background: {{r.bg}}; color: #F2F3F5; font-size: 14px; display: flex; align-items: center; gap: 6px">{{r.text}}<span style="font-size: 11px; color: #9AA0AA">{{r.when}}</span></button>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; border-radius: 16px; background: #1A1C21; padding: 2px 6px 2px 14px">
+      <sc-for list="{{rows}}" as="b" hint-placeholder-count="5">
+        <div style="display: flex; align-items: center; gap: 12px; min-height: 54px; border-bottom: 1px solid {{b.line}}">
+          <span style="width: 14px; height: 30px; border-radius: 7px; background: {{b.c}}; box-shadow: inset 0 0 0 1px {{b.edge}}"></span>
+          <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 15px; font-weight: 600">{{b.name}}</span><span style="font-size: 11px; color: #6E747E">{{b.hint}}</span></span>
+          <button aria-label="One {{b.name}} less" onClick="{{b.less}}" style="width: 44px; height: 44px; border: 0; border-radius: 14px; background: #2A2340; color: #C4B1FF; font-size: 20px; font-weight: 700; opacity: {{b.lessOp}}">−</button>
+          <span style="width: 26px; text-align: center; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 20px; font-weight: 700">{{b.n}}</span>
+          <button aria-label="One {{b.name}} more" onClick="{{b.more}}" style="width: 44px; height: 44px; border: 0; border-radius: 14px; background: #2A2340; color: #C4B1FF; font-size: 20px; font-weight: 700">+</button>
+        </div>
+      </sc-for>
+    </div>
+    <span style="font-size: 12px; color: #9AA0AA">Order doesn't matter: always shown lightest → strongest · your bands are set once in the exercise</span>
+
+    <button style="height: 56px; border: 0; border-radius: 18px; background: #7C3AED; color: #FFFFFF; font-size: 17px; font-weight: 700">Done · {{summary}}</button>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const defs = [
+      { k: 'g', name: 'Green', hint: 'lightest', c: '#43A047', edge: '#43A047', e: '🟢' },
+      { k: 'y', name: 'Yellow', hint: '', c: '#FFC107', edge: '#FFC107', e: '🟡' },
+      { k: 'p', name: 'Purple', hint: '', c: '#8E44D8', edge: '#8E44D8', e: '🟣' },
+      { k: 'r', name: 'Red', hint: '', c: '#E53935', edge: '#E53935', e: '🔴' },
+      { k: 'k', name: 'Black', hint: 'strongest', c: '#16181C', edge: '#5A5F68', e: '⚫' }
+    ];
+    const st = this.state || {};
+    const n = st.n || { g: 1, y: 0, p: 2, r: 1, k: 0 };
+    const setN = (next) => this.setState({ n: next });
+    const stack = [];
+    defs.forEach((d) => { for (let i = 0; i < n[d.k]; i++) stack.push({ c: d.c, edge: d.edge }); });
+    const text = (m) => defs.map((d) => d.e.repeat(m[d.k] || 0)).join('') || 'none';
+    const combos = [
+      [{ g: 1, p: 1, r: 1 }, 'Sep'],
+      [{ g: 1, p: 2, r: 1 }, 'last'],
+      [{ g: 1, p: 2, r: 2 }, 'Oct'],
+      [{ g: 2, p: 2, k: 1 }, 'Oct']
+    ];
+    const same = (a) => defs.every((d) => (a[d.k] || 0) === (n[d.k] || 0));
+    const recent = combos.map(([m, when]) => ({
+      text: text(m), when, pick: () => setN(Object.assign({ g: 0, y: 0, p: 0, r: 0, k: 0 }, m)),
+      bg: same(m) ? '#2A2340' : '#111216', border: same(m) ? '#7C3AED' : '#2A2D34'
+    }));
+    const rows = defs.map((d, i) => ({
+      name: d.name, hint: d.hint, c: d.c, edge: d.edge, n: n[d.k],
+      line: i === defs.length - 1 ? 'transparent' : '#23262C',
+      lessOp: n[d.k] ? 1 : 0.35,
+      less: () => setN(Object.assign({}, n, { [d.k]: Math.max(0, n[d.k] - 1) })),
+      more: () => setN(Object.assign({}, n, { [d.k]: Math.min(4, n[d.k] + 1) }))
+    }));
+    return {
+      stack, empty: stack.length === 0, recent, rows, summary: text(n),
+      clear: () => setN({ g: 0, y: 0, p: 0, r: 0, k: 0 })
+    };
+  }
+}
+</script>
+</body>
+</html>
