@@ -103,7 +103,9 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
     after a set it switches side. Never separate "(Left)" / "(Right)" exercises.
   - **Bands**: a combination, how many of each color; order does not matter, always shown strongest → lightest
     (strongest → lightest: green, purple, black, red, yellow; shown in that order, like your comments).
-  - Rest after each set (teal timer), starts automatically when a set is logged.
+  - **Rest clock counts up** (not a countdown), starts when a set is logged. Each exercise has its own rest target:
+    at the target it buzzes / notifies, then keeps counting so you see how long you really rested.
+    The real rest before each set is saved; shown on the set ("rested 3:25"), in history and in Stats (average vs target).
 - **Quick notes per set**: tags (Max, Bad form, Assisted, Failed, +½ rep, your own) + free note.
 - **Variants stay separate exercises** (Block Pulls Squeezed, Pull Up (Second Half)…).
 - **Groups** of exercises (Pull day, Legs…), started from Today.

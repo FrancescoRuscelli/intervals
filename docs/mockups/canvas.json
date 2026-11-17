@@ -200,7 +200,7 @@
       "y": -2900,
       "w": 390,
       "h": 844,
-      "title": "G1 · Gym today (chosen: own Gym tab)"
+      "title": "G1 · Gym today (chosen: own tab · tweak: rest clock)"
     },
     "GymTodaySwitch.dc.html": {
       "x": 470,
@@ -262,38 +262,38 @@
     },
     "GymPick.dc.html": {
       "x": 0,
-      "y": -4500,
+      "y": -4900,
       "w": 390,
       "h": 844,
       "title": "G9 · Add exercise: recent first, search, or create (tweak: typing)"
     },
     "GymSession.dc.html": {
       "x": 470,
-      "y": -4500,
+      "y": -4900,
       "w": 390,
       "h": 844,
-      "title": "G10 · Group in progress (Legs)"
+      "title": "G10 · Group in progress (tweak: rest counting / past target)"
     },
     "GymFinish.dc.html": {
       "x": 940,
-      "y": -4500,
+      "y": -4900,
       "w": 390,
       "h": 844,
       "title": "G11 · Gym workout done"
     },
     "GymJournal.dc.html": {
       "x": 1410,
-      "y": -4500,
+      "y": -4900,
       "w": 390,
       "h": 844,
       "title": "G12 · Journal: gym (purple) + intervals (pink)"
     },
     "GymStats.dc.html": {
       "x": 1880,
-      "y": -4500,
+      "y": -4900,
       "w": 390,
-      "h": 1000,
-      "title": "G13 · Stats: Gym tab, records, most trained"
+      "h": 1250,
+      "title": "G13 · Stats: Gym tab, records, real rest vs target"
     }
   },
   "order": [
@@ -370,7 +370,7 @@
     },
     "gymhead2": {
       "x": 0,
-      "y": -4800,
+      "y": -5200,
       "text": "Gym: more screens",
       "kind": "title1",
       "maxW": 2740
