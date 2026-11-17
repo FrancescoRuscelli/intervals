@@ -26,7 +26,12 @@ class PlayerController(
     private val sounds: Sounds,
     private val scope: CoroutineScope,
     private val onEnd: (completed: Boolean, elapsedMs: Long, roundsDone: Int, startedAt: Long) -> Unit,
+    /** Called when the segment changes, on pause / resume and on jumps (refreshes the notification). */
+    private val onChange: () -> Unit = {},
 ) {
+    /** True while the player screen is visible: then the clock ticks 10× a second for smooth drawing. */
+    @Volatile var uiVisible = true
+    private var lastIndex = -1
     val plan = PlayerPlan(saved.workout)
     private val cues = plan.cues(settings.sayNames, settings.beepLast3)
     private var nextCue = 0
@@ -61,9 +66,20 @@ class PlayerController(
                 fireCues(now)
                 if (plan.isOver(now)) { finish(true); break }
                 tick = now
-                delay(if (paused) 200 else 100)
+                val idx = plan.stateAt(now)?.index ?: -1
+                if (idx != lastIndex) { lastIndex = idx; onChange() }
+                delay(nextWakeMs(now))
             }
         }
+    }
+
+    /** Screen visible: 10 Hz. Screen off: sleep until the next cue or segment change (energy). */
+    private fun nextWakeMs(now: Long): Long {
+        if (paused) return if (uiVisible) 200 else 1000
+        if (uiVisible) return 100
+        val cueAt = cues.getOrNull(nextCue)?.atSec?.times(1000L) ?: Long.MAX_VALUE
+        val segEnd = plan.stateAt(now)?.segment?.endSec?.times(1000L) ?: Long.MAX_VALUE
+        return (minOf(cueAt, segEnd) - now).coerceIn(20, 5000)
     }
 
     private fun fireCues(now: Long) {
@@ -83,6 +99,7 @@ class PlayerController(
         if (countdown > 0) return
         if (paused) { resumedAt = SystemClock.elapsedRealtime(); paused = false }
         else { baseMs = elapsedMs; paused = true }
+        onChange()
     }
 
     private fun jumpTo(ms: Long) {
@@ -90,6 +107,7 @@ class PlayerController(
         resumedAt = SystemClock.elapsedRealtime()
         nextCue = cues.indexOfFirst { it.atSec * 1000L >= baseMs }.let { if (it < 0) cues.size else it }
         tick = baseMs
+        onChange()
     }
 
     fun previous() { if (countdown == 0) jumpTo(plan.previousStartMs(elapsedMs)) }

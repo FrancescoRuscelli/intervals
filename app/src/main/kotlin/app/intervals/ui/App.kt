@@ -42,6 +42,16 @@ fun App(vm: AppViewModel) {
         LaunchedEffect(vm.message) {
             vm.message?.let { snack.showSnackbar(it); vm.message = null }
         }
+        // ask once for notifications (Android 13+): the lock-screen countdown and Pause / Next buttons
+        val askNotif = androidx.activity.compose.rememberLauncherForActivityResult(
+            androidx.activity.result.contract.ActivityResultContracts.RequestPermission(),
+        ) { }
+        val ctx = androidx.compose.ui.platform.LocalContext.current
+        LaunchedEffect(vm.overlays.lastOrNull()) {
+            if (vm.overlays.lastOrNull() == Overlay.Player && android.os.Build.VERSION.SDK_INT >= 33 &&
+                ctx.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED
+            ) askNotif.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        }
         BackHandler(enabled = vm.overlays.isNotEmpty() && vm.overlays.last() != Overlay.Player && vm.overlays.last() != Overlay.Finished) { vm.back() }
 
         Box(Modifier.fillMaxSize().background(p.bg)) {

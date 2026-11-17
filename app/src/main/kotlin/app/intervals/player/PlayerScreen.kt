@@ -73,6 +73,15 @@ fun PlayerScreen(c: PlayerController, keepScreenOn: Boolean, onClose: () -> Unit
         view.keepScreenOn = keepScreenOn
         onDispose { view.keepScreenOn = false }
     }
+    val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
+    DisposableEffect(lifecycle, c) {
+        val obs = androidx.lifecycle.LifecycleEventObserver { _, e ->
+            if (e == androidx.lifecycle.Lifecycle.Event.ON_START) c.uiVisible = true
+            if (e == androidx.lifecycle.Lifecycle.Event.ON_STOP) c.uiVisible = false
+        }
+        lifecycle.addObserver(obs)
+        onDispose { lifecycle.removeObserver(obs) }
+    }
     BackHandler { askStop = true }
 
     @Suppress("UNUSED_VARIABLE") val t = c.tick // redraw on every tick

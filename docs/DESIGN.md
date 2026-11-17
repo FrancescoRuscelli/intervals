@@ -191,7 +191,10 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
         disc in the series color, inflates at each new segment; last 3 s number drops from big), Next card, progress, pause / previous / next,
         Get ready 3-2-1, stop (confirm, saved as stopped); voice (TextToSpeech) + beeps (ToneGenerator), music lowered only during cues
   - [x] Finished: done disc, time / rounds / series, logged values (start from last time, ▲▼ vs last time), note, Repeat, Save to journal
-  - [ ] foreground service (keeps running with the screen off), lock screen controls, landscape, crazy spin + coin flip,
+  - [x] foreground service (mediaPlayback) + partial wake lock only while a workout runs; notification on the lock screen
+        with series, round, live countdown (system chronometer, no per-second updates), Pause / Next; the running workout lives
+        in the Application (survives the activity); screen off: the clock sleeps until the next cue / segment (no 10 Hz ticking)
+  - [ ] landscape, crazy spin + coin flip,
         rest between rounds editing of logged values (4b), set per round
 - [ ] Step 6: install on the Pixel 8a, real workout test, energy profiling
 - [x] Gym mockups G1–G16 (placement: own tab)

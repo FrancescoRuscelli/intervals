@@ -7,7 +7,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import app.intervals.IntervalsApp
 import app.intervals.core.AppSettings
 import app.intervals.core.Block
 import app.intervals.core.HybridImport
@@ -16,6 +15,8 @@ import app.intervals.core.Session
 import app.intervals.player.FieldKey
 import app.intervals.player.FinishedInfo
 import app.intervals.player.PlayerController
+import app.intervals.player.PlayerService
+import app.intervals.IntervalsApp
 import app.intervals.player.Sounds
 import app.intervals.core.SavedWorkout
 import app.intervals.core.Series
@@ -151,10 +152,15 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     // ---- player ----
 
-    var player by mutableStateOf<PlayerController?>(null)
-        private set
-    var finished by mutableStateOf<FinishedInfo?>(null)
-        private set
+    private val ia get() = getApplication<IntervalsApp>()
+    val player: PlayerController? get() = ia.player
+    val finished: FinishedInfo? get() = ia.finished
+
+    init {
+        // the activity came back while a workout runs (or waits to be saved): show it again
+        if (ia.player != null && Overlay.Player !in overlays) overlays += Overlay.Player
+        else if (ia.finished != null && Overlay.Finished !in overlays) overlays += Overlay.Finished
+    }
 
     fun player(id: Long) {
         val saved = workouts.value?.firstOrNull { it.id == id } ?: return
@@ -165,18 +171,21 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         if (saved.workout.blocks.isEmpty()) { message = "Add a series first"; return }
         val s = settings.value
         val sounds = Sounds(getApplication(), s.volume, s.duckMusic, s.voiceLanguage)
-        val c = PlayerController(saved, s, sounds, viewModelScope) { completed, elapsed, rounds, startedAt ->
-            viewModelScope.launch {
+        lateinit var c: PlayerController
+        c = PlayerController(saved, s, sounds, ia.appScope, onEnd = { completed, elapsed, rounds, startedAt ->
+            ia.appScope.launch {
                 val last = repo.lastValues(saved.id)
-                finished = FinishedInfo(saved, completed, elapsed, rounds, startedAt, last)
-                player?.close()
-                player = null
+                ia.finished = FinishedInfo(saved, completed, elapsed, rounds, startedAt, last)
+                ia.player?.close()
+                ia.player = null
+                PlayerService.stop(ia)
                 overlays.remove(Overlay.Player)
-                overlays += Overlay.Finished
+                if (Overlay.Finished !in overlays) overlays += Overlay.Finished
             }
-        }
-        player = c
+        }, onChange = { PlayerService.update(ia, c) })
+        ia.player = c
         overlays += Overlay.Player
+        PlayerService.start(ia)
         c.start()
     }
 
@@ -193,15 +202,12 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 completed = f.completed, note = note.trim(), values = logged,
             ),
         )
-        finished = null
+        ia.finished = null
         overlays.remove(Overlay.Finished)
         message = "Saved to the journal"
         if (repeat) startPlayer(f.saved)
     }
 
-    override fun onCleared() {
-        player?.close()
-    }
 
     fun saveSettings(s: AppSettings) = viewModelScope.launch { repo.saveSettings(s) }
 
