@@ -2,6 +2,7 @@ package app.intervals.core
 
 enum class SegmentKind { WARMUP, SERIES, CHANGE_SIDE, ROUND_REST }
 
+@kotlinx.serialization.Serializable
 enum class Side { LEFT, RIGHT }
 
 /** One step of the timeline the player runs through, with its absolute start time. */

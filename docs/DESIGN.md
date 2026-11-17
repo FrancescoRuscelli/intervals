@@ -114,7 +114,14 @@ Not wanted (for now): sharing workouts, reminders, home-screen widget, smartwatc
 - [x] Step 2: project setup, data model, timeline, CSV importer + tests (all passing)
 - [x] Mockups for logged fields (series editor, rest between rounds, finished)
 - [x] Player details: rounds ring, rounded segments, last 3 s drop-in, no flash; palette (purple, pink, yellow, teal)
-- [ ] Step 3: Room database + repository (with logged fields per round and side); backup / restore JSON
+- [x] Step 3: Room database + repository (with logged fields per round and side); backup / restore JSON
+  - `core/`: `LogField` on a series (+ say name / beep switches), `Session` + `LoggedValue` (`Journal.kt`),
+    `AppSettings` (`Settings.kt`), backup format `intervals-backup` v1 (`Backup.kt`; unknown keys ignored, newer version refused)
+  - `app/data/`: Room tables workouts (content as JSON), sessions, logged_values, settings; schema in `app/schemas/`;
+    `IntervalsRepository` is the only way the screens touch data (add / edit / duplicate below / reorder / delete workouts,
+    import, sessions per month, notes, last values for the next session, settings, export / restore backup).
+    Deleting a workout keeps its sessions (unlinked, name kept). A bad backup file changes nothing.
+  - Tests: 16 in `core`, 8 database tests in `app` (Robolectric, run on the PC)
 - [ ] Step 4: screens (list, editor, series, import, journal, stats, settings, finished)
 - [ ] Step 5: player screen + foreground timer service, voice, beeps, countdown, flash, landscape
 - [ ] Step 6: install on the Pixel 8a, real workout test, energy profiling

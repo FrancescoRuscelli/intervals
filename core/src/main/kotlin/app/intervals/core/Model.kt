@@ -1,16 +1,38 @@
 package app.intervals.core
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
 /** Icon shown next to a series. Matches the icons of the old Hybrid Interval Timer app. */
+@Serializable
 enum class SeriesIcon { JUMP, RUN, STAND, WEIGHT, WARMUP, COOL }
 
 /** A series done once per side: left, a pause to change side, then right. */
+@Serializable
 data class PerSide(val changeSec: Int) {
     init {
         require(changeSec >= 0) { "changeSec must be >= 0" }
     }
 }
 
+/**
+ * A value the user writes down for a series, e.g. Load (kg) or Edge (mm).
+ * Asked in the rest between rounds and at the end; saved per round in the journal.
+ */
+@Serializable
+data class LogField(
+    val name: String,
+    val unit: String = "",
+    /** One value for the left side and one for the right (only meaningful for a per-side series). */
+    val leftRightApart: Boolean = false,
+) {
+    init {
+        require(name.isNotBlank()) { "a log field needs a name" }
+    }
+}
+
 /** One timed step of a round, e.g. "hang 0:05". */
+@Serializable
 data class Series(
     val name: String,
     val durationSec: Int,
@@ -18,6 +40,11 @@ data class Series(
     val color: Long,
     val icon: SeriesIcon = SeriesIcon.STAND,
     val perSide: PerSide? = null,
+    val logFields: List<LogField> = emptyList(),
+    /** Say the name when it starts. */
+    val sayName: Boolean = true,
+    /** Beep in the last 3 seconds. */
+    val beepLast3: Boolean = true,
 ) {
     init {
         require(durationSec > 0) { "durationSec must be > 0" }
@@ -25,9 +52,14 @@ data class Series(
 }
 
 /** What a round is made of: single series, or a group of series repeated N times. */
+@Serializable
 sealed interface Block {
+    @Serializable
+    @SerialName("single")
     data class Single(val series: Series) : Block
 
+    @Serializable
+    @SerialName("repeat")
     data class Repeat(val times: Int, val series: List<Series>) : Block {
         init {
             require(times >= 1) { "times must be >= 1" }
@@ -36,6 +68,7 @@ sealed interface Block {
     }
 }
 
+@Serializable
 data class Workout(
     val name: String,
     val warmupSec: Int = 0,
@@ -51,3 +84,14 @@ data class Workout(
         require(restBetweenRoundsSec >= 0) { "restBetweenRoundsSec must be >= 0" }
     }
 }
+
+/** A workout as saved in the app: with its id and its place in the list. */
+@Serializable
+data class SavedWorkout(
+    val id: Long,
+    val position: Int,
+    val workout: Workout,
+    /** Epoch milliseconds. */
+    val createdAt: Long,
+    val updatedAt: Long,
+)

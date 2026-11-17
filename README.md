@@ -18,7 +18,8 @@ Design decisions, plan and status: [docs/DESIGN.md](docs/DESIGN.md).
 # Java: Android Studio's bundled JDK works
 export JAVA_HOME=/snap/android-studio/current/jbr      # path for the snap install
 
-./gradlew :core:test                 # unit tests (model, timeline, importer)
+./gradlew :core:test                 # unit tests (model, timeline, importer, backup format)
+./gradlew :app:testDebugUnitTest     # database tests, on the PC (Robolectric)
 ./gradlew :core:test -Pintervals.csv=/path/to/export.csv   # also check a real Hybrid Interval Timer export
 ./gradlew :app:assembleDebug         # APK in app/build/outputs/apk/debug/
 ./gradlew :app:installDebug          # install on the connected phone
@@ -29,5 +30,5 @@ export JAVA_HOME=/snap/android-studio/current/jbr      # path for the snap insta
 ## Layout
 
 - `core/`: plain Kotlin: data model, timeline (exact play order and total), Hybrid Interval Timer CSV importer.
-- `app/`: Android app (Jetpack Compose).
+- `app/`: Android app (Jetpack Compose); `data/` = Room database + repository; `schemas/` = database schema history.
 - `docs/`: design decisions and a copy of the mockups.
