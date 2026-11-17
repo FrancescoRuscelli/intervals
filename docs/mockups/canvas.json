@@ -194,6 +194,48 @@
       "h": 844,
       "title": "4d · Live: crazy spin (optional, in Settings)",
       "is_interactive": true
+    },
+    "GymToday.dc.html": {
+      "x": 0,
+      "y": -2900,
+      "w": 390,
+      "h": 844,
+      "title": "G1 · Gym today (option A: own Gym tab)"
+    },
+    "GymTodaySwitch.dc.html": {
+      "x": 470,
+      "y": -2900,
+      "w": 390,
+      "h": 844,
+      "title": "G1b · Gym today (option B: switch inside Workouts)"
+    },
+    "GymExercise.dc.html": {
+      "x": 940,
+      "y": -2900,
+      "w": 390,
+      "h": 844,
+      "title": "G2 · Log an exercise (try the exercise tweak)"
+    },
+    "GymNewExercise.dc.html": {
+      "x": 1410,
+      "y": -2900,
+      "w": 390,
+      "h": 844,
+      "title": "G3 · New exercise: what you write down"
+    },
+    "GymGroup.dc.html": {
+      "x": 1880,
+      "y": -2900,
+      "w": 390,
+      "h": 844,
+      "title": "G4 · Group of exercises"
+    },
+    "GymHistory.dc.html": {
+      "x": 2350,
+      "y": -2900,
+      "w": 390,
+      "h": 844,
+      "title": "G5 · Exercise history"
     }
   },
   "order": [
@@ -222,7 +264,13 @@
     "PlayerRest.dc.html",
     "PlayerLiveRounds.dc.html",
     "Palette.dc.html",
-    "PlayerLiveSpin.dc.html"
+    "PlayerLiveSpin.dc.html",
+    "GymToday.dc.html",
+    "GymTodaySwitch.dc.html",
+    "GymExercise.dc.html",
+    "GymNewExercise.dc.html",
+    "GymGroup.dc.html",
+    "GymHistory.dc.html"
   ],
   "notes": {
     "head": {
@@ -246,6 +294,13 @@
       "text": "Player: landscape and live demo",
       "kind": "title1",
       "maxW": 2238
+    },
+    "gymhead": {
+      "x": 0,
+      "y": -3200,
+      "text": "Gym: strength log (proposal)",
+      "kind": "title1",
+      "maxW": 2740
     }
   },
   "designSystems": [],

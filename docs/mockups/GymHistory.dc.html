@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gym, exercise history</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #000000; color: #F2F3F5; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+  <header style="display: flex; align-items: center; justify-content: space-between; padding: 12px 8px 0">
+    <a href="GymToday.dc.html" aria-label="Back to today" style="width: 44px; height: 44px; border-radius: 22px; color: inherit; display: flex; align-items: center; justify-content: center">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+    </a>
+    <span style="font-size: 17px; font-weight: 700">Pull-ups</span>
+    <span style="width: 44px"></span>
+  </header>
+
+  <div role="tablist" style="display: flex; gap: 6px; padding: 8px 16px 0">
+    <a href="GymExercise.dc.html" role="tab" aria-selected="false" style="flex: 1; height: 38px; border-radius: 12px; color: #9AA0AA; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; text-decoration: none">Log</a>
+    <button role="tab" aria-selected="true" style="flex: 1; height: 38px; border: 0; border-radius: 12px; background: #2A2340; color: #C4B1FF; font-size: 14px; font-weight: 700">History</button>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 14px 16px 0">
+    <div style="padding: 10px 12px; border-radius: 14px; background: #1A1C21; display: flex; flex-direction: column"><span style="font-size: 12px; color: #9AA0AA">Best set</span><span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 19px; font-weight: 700">+10 × 8</span></div>
+    <div style="padding: 10px 12px; border-radius: 14px; background: #1A1C21; display: flex; flex-direction: column"><span style="font-size: 12px; color: #9AA0AA">Most reps</span><span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 19px; font-weight: 700">14</span></div>
+    <div style="padding: 10px 12px; border-radius: 14px; background: #1A1C21; display: flex; flex-direction: column"><span style="font-size: 12px; color: #9AA0AA">Sessions</span><span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 19px; font-weight: 700">23</span></div>
+  </div>
+
+  <section style="margin: 12px 16px 0; padding: 14px 14px 8px; border-radius: 18px; background: #1A1C21">
+    <h2 style="margin: 0; font-size: 15px; font-weight: 600">Added weight, best set per day</h2>
+    <span style="font-size: 12px; color: #9AA0AA">Last 8 times · yellow = record</span>
+    <svg role="img" aria-label="Best added weight per session: 5, 5, 7.5, 7.5, 7.5, 8.75, 7.5, 10 kg" width="330" height="140" viewBox="0 0 330 140" style="display: block; margin-top: 8px">
+      <sc-for list="{{grid}}" as="g" hint-placeholder-count="2">
+        <line x1="30" x2="330" y1="{{g.y}}" y2="{{g.y}}" stroke="#2A2D34" stroke-width="1"></line>
+        <text x="0" y="{{g.ty}}" font-size="10" fill="#9AA0AA" font-family="Inter, sans-serif">{{g.label}}</text>
+      </sc-for>
+      <line x1="30" x2="330" y1="116" y2="116" stroke="#3A3E46" stroke-width="1"></line>
+      <sc-for list="{{bars}}" as="b" hint-placeholder-count="8">
+        <path d="{{b.d}}" fill="{{b.fill}}"></path>
+        <text x="{{b.cx}}" y="132" text-anchor="middle" font-size="10" fill="#9AA0AA" font-family="Inter, sans-serif">{{b.label}}</text>
+      </sc-for>
+    </svg>
+  </section>
+
+  <div style="flex: 1; overflow: hidden; display: flex; flex-direction: column; gap: 8px; padding: 14px 16px 0">
+    <sc-for list="{{days}}" as="d" hint-placeholder-count="4">
+      <div style="padding: 10px 14px; border-radius: 14px; border: 1px solid #23262C; display: flex; flex-direction: column; gap: 4px">
+        <span style="font-size: 12px; color: #9AA0AA">{{d.day}}</span>
+        <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 16px; font-weight: 600">{{d.sets}}</span>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const data = [['20 Oct', 5], ['24', 5], ['27', 7.5], ['31', 7.5], ['3 Nov', 7.5], ['7', 8.75, true], ['13', 7.5], ['17', 10, true]];
+    const base = 116, top = 10, max = 12, x0 = 38, slot = 37, bw = 24, r = 4;
+    const yOf = (v) => base - (v / max) * (base - top);
+    const bars = data.map(([label, v, pr], i) => {
+      const x = x0 + i * slot, y = yOf(v);
+      const d = 'M' + x + ' ' + base + ' V' + (y + r) + ' Q' + x + ' ' + y + ' ' + (x + r) + ' ' + y + ' H' + (x + bw - r) + ' Q' + (x + bw) + ' ' + y + ' ' + (x + bw) + ' ' + (y + r) + ' V' + base + ' Z';
+      return { d, label, cx: x + bw / 2, fill: pr ? '#FFC107' : '#E91E63' };
+    });
+    const grid = [5, 10].map((v) => ({ y: yOf(v), ty: yOf(v) + 3, label: '+' + v }));
+    return {
+      bars, grid,
+      days: [
+        { day: 'Today · Tuesday 17', sets: '+10 × 8 · +10 × 7 · +10 × 6' },
+        { day: 'Friday 13', sets: '+7.5 × 8 · +7.5 × 8 · +7.5 × 7' },
+        { day: 'Saturday 7', sets: '+8.75 × 6 · +7.5 × 7 · +7.5 × 6' },
+        { day: 'Tuesday 3', sets: '+7.5 × 7 · +7.5 × 7 · +5 × 9' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

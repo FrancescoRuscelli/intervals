@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gym, log an exercise</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #000000; color: #F2F3F5; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+  <header style="display: flex; align-items: center; justify-content: space-between; padding: 12px 8px 0">
+    <a href="GymToday.dc.html" aria-label="Back to today" style="width: 44px; height: 44px; border-radius: 22px; color: inherit; display: flex; align-items: center; justify-content: center">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+    </a>
+    <span style="font-size: 17px; font-weight: 700">{{ex.name}}</span>
+    <a href="GymNewExercise.dc.html" aria-label="Edit exercise" style="width: 44px; height: 44px; border-radius: 22px; color: inherit; display: flex; align-items: center; justify-content: center">
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"></path></svg>
+    </a>
+  </header>
+
+  <div role="tablist" style="display: flex; gap: 6px; padding: 8px 16px 0">
+    <button role="tab" aria-selected="true" style="flex: 1; height: 38px; border: 0; border-radius: 12px; background: #2A2340; color: #C4B1FF; font-size: 14px; font-weight: 700">Log</button>
+    <a href="GymHistory.dc.html" role="tab" aria-selected="false" style="flex: 1; height: 38px; border-radius: 12px; color: #9AA0AA; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; text-decoration: none">History</a>
+  </div>
+
+  <sc-if value="{{ex.perSide}}" hint-placeholder-val="{{ false }}">
+    <div role="group" aria-label="Side" style="display: flex; margin: 14px 16px 0; padding: 4px; border-radius: 14px; background: #1A1C21">
+      <button aria-pressed="true" style="flex: 1; height: 40px; border: 0; border-radius: 10px; background: #F2F3F5; color: #000000; font-size: 15px; font-weight: 700">Left</button>
+      <button style="flex: 1; height: 40px; border: 0; border-radius: 10px; background: transparent; color: #9AA0AA; font-size: 15px; font-weight: 600">Right</button>
+    </div>
+  </sc-if>
+
+  <div style="display: flex; flex-direction: column; gap: 10px; padding: 14px 16px 0">
+    <sc-for list="{{ex.fields}}" as="f" hint-placeholder-count="2">
+      <div style="padding: 10px 10px 10px 16px; border-radius: 18px; background: #1A1C21; display: flex; align-items: center; gap: 8px">
+        <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 13px; color: #9AA0AA">{{f.label}}</span><span style="font-size: 12px; color: #6E747E">{{f.step}}</span></span>
+        <button aria-label="{{f.label}} less" style="width: 52px; height: 52px; border: 0; border-radius: 16px; background: #2A2340; color: #C4B1FF; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
+        <span style="min-width: 118px; text-align: center; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums">{{f.value}}<span style="font-size: 16px; color: #9AA0AA; margin-left: 3px">{{f.unit}}</span></span>
+        <button aria-label="{{f.label}} more" style="width: 52px; height: 52px; border: 0; border-radius: 16px; background: #2A2340; color: #C4B1FF; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="display: flex; gap: 10px; padding: 14px 16px 0">
+    <button style="flex: 1; height: 58px; border: 0; border-radius: 18px; background: #7C3AED; color: #FFFFFF; font-size: 17px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px">
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>{{ex.logLabel}}
+    </button>
+  </div>
+  <span style="padding: 8px 20px 0; font-size: 12px; color: #9AA0AA">Starts from last time · logging starts the rest timer ({{ex.rest}})</span>
+
+  <section style="flex: 1; overflow: hidden; margin-top: 16px; padding: 14px 16px 0; border-top: 1px solid #23262C; display: flex; flex-direction: column; gap: 6px">
+    <h2 style="margin: 0 0 4px; font-size: 13px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: #9AA0AA">Today</h2>
+    <sc-for list="{{ex.today}}" as="s" hint-placeholder-count="3">
+      <div style="display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 6px 0 12px; border-radius: 14px; background: #111216">
+        <span style="width: 26px; height: 26px; border-radius: 13px; background: #3A1428; color: #FF8AB3; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{s.n}}</span>
+        <span style="flex: 1; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 18px; font-weight: 600">{{s.text}}</span>
+        <sc-if value="{{s.pr}}" hint-placeholder-val="{{ false }}">
+          <span style="height: 24px; padding: 0 8px; border-radius: 12px; background: #FFC107; color: #1A1200; font-size: 12px; font-weight: 800; display: flex; align-items: center">PR</span>
+        </sc-if>
+        <button aria-label="Edit set {{s.n}}" style="width: 40px; height: 40px; border: 0; border-radius: 12px; background: transparent; color: #6E747E; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="12" cy="19" r="1.8"></circle></svg></button>
+      </div>
+    </sc-for>
+    <div style="margin-top: 8px; padding: 10px 12px; border-radius: 12px; border: 1px solid #23262C; display: flex; flex-direction: column; gap: 2px">
+      <span style="font-size: 12px; color: #9AA0AA">Last time · {{ex.lastDay}}</span>
+      <span style="font-size: 14px; font-weight: 600">{{ex.lastSets}}</span>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"exercise":{"editor":"enum","options":["pull-ups","one-arm hang","band face pulls"],"default":"pull-ups"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const all = {
+      'pull-ups': {
+        name: 'Pull-ups', perSide: false, rest: '2:00', logLabel: 'Log set 4',
+        fields: [{ label: 'Added weight', step: '± 2.5 kg', value: '+10', unit: 'kg' }, { label: 'Reps', step: '± 1', value: '6', unit: '' }],
+        today: [{ n: 1, text: '+10 kg × 8', pr: true }, { n: 2, text: '+10 kg × 7', pr: false }, { n: 3, text: '+10 kg × 6', pr: false }],
+        lastDay: 'Friday 13', lastSets: '+7.5 kg × 8 · 8 · 7'
+      },
+      'one-arm hang': {
+        name: 'One-arm hang', perSide: true, rest: '3:00', logLabel: 'Log left',
+        fields: [{ label: 'Added weight', step: '± 0.5 kg', value: '+10', unit: 'kg' }, { label: 'Time', step: '± 1 s', value: '0:10', unit: '' }],
+        today: [{ n: 1, text: 'L +10 kg · 0:10', pr: true }, { n: 2, text: 'R +8 kg · 0:10', pr: false }],
+        lastDay: 'Thursday 12', lastSets: 'L +7.5 kg · 0:10 · R +7.5 kg · 0:10'
+      },
+      'band face pulls': {
+        name: 'Band face pulls', perSide: false, rest: '1:00', logLabel: 'Log set 3',
+        fields: [{ label: 'Band', step: 'yellow · red · black', value: 'red', unit: '' }, { label: 'Reps', step: '± 1', value: '15', unit: '' }],
+        today: [{ n: 1, text: 'red × 15', pr: false }, { n: 2, text: 'red × 15', pr: false }],
+        lastDay: 'Friday 13', lastSets: 'yellow × 15 · 15'
+      }
+    };
+    return { ex: all[this.props.exercise ?? 'pull-ups'] || all['pull-ups'] };
+  }
+}
+</script>
+</body>
+</html>

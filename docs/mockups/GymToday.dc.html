@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gym, today</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#C4B1FF}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #000000; color: #F2F3F5; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; position: relative; overflow: hidden">
+
+  <sc-if value="{{isSwitch}}" hint-placeholder-val="{{ false }}">
+    <div role="group" aria-label="Training type" style="display: flex; margin: 14px 16px 0; padding: 4px; border-radius: 14px; background: #1A1C21">
+      <button style="flex: 1; height: 38px; border: 0; border-radius: 10px; background: transparent; color: #9AA0AA; font-size: 15px; font-weight: 600">Intervals</button>
+      <button aria-pressed="true" style="flex: 1; height: 38px; border: 0; border-radius: 10px; background: #7C3AED; color: #FFFFFF; font-size: 15px; font-weight: 600">Gym</button>
+    </div>
+  </sc-if>
+
+  <header style="display: flex; align-items: center; justify-content: space-between; padding: 16px 12px 4px 20px">
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <h1 style="margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 30px; font-weight: 700; letter-spacing: -0.5px">Today</h1>
+      <span style="font-size: 13px; color: #9AA0AA">Tuesday 17 November · 3 exercises · 9 sets</span>
+    </div>
+    <button aria-label="Other days" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: transparent; color: #F2F3F5; display: flex; align-items: center; justify-content: center">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path></svg>
+    </button>
+  </header>
+
+  <div style="display: flex; gap: 8px; padding: 8px 16px 12px; overflow: hidden">
+    <sc-for list="{{groups}}" as="g" hint-placeholder-count="3">
+      <button style="flex: none; height: 38px; padding: 0 14px 0 10px; border-radius: 19px; border: 1px solid #2A2D34; background: #111216; color: #F2F3F5; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px">
+        <span style="width: 22px; height: 22px; border-radius: 11px; background: #7C3AED; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"></path></svg></span>{{g}}
+      </button>
+    </sc-for>
+    <button style="flex: none; height: 38px; padding: 0 14px; border-radius: 19px; border: 1px dashed #4A4F58; background: transparent; color: #9AA0AA; font-size: 14px; font-weight: 600">+ Group</button>
+  </div>
+
+  <div style="flex: 1; overflow: hidden; display: flex; flex-direction: column; gap: 10px; padding: 0 16px">
+    <sc-for list="{{exercises}}" as="e" hint-placeholder-count="3">
+      <a href="GymExercise.dc.html" style="display: flex; flex-direction: column; gap: 10px; padding: 14px 14px 12px 16px; border-radius: 18px; background: #1A1C21; color: inherit; text-decoration: none">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+          <span style="font-size: 17px; font-weight: 700">{{e.name}}</span>
+          <span style="font-size: 12px; color: #9AA0AA">{{e.fields}}</span>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px">
+          <sc-for list="{{e.sets}}" as="s" hint-placeholder-count="3">
+            <span style="height: 30px; padding: 0 10px; border-radius: 10px; background: {{s.bg}}; color: {{s.fg}}; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 5px">{{s.text}}</span>
+          </sc-for>
+        </div>
+        <span style="font-size: 12px; color: #9AA0AA">{{e.last}}</span>
+      </a>
+    </sc-for>
+    <button style="height: 52px; border: 2px dashed #2A2D34; border-radius: 16px; background: transparent; color: #C4B1FF; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px">
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Add exercise
+    </button>
+  </div>
+
+  <div style="margin: 10px 16px 10px; padding: 10px 10px 10px 16px; border-radius: 18px; background: #00BFA5; color: #04221E; display: flex; align-items: center; gap: 10px">
+    <span style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px">Rest</span>
+    <span style="flex: 1; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums">1:24</span>
+    <button aria-label="Add 30 seconds" style="height: 40px; padding: 0 12px; border: 0; border-radius: 12px; background: rgba(4,34,30,0.16); color: inherit; font-size: 14px; font-weight: 700">+30 s</button>
+    <button aria-label="Stop rest timer" style="width: 40px; height: 40px; border: 0; border-radius: 12px; background: rgba(4,34,30,0.16); color: inherit; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+  </div>
+
+  <nav aria-label="Main" style="display: grid; grid-template-columns: repeat({{cols}}, minmax(0, 1fr)); padding: 8px 4px 18px; border-top: 1px solid #23262C; background: #16181C">
+    <sc-for list="{{nav}}" as="n" hint-placeholder-count="5">
+      <a href="{{n.href}}" style="height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: {{n.color}}; text-decoration: none; font-size: 12px; font-weight: {{n.fw}}">
+        <span style="width: 52px; height: 30px; border-radius: 15px; background: {{n.bg}}; display: flex; align-items: center; justify-content: center">
+          <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{n.icon}}"></path></svg>
+        </span>{{n.label}}
+      </a>
+    </sc-for>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"nav":{"editor":"enum","options":["tab","switch"],"default":"tab"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const isSwitch = (this.props.nav ?? 'tab') === 'switch';
+    const I = {
+      timer: 'M12 8v5l3 2M9 2h6M12 4a9 9 0 1 0 0 18a9 9 0 0 0 0-18',
+      gym: 'M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12',
+      journal: 'M3.5 7.5a2.5 2.5 0 0 1 2.5-2.5h12a2.5 2.5 0 0 1 2.5 2.5v10a2.5 2.5 0 0 1-2.5 2.5h-12a2.5 2.5 0 0 1-2.5-2.5zM3.5 10h17M8 3v4M16 3v4',
+      stats: 'M5 20v-8M12 20V5M19 20v-5',
+      settings: 'M12 9a3 3 0 1 0 0 6a3 3 0 0 0 0-6M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1'
+    };
+    const tabs = isSwitch
+      ? [['Workouts', I.gym, 'Main.dc.html', true], ['Journal', I.journal, 'Journal.dc.html'], ['Stats', I.stats, 'Stats.dc.html'], ['Settings', I.settings, 'Settings.dc.html']]
+      : [['Intervals', I.timer, 'Main.dc.html'], ['Gym', I.gym, 'GymToday.dc.html', true], ['Journal', I.journal, 'Journal.dc.html'], ['Stats', I.stats, 'Stats.dc.html'], ['Settings', I.settings, 'Settings.dc.html']];
+    const nav = tabs.map(([label, icon, href, on]) => ({ label, icon, href, color: on ? '#C4B1FF' : '#9AA0AA', bg: on ? '#2A2340' : 'transparent', fw: on ? 700 : 600 }));
+    const done = (text) => ({ text: text + ' ✓', bg: '#3A1428', fg: '#FF8AB3' });
+    const todo = (text) => ({ text, bg: '#23262C', fg: '#C9CDD3' });
+    return {
+      isSwitch, nav, cols: tabs.length,
+      groups: ['Pull day', 'Fingers', 'Legs'],
+      exercises: [
+        { name: 'Pull-ups', fields: 'weight · reps', sets: [done('+10 kg × 8'), done('+10 kg × 7'), todo('+10 kg × 6')], last: 'Last time (Fri): +7.5 kg × 8, 8, 7' },
+        { name: 'One-arm hang', fields: 'weight · time · per side', sets: [done('L +10 kg · 0:10'), done('R +8 kg · 0:10'), done('L +10 kg · 0:10'), todo('R +8 kg · 0:10')], last: 'Last time (Thu): L +7.5 · R +7.5 kg' },
+        { name: 'Band face pulls', fields: 'band · reps', sets: [done('red × 15'), done('red × 15')], last: 'Last time: yellow × 15, 15' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
