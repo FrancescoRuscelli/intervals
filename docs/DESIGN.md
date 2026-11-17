@@ -190,7 +190,11 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
   - [x] Settings: theme, disc animation, sound, workout options, import, backup to file, restore (confirm; bad file changes nothing)
   - [x] List: multi-select (long-press) → Tag… (tri-state for several workouts), Duplicate, Delete; ⋮ → Reorder (drag handles)
   - [x] Tested on the Pixel 8a (adb over USB): import of the 26 Hybrid workouts, editor, player, settings
-  - [ ] NEXT: Journal, Stats, import preview screen; "last time" on cards; swipe-to-delete in the editor
+  - [x] Journal: month calendar (Monday first, dots pink = completed / yellow = stopped), month totals, sessions of the day
+        with logged values and note (tap = edit note, long-press = delete)
+  - [x] Stats: Week / Month / Year, time · sessions · completed %, minutes chart (current period purple), most done workouts
+  - [x] Workout cards: "Last: Tue · 4/4 · hang · Load L 10 · R 8 kg" (yellow dot if stopped), "Never done yet"
+  - [ ] NEXT: Gym 1 (data model + FitNotes .fitnotes importer), import preview screen; "last time" on cards; swipe-to-delete in the editor
 - [ ] Step 5: player (in progress)
   - [x] core: play state at any time, cues (names, 3-2-1 beeps, end), previous / next (tests)
   - [x] player screen: disc (series ring sized by time, rounded ends, current thicker, dot; rounds ring inside emptying;
