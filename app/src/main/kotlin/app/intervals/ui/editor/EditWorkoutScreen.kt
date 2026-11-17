@@ -321,29 +321,51 @@ private fun RepeatHeader(row: EditorRow.RepeatHeader, onTimes: (Int) -> Unit, on
 @Composable
 private fun SeriesRow(s: Series, inGroup: Boolean, selecting: Boolean, selected: Boolean, onClick: () -> Unit, onLongClick: () -> Unit) {
     val p = LocalPalette.current
-    Row(
+    val ps = s.perSide
+    Column(
         Modifier.padding(horizontal = if (inGroup) 12.dp else 0.dp).fillMaxWidth()
             .background(if (selected) p.tint else if (inGroup) p.group else Color.Transparent)
             .combinedClickable(onClick = onClick, onLongClick = onLongClick)
-            .padding(start = if (inGroup) 14.dp else 20.dp, end = 16.dp).height(52.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            .padding(start = if (inGroup) 14.dp else 20.dp, end = 16.dp),
     ) {
-        if (selecting) {
-            Checkbox(checked = selected, onCheckedChange = { onClick() }, colors = CheckboxDefaults.colors(checkedColor = p.accent))
+        val logs = if (s.logFields.isNotEmpty()) "logs " + s.logFields.joinToString { it.name } else null
+        if (ps == null) {
+            Line(s.color, s.icon, s.name.ifBlank { "series" }, logs, s.durationSec, selecting, selected, onClick, big = true)
+        } else {
+            // one per-side series, shown as its three steps: left, change side, right
+            Line(s.color, s.icon, s.name.ifBlank { "series" } + " · left", logs, s.durationSec, selecting, selected, onClick, big = true)
+            Line(p.teal.value.toLong(), null, "change side", null, ps.changeSec, selecting, selected, onClick, big = false, tealColor = p.teal)
+            Line(ps.rightColor ?: s.color, s.icon, s.name.ifBlank { "series" } + " · right", null, s.durationSec, selecting, selected, onClick, big = true)
         }
-        Box(Modifier.size(32.dp).clip(CircleShape).background(Color(s.color)), contentAlignment = Alignment.Center) {
-            Icon(AppIcons.series(s.icon), null, tint = Color(0xFF111111), modifier = Modifier.size(17.dp))
+    }
+}
+
+@Composable
+private fun Line(
+    color: Long, icon: app.intervals.core.SeriesIcon?, name: String, sub: String?, sec: Int,
+    selecting: Boolean, selected: Boolean, onClick: () -> Unit, big: Boolean, tealColor: Color? = null,
+) {
+    val p = LocalPalette.current
+    Row(Modifier.fillMaxWidth().height(if (big) 52.dp else 34.dp), verticalAlignment = Alignment.CenterVertically) {
+        if (selecting) {
+            if (big) Checkbox(checked = selected, onCheckedChange = { onClick() }, colors = CheckboxDefaults.colors(checkedColor = p.accent))
+            else Spacer(Modifier.width(48.dp))
+        }
+        Box(Modifier.width(32.dp), contentAlignment = Alignment.Center) {
+            if (icon != null) {
+                Box(Modifier.size(32.dp).clip(CircleShape).background(Color(color)), contentAlignment = Alignment.Center) {
+                    Icon(AppIcons.series(icon), null, tint = Color(0xFF111111), modifier = Modifier.size(17.dp))
+                }
+            } else {
+                Box(Modifier.size(width = 14.dp, height = 6.dp).clip(RoundedCornerShape(3.dp)).background(tealColor ?: Color(color)))
+            }
         }
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
-            Text(s.name.ifBlank { "series" }, color = p.text, fontSize = 16.sp)
-            val extras = buildList {
-                s.perSide?.let { add("per side · change ${formatDuration(it.changeSec)}") }
-                if (s.logFields.isNotEmpty()) add("logs " + s.logFields.joinToString { it.name })
-            }
-            if (extras.isNotEmpty()) Text(extras.joinToString(" · "), color = p.muted, fontSize = 12.sp)
+            Text(name, color = if (big) p.text else p.teal, fontSize = if (big) 16.sp else 14.sp)
+            if (sub != null) Text(sub, color = p.muted, fontSize = 12.sp)
         }
-        Text(formatDuration(s.durationSec), color = p.soft, style = NumberStyle, fontSize = 16.sp)
+        Text(formatDuration(sec), color = if (big) p.soft else p.teal, style = NumberStyle, fontSize = if (big) 16.sp else 14.sp)
     }
 }
 
