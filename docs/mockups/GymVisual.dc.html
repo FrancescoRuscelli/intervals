@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Journal, what you trained</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 1000px; box-sizing: border-box; background: #000000; color: #F2F3F5; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+  <header style="display: flex; align-items: baseline; justify-content: space-between; padding: 20px 20px 4px">
+    <h1 style="margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 30px; font-weight: 700; letter-spacing: -0.5px">Journal</h1>
+    <span style="font-size: 15px; font-weight: 600">November 2026</span>
+  </header>
+  <span style="padding: 0 20px; font-size: 12px; color: #9AA0AA">{{styleName}}</span>
+
+  <div style="margin: 12px 16px 0; padding: 10px 8px 12px; border-radius: 18px; background: #1A1C21">
+    <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); text-align: center; font-size: 12px; font-weight: 600; color: #9AA0AA; padding-bottom: 6px">
+      <span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); row-gap: 4px">
+      <sc-for list="{{cells}}" as="c" hint-placeholder-count="42">
+        <div style="height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 3px; padding-top: 4px; border-radius: 12px; background: {{c.bg}}; opacity: {{c.op}}">
+          <span style="font-size: 14px; font-weight: {{c.fw}}; line-height: 1; color: {{c.fg}}">{{c.n}}</span>
+          <sc-if value="{{c.dots}}" hint-placeholder-val="{{ false }}">
+            <span style="display: flex; gap: 2px">
+              <sc-for list="{{c.dotList}}" as="d" hint-placeholder-count="1"><span style="width: 7px; height: 7px; border-radius: 4px; background: {{d}}"></span></sc-for>
+            </span>
+          </sc-if>
+          <sc-if value="{{c.tag}}" hint-placeholder-val="{{ false }}">
+            <span style="font-size: 9px; font-weight: 800; letter-spacing: 0.2px; color: #E3E5E8; background: #2A2D34; border-radius: 4px; padding: 1px 3px; line-height: 1.2">{{c.tag}}</span>
+          </sc-if>
+          <sc-if value="{{c.strip}}" hint-placeholder-val="{{ false }}">
+            <span style="display: flex; width: 34px; height: 5px; border-radius: 3px; overflow: hidden; gap: 1px">
+              <sc-for list="{{c.segs}}" as="g" hint-placeholder-count="2"><span style="flex: {{g.f}}; background: {{g.c}}"></span></sc-for>
+            </span>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <sc-if value="{{showLegend}}" hint-placeholder-val="{{ false }}">
+    <div style="display: flex; flex-wrap: wrap; gap: 6px 12px; padding: 10px 20px 0; font-size: 12px; color: #C9CDD3">
+      <sc-for list="{{legend}}" as="l" hint-placeholder-count="5">
+        <span style="display: flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 5px; background: {{l.c}}"></span>{{l.name}}</span>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <div style="flex: 1; overflow: hidden; display: flex; flex-direction: column; gap: 8px; padding: 14px 16px 0">
+    <sc-for list="{{days}}" as="d" hint-placeholder-count="4">
+      <div style="display: flex; gap: 12px; padding: 12px 14px; border-radius: 16px; background: #1A1C21">
+        <span style="width: 5px; border-radius: 3px; background: {{d.bar}}"></span>
+        <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+          <span style="display: flex; align-items: center; gap: 8px">
+            <span style="font-size: 14px; font-weight: 700">{{d.day}}</span>
+            <sc-if value="{{d.group}}" hint-placeholder-val="{{ false }}"><span style="height: 20px; padding: 0 8px; border-radius: 10px; background: {{d.groupBg}}; color: {{d.groupFg}}; font-size: 11px; font-weight: 700; display: flex; align-items: center">{{d.group}}</span></sc-if>
+            <span style="flex: 1"></span>
+            <span style="font-size: 12px; color: #9AA0AA">{{d.sets}} sets</span>
+          </span>
+          <sc-if value="{{d.showText}}" hint-placeholder-val="{{ true }}">
+            <span style="font-size: 13px; color: #C9CDD3">{{d.text}}</span>
+          </sc-if>
+          <sc-if value="{{d.showTags}}" hint-placeholder-val="{{ false }}">
+            <span style="display: flex; flex-wrap: wrap; gap: 6px">
+              <sc-for list="{{d.items}}" as="i" hint-placeholder-count="3">
+                <span style="height: 26px; padding: 0 8px; border-radius: 8px; background: #23262C; font-size: 12px; display: flex; align-items: center; gap: 6px"><b style="font-size: 11px; letter-spacing: 0.3px">{{i.tag}}</b><span style="color: #9AA0AA">{{i.n}}</span></span>
+              </sc-for>
+            </span>
+          </sc-if>
+          <sc-if value="{{d.showStrip}}" hint-placeholder-val="{{ false }}">
+            <span style="display: flex; height: 22px; border-radius: 6px; overflow: hidden; gap: 2px">
+              <sc-for list="{{d.items}}" as="i" hint-placeholder-count="3">
+                <span style="flex: {{i.n}}; min-width: 0; background: {{i.c}}; color: #0B0C0E; font-size: 10px; font-weight: 800; display: flex; align-items: center; padding: 0 6px; white-space: nowrap; overflow: hidden">{{i.tag}} {{i.n}}</span>
+              </sc-for>
+            </span>
+            <span style="font-size: 12px; color: #9AA0AA">{{d.text}}</span>
+          </sc-if>
+        </span>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"style":{"editor":"enum","options":["1 group colors","2 exercise tags","3 day strip"],"default":"1 group colors"},"$preview":{"width":390,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const style = this.props.style ?? '1 group colors';
+    const S1 = style.startsWith('1'), S2 = style.startsWith('2'), S3 = style.startsWith('3');
+    // group colors: soft tones, kept apart from the app colors (purple, pink, yellow, teal)
+    const G = {
+      Legs: '#8BC34A', Pull: '#5B8DEF', Shoulders: '#FF8A50', Push: '#90A4AE', Fingers: '#C8A97E'
+    };
+    // exercise → short tag + group (your real exercises)
+    const X = {
+      'Barbell Deep Squat': ['SQ', 'Legs'], 'Deadlift': ['DL', 'Legs'], 'Bulgarian Bar Squat': ['BG', 'Legs'],
+      'Overhead Press': ['OHP', 'Shoulders'], 'Box Pike Push Up': ['PK', 'Shoulders'],
+      'Pull Up': ['PU', 'Pull'], 'Band One Arm Pull Up': ['OAP', 'Pull'],
+      'Dips': ['DIP', 'Push'], 'Block Pulls': ['BP', 'Fingers']
+    };
+    // your real gym days, 26 Oct – 15 Nov 2026 (sets per exercise)
+    const log = {
+      2: [['Band One Arm Pull Up', 5], ['Pull Up', 11]], 3: [['Block Pulls', 7]],
+      4: [['Barbell Deep Squat', 12], ['Bulgarian Bar Squat', 4], ['Deadlift', 5]],
+      6: [['Overhead Press', 10], ['Box Pike Push Up', 6]], 8: [['Pull Up', 5], ['Band One Arm Pull Up', 6]],
+      9: [['Dips', 12]], 11: [['Barbell Deep Squat', 13], ['Bulgarian Bar Squat', 3], ['Deadlift', 4]],
+      13: [['Overhead Press', 11], ['Box Pike Push Up', 7]], 15: [['Band One Arm Pull Up', 3], ['Pull Up', 5]]
+    };
+    const intervals = [16];
+    const groupOf = (items) => X[items[0][0]][1];
+    const cells = [];
+    for (let i = 0; i < 6; i++) cells.push({ n: '', bg: 'transparent', op: 1, fw: 500, fg: '#F2F3F5', dots: false, tag: '', strip: false });
+    for (let d = 1; d <= 30; d++) {
+      const items = log[d];
+      const c = { n: d, bg: d === 17 ? '#2A2340' : 'transparent', op: d > 17 ? 0.35 : 1, fw: items ? 700 : 500, fg: '#F2F3F5', dots: false, dotList: [], tag: '', strip: false, segs: [] };
+      if (items) {
+        if (S1) { c.dots = true; c.dotList = [G[groupOf(items)]]; }
+        if (S2) { c.tag = items.slice().sort((a, b) => b[1] - a[1])[0] ? X[items.slice().sort((a, b) => b[1] - a[1])[0][0]][0] : ''; }
+        if (S3) { c.strip = true; c.segs = items.map(([e, n]) => ({ f: n, c: G[X[e][1]] })); }
+      }
+      if (intervals.includes(d)) { c.dots = true; c.dotList = (c.dotList || []).concat(['#E91E63']); }
+      cells.push(c);
+    }
+    while (cells.length < 42) cells.push({ n: '', bg: 'transparent', op: 1, fw: 500, fg: '#F2F3F5', dots: false, tag: '', strip: false });
+
+    const names = { 15: 'Sun 15', 13: 'Fri 13', 11: 'Wed 11', 9: 'Mon 9' };
+    const days = [15, 13, 11, 9].map((d) => {
+      const items = log[d], g = groupOf(items);
+      const shade = (hex) => hex + '33';
+      return {
+        day: names[d], sets: items.reduce((a, b) => a + b[1], 0),
+        bar: S1 ? G[g] : (S3 ? '#2A2D34' : '#7C3AED'),
+        group: S1 ? g : '', groupBg: shade(G[g]), groupFg: G[g],
+        showText: S1, showTags: S2, showStrip: S3,
+        text: items.map(([e, n]) => e + ' ' + n).join(' · '),
+        items: items.map(([e, n]) => ({ tag: X[e][0], n, c: G[X[e][1]] }))
+      };
+    });
+    const styleName = S1 ? 'Option 1 · a color per group (you pick the colors)'
+      : S2 ? 'Option 2 · short tags for exercises (main one in the calendar)'
+      : 'Option 3 · day strip: each day split by exercise, by sets';
+    return {
+      cells, days, styleName,
+      showLegend: S1 || S3,
+      legend: Object.keys(G).map((name) => ({ name, c: G[name] })).concat([{ name: 'Intervals', c: '#E91E63' }])
+    };
+  }
+}
+</script>
+</body>
+</html>
