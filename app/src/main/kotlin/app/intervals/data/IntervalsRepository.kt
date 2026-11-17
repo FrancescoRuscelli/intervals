@@ -66,6 +66,31 @@ class IntervalsRepository(
         workoutDao.insertAll(workouts.mapIndexed { i, w -> w.toEntity(start + i, t, t) })
     }
 
+    /**
+     * Import again: a workout with the same name that was never edited in the app is updated in place
+     * (same id, place and journal links); the others are added at the end. Returns (added, updated).
+     */
+    suspend fun importOrUpdate(workouts: List<Workout>): Pair<Int, Int> = db.withTransaction {
+        val existing = workoutDao.getAll().filter { it.createdAt == it.updatedAt }.toMutableList()
+        val toAdd = mutableListOf<Workout>()
+        var updated = 0
+        val t = now()
+        for (w in workouts) {
+            val old = existing.firstOrNull { it.name == w.name }
+            if (old != null) {
+                existing.remove(old)
+                // keep createdAt == updatedAt: it still counts as "not edited by you"
+                workoutDao.update(w.toEntity(old.position, t, t, old.id))
+                updated++
+            } else {
+                toAdd += w
+            }
+        }
+        val start = workoutDao.nextPosition()
+        workoutDao.insertAll(toAdd.mapIndexed { i, w -> w.toEntity(start + i, t, t) })
+        toAdd.size to updated
+    }
+
     // ---- journal ----
 
     /** Sessions started in [fromMillis, toMillis), e.g. one month for the calendar. */

@@ -11,7 +11,7 @@ sealed interface EditorRow {
     val block: Int
 
     data class SingleRow(override val block: Int, val series: Series) : EditorRow
-    data class RepeatHeader(override val block: Int, val times: Int, val size: Int) : EditorRow
+    data class RepeatHeader(override val block: Int, val times: Int, val size: Int, val skipLast: Boolean = false, val lastName: String = "") : EditorRow
     data class InRepeat(override val block: Int, val inner: Int, val series: Series) : EditorRow
 }
 
@@ -27,7 +27,7 @@ fun Workout.editorRows(): List<EditorRow> = buildList {
         when (block) {
             is Block.Single -> add(EditorRow.SingleRow(b, block.series))
             is Block.Repeat -> {
-                add(EditorRow.RepeatHeader(b, block.times, block.series.size))
+                add(EditorRow.RepeatHeader(b, block.times, block.series.size, block.skipLast, block.series.last().name))
                 block.series.forEachIndexed { i, s -> add(EditorRow.InRepeat(b, i, s)) }
             }
         }
@@ -62,7 +62,7 @@ fun Workout.deleteSeries(ps: Collection<SeriesPos>): Workout {
             is Block.Single -> if (SeriesPos(i) in drop) null else b
             is Block.Repeat -> {
                 val kept = b.series.filterIndexed { j, _ -> SeriesPos(i, j) !in drop }
-                if (kept.isEmpty()) null else b.copy(series = kept)
+                if (kept.isEmpty()) null else b.copy(series = kept, skipLast = b.skipLast && kept.size >= 2)
             }
         }
     }
@@ -139,10 +139,15 @@ fun Workout.roundBar(): List<Pair<Int, Long>> = blocks.flatMap { b ->
     }
     when (b) {
         is Block.Single -> one(b.series)
-        is Block.Repeat -> List(b.times) { b.series.flatMap(one) }.flatten()
+        is Block.Repeat -> b.unrolled().flatMap(one)
     }
 }
 
 /** Number of series in one round, repeat groups unrolled (per-side counts once). */
 val Workout.seriesCount: Int
-    get() = blocks.sumOf { b -> when (b) { is Block.Single -> 1; is Block.Repeat -> b.times * b.series.size } }
+    get() = blocks.sumOf { b -> when (b) { is Block.Single -> 1; is Block.Repeat -> b.unrolled().size } }
+
+/** Turns "skip the last series the last time" on or off for a repeat group. */
+fun Workout.setSkipLast(block: Int, on: Boolean): Workout = copy(
+    blocks = blocks.mapIndexed { i, b -> if (i == block && b is Block.Repeat && (!on || b.series.size >= 2)) b.copy(skipLast = on) else b },
+)

@@ -39,6 +39,10 @@ CSV backup, no header, no quoting, two row types (see `HybridImport.kt`):
 - interval: `id,workoutId,name,durationSec,,,0,icon,color(signed ARGB int)`
 
 Rules:
+- **X · change · X** (same series, a *change* in the middle) becomes **one per-side series** X with that change time.
+- **"A, rest" repeated + a last "A"** becomes **Repeat ×N with "skip the last rest"** (repeat groups have `skipLast`:
+  the last time through, the group's last series is not played). Timing is unchanged.
+- **Import again** updates the workouts you never edited (same name, same place, journal links kept); edited ones are added as new.
 - If the last series of a workout is named *rest* / *change*, it becomes **rest between rounds** (19 of the 26 workouts; ~31 min of useless rest removed in total).
 - Repeated patterns become **repeat groups** automatically (e.g. hang/rest ×3 + hang).
 - Cool-down column is ignored (always 0 in the real export).
@@ -180,7 +184,14 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
   - [x] Edit series: name, time (± 5 s, tap to type), 12 colors, 6 icons, per side + change time, log fields (unit, left/right apart), sound switches
   - [x] Settings: theme, disc animation, sound, workout options, import, backup to file, restore (confirm; bad file changes nothing)
   - [ ] Import preview screen, Journal, Stats, Finished; "last time" on cards; swipe-to-delete in the editor
-- [ ] Step 5: player screen + foreground timer service, voice, beeps, countdown, flash, landscape
+- [ ] Step 5: player (in progress)
+  - [x] core: play state at any time, cues (names, 3-2-1 beeps, end), previous / next (tests)
+  - [x] player screen: disc (series ring sized by time, rounded ends, current thicker, dot; rounds ring inside emptying;
+        disc in the series color, inflates at each new segment; last 3 s number drops from big), Next card, progress, pause / previous / next,
+        Get ready 3-2-1, stop (confirm, saved as stopped); voice (TextToSpeech) + beeps (ToneGenerator), music lowered only during cues
+  - [x] Finished: done disc, time / rounds / series, logged values (start from last time, ▲▼ vs last time), note, Repeat, Save to journal
+  - [ ] foreground service (keeps running with the screen off), lock screen controls, landscape, crazy spin + coin flip,
+        rest between rounds editing of logged values (4b), set per round
 - [ ] Step 6: install on the Pixel 8a, real workout test, energy profiling
 - [x] Gym mockups G1–G16 (placement: own tab)
 - [ ] Gym: data model, database, screens, FitNotes importer (after the interval screens? to decide)

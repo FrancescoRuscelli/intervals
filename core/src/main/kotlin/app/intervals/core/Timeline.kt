@@ -50,7 +50,7 @@ fun Workout.timeline(): Timeline {
     val roundSeries = blocks.flatMap { block ->
         when (block) {
             is Block.Single -> listOf(block.series)
-            is Block.Repeat -> List(block.times) { block.series }.flatten()
+            is Block.Repeat -> block.unrolled()
         }
     }
     for (r in 1..rounds) {
@@ -80,7 +80,7 @@ val Workout.roundSec: Int
         val one = { s: Series -> s.perSide?.let { 2 * s.durationSec + it.changeSec } ?: s.durationSec }
         when (block) {
             is Block.Single -> one(block.series)
-            is Block.Repeat -> block.times * block.series.sumOf(one)
+            is Block.Repeat -> block.unrolled().sumOf(one)
         }
     }
 

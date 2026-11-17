@@ -64,6 +64,7 @@ import app.intervals.core.moveBlock
 import app.intervals.core.pos
 import app.intervals.core.roundSec
 import app.intervals.core.setRepeatTimes
+import app.intervals.core.setSkipLast
 import app.intervals.core.totalSec
 import app.intervals.core.ungroup
 import app.intervals.ui.AppIcons
@@ -196,6 +197,7 @@ fun EditWorkoutScreen(vm: AppViewModel) {
                             row,
                             onTimes = { t -> vm.updateDraft { it.setRepeatTimes(row.block, t) } },
                             onUngroup = { vm.updateDraft { it.ungroup(row.block) } },
+                            onSkipLast = { on -> vm.updateDraft { it.setSkipLast(row.block, on) } },
                         )
                         is EditorRow.SingleRow, is EditorRow.InRepeat -> {
                             val pos = row.pos!!
@@ -286,7 +288,7 @@ private fun SettingRow(icon: androidx.compose.ui.graphics.vector.ImageVector, la
 }
 
 @Composable
-private fun RepeatHeader(row: EditorRow.RepeatHeader, onTimes: (Int) -> Unit, onUngroup: () -> Unit) {
+private fun RepeatHeader(row: EditorRow.RepeatHeader, onTimes: (Int) -> Unit, onUngroup: () -> Unit, onSkipLast: (Boolean) -> Unit) {
     val p = LocalPalette.current
     var menu by remember { mutableStateOf(false) }
     Row(
@@ -297,10 +299,16 @@ private fun RepeatHeader(row: EditorRow.RepeatHeader, onTimes: (Int) -> Unit, on
     ) {
         Icon(AppIcons.Repeat, null, tint = p.accentText, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(10.dp))
-        Box(Modifier.weight(1f)) {
-            Text("Repeat", color = p.accentText, fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.clickable { menu = true })
+        Column(Modifier.weight(1f).clickable { menu = true }) {
+            Text("Repeat ▾", color = p.accentText, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+            if (row.skipLast) Text("no “${row.lastName}” after the last", color = p.muted, fontSize = 11.sp)
             DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                if (row.size >= 2) {
+                    DropdownMenuItem(
+                        text = { Text(if (row.skipLast) "Play “${row.lastName}” also the last time" else "Skip “${row.lastName}” the last time") },
+                        onClick = { menu = false; onSkipLast(!row.skipLast) },
+                    )
+                }
                 DropdownMenuItem(text = { Text("Ungroup (play once)") }, onClick = { menu = false; onUngroup() })
             }
         }

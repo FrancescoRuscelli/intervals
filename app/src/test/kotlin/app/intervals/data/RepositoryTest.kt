@@ -152,4 +152,18 @@ class RepositoryTest {
         assertFailsWith<BackupException> { repo.restoreBackup("not a backup") }
         assertTrue(repo.workouts.first().single().workout.name == "keep me")
     }
+
+    @Test
+    fun importAgainUpdatesOnlyUneditedWorkouts() = runTest {
+        repo.importWorkouts(listOf(workout("a"), workout("b")))
+        val b = repo.workouts.first().first { it.workout.name == "b" }
+        repo.updateWorkout(b.id, b.workout.copy(rounds = 9)) // edited by the user
+        val (added, updated) = repo.importOrUpdate(listOf(workout("a").copy(rounds = 5), workout("b"), workout("c")))
+        assertEquals(2, added) // b (edited, so a new copy) and c
+        assertEquals(1, updated)
+        val all = repo.workouts.first()
+        assertEquals(listOf("a", "b", "b", "c"), all.map { it.workout.name })
+        assertEquals(5, all[0].workout.rounds)
+        assertEquals(9, all[1].workout.rounds)
+    }
 }

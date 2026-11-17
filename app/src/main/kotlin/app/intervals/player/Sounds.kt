@@ -1,0 +1,71 @@
+package app.intervals.player
+
+import android.content.Context
+import android.media.AudioAttributes
+import android.media.AudioFocusRequest
+import android.media.AudioManager
+import android.media.ToneGenerator
+import android.os.Handler
+import android.os.Looper
+import android.speech.tts.TextToSpeech
+import java.util.Locale
+
+/**
+ * Voice and beeps of the player. Text-to-speech starts when the player opens and is released when it closes.
+ * Other apps' music is lowered only while a cue plays (if [duck]).
+ */
+class Sounds(context: Context, private val volume: Float, private val duck: Boolean, language: String) {
+    private val audio = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    private val handler = Handler(Looper.getMainLooper())
+    private var ttsReady = false
+    private val tts: TextToSpeech = TextToSpeech(context.applicationContext) { status ->
+        ttsReady = status == TextToSpeech.SUCCESS
+        if (ttsReady) tts.language = Locale.forLanguageTag(language)
+    }
+    private val tones = runCatching { ToneGenerator(AudioManager.STREAM_MUSIC, (volume * 100).toInt().coerceIn(1, 100)) }.getOrNull()
+    private val attrs = AudioAttributes.Builder()
+        .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+        .build()
+    private val focus = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK).setAudioAttributes(attrs).build()
+    private val release = Runnable { audio.abandonAudioFocusRequest(focus) }
+
+    init {
+        tts.setAudioAttributes(attrs)
+    }
+
+    private fun duckFor(ms: Long) {
+        if (!duck) return
+        handler.removeCallbacks(release)
+        audio.requestAudioFocus(focus)
+        handler.postDelayed(release, ms)
+    }
+
+    fun say(text: String) {
+        if (!ttsReady) return
+        duckFor(1800)
+        tts.speak(text, TextToSpeech.QUEUE_FLUSH, android.os.Bundle().apply {
+            putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, volume)
+        }, text)
+    }
+
+    /** Short beep for 3, 2; a longer, higher one for 1. */
+    fun beep(n: Int) {
+        duckFor(600)
+        if (n == 1) tones?.startTone(ToneGenerator.TONE_PROP_BEEP2, 300) else tones?.startTone(ToneGenerator.TONE_PROP_BEEP, 150)
+    }
+
+    fun finished() {
+        duckFor(2500)
+        tones?.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 600)
+        if (ttsReady) tts.speak("Well done", TextToSpeech.QUEUE_ADD, null, "done")
+    }
+
+    fun close() {
+        handler.removeCallbacksAndMessages(null)
+        audio.abandonAudioFocusRequest(focus)
+        tts.stop()
+        tts.shutdown()
+        tones?.release()
+    }
+}

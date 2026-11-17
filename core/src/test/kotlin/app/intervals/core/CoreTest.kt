@@ -82,12 +82,13 @@ class HybridImportTest {
     @Test
     fun repeatedPatternsBecomeRepeatGroups() {
         val hb = sample().workouts.first { it.workout.name == "hangboard 70%" }.workout
-        // hang, rest, hang, rest, hang, rest, hang  ->  Repeat x3 (hang, rest), hang
-        assertEquals(2, hb.blocks.size)
+        // hang, rest, hang, rest, hang, rest, hang  ->  Repeat x4 (hang, rest), the last rest skipped
+        assertEquals(1, hb.blocks.size)
         val rep = hb.blocks[0] as Block.Repeat
-        assertEquals(3, rep.times)
+        assertEquals(4, rep.times)
+        assertTrue(rep.skipLast)
         assertEquals(listOf("hang", "rest"), rep.series.map { it.name })
-        assertEquals("hang", (hb.blocks[1] as Block.Single).series.name)
+        assertEquals(5 * 60 + 25, hb.totalSec)
         assertEquals(0xFFE91E63L, rep.series[0].color)
         assertEquals(SeriesIcon.JUMP, rep.series[0].icon)
     }
@@ -111,5 +112,39 @@ class HybridImportTest {
             assertEquals(expected, iw.workout.totalSec, iw.workout.name)
         }
         println("Imported ${r.workouts.size} workouts, ${r.workouts.count { it.convertedFinalRest }} with final rest converted")
+    }
+
+    @Test
+    fun sidesMergeAndTailsFold() {
+        // block pulls 60%: (pull, change, pull, rest) x3 + pull, change, pull; big rest -> between rounds
+        val pull = Series("pull", 5, 0xFFE91E63L, SeriesIcon.JUMP)
+        val change = Series("change", 2, 0xFF9E9E9EL)
+        val rest = Series("rest", 3, 0xFFFFC107L)
+        val flat = List(3) { listOf(pull, change, pull, rest) }.flatten() + listOf(pull, change, pull)
+        val blocks = HybridImport.groupRepeats(HybridImport.mergeSides(flat))
+        val rep = blocks.single() as Block.Repeat
+        assertEquals(4, rep.times)
+        assertTrue(rep.skipLast)
+        assertEquals(PerSide(2), rep.series[0].perSide)
+        val w = Workout("bp", rounds = 1, blocks = blocks)
+        assertEquals(flat.sumOf { it.durationSec }, w.totalSec) // same timing as before
+        // a single "A, rest, A" also folds
+        val small = HybridImport.groupRepeats(listOf(pull, rest, pull))
+        assertEquals(listOf<Block>(Block.Repeat(2, listOf(pull, rest), skipLast = true)), small)
+    }
+
+    @Test
+    fun skipLastInTimelineAndEdits() {
+        val a = Series("a", 5, 1L)
+        val r = Series("rest", 2, 2L)
+        val w = Workout("s", rounds = 1, blocks = listOf(Block.Repeat(3, listOf(a, r), skipLast = true)))
+        assertEquals(listOf("a", "rest", "a", "rest", "a"), w.timeline().segments.map { it.name })
+        assertEquals(19, w.roundSec)
+        assertEquals(5, w.seriesCount)
+        val off = w.setSkipLast(0, false)
+        assertEquals(21, off.roundSec)
+        // deleting down to one series turns skipLast off instead of failing
+        val one = w.deleteSeries(listOf(SeriesPos(0, 1)))
+        assertEquals(false, (one.blocks[0] as Block.Repeat).skipLast)
     }
 }

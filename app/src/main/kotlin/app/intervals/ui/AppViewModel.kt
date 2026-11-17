@@ -11,6 +11,12 @@ import app.intervals.IntervalsApp
 import app.intervals.core.AppSettings
 import app.intervals.core.Block
 import app.intervals.core.HybridImport
+import app.intervals.core.LoggedValue
+import app.intervals.core.Session
+import app.intervals.player.FieldKey
+import app.intervals.player.FinishedInfo
+import app.intervals.player.PlayerController
+import app.intervals.player.Sounds
 import app.intervals.core.SavedWorkout
 import app.intervals.core.Series
 import app.intervals.core.SeriesIcon
@@ -28,6 +34,8 @@ enum class Tab { INTERVALS, GYM, JOURNAL, STATS, SETTINGS }
 /** Screens shown on top of the tabs, newest last. */
 sealed interface Overlay {
     data object EditWorkout : Overlay
+    data object Player : Overlay
+    data object Finished : Overlay
     /** [pos] null = a new series. */
     data class EditSeries(val pos: SeriesPos?, val template: Series) : Overlay
 }
@@ -57,6 +65,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun back(): Boolean {
         if (overlays.isEmpty()) return false
+        if (overlays.last() == Overlay.Player || overlays.last() == Overlay.Finished) return true // handled by those screens
         val top = overlays.removeAt(overlays.lastIndex)
         if (top == Overlay.EditWorkout) draft = null
         return true
@@ -98,9 +107,13 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             message = "Nothing to import: is it the Hybrid Interval Timer backup (.csv)?"
             return@launch
         }
-        repo.importWorkouts(result.workouts.map { it.workout })
+        val (added, updated) = repo.importOrUpdate(result.workouts.map { it.workout })
         val rests = result.workouts.count { it.convertedFinalRest }
-        message = "Imported ${result.workouts.size} workouts" + if (rests > 0) " · $rests final rests became rest between rounds" else ""
+        message = buildList {
+            if (added > 0) add("Imported $added workouts")
+            if (updated > 0) add("updated $updated not edited by you")
+            if (rests > 0) add("$rests final rests became rest between rounds")
+        }.joinToString(" · ").replaceFirstChar { it.uppercase() }
     }
 
     // ---- editor ----
@@ -136,8 +149,58 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         overlays.removeAll { it is Overlay.EditSeries }
     }
 
-    fun player(@Suppress("UNUSED_PARAMETER") id: Long) {
-        message = "The player comes in the next step"
+    // ---- player ----
+
+    var player by mutableStateOf<PlayerController?>(null)
+        private set
+    var finished by mutableStateOf<FinishedInfo?>(null)
+        private set
+
+    fun player(id: Long) {
+        val saved = workouts.value?.firstOrNull { it.id == id } ?: return
+        startPlayer(saved)
+    }
+
+    private fun startPlayer(saved: SavedWorkout) {
+        if (saved.workout.blocks.isEmpty()) { message = "Add a series first"; return }
+        val s = settings.value
+        val sounds = Sounds(getApplication(), s.volume, s.duckMusic, s.voiceLanguage)
+        val c = PlayerController(saved, s, sounds, viewModelScope) { completed, elapsed, rounds, startedAt ->
+            viewModelScope.launch {
+                val last = repo.lastValues(saved.id)
+                finished = FinishedInfo(saved, completed, elapsed, rounds, startedAt, last)
+                player?.close()
+                player = null
+                overlays.remove(Overlay.Player)
+                overlays += Overlay.Finished
+            }
+        }
+        player = c
+        overlays += Overlay.Player
+        c.start()
+    }
+
+    fun saveSession(note: String, values: Map<FieldKey, Double>, repeat: Boolean) = viewModelScope.launch {
+        val f = finished ?: return@launch
+        val rounds = f.roundsDone.coerceAtLeast(1)
+        val logged = values.flatMap { (k, v) ->
+            (1..rounds).map { r -> LoggedValue(k.series, k.field, k.unit, r, k.side, v) }
+        }
+        repo.addSession(
+            Session(
+                workoutId = f.saved.id, workoutName = f.saved.workout.name, startedAt = f.startedAt,
+                durationSec = (f.elapsedMs / 1000).toInt(), roundsDone = f.roundsDone, roundsTotal = f.saved.workout.rounds,
+                completed = f.completed, note = note.trim(), values = logged,
+            ),
+        )
+        finished = null
+        overlays.remove(Overlay.Finished)
+        message = "Saved to the journal"
+        if (repeat) startPlayer(f.saved)
+    }
+
+    override fun onCleared() {
+        player?.close()
     }
 
     fun saveSettings(s: AppSettings) = viewModelScope.launch { repo.saveSettings(s) }

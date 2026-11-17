@@ -42,7 +42,7 @@ fun App(vm: AppViewModel) {
         LaunchedEffect(vm.message) {
             vm.message?.let { snack.showSnackbar(it); vm.message = null }
         }
-        BackHandler(enabled = vm.overlays.isNotEmpty()) { vm.back() }
+        BackHandler(enabled = vm.overlays.isNotEmpty() && vm.overlays.last() != Overlay.Player && vm.overlays.last() != Overlay.Finished) { vm.back() }
 
         Box(Modifier.fillMaxSize().background(p.bg)) {
             Scaffold(
@@ -64,6 +64,8 @@ fun App(vm: AppViewModel) {
             when (val top = vm.overlays.lastOrNull()) {
                 Overlay.EditWorkout -> EditWorkoutScreen(vm)
                 is Overlay.EditSeries -> EditSeriesScreen(vm, top)
+                Overlay.Player -> vm.player?.let { app.intervals.player.PlayerScreen(it, settings.keepScreenOn) { it.stop() } }
+                Overlay.Finished -> vm.finished?.let { app.intervals.player.FinishedScreen(it) { note, values, repeat -> vm.saveSession(note, values, repeat) } }
                 null -> Unit
             }
         }

@@ -60,11 +60,21 @@ sealed interface Block {
 
     @Serializable
     @SerialName("repeat")
-    data class Repeat(val times: Int, val series: List<Series>) : Block {
+    data class Repeat(
+        val times: Int,
+        val series: List<Series>,
+        /** The last time through, the group's last series (usually a rest) is skipped. */
+        val skipLast: Boolean = false,
+    ) : Block {
         init {
             require(times >= 1) { "times must be >= 1" }
             require(series.isNotEmpty()) { "a repeat group needs at least one series" }
+            require(!skipLast || series.size >= 2) { "skipLast needs at least two series" }
         }
+
+        /** The series in play order, all repetitions unrolled. */
+        fun unrolled(): List<Series> =
+            (0 until times).flatMap { k -> if (skipLast && k == times - 1) series.dropLast(1) else series }
     }
 }
 

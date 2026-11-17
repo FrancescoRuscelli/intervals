@@ -94,7 +94,7 @@ object HybridImport {
                     warmupSec = w.warmup,
                     rounds = maxOf(1, w.rounds),
                     restBetweenRoundsSec = if (convert) last.durationSec else 0,
-                    blocks = groupRepeats(roundSeries),
+                    blocks = groupRepeats(mergeSides(roundSeries)),
                 ),
                 oldTotalSec = w.total,
                 convertedFinalRest = convert,
@@ -106,6 +106,33 @@ object HybridImport {
     private fun isRestName(name: String): Boolean {
         val n = name.lowercase()
         return "rest" in n || "change" in n
+    }
+
+    private fun isChangeName(name: String): Boolean {
+        val n = name.lowercase()
+        return "change" in n || "cambi" in n || "switch" in n
+    }
+
+    /**
+     * The old app had no "per side": it was written as X, change, X.
+     * Those three become one per-side series X (change time from the middle one).
+     */
+    fun mergeSides(series: List<Series>): List<Series> {
+        val out = mutableListOf<Series>()
+        var i = 0
+        while (i < series.size) {
+            val a = series[i]
+            val mid = series.getOrNull(i + 1)
+            val b = series.getOrNull(i + 2)
+            if (mid != null && b != null && a == b && a.perSide == null && isChangeName(mid.name)) {
+                out += a.copy(perSide = PerSide(mid.durationSec))
+                i += 3
+            } else {
+                out += a
+                i++
+            }
+        }
+        return out
     }
 
     /**
@@ -136,6 +163,36 @@ object HybridImport {
                 out += Block.Single(series[i])
                 i++
             }
+        }
+        return foldTails(out)
+    }
+
+    /**
+     * "A, rest" repeated, then a last "A" without the rest (the old app's way of skipping the last rest)
+     * becomes one group with skipLast. Also "A, rest, A" alone becomes Repeat ×2 skipping the last rest.
+     */
+    private fun foldTails(blocks: List<Block>): List<Block> {
+        val out = blocks.toMutableList()
+        var j = 0
+        while (j < out.size) {
+            val b = out[j]
+            if (b is Block.Repeat && !b.skipLast && b.series.size >= 2 && isRestName(b.series.last().name)) {
+                val tail = b.series.dropLast(1)
+                val next = out.subList(j + 1, minOf(out.size, j + 1 + tail.size)).map { (it as? Block.Single)?.series }
+                if (next == tail) {
+                    repeat(tail.size) { out.removeAt(j + 1) }
+                    out[j] = Block.Repeat(b.times + 1, b.series, skipLast = true)
+                }
+            } else if (b is Block.Single && j + 2 < out.size) {
+                val r = (out[j + 1] as? Block.Single)?.series
+                val again = (out[j + 2] as? Block.Single)?.series
+                if (r != null && isRestName(r.name) && again == b.series) {
+                    out[j] = Block.Repeat(2, listOf(b.series, r), skipLast = true)
+                    out.removeAt(j + 1)
+                    out.removeAt(j + 1)
+                }
+            }
+            j++
         }
         return out
     }
