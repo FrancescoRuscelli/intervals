@@ -90,10 +90,10 @@ button{font-family:inherit}
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"style":{"editor":"enum","options":["1 group colors","2 exercise tags","3 day strip"],"default":"1 group colors"},"$preview":{"width":390,"height":1000}}'>
+<script type="text/x-dc" data-dc-script data-props='{"variant":{"editor":"enum","options":["1 group colors","2 exercise tags","3 day strip"],"default":"1 group colors"},"$preview":{"width":390,"height":1000}}'>
 class Component extends DCLogic {
   renderVals() {
-    const style = this.props.style ?? '1 group colors';
+    const style = this.props.variant ?? '1 group colors';
     const S1 = style.startsWith('1'), S2 = style.startsWith('2'), S3 = style.startsWith('3');
     // group colors: soft tones, kept apart from the app colors (purple, pink, yellow, teal)
     const G = {
