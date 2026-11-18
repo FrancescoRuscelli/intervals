@@ -101,6 +101,11 @@ fun PlayerScreen(c: PlayerController, keepScreenOn: Boolean, spinLevel: Int = 0,
             }
             Spacer(Modifier.width(48.dp))
         }
+        // the whole workout's time left, big, like the old app
+        if (st != null) Text(
+            mmss(if (c.celebrating) 0 else st.totalLeftSec), color = p.soft, style = NumberStyle, fontSize = 52.sp, fontWeight = FontWeight.Light,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.fillMaxWidth(),
+        )
 
         Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
             if (st != null) Disc(c, st, spinLevel, Modifier.padding(16.dp).fillMaxWidth().aspectRatio(1f))
@@ -205,13 +210,13 @@ private fun Disc(c: PlayerController, st: PlayState, spinLevel: Int, modifier: M
             if (!bigCount) {
                 Icon(app.intervals.ui.AppIcons.series(seg.icon), null, tint = ink, modifier = Modifier.size(28.dp))
                 Text(label(st), color = ink, fontSize = 22.sp, fontWeight = FontWeight.SemiBold)
-                Text(formatDuration(st.secLeft), color = ink, style = NumberStyle, fontSize = (discDp.value * 0.2f).sp, fontWeight = FontWeight.Medium)
+                Text(mmss(st.secLeft), color = ink, style = NumberStyle, fontSize = (discDp.value * 0.17f).sp, fontWeight = FontWeight.Bold)
             } else {
-                Text(label(st), color = ink, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
+                // the last seconds: one giant digit filling the disc, nothing else
                 val k = drop.value
                 Text(
                     "${st.secLeft}", color = ink, style = NumberStyle, fontWeight = FontWeight.Bold,
-                    fontSize = (discDp.value * 0.34f).sp,
+                    fontSize = (discDp.value * 0.5f).sp,
                     modifier = Modifier.offset(y = (-(1f - k) * 70f).dp).scale(1f + (1f - k) * 1.6f),
                 )
             }
@@ -324,7 +329,6 @@ private fun Info(c: PlayerController, st: PlayState) {
                 if (st.inRound > 0) "Series ${st.inRound} of ${st.ofRound}" else "Warm-up",
                 color = p.muted, fontSize = 13.sp, modifier = Modifier.weight(1f),
             )
-            Text("${formatDuration(st.totalLeftSec)} left", color = p.muted, fontSize = 13.sp)
         }
         val n = st.next
         Row(
@@ -375,4 +379,12 @@ private fun Controls(c: PlayerController) {
             Icon(AppIcons.Back, "Next", tint = p.text, modifier = Modifier.size(24.dp).scale(scaleX = -1f, scaleY = 1f))
         }
     }
+}
+
+/** 00:04, 05:25, 1:02:03: minutes always with two digits, like the old app. */
+private fun mmss(sec: Int): String {
+    val h = sec / 3600
+    val m = (sec % 3600) / 60
+    val x = sec % 60
+    return if (h > 0) "%d:%02d:%02d".format(h, m, x) else "%02d:%02d".format(m, x)
 }
