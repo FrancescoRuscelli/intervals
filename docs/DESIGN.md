@@ -169,6 +169,15 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
 
 ## Plan / status
 
+### To do next (asked 2026-11-18, intervals part)
+
+- [ ] **Entering minutes and seconds without typing**: find the easiest way used by good apps (look online first),
+      e.g. two scroll wheels (min | sec), a timer keypad where digits fill from the right (Android Clock timer),
+      or presets + − / +; then use it everywhere a time is set (series, warm-up, rest between rounds, change side, gym time).
+- [ ] **New workout starts empty**: no default series in it.
+- [ ] **Workout list: tap a card = edit**, the button on the right = **play** (today it's the other way round).
+- [ ] **Finished screen: "Discard"**, i.e. don't save to the journal, with an "Are you sure?" confirm.
+
 - [x] Mockups agreed
 - [x] Step 2: project setup, data model, timeline, CSV importer + tests (all passing)
 - [x] Mockups for logged fields (series editor, rest between rounds, finished)
