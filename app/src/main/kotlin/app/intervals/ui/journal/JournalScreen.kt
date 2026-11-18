@@ -94,11 +94,13 @@ fun JournalScreen(vm: AppViewModel) {
     val to = month.plusMonths(1).atDay(1).atStartOfDay(zone).toInstant().toEpochMilli()
     val flow = remember(from, to) { vm.sessions(from, to) }
     val loadedSessions by flow.collectAsState(initial = null)
-    val sessions = loadedSessions.orEmpty()
+    // All / Gym / Intervals
+    var show by rememberSaveable { mutableStateOf(0) }
+    val sessions = if (show == 1) emptyList() else loadedSessions.orEmpty()
     val byDay = sessions.groupBy { it.day(zone) }
     val gymFlow = remember(month) { vm.gymDaysBetween(month.atDay(1).toString(), month.plusMonths(1).atDay(1).toString()) }
     val loadedGymDays by gymFlow.collectAsState(initial = null)
-    val gymDays = loadedGymDays.orEmpty()
+    val gymDays = if (show == 2) emptyList() else loadedGymDays.orEmpty()
     val gymDates = remember(gymDays) { gymDays.map(LocalDate::parse).toSet() }
     val gymDayFlow = remember(dayText) { vm.gymDay(dayText) }
     val gymOfDay by gymDayFlow.collectAsState(initial = emptyList())
@@ -132,11 +134,25 @@ fun JournalScreen(vm: AppViewModel) {
                 Tile("Days trained", "${(byDay.keys + gymDates).size}", Modifier.weight(1f))
                 Tile("Time", hm(sum.totalSec), Modifier.weight(1f))
             }
+            Row(Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                listOf("All", "Gym", "Intervals").forEachIndexed { i, label ->
+                    val on = i == show
+                    val dot = when (i) { 1 -> p.accent; 2 -> p.pink; else -> null }
+                    Row(
+                        Modifier.height(34.dp).clip(RoundedCornerShape(17.dp)).background(if (on) p.tint else Color.Transparent)
+                            .border(1.dp, if (on) p.accent else p.line, RoundedCornerShape(17.dp)).clickable { show = i }.padding(horizontal = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        if (dot != null) { Box(Modifier.size(8.dp).clip(CircleShape).background(dot)); Spacer(Modifier.width(6.dp)) }
+                        Text(label, color = if (on) p.accentText else p.soft, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
         }
         item {
             HorizontalPager(pager, key = { it }, verticalAlignment = Alignment.Top,
                 flingBehavior = PagerDefaults.flingBehavior(pager, pagerSnapDistance = PagerSnapDistance.atMost(1))) { page ->
-                MonthCalendar(vm, firstMonth.plusMonths(page.toLong()), today, selectedDay, zone) { dayText = it.toString() }
+                MonthCalendar(vm, firstMonth.plusMonths(page.toLong()), today, selectedDay, zone, show) { dayText = it.toString() }
             }
         }
         item {
@@ -146,11 +162,11 @@ fun JournalScreen(vm: AppViewModel) {
             )
         }
         val ofDay = byDay[selectedDay].orEmpty().sortedBy { it.startedAt }
-        if (gymOfDay.isNotEmpty()) item(key = "gym") {
+        if (gymOfDay.isNotEmpty() && show != 2) item(key = "gym") {
             GymDayCard(gymOfDay, exercises.associateBy { it.id }) { vm.openGymDay(dayText) }
             Spacer(Modifier.height(8.dp))
         }
-        if (ofDay.isEmpty() && gymOfDay.isEmpty()) item {
+        if (ofDay.isEmpty() && (gymOfDay.isEmpty() || show == 2)) item {
             Text(
                 if (selectedDay == today) "Nothing yet today. Sessions appear here when you finish or stop a workout."
                 else "No sessions this day.",
@@ -201,13 +217,17 @@ private fun Tile(label: String, value: String, modifier: Modifier) {
 
 /** A month's calendar with its own data, so the pages next to the current one show their dots while swiping. */
 @Composable
-private fun MonthCalendar(vm: AppViewModel, month: YearMonth, today: LocalDate, selected: LocalDate, zone: ZoneId, onPick: (LocalDate) -> Unit) {
+private fun MonthCalendar(vm: AppViewModel, month: YearMonth, today: LocalDate, selected: LocalDate, zone: ZoneId, show: Int, onPick: (LocalDate) -> Unit) {
     val from = month.atDay(1).atStartOfDay(zone).toInstant().toEpochMilli()
     val to = month.plusMonths(1).atDay(1).atStartOfDay(zone).toInstant().toEpochMilli()
     val sessions by remember(from, to) { vm.sessions(from, to) }.collectAsState(initial = emptyList())
     val gymDays by remember(month) { vm.gymDaysBetween(month.atDay(1).toString(), month.plusMonths(1).atDay(1).toString()) }
         .collectAsState(initial = emptyList())
-    Calendar(month, today, selected, sessions.groupBy { it.day(zone) }, gymDays.map(LocalDate::parse).toSet(), onPick)
+    Calendar(
+        month, today, selected,
+        if (show == 1) emptyMap() else sessions.groupBy { it.day(zone) },
+        if (show == 2) emptySet() else gymDays.map(LocalDate::parse).toSet(), onPick,
+    )
 }
 
 @Composable

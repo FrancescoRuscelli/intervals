@@ -104,3 +104,30 @@ fun estimatedFor(oneRm: Double, reps: Int): Double = oneRm / (1 + reps / 30.0)
 /** The training days of an exercise, newest first, each with its sets in order. */
 fun historyDays(sets: List<GymSet>): List<Pair<String, List<GymSet>>> =
     sets.groupBy { it.day }.toSortedMap(compareByDescending { it }).map { (d, s) -> d to s.sortedBy { it.order } }
+
+/** Gym days per week, the last [weeks] weeks up to the one containing [today], oldest first (weeks start on Monday). */
+fun gymDaysPerWeek(days: Collection<String>, weeks: Int, today: java.time.LocalDate): List<Pair<java.time.LocalDate, Int>> {
+    val last = weekStart(today)
+    val byWeek = days.map { weekStart(java.time.LocalDate.parse(it)) }.groupingBy { it }.eachCount()
+    return (weeks - 1 downTo 0).map { k -> last.minusWeeks(k.toLong()).let { it to (byWeek[it] ?: 0) } }
+}
+
+data class GymRecord(val exercise: Exercise, val metric: GymMetric, val day: String, val value: Double)
+
+/** Records set on or after [since] (one per exercise, its main graph), newest first. */
+fun recentRecords(exercises: List<Exercise>, sets: List<GymSet>, since: String): List<GymRecord> {
+    val byEx = sets.groupBy { it.exerciseId }
+    return exercises.mapNotNull { ex ->
+        val s = byEx[ex.id] ?: return@mapNotNull null
+        val metric = metricsFor(ex).first { it != GymMetric.REST }
+        val sides: List<Side?> = if (ex.perSide) listOf(Side.LEFT, Side.RIGHT) else listOf(null)
+        sides.flatMap { side -> metricSeries(metric, s, side) }
+            .filter { it.record && it.day >= since }
+            .maxByOrNull { it.day }
+            ?.let { GymRecord(ex, metric, it.day, it.value) }
+    }.sortedByDescending { it.day }
+}
+
+/** Sets per exercise, most first. */
+fun setsPerExercise(sets: List<GymSet>): List<Pair<Long, Int>> =
+    sets.groupingBy { it.exerciseId }.eachCount().toList().sortedByDescending { it.second }

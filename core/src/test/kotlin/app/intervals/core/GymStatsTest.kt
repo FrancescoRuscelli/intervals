@@ -71,4 +71,14 @@ class GymStatsTest {
         val rest = metricSeries(GymMetric.REST, listOf(s("2026-01-01", 1.0, 1, rest = 100), s("2026-01-01", 1.0, 1, rest = 200)))
         assertEquals(150.0, rest.single().value, 0.001)
     }
+
+    @Test
+    fun gymOverview() {
+        val weeks = gymDaysPerWeek(listOf("2026-11-16", "2026-11-17", "2026-11-04"), 3, java.time.LocalDate.parse("2026-11-18"))
+        assertEquals(listOf(1, 0, 2), weeks.map { it.second })
+        val rec = recentRecords(listOf(dl), sets, "2026-10-25")
+        assertEquals(listOf("2026-10-28"), rec.map { it.day })
+        assertEquals(GymMetric.E1RM, rec.single().metric)
+        assertEquals(listOf(1L to 5), setsPerExercise(sets))
+    }
 }

@@ -248,6 +248,9 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
   - [x] Edit exercise (pencil on the log screen): name (history kept), notes, fields, weight step chips, rest target chips,
         left/right apart, assisted; "In your log: N sets since …"; merge another exercise into it (similar names first, confirm);
         delete with its sets (confirm). Tested in the database tests.
-  - [ ] then: groups, gym in Stats, Journal filter All / Gym / Intervals
+  - [x] Journal filter chips All / Gym (purple) / Intervals (pink): dots, cards and totals follow
+  - [x] Stats: Intervals · Gym · Both tabs; Gym = gym days / sets / exercises in the period, gym days per week (12 weeks, this week purple),
+        recent records (30 days, each exercise's main graph), most trained (sets), real rest vs target (only rests logged in the app)
+  - [ ] then: groups (new table, start a group from Add exercise, plan per exercise, suggested from the import)
   - not yet: groups suggested from the import, records recomputed (FitNotes PR flags not imported)
 - [ ] App icon (to decide: e.g. purple disc with segmented ring)

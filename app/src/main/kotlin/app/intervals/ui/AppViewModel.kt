@@ -305,6 +305,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     val lastUsed: StateFlow<Map<Long, String>> = repo.lastUsed.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
     fun exerciseAll(exerciseId: Long) = repo.exerciseAll(exerciseId)
+    fun gymSetsSince(from: String) = repo.gymSetsSince(from)
 
     fun exerciseDay(exerciseId: Long, day: String): Flow<List<GymSet>> = repo.exerciseDay(exerciseId, day)
 

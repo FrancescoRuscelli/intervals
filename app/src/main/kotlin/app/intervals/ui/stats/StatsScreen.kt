@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -61,6 +62,7 @@ fun StatsScreen(vm: AppViewModel) {
     val zone = remember { ZoneId.systemDefault() }
     val today = remember { LocalDate.now(zone) }
     var periodIdx by rememberSaveable { mutableIntStateOf(0) }
+    var kind by rememberSaveable { mutableIntStateOf(0) }
     val period = Period.entries[periodIdx]
     // one query for the last ~13 months covers every view
     val from = remember { today.minusMonths(13).withDayOfMonth(1).atStartOfDay(zone).toInstant().toEpochMilli() }
@@ -78,6 +80,16 @@ fun StatsScreen(vm: AppViewModel) {
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
         Text("Stats", color = p.text, fontSize = 30.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp, top = 16.dp, bottom = 12.dp))
+        // Intervals · Gym · Both
+        Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+            listOf("Intervals", "Gym", "Both").forEachIndexed { i, t ->
+                val on = i == kind
+                Column(Modifier.clickable { kind = i }, horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(t, color = if (on) p.text else p.faint, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(vertical = 6.dp))
+                    Box(Modifier.width(40.dp).height(2.dp).background(if (on) p.accent else Color.Transparent))
+                }
+            }
+        }
         Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(p.surface).padding(4.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             Period.entries.forEachIndexed { i, per ->
                 val on = i == periodIdx
@@ -87,6 +99,7 @@ fun StatsScreen(vm: AppViewModel) {
                 ) { Text(per.label, color = if (on) p.onAccent else p.muted, fontSize = 14.sp, fontWeight = FontWeight.SemiBold) }
             }
         }
+        if (kind != 1) {
         Row(Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Tile("Time", hm(sum.totalSec), Modifier.weight(1f))
             Tile("Sessions", "${sum.sessions}", Modifier.weight(1f))
@@ -129,6 +142,8 @@ fun StatsScreen(vm: AppViewModel) {
                 }
             }
         }
+        }
+        if (kind != 0) GymStatsSection(vm, start, today)
         Spacer(Modifier.height(24.dp))
     }
 }
