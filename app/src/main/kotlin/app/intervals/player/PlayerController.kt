@@ -116,12 +116,23 @@ class PlayerController(
     /** Stop early (the session is still logged as stopped). */
     fun stop() = finish(false)
 
+    /** True for the ~1.7 s of the coin flip after a completed workout (the screen shows it, then Finished opens). */
+    var celebrating by mutableStateOf(false)
+        private set
+
     private fun finish(completed: Boolean) {
         if (ended) return
         ended = true
         val e = if (completed) plan.totalSec * 1000L else elapsedMs
         job?.cancel()
-        onEnd(completed, e, if (completed) saved.workout.rounds else plan.roundsDone(e), startedAt)
+        val rounds = if (completed) saved.workout.rounds else plan.roundsDone(e)
+        if (completed) {
+            baseMs = e; paused = true // freeze the clock on the last moment
+            celebrating = true
+            scope.launch { delay(1700); onEnd(true, e, rounds, startedAt) }
+        } else {
+            onEnd(false, e, rounds, startedAt)
+        }
     }
 
     fun close() {

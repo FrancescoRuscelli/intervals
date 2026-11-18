@@ -1,5 +1,8 @@
 package app.intervals.player
 
+import kotlinx.coroutines.launch
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -65,7 +68,7 @@ import app.intervals.ui.NumberStyle
 private val DoneGrey = Color(0xFF3A3E46)
 
 @Composable
-fun PlayerScreen(c: PlayerController, keepScreenOn: Boolean, onClose: () -> Unit) {
+fun PlayerScreen(c: PlayerController, keepScreenOn: Boolean, discAnimation: app.intervals.core.DiscAnimation = app.intervals.core.DiscAnimation.CALM, onClose: () -> Unit) {
     val p = LocalPalette.current
     var askStop by remember { mutableStateOf(false) }
     val view = LocalView.current
@@ -85,7 +88,8 @@ fun PlayerScreen(c: PlayerController, keepScreenOn: Boolean, onClose: () -> Unit
     BackHandler { askStop = true }
 
     @Suppress("UNUSED_VARIABLE") val t = c.tick // redraw on every tick
-    val st = c.plan.stateAt(c.elapsedMs)
+    // during the coin flip the clock is at the very end: keep showing the last moment
+    val st = c.plan.stateAt(minOf(c.elapsedMs, c.plan.totalSec * 1000L - 1))
 
     Column(Modifier.fillMaxSize().background(p.bg).statusBarsPadding().navigationBarsPadding()) {
         Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -98,7 +102,7 @@ fun PlayerScreen(c: PlayerController, keepScreenOn: Boolean, onClose: () -> Unit
         }
 
         Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-            if (st != null) Disc(c, st, Modifier.padding(16.dp).fillMaxWidth().aspectRatio(1f))
+            if (st != null) Disc(c, st, discAnimation == app.intervals.core.DiscAnimation.CRAZY_SPIN, Modifier.padding(16.dp).fillMaxWidth().aspectRatio(1f))
             if (c.countdown > 0) GetReady(c.countdown)
         }
 
@@ -118,7 +122,7 @@ fun PlayerScreen(c: PlayerController, keepScreenOn: Boolean, onClose: () -> Unit
 }
 
 @Composable
-private fun Disc(c: PlayerController, st: PlayState, modifier: Modifier) {
+private fun Disc(c: PlayerController, st: PlayState, crazy: Boolean, modifier: Modifier) {
     val p = LocalPalette.current
     val seg = st.segment
     val color = Color(seg.color)
@@ -130,6 +134,25 @@ private fun Disc(c: PlayerController, st: PlayState, modifier: Modifier) {
         inflate.snapTo(0.55f)
         inflate.animateTo(1f, spring(dampingRatio = 0.55f, stiffness = Spring.StiffnessMediumLow))
     }
+    // Crazy spin: the disc whirls 1.5 turns and settles upright; the series ring swings back, the rounds ring the other way
+    val spin = remember { Animatable(0f) }
+    val swing = remember { Animatable(0f) }
+    LaunchedEffect(st.index) {
+        if (!crazy || st.index == 0) return@LaunchedEffect
+        launch { swing.snapTo(1f); swing.animateTo(0f, spring(dampingRatio = 0.35f, stiffness = Spring.StiffnessLow)) }
+        spin.snapTo(-180f)
+        spin.animateTo(360f, tween(700, easing = FastOutSlowInEasing))
+        spin.snapTo(0f)
+    }
+    // the end of a completed workout: a coin flip around the vertical axis, landing on its back ("done ✓")
+    val flip = remember { Animatable(0f) }
+    LaunchedEffect(c.celebrating) {
+        if (c.celebrating) flip.animateTo(1260f, tween(1400, easing = FastOutSlowInEasing))
+    }
+    val flipK = (flip.value / 1260f).coerceIn(0f, 1f)
+    val lift = 1f + 0.14f * kotlin.math.sin(Math.PI * flipK).toFloat()
+    val backSide = (flip.value % 360f).let { it > 90f && it < 270f }
+
     // last 3 s: the number starts huge and higher up, drops down shrinking (~0.4 s)
     val drop = remember { Animatable(1f) }
     val bigCount = st.secLeft <= 3 && seg.durationSec > 3
@@ -143,13 +166,32 @@ private fun Disc(c: PlayerController, st: PlayState, modifier: Modifier) {
         val sizePx = constraints.maxWidth.toFloat()
         Canvas(Modifier.fillMaxSize()) {
             val outer = size.minDimension / 2f - 14.dp.toPx()
-            drawSeriesRing(roundSegs, st, elapsedSec, outer, p.teal)
-            drawRoundsRing(c, st, outer - 24.dp.toPx(), p.accent)
-            drawCircle(color, radius = (outer - 40.dp.toPx()) * inflate.value, center = center)
+            rotate(-50f * swing.value) { drawSeriesRing(roundSegs, st, elapsedSec, outer, p.teal) }
+            rotate(50f * swing.value) { drawRoundsRing(c, st, outer - 24.dp.toPx(), p.accent) }
         }
         val discDp = (sizePx / LocalDensityPx()).dp
-        Column(
-            Modifier.scale(inflate.value),
+        val density = LocalDensityPx()
+        // the disc: its own layer so it can spin (Crazy spin) and flip (end of the workout)
+        Box(
+            Modifier.size(discDp - 108.dp)
+                .graphicsLayer {
+                    rotationZ = spin.value
+                    rotationY = flip.value
+                    cameraDistance = 14f * density
+                    scaleX = inflate.value * lift
+                    scaleY = inflate.value * lift
+                }
+                .clip(CircleShape)
+                .background(if (backSide) p.accent else color),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (backSide) {
+                // seen from behind: mirror it back so "done" reads right
+                Column(Modifier.graphicsLayer { rotationY = 180f }, horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("done", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
+                    Text("✓", color = Color.White, fontSize = (discDp.value * 0.22f).sp, fontWeight = FontWeight.Bold)
+                }
+            } else Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
@@ -166,6 +208,7 @@ private fun Disc(c: PlayerController, st: PlayState, modifier: Modifier) {
                     modifier = Modifier.offset(y = (-(1f - k) * 70f).dp).scale(1f + (1f - k) * 1.6f),
                 )
             }
+        }
         }
     }
 }

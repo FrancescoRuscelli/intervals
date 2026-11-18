@@ -218,7 +218,11 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
   - [x] foreground service (mediaPlayback) + partial wake lock only while a workout runs; notification on the lock screen
         with series, round, live countdown (system chronometer, no per-second updates), Pause / Next; the running workout lives
         in the Application (survives the activity); screen off: the clock sleeps until the next cue / segment (no 10 Hz ticking)
-  - [ ] landscape, crazy spin + coin flip,
+  - [x] Crazy spin (setting): at each new segment the disc with its text turns 1.5 times (from upside down to upright, 0.7 s),
+        the series ring swings back and the rounds ring the other way (spring); Calm = only the inflate
+  - [x] Coin flip at the end of a completed workout (both settings): the clock freezes, the disc turns 3.5 times around its
+        vertical axis (1.4 s) with a small lift and lands on its back, purple "done ✓"; then Finished (stopped workouts: no flip)
+  - [ ] landscape,
         rest between rounds editing of logged values (4b), set per round
 - [ ] Step 6: install on the Pixel 8a, real workout test, energy profiling
 - [x] Gym mockups G1–G16 (placement: own tab)
