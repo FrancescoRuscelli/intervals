@@ -58,9 +58,11 @@ class GymImportTest {
         assertEquals(listOf("Pinch", "Pistol Squat"), r.exercises.map { it.name })
         assertEquals(120, r.exercises[0].restSec)
         assertEquals(3, repo.replaceGym(r))
+        repo.saveGymDayNote("2026-11-17", "  Good form  ")
         // importing again replaces, never doubles
         repo.replaceGym(r)
         assertEquals(3, repo.gymSetCount())
+        assertEquals("Good form", repo.gymDayNote("2026-11-17").first())
 
         assertEquals(listOf("2026-11-17", "2026-11-16"), repo.gymDays.first())
         val day = repo.gymDay("2026-11-17").first()
@@ -72,11 +74,16 @@ class GymImportTest {
 
         // backup and restore carry the gym
         val text = repo.exportBackup()
+        repo.saveGymDayNote("2026-11-17", "   ")
+        assertEquals("", repo.gymDayNote("2026-11-17").first())
+        repo.saveGymDayNote("2026-11-18", "Another day")
         repo.replaceGym(FitNotesImport.convert(FitNotesImport.FnData(emptyList(), emptyList(), emptyMap())))
         assertEquals(0, repo.gymSetCount())
         assertEquals(3, repo.restoreBackup(text).gymSets)
         assertEquals(day, repo.gymDay("2026-11-17").first())
         assertEquals(r.exercises, repo.exercises.first().sortedBy { it.id })
+        assertEquals("Good form", repo.gymDayNote("2026-11-17").first())
+        assertEquals("", repo.gymDayNote("2026-11-18").first())
     }
 
     @Test

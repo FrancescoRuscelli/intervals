@@ -51,6 +51,21 @@ class GymStatsTest {
     }
 
     @Test
+    fun dayRecordsUseEachSidesBestSetAndExcludeTies() {
+        val previous = "2026-11-17"
+        val day = "2026-11-18"
+        val bestLeft = s(day, 12.0, 5, Side.LEFT, order = 1)
+        val history = listOf(
+            s(previous, 10.0, 5, Side.LEFT), s(previous, 15.0, 5, Side.RIGHT),
+            s(day, 11.0, 5, Side.LEFT), bestLeft, bestLeft.copy(order = 2), s(day, 15.0, 5, Side.RIGHT, order = 3),
+        )
+        val exercise = dl.copy(perSide = true)
+        assertEquals(listOf(bestLeft), recordSets(exercise, day, history))
+        assertEquals(emptyList(), recordSets(exercise, previous, history))
+        assertEquals(emptyList(), recordSets(dl.copy(fields = listOf(GymField.DISTANCE)), day, history))
+    }
+
+    @Test
     fun repMaxesAndEstimates() {
         val rm = repMaxes(sets, assist = false)
         assertEquals(listOf(1, 5), rm.map { it.reps })

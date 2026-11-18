@@ -101,6 +101,24 @@ interface GymDao {
     @Query("SELECT * FROM gym_sets WHERE day = :day ORDER BY position, id")
     fun observeDay(day: String): Flow<List<GymSetEntity>>
 
+    @Query("SELECT note FROM gym_day_notes WHERE day = :day")
+    fun observeDayNote(day: String): Flow<String?>
+
+    @Upsert
+    suspend fun putDayNote(note: GymDayNoteEntity)
+
+    @Query("DELETE FROM gym_day_notes WHERE day = :day")
+    suspend fun deleteDayNote(day: String)
+
+    @Query("SELECT * FROM gym_day_notes ORDER BY day")
+    suspend fun getDayNotes(): List<GymDayNoteEntity>
+
+    @Insert
+    suspend fun insertDayNotes(notes: List<GymDayNoteEntity>)
+
+    @Query("DELETE FROM gym_day_notes")
+    suspend fun deleteAllDayNotes()
+
     /** Days with sets, newest first. */
     @Query("SELECT DISTINCT day FROM gym_sets ORDER BY day DESC")
     fun observeDays(): Flow<List<String>>

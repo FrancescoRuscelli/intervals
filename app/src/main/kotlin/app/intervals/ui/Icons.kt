@@ -41,6 +41,7 @@ object AppIcons {
     val Minus = stroke("M5 12h14", 2.4f)
     val Close = stroke("M6 6l12 12M18 6L6 18")
     val Back = stroke("M15 5l-7 7 7 7", 2.2f)
+    val Check = stroke("M5 12.5l4.5 4.5L19 7.5", 2.8f)
     val Edit = stroke("M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4")
     val Delete = stroke("M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13", 2.2f)
     val Repeat = stroke("M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3", 2.2f)

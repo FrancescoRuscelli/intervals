@@ -31,6 +31,7 @@ class BackupTest {
         workouts = listOf(SavedWorkout(1, 0, workout, 1_794_000_000_000, 1_794_100_000_000)),
         sessions = listOf(session),
         settings = AppSettings(theme = ThemeMode.DARK, discAnimation = DiscAnimation.CRAZY_SPIN, volume = 0.5f),
+        gymDayNotes = mapOf("2026-11-18" to "Good form"),
     )
 
     @Test
@@ -57,6 +58,12 @@ class BackupTest {
     }
 
     @Test
+    fun olderBackupsHaveNoGymDayNotes() {
+        val text = """{"format":"intervals-backup","version":1,"exportedAt":0,"workouts":[],"sessions":[]}"""
+        assertTrue(BackupJson.decode(text).gymDayNotes.isEmpty())
+    }
+
+    @Test
     fun unknownKeysAreIgnored() {
         val text = BackupJson.encode(backup).replaceFirst("{", "{\n  \"addedLater\": 42,")
         assertEquals(backup, BackupJson.decode(text))
@@ -74,6 +81,8 @@ class BackupTest {
         assertFailsWith<BackupException> { BackupJson.decode(broken) }
         val twice = backup.copy(workouts = backup.workouts + backup.workouts)
         assertFailsWith<BackupException> { BackupJson.decode(BackupJson.encode(twice)) }
+        val badDate = backup.copy(gymDayNotes = mapOf("2026-11-31" to "Good form"))
+        assertFailsWith<BackupException> { BackupJson.decode(BackupJson.encode(badDate)) }
     }
 
     @Test

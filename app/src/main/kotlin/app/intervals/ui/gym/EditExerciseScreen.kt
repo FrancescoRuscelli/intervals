@@ -98,7 +98,7 @@ fun EditExerciseScreen(vm: AppViewModel, exerciseId: Long) {
             Column {
                 Text("Notes (how you do it)", color = p.muted, fontSize = 12.sp)
                 Box(Modifier.padding(top = 6.dp).fillMaxWidth().heightIn(min = 52.dp).clip(RoundedCornerShape(14.dp)).background(p.surface).padding(12.dp)) {
-                    if (e.notes.isEmpty()) Text("e.g. 20 mm edge, open hand", color = p.faint, fontSize = 15.sp)
+                    if (e.notes.isEmpty()) Text("e.g. 20 mm edge, open hand", color = p.muted, fontSize = 15.sp)
                     BasicTextField(e.notes, { e = e.copy(notes = it) }, textStyle = TextStyle(color = p.text, fontSize = 15.sp),
                         cursorBrush = SolidColor(p.accent), modifier = Modifier.fillMaxWidth())
                 }

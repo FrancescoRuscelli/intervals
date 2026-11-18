@@ -1,6 +1,5 @@
 package app.intervals.ui.gym
 
-import app.intervals.core.planLabel
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -69,23 +68,12 @@ import java.util.Locale
 /** The Gym tab: one page per training day, today first; older days to the left (swipe or arrows). */
 @Composable
 fun GymScreen(vm: AppViewModel) {
-    val p = LocalPalette.current
     val days by vm.gymDays.collectAsStateWithLifecycle()
     val exercises by vm.exercises.collectAsStateWithLifecycle()
     val pick = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let(vm::previewFitNotes) }
     val list = days ?: return
-    if (list.isEmpty()) {
-        Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("Gym", color = p.text, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(8.dp))
-            Text("Bring in your FitNotes history: the backup file (.fitnotes), not the CSV.", color = p.muted, fontSize = 15.sp)
-            Spacer(Modifier.height(20.dp))
-            BigButton("Import from FitNotes", p.accent, p.onAccent, { pick.launch(arrayOf("*/*")) })
-        }
-        return
-    }
     val today = LocalDate.now().toString()
-    val pages = remember(list, today) { if (list.first() == today) list else listOf(today) + list }
+    val pages = remember(list, today) { if (list.firstOrNull() == today) list else listOf(today) + list }
     val byId = remember(exercises) { exercises.associateBy { it.id } }
     val pager = rememberPagerState { pages.size }
     LaunchedEffect(vm.gymFocusDay, pages) {
@@ -98,27 +86,33 @@ fun GymScreen(vm: AppViewModel) {
         // one day per swipe, even a fast one
         flingBehavior = PagerDefaults.flingBehavior(pager, pagerSnapDistance = PagerSnapDistance.atMost(1)),
     ) { i ->
-        DayPage(vm, pages[i], i, pages.size, pager, byId)
+        DayPage(vm, pages[i], i, pages.size, pager, byId,
+            onImport = if (list.isEmpty()) ({ pick.launch(arrayOf("*/*")) }) else null)
     }
 }
 
 @Composable
-private fun DayPage(vm: AppViewModel, day: String, index: Int, count: Int, pager: PagerState, byId: Map<Long, Exercise>) {
+private fun DayPage(
+    vm: AppViewModel, day: String, index: Int, count: Int, pager: PagerState,
+    byId: Map<Long, Exercise>, onImport: (() -> Unit)?,
+) {
     val p = LocalPalette.current
     val scope = rememberCoroutineScope()
-    val sets by vm.gymDay(day).collectAsStateWithLifecycle(null)
-    val groups = remember(sets) { sets.orEmpty().groupBy { it.exerciseId }.toList() }
+    val sets by remember(day) { vm.gymDay(day) }.collectAsStateWithLifecycle(null)
+    val loggedById = remember(sets) { sets.orEmpty().groupBy { it.exerciseId } }
     val allGroups by vm.groups.collectAsStateWithLifecycle()
-    val active = vm.activeGroups[day]?.let { id -> allGroups.firstOrNull { it.id == id } }
-    // a started group: its exercises in order (logged or still to do), then the others logged that day
-    val inGroup = active?.items?.map { it.exerciseId }?.toSet().orEmpty()
-    val loggedById = groups.toMap()
+    val run = vm.activeGroups[day]
+    val group = run?.let { allGroups.firstOrNull { group -> group.id == it.id } }
+    if (run != null && group != null) {
+        if (sets != null) GymGroupRun(vm, day, group, run, byId, loggedById)
+        return
+    }
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 4.dp, top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(dayTitle(day), color = p.text, fontSize = 30.sp, fontWeight = FontWeight.Bold)
                 val n = sets?.size ?: 0
-                Text(if (n == 0) "No sets" else "$n set${if (n == 1) "" else "s"} · ${groups.size} exercise${if (groups.size == 1) "" else "s"}", color = p.muted, fontSize = 13.sp)
+                Text(if (n == 0) "No sets" else "$n set${if (n == 1) "" else "s"} · ${loggedById.size} exercise${if (loggedById.size == 1) "" else "s"}", color = p.muted, fontSize = 13.sp)
             }
             IconButton(enabled = index < count - 1, onClick = { scope.launch { pager.animateScrollToPage(index + 1) } }) {
                 Icon(AppIcons.Back, "Day before", tint = if (index < count - 1) p.text else p.faint)
@@ -129,34 +123,17 @@ private fun DayPage(vm: AppViewModel, day: String, index: Int, count: Int, pager
             IconButton(onClick = { vm.openSettings() }) { Icon(AppIcons.Settings, "Settings", tint = p.text) }
         }
         LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            if (active != null) item(key = "group") {
-                Row(
-                    Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(p.group).padding(start = 14.dp, end = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(Modifier.weight(1f).padding(vertical = 10.dp)) {
-                        Text(active.name, color = p.accentText, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                        val done = active.items.count { it.exerciseId in loggedById }
-                        Text("group · $done of ${active.items.size} exercises started", color = p.muted, fontSize = 12.sp)
-                    }
-                    androidx.compose.material3.TextButton(onClick = { vm.endGroup(day) }) { Text("End", color = p.accentText) }
-                }
-            }
-            active?.items?.forEach { item ->
-                val ex = byId[item.exerciseId] ?: return@forEach
-                val logged = loggedById[item.exerciseId]
-                item(key = "p" + item.exerciseId) {
-                    if (logged != null) ExerciseCard(vm, ex, logged, day, item) else PlannedCard(vm, ex, item, day)
-                }
-            }
-            items(groups.filter { it.first !in inGroup }, key = { it.first }) { (id, exSets) ->
+            items(loggedById.entries.toList(), key = { it.key }) { (id, exSets) ->
                 byId[id]?.let { ExerciseCard(vm, it, exSets, day) }
             }
-            if (sets?.isEmpty() == true && active == null) item {
+            if (sets?.isEmpty() == true) item {
                 Text("Nothing logged on this day.", color = p.muted, fontSize = 15.sp, modifier = Modifier.padding(top = 8.dp))
             }
             if (sets != null) item {
                 BigButton("+ Add exercise", p.tint, p.accentText, { vm.openGymPick(day) })
+            }
+            if (onImport != null) item {
+                BigButton("Import from FitNotes", p.surface, p.text, onImport)
             }
         }
     }
@@ -189,7 +166,7 @@ private fun header(f: GymField, ex: Exercise) = when (f) {
 }
 
 @Composable
-private fun ExerciseCard(vm: AppViewModel, ex: Exercise, sets: List<GymSet>, day: String, plan: app.intervals.core.GroupItem? = null) {
+private fun ExerciseCard(vm: AppViewModel, ex: Exercise, sets: List<GymSet>, day: String) {
     val p = LocalPalette.current
     val cols = columns(ex)
     val rows = remember(sets) { dayRows(sets) }
@@ -201,11 +178,10 @@ private fun ExerciseCard(vm: AppViewModel, ex: Exercise, sets: List<GymSet>, day
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(ex.name, color = p.text, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
             Text(
-                if (plan?.planSets != null) "${sets.size} of ${plan.planSets} sets" else if (sets.size == 1) "1 set" else "${sets.size} sets",
-                color = p.pink, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+                if (sets.size == 1) "1 set" else "${sets.size} sets",
+                color = p.workText, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
             )
         }
-        if (plan != null && plan.planNote.isNotBlank()) Text(plan.planNote, color = p.muted, fontSize = 12.sp)
         Spacer(Modifier.height(8.dp))
         Row(Modifier.fillMaxWidth()) {
             Text("Set", color = p.muted, fontSize = 12.sp, modifier = Modifier.width(56.dp))
@@ -239,7 +215,7 @@ private fun SetRowView(row: SetRow, ex: Exercise, cols: List<GymField>) {
                 }
             }
             Box(Modifier.width(40.dp), contentAlignment = Alignment.CenterEnd) {
-                if (row.count > 1) Text("×${row.count}", color = p.pink, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                if (row.count > 1) Text("×${row.count}", color = p.workText, fontSize = 14.sp, fontWeight = FontWeight.Bold)
             }
         }
         if (s.note.isNotEmpty()) {
@@ -273,27 +249,6 @@ fun BandDots(bands: List<Band>) {
                 Modifier.size(13.dp).clip(CircleShape).background(bandColor(b))
                     .then(if (b == Band.BLACK) Modifier.border(1.5.dp, Color(0xFF5A5F68), CircleShape) else Modifier)
             )
-        }
-    }
-}
-
-/** An exercise of the started group not logged yet: its plan and last time; tap to log it. */
-@Composable
-private fun PlannedCard(vm: AppViewModel, ex: Exercise, item: app.intervals.core.GroupItem, day: String) {
-    val p = LocalPalette.current
-    val last by produceState<List<GymSet>?>(null, ex.id, day) { value = vm.lastSets(ex.id, day) }
-    Column(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).border(2.dp, p.line, RoundedCornerShape(16.dp))
-            .clickable(onClickLabel = "Log ${ex.name}") { vm.openGymLog(ex.id, day) }.padding(14.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(ex.name, color = p.soft, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-            Text("to do", color = p.muted, fontSize = 13.sp)
-        }
-        Text(item.planLabel(), color = p.muted, fontSize = 13.sp, modifier = Modifier.padding(top = 4.dp))
-        last?.let { l ->
-            val top = topSet(l, ex)
-            Text(if (top == null) "first time" else "last time ${l.size} sets · ${top.summary(ex)}", color = p.faint, fontSize = 12.sp, modifier = Modifier.padding(top = 2.dp))
         }
     }
 }

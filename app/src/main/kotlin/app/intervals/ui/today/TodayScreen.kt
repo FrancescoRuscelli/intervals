@@ -125,13 +125,6 @@ fun TodayScreen(vm: AppViewModel) {
                 }
             }
         }
-        // start
-        item {
-            Row(Modifier.padding(top = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                StartButton("Intervals", AppIcons.Intervals, p.accent, Color.White, Modifier.weight(1f)) { vm.tab = Tab.INTERVALS }
-                StartButton("Gym", AppIcons.Gym, p.pink, Color(0xFF14080C), Modifier.weight(1f)) { vm.gymFocusDay = today.toString(); vm.tab = Tab.GYM }
-            }
-        }
         if (quick.isNotEmpty()) {
             item { Section("Quick start") }
             quick.forEach { q ->
@@ -159,7 +152,7 @@ fun TodayScreen(vm: AppViewModel) {
         val todayGym = gymByDay[today].orEmpty()
         item { Section("Done today") }
         if (todaySessions.isEmpty() && todayGym.isEmpty()) item {
-            Text("Nothing yet. Start above, or pick something from Quick start.", color = p.faint, fontSize = 14.sp, modifier = Modifier.padding(start = 4.dp))
+            Text("Nothing yet. Pick something from Quick start, or open the Intervals or Gym tab.", color = p.faint, fontSize = 14.sp, modifier = Modifier.padding(start = 4.dp))
         }
         if (todayGym.isNotEmpty()) item {
             GymDayCard(todayGym, exercises.associateBy { it.id }, groups, records = 0) { vm.gymFocusDay = today.toString(); vm.tab = Tab.GYM }
@@ -189,15 +182,4 @@ private fun Section(title: String) {
     val p = LocalPalette.current
     Text(title.uppercase(), color = p.muted, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.6.sp,
         modifier = Modifier.padding(start = 4.dp, top = 18.dp, bottom = 8.dp))
-}
-
-@Composable
-private fun StartButton(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, bg: Color, fg: Color, modifier: Modifier, onClick: () -> Unit) {
-    Column(
-        modifier.height(92.dp).clip(RoundedCornerShape(20.dp)).background(bg).clickable(onClickLabel = "Open $label", onClick = onClick).padding(14.dp),
-        verticalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Icon(icon, null, tint = fg, modifier = Modifier.size(26.dp))
-        Text("$label ▶", color = fg, fontSize = 17.sp, fontWeight = FontWeight.Bold)
-    }
 }

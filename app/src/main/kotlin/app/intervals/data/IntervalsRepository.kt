@@ -130,6 +130,14 @@ class IntervalsRepository(
 
     fun gymDay(day: String): Flow<List<GymSet>> = gymDao.observeDay(day).map { list -> list.map { it.toSet() } }
 
+    fun gymDayNote(day: String): Flow<String> = gymDao.observeDayNote(day).map { it.orEmpty() }
+
+    suspend fun saveGymDayNote(day: String, note: String) {
+        val trimmed = note.trim()
+        if (trimmed.isEmpty()) gymDao.deleteDayNote(day)
+        else gymDao.putDayNote(GymDayNoteEntity(day, trimmed))
+    }
+
     /** The sets of [exerciseId] on the last day it was done before [day]. */
     suspend fun lastSets(exerciseId: Long, day: String): List<GymSet> = gymDao.lastBefore(exerciseId, day).map { it.toSet() }
 
@@ -222,6 +230,7 @@ class IntervalsRepository(
                 exercises = gymDao.getExercises().map { it.toExercise() },
                 gymSets = gymDao.getSets().map { it.toSet() },
                 groups = gymDao.getGroups().map { it.toGroup() },
+                gymDayNotes = gymDao.getDayNotes().associate { it.day to it.note },
             )
         )
     }
@@ -249,6 +258,8 @@ class IntervalsRepository(
             gymDao.insertSets(backup.gymSets.map { it.toEntity() })
             gymDao.deleteAllGroups()
             gymDao.insertGroups(backup.groups.mapIndexed { i, g -> g.toEntity(i) })
+            gymDao.deleteAllDayNotes()
+            gymDao.insertDayNotes(backup.gymDayNotes.map { (day, note) -> GymDayNoteEntity(day, note) })
         }
         return RestoreResult(backup.workouts.size, backup.sessions.size, backup.gymSets.size)
     }

@@ -2,6 +2,7 @@ package app.intervals.player
 
 import android.os.SystemClock
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -28,19 +29,26 @@ class PlayerController(
     private val onEnd: (completed: Boolean, elapsedMs: Long, roundsDone: Int, startedAt: Long) -> Unit,
     /** Called when the segment changes, on pause / resume and on jumps (refreshes the notification). */
     private val onChange: () -> Unit = {},
+    /** Time for the player's opening animation before the workout clock starts (the warm-up is the get-ready). */
+    private val openingMs: Long = 0L,
 ) {
-    /** True while the player screen is visible: then the clock ticks 10× a second for smooth drawing. */
+    /** True while the player screen is visible: then the clock ticks at every whole second (the rings animate per frame on their own). */
     @Volatile var uiVisible = true
     private var lastIndex = -1
     val plan = PlayerPlan(saved.workout)
     private val cues = plan.cues(settings.sayNames, settings.beepLast3)
     private var nextCue = 0
 
-    /** Seconds of the 3-2-1 still to show before starting (0 = running). */
-    var countdown by mutableStateOf(if (settings.countdown) 3 else 0)
+    /** True during the opening animation: nothing runs yet. */
+    var opening by mutableStateOf(openingMs > 0)
         private set
+    /** Waiting to start: the opening animation is playing. */
+    val starting: Boolean get() = opening
     var paused by mutableStateOf(false)
         private set
+    var pauseSeconds by mutableIntStateOf(0)
+        private set
+    private var pausedAt: Long? = null
     private var baseMs = 0L // time run before the last resume
     private var resumedAt = 0L
     /** Updated by the ticker; the screen reads [elapsedMs] for smooth drawing. */
@@ -51,21 +59,19 @@ class PlayerController(
     private var ended = false
 
     val elapsedMs: Long
-        get() = if (countdown > 0) 0 else if (paused) baseMs else baseMs + (SystemClock.elapsedRealtime() - resumedAt)
+        get() = if (starting) 0 else if (paused) baseMs else baseMs + (SystemClock.elapsedRealtime() - resumedAt)
 
     fun start() {
         job = scope.launch {
-            while (countdown > 0) {
-                sounds.beep(if (countdown == 1) 1 else 2)
-                delay(1000)
-                countdown--
-            }
+            // the disc's opening animation; the clock starts once the disc is in place
+            if (opening) { delay(openingMs); opening = false }
             resumedAt = SystemClock.elapsedRealtime()
             while (isActive && !ended) {
                 val now = elapsedMs
                 fireCues(now)
                 if (plan.isOver(now)) { finish(true); break }
                 tick = now
+                pausedAt?.let { pauseSeconds = ((SystemClock.elapsedRealtime() - it) / 1000).toInt() }
                 val idx = plan.stateAt(now)?.index ?: -1
                 if (idx != lastIndex) { lastIndex = idx; onChange() }
                 delay(nextWakeMs(now))
@@ -73,10 +79,10 @@ class PlayerController(
         }
     }
 
-    /** Screen visible: 10 Hz. Screen off: sleep until the next cue or segment change (energy). */
+    /** Screen visible: at each whole second (the numbers change). Screen off: sleep until the next cue or segment change (energy). */
     private fun nextWakeMs(now: Long): Long {
         if (paused) return if (uiVisible) 200 else 1000
-        if (uiVisible) return 100
+        if (uiVisible) return (1000 - now % 1000).coerceAtLeast(20)
         val cueAt = cues.getOrNull(nextCue)?.atSec?.times(1000L) ?: Long.MAX_VALUE
         val segEnd = plan.stateAt(now)?.segment?.endSec?.times(1000L) ?: Long.MAX_VALUE
         return (minOf(cueAt, segEnd) - now).coerceIn(20, 5000)
@@ -96,9 +102,18 @@ class PlayerController(
     }
 
     fun togglePause() {
-        if (countdown > 0) return
-        if (paused) { resumedAt = SystemClock.elapsedRealtime(); paused = false }
-        else { baseMs = elapsedMs; paused = true }
+        if (starting || ended) return
+        val now = SystemClock.elapsedRealtime()
+        if (paused) {
+            resumedAt = now
+            pausedAt = null
+            pauseSeconds = 0
+            paused = false
+        } else {
+            baseMs += now - resumedAt
+            pausedAt = now
+            paused = true
+        }
         onChange()
     }
 
@@ -110,8 +125,8 @@ class PlayerController(
         onChange()
     }
 
-    fun previous() { if (countdown == 0) jumpTo(plan.previousStartMs(elapsedMs)) }
-    fun next() { if (countdown == 0) jumpTo(plan.nextStartMs(elapsedMs)) }
+    fun previous() { if (!starting) jumpTo(plan.previousStartMs(elapsedMs)) }
+    fun next() { if (!starting) jumpTo(plan.nextStartMs(elapsedMs)) }
 
     /** Stop early (the session is still logged as stopped). */
     fun stop() = finish(false)

@@ -35,6 +35,16 @@ class GymGroupsTest {
     }
 
     @Test
+    fun groupRunSuggestsFirstExerciseBelowItsPlan() {
+        val items = listOf(GroupItem(1), GroupItem(2, 2), GroupItem(3))
+        val sets = day("2026-11-18", 1, 2, 3).groupBy { it.exerciseId }
+        assertEquals(items[0], nextGroupItem(items, emptyMap()))
+        assertEquals(items[1], nextGroupItem(items, sets))
+        val deadlift = sets.getValue(2L).single()
+        assertEquals(null, nextGroupItem(items, sets + (2L to listOf(deadlift, deadlift.copy(order = 9)))))
+    }
+
+    @Test
     fun stripColorsAndRecords() {
         val legs = GymGroup(1, "Legs", listOf(GroupItem(1), GroupItem(2)))
         val sh = GymGroup(2, "Shoulders", listOf(GroupItem(4)), color = 0xFF123456)

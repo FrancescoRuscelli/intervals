@@ -55,7 +55,7 @@ Rules:
 
 Bottom bar (2026-11-18, option **D**, to confirm after trying it): **Today · Intervals · Gym · Journal**; Stats inside the Journal,
 Settings as ⚙ at the top right. **Today** (home, mockup "Home · Today"): the last 7 days (strip per day, tap = that day in the
-Journal), big **Intervals ▶** / **Gym ▶**, Quick start (recent workouts and groups), Done today. **Built 2026-11-18**:
+Journal), Quick start (recent workouts and groups; the big **Intervals ▶** / **Gym ▶** buttons were removed 2026-11-18: they only switched tab), Done today. **Built 2026-11-18**:
 the app opens on Today; the Journal has **Calendar | Stats** at the top; ⚙ (Settings) on Today, Intervals, Gym and Journal.
 Quick start = the 4 most recent among interval workouts (▶ starts the player) and groups (▶ starts the group on today in the Gym tab).
 (Before: Intervals · Gym · Journal · Stats · Settings, 5 tabs.)
@@ -78,15 +78,15 @@ new **Progress** screen per workout: a graph per logged field (left vs right) an
    rest between rounds = thin teal arc); **inner thin ring = the rounds** (done = grey, left = purple, the current one
    empties as it runs); inner disc filled with the series color showing icon, name and the time.
    All ring segments have **rounded ends** (gaps kept the same width).
-   **Last 3 seconds**: the time becomes a big 3 / 2 / 1; each number starts huge and higher up and drops down,
-   shrinking to its size in ~0.4 s (also for the 3-2-1 "Get ready"). Live demo: 4c on the canvas.
+   **Last 3 seconds**: the time becomes a big 3 / 2 / 1; each number starts huge in the center,
+   shrinking to its size in ~0.4 s (starts 4x bigger and faint, shrinks into the center with no drop, solid at the end; two-tone: in the disc color outside the disc, dark/white inside for contrast - option D of https://claude.ai/artifact/L3yeuVckD9uTiJQVpXf1sa). Live demo: 4c on the canvas.
    **New series**: the disc inflates from the center, fast (~0.25 s, tiny overshoot), with its text.
    **Disc animation** setting: **Calm** (default, demo 4c) or **Crazy spin** (demo 4d): at every new series the disc with its name and time whirls
    1.5 turns and settles (~0.7 s), the series ring swings back and the rounds ring the other way. No always-spinning mode. Demo: 4d.
    **Workout end** (both settings): the disc flips like a tossed coin around its vertical axis (~3.5 turns, ~1.4 s,
    lifts a little mid-flip) and lands on its back: purple, "done ✓". Then the Finished screen.
    Round x/y, remaining, series x/y, "Next" card, whole-workout progress bar, previous / pause / next.
-   **Landscape layout** for viewing from far away. **3-2-1 countdown** before start. **No color flash** (removed).
+   **Landscape layout** for viewing from far away. **No "Get ready" 3-2-1** (removed 2026-11-18: the warm-up is the get-ready); instead a 1 s **opening** (disc grows, rings come out from behind it) before the clock starts. **No color flash** (removed).
    **No extra disc animations** in v1; only the "Liquid / bubbles" demo is kept on the canvas, maybe later.
    **Rest between rounds**: countdown plus − / + for the logged fields of the next round (4b on the canvas).
 5. **Import**: file card, summary, list with new total and old total struck through, "Import N workouts".
@@ -94,7 +94,7 @@ new **Progress** screen per workout: a graph per logged field (left vs right) an
    (time, length, completed / stopped in round x, **note**). Sessions are logged automatically, with their logged field values (load, edge…). No manual sessions, no RPE.
 7. **Stats**: Week / Month / Year; time, sessions, completed; minutes per week chart; most done workouts.
 8. **Settings**: theme (System / Light / Dark), accent color (purple default), voice names + language, beeps, volume,
-   lower music during cues, 3-2-1 countdown, disc spin (circular slider, 5 stops), keep screen on, lock controls; import, **backup to file**, **restore**.
+   lower music during cues, disc spin (circular slider, 5 stops), keep screen on, lock controls; import, **backup to file**, **restore**.
 9. **Finished**: completed disc, time / rounds / series, **logged values to confirm** (per side, *Set per round*), note for the journal, *Repeat*, *Save to journal*.
 
 Style: **pure black** backgrounds in dark mode (OLED), Space Grotesk-like numbers, and a four-color palette (agreed 2026-11-17, "Palette" board):
@@ -213,7 +213,7 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
   - [x] core: play state at any time, cues (names, 3-2-1 beeps, end), previous / next (tests)
   - [x] player screen: disc (series ring sized by time, rounded ends, current thicker, dot; rounds ring inside emptying;
         disc in the series color, inflates at each new segment; last 3 s number drops from big), Next card, progress, pause / previous / next,
-        Get ready 3-2-1, stop (confirm, saved as stopped); voice (TextToSpeech) + beeps (ToneGenerator), music lowered only during cues
+        opening animation (was Get ready 3-2-1), stop (confirm, saved as stopped); voice (TextToSpeech) + beeps (ToneGenerator), music lowered only during cues
   - [x] Finished: done disc, time / rounds / series, logged values (start from last time, ▲▼ vs last time), note, Repeat, Save to journal
   - [x] foreground service (mediaPlayback) + partial wake lock only while a workout runs; notification on the lock screen
         with series, round, live countdown (system chronometer, no per-second updates), Pause / Next; the running workout lives
@@ -265,14 +265,17 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
         recent records (30 days, each exercise's main graph), most trained (sets), real rest vs target (only rests logged in the app)
   - [x] Groups (database v3, table `gym_groups`, in backups): Add exercise starts with "Start a group" (▶, exercises listed, pencil = edit)
         and "+ New group"; group editor: name, exercises in order (up / down / remove, + Add exercise), optional plan per exercise
-        (sets and/or a note, "plan: 4 sets · 3 × 8 @ 40 kg"); starting a group shows on that day a group bar (End) and its exercises
-        in order: logged ones with "2 of 4 sets", the others as outlined "to do" cards with plan and last time; tap = log.
+        (sets and/or a note, "plan: 4 sets · 3 × 8 @ 40 kg").
         The FitNotes import creates suggested groups (exercises done together on ≥ 3 days, named after the main one, "Deadlift day").
-        Shortcut: the started group is kept in memory (after an app restart the plan bar is gone, the sets stay).
+        Shortcut: the started group is kept in memory (after an app restart, the sets are still in the day log).
   - [x] Journal like G12 + the chosen day strip: filter chips under the title; calendar gym days show a **day strip** (split by
         exercise, sized by sets, colored by group; grey = no group), interval sessions keep their dots; soft selected day;
         gym card "Gym · Legs · Shoulders" with records ("1 PR"), a labeled strip ("DS 13 · BBS 3 · Dea 4") and the sets.
         Groups have a color (soft palette, auto by position, changeable in the group editor).
-  - [ ] next: G10-style group run (rest clock "next: …"), light mode for gym screens
+  - [x] G10 group run: elapsed time, exercise and set tiles, PRs, next exercise, and add an exercise for the day.
+        The exercise log and group share the rest clock. It buzzes at the last exercise's target and the group shows the next set.
+        The group, clock, and exercise history use light-mode colors.
+  - [x] G11 finish recap shows the start and end times, elapsed time, sets, PRs, and each exercise's previous logged day.
+        Save to journal opens the date in the Journal. The optional gym day note is shared by groups on that date and included in backups (database v4).
   - not yet: groups suggested from the import, records recomputed (FitNotes PR flags not imported)
-- [ ] App icon (to decide: e.g. purple disc with segmented ring)
+- [x] App icon: week ring Mon-Sun (pink intervals, purple gym, grey missed) around a purple disc with the "done" check (options: https://claude.ai/artifact/1z82bwzzMouzMLoaQFaDhY, chosen H with E's purple disc); adaptive + themed icon in res/drawable/ic_launcher_*.xml

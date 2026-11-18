@@ -31,6 +31,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -82,6 +83,9 @@ import java.util.Locale
 fun JournalScreen(vm: AppViewModel) {
     val p = LocalPalette.current
     var stats by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(vm.journalFocusDay) {
+        if (vm.journalFocusDay != null) stats = false
+    }
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 16.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("Journal", color = p.text, fontSize = 30.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
@@ -128,6 +132,10 @@ private fun JournalCalendar(vm: AppViewModel) {
     val gymDates = remember(gymDays) { gymDays.map(LocalDate::parse).toSet() }
     val gymDayFlow = remember(dayText) { vm.gymDay(dayText) }
     val gymOfDay by gymDayFlow.collectAsState(initial = emptyList())
+    val gymNote = key(dayText) {
+        remember { vm.gymDayNote(dayText) }.collectAsState(initial = "").value
+    }
+    val showGymCard = show != 2 && (gymOfDay.isNotEmpty() || gymNote.isNotBlank())
     val exercises by vm.exercises.collectAsState()
     val allGroups by vm.groups.collectAsState()
     // records of the selected day need each exercise's history up to that day
@@ -135,20 +143,23 @@ private fun JournalCalendar(vm: AppViewModel) {
     val history by remember(dayText, dayIds) {
         if (dayIds.isEmpty()) kotlinx.coroutines.flow.flowOf(emptyList()) else vm.gymSetsBetween("0000-01-01", LocalDate.parse(dayText).plusDays(1).toString())
     }.collectAsState(initial = emptyList())
-    val records = remember(history, dayText) {
+    val records = remember(history, dayText, exercises, dayIds) {
         app.intervals.core.recordsOn(dayText, history.filter { it.exerciseId in dayIds }, exercises.filter { it.id in dayIds })
     }
     val sum = summary(sessions, zone)
     // swiped to another month: select its last trained day (or today / its last day), once its data is loaded
     LaunchedEffect(month, loadedSessions, loadedGymDays) {
-        if (YearMonth.from(selectedDay) == month || loadedSessions == null || loadedGymDays == null) return@LaunchedEffect
+        if (vm.journalFocusDay != null || YearMonth.from(selectedDay) == month || loadedSessions == null || loadedGymDays == null) {
+            return@LaunchedEffect
+        }
         dayText = ((byDay.keys + gymDates).maxOrNull() ?: if (month == YearMonth.from(today)) today else month.atEndOfMonth()).toString()
     }
-    // opened from Today's week: show that day
+    // Opened from Today or a finished gym group.
     LaunchedEffect(vm.journalFocusDay) {
         val d = vm.journalFocusDay?.let(LocalDate::parse) ?: return@LaunchedEffect
+        show = 0
+        pager.scrollToPage(ChronoUnit.MONTHS.between(firstMonth, YearMonth.from(d)).toInt().coerceIn(0, monthCount - 1))
         dayText = d.toString()
-        pager.scrollToPage(ChronoUnit.MONTHS.between(firstMonth, YearMonth.from(d)).toInt())
         vm.journalFocusDay = null
     }
     var editing by remember { mutableStateOf<Session?>(null) }
@@ -204,11 +215,11 @@ private fun JournalCalendar(vm: AppViewModel) {
             )
         }
         val ofDay = byDay[selectedDay].orEmpty().sortedBy { it.startedAt }
-        if (gymOfDay.isNotEmpty() && show != 2) item(key = "gym") {
-            GymDayCard(gymOfDay, exercises.associateBy { it.id }, allGroups, records) { vm.openGymDay(dayText) }
+        if (showGymCard) item(key = "gym") {
+            GymDayCard(gymOfDay, exercises.associateBy { it.id }, allGroups, records, note = gymNote) { vm.openGymDay(dayText) }
             Spacer(Modifier.height(8.dp))
         }
-        if (ofDay.isEmpty() && (gymOfDay.isEmpty() || show == 2)) item {
+        if (ofDay.isEmpty() && !showGymCard) item {
             Text(
                 if (selectedDay == today) "Nothing yet today. Sessions appear here when you finish or stop a workout."
                 else "No sessions this day.",
@@ -363,13 +374,13 @@ internal fun SessionCard(s: Session, zone: ZoneId, onNote: () -> Unit, onLongPre
 @Composable
 internal fun GymDayCard(
     sets: List<app.intervals.core.GymSet>, exercises: Map<Long, app.intervals.core.Exercise>,
-    groups: List<app.intervals.core.GymGroup>, records: Int, onOpen: () -> Unit,
+    groups: List<app.intervals.core.GymGroup>, records: Int, note: String = "", onOpen: () -> Unit,
 ) {
     val p = LocalPalette.current
     val byExercise = sets.sortedBy { it.order }.groupBy { it.exerciseId }
     val strip = app.intervals.core.dayStrip(sets, groups)
     val dayGroups = app.intervals.core.dayGroups(sets, groups)
-    val bar = strip.map { Color(it.color) }.distinct()
+    val bar = strip.map { Color(it.color) }.distinct().ifEmpty { listOf(p.accent) }
     Row(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(p.surface).clickable(onClick = onOpen).padding(14.dp),
     ) {
@@ -385,7 +396,7 @@ internal fun GymDayCard(
                 Text("${sets.size} set${if (sets.size == 1) "" else "s"}" + if (records > 0) " · $records PR" else "", color = p.muted, fontSize = 12.sp)
             }
             // the day strip, labeled: one piece per exercise, sized by sets
-            Row(Modifier.fillMaxWidth().height(22.dp).clip(RoundedCornerShape(6.dp)), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+            if (strip.isNotEmpty()) Row(Modifier.fillMaxWidth().height(22.dp).clip(RoundedCornerShape(6.dp)), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                 strip.forEach { piece ->
                     Box(Modifier.weight(piece.sets.toFloat()).height(22.dp).background(Color(piece.color)).padding(horizontal = 5.dp), contentAlignment = Alignment.CenterStart) {
                         Text(short(exercises[piece.exerciseId]?.name ?: "?") + " " + piece.sets,
@@ -404,7 +415,7 @@ internal fun GymDayCard(
                     append("  $rows")
                 }, color = p.soft, fontSize = 13.sp)
             }
-            sets.map { it.note }.filter { it.isNotEmpty() }.distinct().forEach {
+            (listOf(note) + sets.map { it.note }).filter { it.isNotBlank() }.distinct().forEach {
                 Text("“$it”", color = p.muted, fontSize = 13.sp, fontStyle = FontStyle.Italic)
             }
         }

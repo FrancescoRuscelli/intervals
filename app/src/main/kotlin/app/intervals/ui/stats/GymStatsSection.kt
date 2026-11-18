@@ -83,7 +83,7 @@ fun GymStatsSection(vm: AppViewModel, start: LocalDate, today: LocalDate) {
             weeks.forEachIndexed { i, (_, d) ->
                 if (d == 0) return@forEachIndexed
                 val h = (size.height - 2.dp.toPx()) * d / max
-                drawRoundRect(if (i == n - 1) p.accent else Color(0xFF4C3A80), Offset(i * (w + gap), size.height - h), Size(w, h),
+                drawRoundRect(if (i == n - 1) p.accent else if (p.dark) Color(0xFF4C3A80) else p.accent.copy(alpha = 0.55f), Offset(i * (w + gap), size.height - h), Size(w, h),
                     CornerRadius(4.dp.toPx()))
             }
         }
@@ -100,7 +100,7 @@ fun GymStatsSection(vm: AppViewModel, start: LocalDate, today: LocalDate) {
     SCard {
         Text("Recent records", color = p.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
         Text("last 30 days", color = p.muted, fontSize = 12.sp)
-        if (records.isEmpty()) Text("None in the last 30 days.", color = p.faint, fontSize = 14.sp, modifier = Modifier.padding(top = 8.dp))
+        if (records.isEmpty()) Text("None in the last 30 days.", color = p.muted, fontSize = 14.sp, modifier = Modifier.padding(top = 8.dp))
         records.forEach { r ->
             Row(Modifier.fillMaxWidth().padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(30.dp).clip(CircleShape).background(p.yellow), contentAlignment = Alignment.Center) {
@@ -129,7 +129,7 @@ fun GymStatsSection(vm: AppViewModel, start: LocalDate, today: LocalDate) {
     SCard {
         Text("Most trained", color = p.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
         Text("sets in this period", color = p.muted, fontSize = 12.sp)
-        if (top.isEmpty()) Text("No sets in this period.", color = p.faint, fontSize = 14.sp, modifier = Modifier.padding(top = 8.dp))
+        if (top.isEmpty()) Text("No sets in this period.", color = p.muted, fontSize = 14.sp, modifier = Modifier.padding(top = 8.dp))
         val max = top.maxOfOrNull { it.second } ?: 1
         top.forEach { (id, n) ->
             Column(Modifier.padding(top = 10.dp)) {

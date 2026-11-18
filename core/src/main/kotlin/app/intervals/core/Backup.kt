@@ -2,6 +2,8 @@ package app.intervals.core
 
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
+import java.time.LocalDate
+import java.time.format.DateTimeParseException
 
 /** Everything the app stores, as written to a backup file. */
 @kotlinx.serialization.Serializable
@@ -18,6 +20,7 @@ data class Backup(
     val gymSets: List<GymSet> = emptyList(),
     /** Groups of exercises; missing in older backups. */
     val groups: List<GymGroup> = emptyList(),
+    val gymDayNotes: Map<String, String> = emptyMap(),
 )
 
 class BackupException(message: String, cause: Throwable? = null) : Exception(message, cause)
@@ -62,6 +65,11 @@ object BackupJson {
         if (exIds.size != backup.exercises.size) throw BackupException("The backup file is damaged: two exercises have the same id.")
         if (backup.gymSets.any { it.exerciseId !in exIds }) throw BackupException("The backup file is damaged: a set has no exercise.")
         if (backup.groups.any { g -> g.items.any { it.exerciseId !in exIds } }) throw BackupException("The backup file is damaged: a group has an unknown exercise.")
+        try {
+            backup.gymDayNotes.keys.forEach { LocalDate.parse(it) }
+        } catch (e: DateTimeParseException) {
+            throw BackupException("The backup file is damaged: a gym note has an invalid date.", e)
+        }
         return backup
     }
 

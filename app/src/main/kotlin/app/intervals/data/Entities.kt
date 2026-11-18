@@ -113,3 +113,6 @@ data class GymGroupEntity(
     val name: String,
     val json: String,
 )
+
+@Entity(tableName = "gym_day_notes")
+data class GymDayNoteEntity(@PrimaryKey val day: String, val note: String)

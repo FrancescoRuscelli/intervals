@@ -1,6 +1,12 @@
 package app.intervals.ui
 
 import android.app.Application
+import android.database.SQLException
+import android.os.Build
+import android.os.SystemClock
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -37,8 +43,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import java.time.LocalDate
+import java.time.LocalTime
 
 enum class Tab { TODAY, INTERVALS, GYM, JOURNAL }
 
@@ -54,12 +66,19 @@ sealed interface Overlay {
     data class EditExercise(val exerciseId: Long) : Overlay
     /** [groupId] null = a new group. */
     data class EditGroup(val groupId: Long?) : Overlay
+    data class GymFinish(
+        val day: String, val group: GymGroup, val start: LocalTime, val end: LocalTime, val elapsedSec: Int,
+    ) : Overlay
     /** [pos] null = a new series. */
     data class EditSeries(val pos: SeriesPos?, val template: Series) : Overlay
 }
 
 /** A FitNotes import to confirm; [existingSets] already in the app are replaced. */
 data class GymImportPreview(val result: FitNotesImport.Result, val fileName: String, val existingSets: Int)
+
+data class ActiveGymGroup(val id: Long, val startedAt: Long, val startTime: LocalTime)
+
+data class GymRest(val day: String, val startedAt: Long, val targetSec: Int, val visible: Boolean = true)
 
 /** The workout being edited: [id] null for a new one. */
 data class Draft(val id: Long?, val workout: Workout, val original: Workout) {
@@ -79,7 +98,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     var tab by mutableStateOf(Tab.TODAY)
 
-    /** A day to show when the Journal opens (from Today's week); consumed by the Journal. */
+    /** A day requested by Today's week or a finished gym group. The Journal consumes it. */
     var journalFocusDay by mutableStateOf<String?>(null)
 
     fun openJournalDay(day: String) { journalFocusDay = day; tab = Tab.JOURNAL }
@@ -94,6 +113,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun back(): Boolean {
         if (overlays.isEmpty()) return false
         if (overlays.last() == Overlay.Player || overlays.last() == Overlay.Finished) return true // handled by those screens
+        if (overlays.last() is Overlay.GymFinish && gymFinishSaving) return true
         val top = overlays.removeAt(overlays.lastIndex)
         if (top == Overlay.EditWorkout) draft = null
         if (top == Overlay.GymImport) gymImport = null
@@ -237,6 +257,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun startPlayer(saved: SavedWorkout) {
+        if (ia.player != null) return
         if (saved.workout.blocks.isEmpty()) { message = "Add a series first"; return }
         val s = settings.value
         val sounds = Sounds(getApplication(), s.volume, s.duckMusic, s.voiceLanguage)
@@ -251,7 +272,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 overlays.remove(Overlay.Player)
                 if (Overlay.Finished !in overlays) overlays += Overlay.Finished
             }
-        }, onChange = { PlayerService.update(ia, c) })
+        }, onChange = { PlayerService.update(ia, c) }, openingMs = 1000L)
         ia.player = c
         overlays += Overlay.Player
         PlayerService.start(ia)
@@ -310,6 +331,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun gymDay(day: String): Flow<List<GymSet>> = repo.gymDay(day)
 
+    fun gymDayNote(day: String) = repo.gymDayNote(day)
+
     fun gymDaysBetween(from: String, to: String): Flow<List<String>> = repo.gymDaysBetween(from, to)
 
     /** Exercise id → last day done, for "recent" in the picker. */
@@ -353,15 +376,55 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     val groups: StateFlow<List<GymGroup>> = repo.groups.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     /** The group started on each day (kept in memory: after an app restart the plan is gone, the sets stay). */
-    val activeGroups = androidx.compose.runtime.mutableStateMapOf<String, Long>()
+    val activeGroups = androidx.compose.runtime.mutableStateMapOf<String, ActiveGymGroup>()
 
     fun startGroup(groupId: Long, day: String) {
-        activeGroups[day] = groupId
+        if (activeGroups[day]?.id != groupId) {
+            activeGroups[day] = ActiveGymGroup(groupId, SystemClock.elapsedRealtime(), LocalTime.now())
+        }
         overlays.removeAll { it is Overlay.GymPick }
         gymFocusDay = day
     }
 
-    fun endGroup(day: String) { activeGroups.remove(day) }
+    fun endGroup(day: String) {
+        val run = activeGroups.remove(day) ?: return
+        val rest = gymRest ?: return
+        if (rest.day == day && rest.startedAt >= run.startedAt) dismissGymRest()
+    }
+
+    var gymFinishSaving by mutableStateOf(false)
+        private set
+    var gymFinishError by mutableStateOf(false)
+        private set
+
+    fun finishGymGroup(day: String, group: GymGroup) = viewModelScope.launch {
+        val run = activeGroups[day]?.takeIf { it.id == group.id } ?: return@launch
+        val elapsed = ((SystemClock.elapsedRealtime() - run.startedAt) / 1000).toInt()
+        val finish = Overlay.GymFinish(day, group, run.startTime, LocalTime.now(), elapsed)
+        logMutex.withLock {
+            if (tab != Tab.GYM || overlays.isNotEmpty() || activeGroups[day] != run) return@withLock
+            val rest = gymRest
+            if (rest != null && rest.day == day && rest.startedAt >= run.startedAt) dismissGymRest()
+            gymFinishError = false
+            overlays += finish
+        }
+    }
+
+    fun saveGymFinish(finish: Overlay.GymFinish, note: String) = viewModelScope.launch {
+        if (gymFinishSaving || overlays.lastOrNull() != finish) return@launch
+        gymFinishSaving = true
+        gymFinishError = false
+        try {
+            repo.saveGymDayNote(finish.day, note)
+            endGroup(finish.day)
+            overlays.remove(finish)
+            openJournalDay(finish.day)
+        } catch (_: SQLException) {
+            gymFinishError = true
+        } finally {
+            gymFinishSaving = false
+        }
+    }
 
     fun editGroup(groupId: Long?) { overlays += Overlay.EditGroup(groupId) }
 
@@ -373,23 +436,51 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun deleteGroup(group: GymGroup) = viewModelScope.launch {
         repo.deleteGroup(group.id)
-        activeGroups.entries.removeAll { it.value == group.id }
+        activeGroups.filterValues { it.id == group.id }.keys.forEach(::endGroup)
         overlays.removeAll { it is Overlay.EditGroup }
         message = "Deleted “${group.name}”"
     }
 
-    /** Rest clock: when the last set was logged today (SystemClock.elapsedRealtime); null = not resting. */
-    var lastSetAt by mutableStateOf<Long?>(null)
+    var gymRest by mutableStateOf<GymRest?>(null)
         private set
+    private var restBuzz: Job? = null
+    private val logMutex = Mutex()
+
+    fun dismissGymRest() {
+        gymRest = gymRest?.copy(visible = false)
+        restBuzz?.cancel()
+    }
 
     /** Logs sets (one, or one per side); on today, the real rest since the last set is saved on the first one. */
-    fun logSets(sets: List<GymSet>) = viewModelScope.launch {
-        val now = android.os.SystemClock.elapsedRealtime()
-        val today = sets.firstOrNull()?.day == java.time.LocalDate.now().toString()
+    fun logSets(sets: List<GymSet>, targetSec: Int) = viewModelScope.launch {
+        val now = SystemClock.elapsedRealtime()
+        val day = sets.firstOrNull()?.day ?: return@launch
+        val today = day == LocalDate.now().toString()
+        val run = activeGroups[day]
         // shortcut: the clock lives in memory, so a rest across an app restart is not saved
-        val rest = lastSetAt?.let { ((now - it) / 1000).toInt() }?.takeIf { today && it < 3 * 3600 }
-        repo.addSets(sets.mapIndexed { i, s -> s.copy(restSec = if (i == 0) rest else null) })
-        if (today) lastSetAt = now
+        logMutex.withLock {
+            val rest = gymRest?.takeIf { today && it.day == day }
+                ?.let { (now - it.startedAt) / 1000 }?.takeIf { it in 0 until 3 * 3600L }?.toInt()
+            repo.addSets(sets.mapIndexed { i, s -> s.copy(restSec = if (i == 0) rest else null) })
+            if (today) startGymRest(GymRest(day, now, targetSec, visible = run == activeGroups[day]))
+        }
+    }
+
+    private fun startGymRest(rest: GymRest) {
+        gymRest = rest
+        restBuzz?.cancel()
+        if (!rest.visible || rest.targetSec <= 0) return
+        restBuzz = viewModelScope.launch {
+            delay(rest.startedAt + rest.targetSec * 1000L - SystemClock.elapsedRealtime())
+            if (rest.day != LocalDate.now().toString()) return@launch
+            val app = getApplication<Application>()
+            val vibrator = if (Build.VERSION.SDK_INT >= 31) {
+                app.getSystemService(VibratorManager::class.java)?.defaultVibrator
+            } else {
+                @Suppress("DEPRECATION") app.getSystemService(Vibrator::class.java)
+            }
+            vibrator?.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 300, 150, 300), -1))
+        }
     }
 
     fun updateGymSet(set: GymSet) = viewModelScope.launch { repo.updateSet(set) }

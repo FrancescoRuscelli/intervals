@@ -23,7 +23,6 @@ data class AppSettings(
     val volume: Float = 0.8f,
     /** Lower other apps' music during cues. */
     val duckMusic: Boolean = true,
-    val countdown: Boolean = true,
     val discAnimation: DiscAnimation = DiscAnimation.CALM,
     /** Disc spin 0..4 (none, a little, more, crazy, always); -1 = not set yet, taken from [discAnimation]. */
     val spin: Int = -1,

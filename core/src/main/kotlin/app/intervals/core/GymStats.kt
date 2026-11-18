@@ -64,6 +64,18 @@ fun metricSeries(metric: GymMetric, sets: List<GymSet>, side: Side? = null): Lis
         }
 }
 
+/** The first set matching a record on [day], once per side for a per-side exercise. */
+fun recordSets(exercise: Exercise, day: String, history: List<GymSet>): List<GymSet> {
+    val metric = metricsFor(exercise).firstOrNull { it != GymMetric.REST } ?: return emptyList()
+    val sets = history.filter { it.day == day }
+    if (sets.isEmpty()) return emptyList()
+    val sides = if (exercise.perSide) listOf(Side.LEFT, Side.RIGHT) else listOf(null)
+    return sides.mapNotNull { side ->
+        val point = metricSeries(metric, history, side).firstOrNull { it.day == day && it.record } ?: return@mapNotNull null
+        sets.firstOrNull { (side == null || it.side == side) && metricOf(metric, listOf(it)) == point.value }
+    }
+}
+
 /** Straight line through the points (least squares), as values at the first and last point. */
 fun trend(values: List<Double>): Pair<Double, Double>? {
     val n = values.size
@@ -119,7 +131,7 @@ fun recentRecords(exercises: List<Exercise>, sets: List<GymSet>, since: String):
     val byEx = sets.groupBy { it.exerciseId }
     return exercises.mapNotNull { ex ->
         val s = byEx[ex.id] ?: return@mapNotNull null
-        val metric = metricsFor(ex).first { it != GymMetric.REST }
+        val metric = metricsFor(ex).firstOrNull { it != GymMetric.REST } ?: return@mapNotNull null
         val sides: List<Side?> = if (ex.perSide) listOf(Side.LEFT, Side.RIGHT) else listOf(null)
         sides.flatMap { side -> metricSeries(metric, s, side) }
             .filter { it.record && it.day >= since }

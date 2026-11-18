@@ -104,15 +104,15 @@ fun ExerciseHistory(ex: Exercise, all: List<GymSet>, onOpenDay: (String) -> Unit
                         Text(row.label, color = p.muted, fontSize = 13.sp, modifier = Modifier.width(44.dp))
                         Text(row.set.summary(ex), color = p.text, style = NumberStyle, fontSize = 15.sp, modifier = Modifier.weight(1f))
                         if (row.count > 1) {
-                            Box(Modifier.clip(RoundedCornerShape(10.dp)).background(Color(0xFF3A1428)).padding(horizontal = 7.dp, vertical = 2.dp)) {
-                                Text("×${row.count}", color = Color(0xFFFF8AB3), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Box(Modifier.clip(RoundedCornerShape(10.dp)).background(p.workTint).padding(horizontal = 7.dp, vertical = 2.dp)) {
+                                Text("×${row.count}", color = p.workText, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
                     if (row.set.note.isNotBlank()) Text(row.set.note, color = p.muted, fontSize = 12.sp, fontStyle = FontStyle.Italic, modifier = Modifier.padding(start = 44.dp))
                 }
                 val rests = sets.mapNotNull { it.restSec }
-                if (rests.isNotEmpty()) Text("rests " + rests.joinToString(" · ") { formatTime(it) }, color = p.faint, fontSize = 11.sp)
+                if (rests.isNotEmpty()) Text("rests " + rests.joinToString(" · ") { formatTime(it) }, color = p.muted, fontSize = 11.sp)
             }
         }
     }
@@ -157,13 +157,13 @@ fun ExerciseGraph(ex: Exercise, all: List<GymSet>) {
             }
             Spacer(Modifier.height(10.dp))
             if (pts.size < 2) {
-                Text(if (pts.isEmpty()) "Nothing in this period." else "One day only: the graph needs at least two.", color = p.faint, fontSize = 14.sp,
+                Text(if (pts.isEmpty()) "Nothing in this period." else "One day only: the graph needs at least two.", color = p.muted, fontSize = 14.sp,
                     modifier = Modifier.padding(vertical = 40.dp))
             } else {
                 LineChart(lines.map { it.second }, if (ex.perSide) listOf(p.pink, p.teal) else listOf(p.pink), fmt) { tapped = it }
                 Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                     if (ex.perSide) { Legend(p.pink, "Left"); Legend(p.teal, "Right") } else Legend(p.pink, "per day")
-                    if (metric != GymMetric.REST) Legend(p.yellow, "record")
+                    if (metric != GymMetric.REST) Legend(p.recordText, "record")
                     if (!ex.perSide) Legend(p.muted, "trend")
                 }
             }
@@ -179,7 +179,7 @@ fun ExerciseGraph(ex: Exercise, all: List<GymSet>) {
                     color = p.text, style = NumberStyle, fontSize = 14.sp)
             }
         }
-        Text("Tap the graph to see a day.", color = p.faint, fontSize = 12.sp)
+        Text("Tap the graph to see a day.", color = p.muted, fontSize = 12.sp)
     }
 }
 
@@ -229,13 +229,13 @@ private fun LineChart(series: List<List<MetricPoint>>, colors: List<Color>, fmt:
             drawPath(path, colors[si], style = Stroke(2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
             pts.forEach { pt ->
                 drawCircle(p.surface, (if (pt.record) 6f else 4.5f).dp.toPx(), Offset(x(pt.day), y(pt.value)))
-                drawCircle(if (pt.record) p.yellow else colors[si], (if (pt.record) 4.5f else 3f).dp.toPx(), Offset(x(pt.day), y(pt.value)))
+                drawCircle(if (pt.record) p.recordText else colors[si], (if (pt.record) 4.5f else 3f).dp.toPx(), Offset(x(pt.day), y(pt.value)))
             }
         }
     }
     Row(Modifier.fillMaxWidth().padding(top = 4.dp)) {
         Text(shortDay(days.first()), color = p.muted, fontSize = 10.sp, modifier = Modifier.weight(1f))
-        Text(fmt(lo) + " – " + fmt(hi), color = p.faint, fontSize = 10.sp, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
+        Text(fmt(lo) + " – " + fmt(hi), color = p.muted, fontSize = 10.sp, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
         Text(shortDay(days.last()), color = p.muted, fontSize = 10.sp, textAlign = TextAlign.End, modifier = Modifier.weight(1f))
     }
 }
@@ -270,7 +270,7 @@ fun ExerciseRecords(ex: Exercise, all: List<GymSet>) {
     val hasR = GymField.REPS in ex.fields
     val sides: List<Side?> = if (ex.perSide) listOf(Side.LEFT, Side.RIGHT) else listOf(null)
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        if (all.isEmpty()) item { Text("No records yet: log some sets.", color = p.faint, fontSize = 14.sp) }
+        if (all.isEmpty()) item { Text("No records yet: log some sets.", color = p.muted, fontSize = 14.sp) }
         sides.forEach { side ->
             val sets = all.filter { side == null || it.side == side }
             if (sets.isEmpty()) return@forEach
@@ -283,12 +283,12 @@ fun ExerciseRecords(ex: Exercise, all: List<GymSet>) {
                             row.forEach { rm ->
                                 Column(
                                     Modifier.weight(1f).clip(RoundedCornerShape(12.dp))
-                                        .background(if (rm.beaten) p.bg else Color(0xFF2E2410))
-                                        .border(1.dp, if (rm.beaten) p.line else p.yellow, RoundedCornerShape(12.dp)).padding(vertical = 8.dp),
+                                        .background(if (rm.beaten) p.bg else p.recordTint)
+                                        .border(1.dp, if (rm.beaten) p.line else p.recordText, RoundedCornerShape(12.dp)).padding(vertical = 8.dp),
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                 ) {
-                                    Text("${rm.reps} rep${if (rm.reps == 1) "" else "s"}", color = if (rm.beaten) p.faint else Color(0xFFFFD966), fontSize = 11.sp)
-                                    Text((if (ex.assist) "−" else "") + formatKg(rm.weightKg), color = if (rm.beaten) p.faint else p.yellow,
+                                    Text("${rm.reps} rep${if (rm.reps == 1) "" else "s"}", color = if (rm.beaten) p.muted else p.recordText, fontSize = 11.sp)
+                                    Text((if (ex.assist) "−" else "") + formatKg(rm.weightKg), color = if (rm.beaten) p.muted else p.recordText,
                                         style = NumberStyle, fontSize = 17.sp)
                                 }
                             }
@@ -296,7 +296,7 @@ fun ExerciseRecords(ex: Exercise, all: List<GymSet>) {
                         }
                     }
                     Text("Faded = beaten by more reps with as much (or less assist). Tap the Graph tab for the history.",
-                        color = p.faint, fontSize = 11.sp, modifier = Modifier.padding(top = 8.dp))
+                        color = p.muted, fontSize = 11.sp, modifier = Modifier.padding(top = 8.dp))
                 }
             }
             if (hasW && hasR && !ex.assist) item {

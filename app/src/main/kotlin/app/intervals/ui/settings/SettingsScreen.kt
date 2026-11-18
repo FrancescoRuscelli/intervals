@@ -104,7 +104,6 @@ fun SettingsScreen(vm: AppViewModel) {
         }
 
         Group("Workout") {
-            SwitchRow("3-2-1 before starting", null, s.countdown) { v -> set { it.copy(countdown = v) } }
             SwitchRow("Keep the screen on", "Only while a workout runs", s.keepScreenOn) { v -> set { it.copy(keepScreenOn = v) } }
             SwitchRow("Lock the controls", "Avoid taps by mistake; hold to unlock", s.lockControls) { v -> set { it.copy(lockControls = v) } }
         }

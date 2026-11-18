@@ -1,11 +1,5 @@
 package app.intervals.ui.gym
 
-import android.content.Context
-import android.os.Build
-import android.os.SystemClock
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -47,7 +41,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -75,7 +68,6 @@ import app.intervals.ui.AppViewModel
 import app.intervals.ui.LocalPalette
 import app.intervals.ui.NumberStyle
 import app.intervals.ui.list.BigButton
-import kotlinx.coroutines.delay
 import java.time.LocalDate
 
 /** Values being entered; only the exercise's fields are used. */
@@ -152,7 +144,7 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
             listOf("Log", "History", "Graph", "Records").forEachIndexed { i, t ->
                 val on = i == tab
                 Column(Modifier.clickable { tab = i }.padding(horizontal = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(t, color = if (on) p.text else p.faint, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(vertical = 8.dp))
+                    Text(t, color = if (on) p.text else p.muted, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(vertical = 8.dp))
                     Box(Modifier.width(36.dp).height(2.dp).background(if (on) p.accent else Color.Transparent))
                 }
             }
@@ -196,7 +188,7 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
                             when (side) { SideChoice.LEFT -> "Log set · L"; SideChoice.RIGHT -> "Log set · R"; SideChoice.BOTH -> "Log L + R"; null -> "Log set" },
                             p.accent, p.onAccent,
                             {
-                                vm.logSets(side.sides().map { s -> v.into(GymSet(exerciseId = ex.id, day = day, order = 0, side = s), ex) })
+                                vm.logSets(side.sides().map { s -> v.into(GymSet(exerciseId = ex.id, day = day, order = 0, side = s), ex) }, ex.restSec)
                                 side = side?.afterSet()
                             },
                             Modifier.weight(1f),
@@ -207,7 +199,9 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
                     }
                 }
             }
-            if (day == LocalDate.now().toString() && editing == null) item { RestClock(vm, ex) }
+            if (day == LocalDate.now().toString() && editing == null) item {
+                vm.gymRest?.takeIf { it.day == day && it.visible }?.let { RestClock(it, vm::dismissGymRest) }
+            }
 
             val list = sets.orEmpty()
             if (list.isNotEmpty()) item {
@@ -217,7 +211,7 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
             itemsIndexed(list, key = { _, s -> s.id }) { i, s ->
                 SetLine(i + 1, s, ex, s.id == editing?.id) { noteFor = s }
             }
-            if (list.isNotEmpty()) item { Text("Tap a set to edit it or add a note", color = p.faint, fontSize = 12.sp) }
+            if (list.isNotEmpty()) item { Text("Tap a set to edit it or add a note", color = p.muted, fontSize = 12.sp) }
         }
     }
 
@@ -300,38 +294,6 @@ private fun BandsTile(bands: List<Band>, onTap: (Band) -> Unit) {
             }
         }
     }
-}
-
-/** Counts up from the last set logged today; buzzes once at the exercise's rest target and keeps counting. */
-@Composable
-private fun RestClock(vm: AppViewModel, ex: Exercise) {
-    val p = LocalPalette.current
-    val start = vm.lastSetAt ?: return
-    val context = LocalContext.current
-    val elapsed by produceState(0, start) {
-        while (true) {
-            value = ((SystemClock.elapsedRealtime() - start) / 1000).toInt()
-            delay(1000 - (SystemClock.elapsedRealtime() - start) % 1000)
-        }
-    }
-    val over = ex.restSec in 1..elapsed
-    LaunchedEffect(start, over) { if (over && elapsed < ex.restSec + 2) buzz(context) }
-    Row(
-        Modifier.clip(RoundedCornerShape(20.dp)).background(if (over) p.teal.copy(alpha = 0.25f) else p.surface).padding(horizontal = 14.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(formatTime(elapsed), color = p.teal, fontSize = 20.sp, style = NumberStyle)
-        Text(if (ex.restSec > 0) "  resting · buzz at ${formatTime(ex.restSec)}" else "  resting", color = p.muted, fontSize = 13.sp)
-    }
-}
-
-private fun buzz(context: Context) {
-    val vibrator = if (Build.VERSION.SDK_INT >= 31) {
-        context.getSystemService(VibratorManager::class.java)?.defaultVibrator
-    } else {
-        @Suppress("DEPRECATION") context.getSystemService(Vibrator::class.java)
-    }
-    vibrator?.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 300, 150, 300), -1))
 }
 
 @Composable

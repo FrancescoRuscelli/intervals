@@ -6,6 +6,10 @@ fun GroupItem.planLabel(): String {
     return if (parts.isEmpty()) "no plan" else "plan: " + parts.joinToString(" · ")
 }
 
+/** Group order suggests where to log next. An exercise without a count is started once it has a set. */
+fun nextGroupItem(items: List<GroupItem>, setsByExercise: Map<Long, List<GymSet>>): GroupItem? =
+    items.firstOrNull { setsByExercise[it.exerciseId].orEmpty().size < (it.planSets ?: 1) }
+
 /**
  * Groups suggested from the log: the same exercises done together on at least [minDays] days.
  * The most frequent combinations first; a combination is skipped when all its exercises are already in a chosen one.
@@ -73,9 +77,6 @@ fun recordsOn(day: String, all: List<GymSet>, exercises: List<Exercise>): Int {
     val byEx = all.filter { it.day <= day }.groupBy { it.exerciseId }
     return exercises.count { ex ->
         val s = byEx[ex.id] ?: return@count false
-        if (s.none { it.day == day }) return@count false
-        val metric = metricsFor(ex).first { it != GymMetric.REST }
-        val sides: List<Side?> = if (ex.perSide) listOf(Side.LEFT, Side.RIGHT) else listOf(null)
-        sides.any { side -> metricSeries(metric, s, side).lastOrNull()?.let { it.day == day && it.record } == true }
+        recordSets(ex, day, s).isNotEmpty()
     }
 }

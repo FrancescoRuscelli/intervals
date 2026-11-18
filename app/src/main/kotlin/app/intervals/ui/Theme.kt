@@ -40,6 +40,14 @@ data class Palette(
 ) {
     val pink = Color(0xFFE91E63)
     val yellow = Color(0xFFFFC107)
+    val workText = if (dark) Color(0xFFFF8AB3) else Color(0xFFA61B50)
+    val workTint = if (dark) Color(0xFF3A1428) else Color(0xFFFFE7F0)
+    val recordText = if (dark) yellow else Color(0xFF745100)
+    val recordTint = if (dark) Color(0xFF2E2410) else Color(0xFFFFF1CA)
+    val restText = if (dark) Color(0xFFA4F5E8) else Color(0xFF00594D)
+    val restTint = if (dark) Color(0xFF0E3B35) else Color(0xFFE0F5EF)
+    val restReady = if (dark) teal else Color(0xFFB4E9DB)
+    val onRestReady = if (dark) Color(0xFF04221E) else restText
 }
 
 private val DarkPalette = Palette(

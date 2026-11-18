@@ -13,11 +13,10 @@ import androidx.room.RoomDatabase
 @Database(
     entities = [
         WorkoutEntity::class, SessionEntity::class, LoggedValueEntity::class, SettingsEntity::class,
-        ExerciseEntity::class, GymSetEntity::class, GymGroupEntity::class,
+        ExerciseEntity::class, GymSetEntity::class, GymGroupEntity::class, GymDayNoteEntity::class,
     ],
-    version = 3,
-    // 2: gym tables added; 3: gym groups (new tables only, so Room migrates by itself and keeps the data)
-    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3)],
+    version = 4,
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4)],
     exportSchema = true,
 )
 abstract class IntervalsDatabase : RoomDatabase() {

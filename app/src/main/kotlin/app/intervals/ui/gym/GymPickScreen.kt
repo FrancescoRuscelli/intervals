@@ -49,7 +49,7 @@ import app.intervals.ui.AppViewModel
 import app.intervals.ui.LocalPalette
 import app.intervals.ui.editor.SectionTitle
 
-/** Add an exercise to a day: search, recent first, then all A–Z; or a new one (mockup G9, without groups for now). */
+/** Add an exercise to a day: search, recent first, then all A–Z; or a new one (mockup G9). */
 @Composable
 fun GymPickScreen(vm: AppViewModel, day: String) {
     val p = LocalPalette.current
@@ -77,33 +77,35 @@ fun GymPickScreen(vm: AppViewModel, day: String) {
                         modifier = Modifier.fillMaxWidth().clickable { creating = q }.padding(vertical = 14.dp, horizontal = 4.dp))
                 }
             } else {
-                item {
-                    Row(Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                        SectionTitle("Start a group", Modifier.weight(1f))
-                        Text("+ New group", color = p.accentText, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.clickable { vm.editGroup(null) }.padding(6.dp))
+                if (day !in vm.activeGroups) {
+                    item {
+                        Row(Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                            SectionTitle("Start a group", Modifier.weight(1f))
+                            Text("+ New group", color = p.accentText, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.clickable { vm.editGroup(null) }.padding(6.dp))
+                        }
                     }
-                }
-                if (groups.isEmpty()) item {
-                    Text("Groups are exercises you do together, e.g. Legs: Squat · Deadlift. Make one with + New group.",
-                        color = p.faint, fontSize = 13.sp, modifier = Modifier.padding(bottom = 8.dp))
-                }
-                items(groups, key = { "g" + it.id }) { g ->
-                    Row(
-                        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(p.group)
-                            .clickable(onClickLabel = "Start ${g.name}") { vm.startGroup(g.id, day) }.padding(start = 10.dp, top = 8.dp, bottom = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Box(Modifier.size(34.dp).clip(CircleShape).background(p.accent), contentAlignment = Alignment.Center) {
-                            Icon(AppIcons.Play, null, tint = p.onAccent, modifier = Modifier.size(14.dp))
+                    if (groups.isEmpty()) item {
+                        Text("Groups are exercises you do together, e.g. Legs: Squat · Deadlift. Make one with + New group.",
+                            color = p.muted, fontSize = 13.sp, modifier = Modifier.padding(bottom = 8.dp))
+                    }
+                    items(groups, key = { "g" + it.id }) { g ->
+                        Row(
+                            Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(p.group)
+                                .clickable(onClickLabel = "Start ${g.name}") { vm.startGroup(g.id, day) }.padding(start = 10.dp, top = 8.dp, bottom = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Box(Modifier.size(34.dp).clip(CircleShape).background(p.accent), contentAlignment = Alignment.Center) {
+                                Icon(AppIcons.Play, null, tint = p.onAccent, modifier = Modifier.size(14.dp))
+                            }
+                            Spacer(Modifier.width(12.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(g.name, color = p.text, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                                Text(g.items.mapNotNull { names[it.exerciseId] }.joinToString(" · "), color = p.muted, fontSize = 12.sp, maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                            }
+                            IconButton(onClick = { vm.editGroup(g.id) }) { Icon(AppIcons.Edit, "Edit ${g.name}", tint = p.muted, modifier = Modifier.size(18.dp)) }
                         }
-                        Spacer(Modifier.width(12.dp))
-                        Column(Modifier.weight(1f)) {
-                            Text(g.name, color = p.text, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                            Text(g.items.mapNotNull { names[it.exerciseId] }.joinToString(" · "), color = p.muted, fontSize = 12.sp, maxLines = 1,
-                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
-                        }
-                        IconButton(onClick = { vm.editGroup(g.id) }) { Icon(AppIcons.Edit, "Edit ${g.name}", tint = p.muted, modifier = Modifier.size(18.dp)) }
                     }
                 }
                 item {
