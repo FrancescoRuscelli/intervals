@@ -22,6 +22,16 @@ android {
         versionName = "0.1"
     }
 
+    // shared debug key, committed: every PC signs debug builds the same way, so any of them can update the phone
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
