@@ -91,8 +91,9 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     // ---- list ----
 
     fun newWorkout() {
-        val w = Workout(name = "New workout", rounds = 3, blocks = listOf(Block.Single(WORK_SERIES), Block.Single(REST_SERIES)))
-        draft = Draft(null, w, w.copy(name = ""))
+        // starts empty: you add the series you want
+        val w = Workout(name = "", blocks = emptyList())
+        draft = Draft(null, w, w)
         overlays += Overlay.EditWorkout
     }
 
@@ -262,6 +263,13 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         overlays.remove(Overlay.Finished)
         message = "Saved to the journal"
         if (repeat) startPlayer(f.saved)
+    }
+
+    /** Finished, but not kept: nothing goes in the journal. */
+    fun discardSession() {
+        ia.finished = null
+        overlays.remove(Overlay.Finished)
+        message = "Not saved"
     }
 
 

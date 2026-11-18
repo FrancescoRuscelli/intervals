@@ -173,12 +173,13 @@ fun IntervalsListScreen(vm: AppViewModel) {
                         last = lastRuns[w.id],
                         selecting = selecting,
                         selected = w.id in selected,
+                        // tap = start; the button on the right = edit
                         onOpen = {
                             if (selecting) selected = if (w.id in selected) selected - w.id else selected + w.id
-                            else vm.edit(w)
+                            else vm.player(w.id)
                         },
                         onLongPress = { selected = selected + w.id },
-                        onPlay = { vm.player(w.id) },
+                        onEdit = { vm.edit(w) },
                     )
                 }
             }
@@ -401,7 +402,7 @@ private fun WorkoutCard(
     selected: Boolean,
     onOpen: () -> Unit,
     onLongPress: () -> Unit,
-    onPlay: () -> Unit,
+    onEdit: () -> Unit,
 ) {
     val p = LocalPalette.current
     val w = saved.workout
@@ -433,9 +434,9 @@ private fun WorkoutCard(
         if (!selecting) {
             Spacer(Modifier.width(14.dp))
             Box(
-                Modifier.size(48.dp).clip(CircleShape).background(p.accent).clickable(onClick = onPlay),
+                Modifier.size(48.dp).clip(CircleShape).background(p.tint).clickable(onClick = onEdit),
                 contentAlignment = Alignment.Center,
-            ) { Icon(AppIcons.Play, "Start ${w.name}", tint = p.onAccent, modifier = Modifier.size(20.dp)) }
+            ) { Icon(AppIcons.Edit, "Edit ${w.name}", tint = p.accentText, modifier = Modifier.size(20.dp)) }
         }
     }
 }

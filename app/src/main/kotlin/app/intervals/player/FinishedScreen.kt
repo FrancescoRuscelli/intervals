@@ -84,7 +84,7 @@ fun fieldKeys(saved: SavedWorkout): List<FieldKey> {
 private fun fmt(v: Double): String = if (v == kotlin.math.floor(v)) v.toLong().toString() else "%.2f".format(v).trimEnd('0').trimEnd('.')
 
 @Composable
-fun FinishedScreen(info: FinishedInfo, onSave: (note: String, values: Map<FieldKey, Double>, repeat: Boolean) -> Unit) {
+fun FinishedScreen(info: FinishedInfo, onDiscard: () -> Unit, onSave: (note: String, values: Map<FieldKey, Double>, repeat: Boolean) -> Unit) {
     val p = LocalPalette.current
     val keys = remember(info) { fieldKeys(info.saved) }
     val values = remember(info) {
@@ -97,10 +97,19 @@ fun FinishedScreen(info: FinishedInfo, onSave: (note: String, values: Map<FieldK
     }
     val lastOf = remember(info) { keys.associateWith { k -> info.last.firstOrNull { it.series == k.series && it.field == k.field && it.side == k.side }?.value } }
     var note by remember { mutableStateOf("") }
+    var askDiscard by remember { mutableStateOf(false) }
+    if (askDiscard) androidx.compose.material3.AlertDialog(
+        onDismissRequest = { askDiscard = false },
+        title = { Text("Discard this session?") },
+        text = { Text("It won't be saved in the journal.") },
+        confirmButton = { androidx.compose.material3.TextButton(onClick = { askDiscard = false; onDiscard() }) { Text("Discard", color = p.dangerText) } },
+        dismissButton = { androidx.compose.material3.TextButton(onClick = { askDiscard = false }) { Text("Cancel") } },
+    )
     BackHandler { onSave(note, values.toMap(), false) }
 
     Column(Modifier.fillMaxSize().background(p.bg).statusBarsPadding().navigationBarsPadding()) {
-        Row(Modifier.fillMaxWidth().padding(8.dp)) {
+        Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            androidx.compose.material3.TextButton(onClick = { askDiscard = true }) { Text("Discard", color = p.dangerText, fontSize = 15.sp) }
             Spacer(Modifier.weight(1f))
             IconButton(onClick = { onSave(note, values.toMap(), false) }) { Icon(AppIcons.Close, "Save and close", tint = p.text) }
         }

@@ -202,7 +202,9 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
         }
     }
 
-    typing?.let { f ->
+    if (typing == GymField.TIME) {
+        app.intervals.ui.editor.DurationDialog("Time", v.timeSec, 0, { typing = null }) { t -> change { it.copy(timeSec = t) }; typing = null }
+    } else typing?.let { f ->
         val current = when (f) {
             GymField.WEIGHT -> formatKg(v.weightKg); GymField.REPS -> "${v.reps}"; GymField.TIME -> "${v.timeSec}"; else -> formatKg(v.distance)
         }

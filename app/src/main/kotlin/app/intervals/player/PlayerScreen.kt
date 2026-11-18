@@ -110,7 +110,7 @@ fun PlayerScreen(c: PlayerController, keepScreenOn: Boolean, onClose: () -> Unit
         AlertDialog(
             onDismissRequest = { askStop = false },
             title = { Text("Stop the workout?") },
-            text = { Text("It is saved in the journal as stopped.") },
+            text = { Text("Next you can save it to the journal (as stopped) or discard it.") },
             confirmButton = { TextButton(onClick = { askStop = false; c.stop() }) { Text("Stop", color = p.dangerText) } },
             dismissButton = { TextButton(onClick = { askStop = false }) { Text("Keep going") } },
         )
