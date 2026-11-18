@@ -27,6 +27,24 @@ export JAVA_HOME=/snap/android-studio/current/jbr      # path for the snap insta
 
 `local.properties` (not in git) must contain `sdk.dir=/home/<you>/Android/Sdk` when building from the command line.
 
+### Windows
+
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
+.\gradlew.bat :core:test :app:testDebugUnitTest :app:assembleDebug
+& "$env:LOCALAPPDATA\Android\Sdk\platform-toolsdb.exe" install -r appuild\outputspk\debugpp-debug.apk
+```
+
+`local.properties`: `sdk.dir=C\:\Users\<you>\AppData\Local\Android\Sdk`. The SDK can be installed without the
+Android Studio wizard: unzip the command-line tools to `Sdk\cmdline-tools\latest`, then
+`android sdk install platforms/android-37.0 build-tools/37.0.0 platform-tools`.
+Don't commit `gradle/gradle-daemon-jvm.properties` if Gradle creates it.
+
+### Updating the phone from any PC
+
+Debug builds are signed with the shared key `app/debug.keystore` (in git), so every PC can `install -r` over the app
+without uninstalling (no data lost). A phone that still has a build signed with an old personal key needs one uninstall first.
+
 ## Layout
 
 - `core/`: plain Kotlin: data model, timeline (exact play order and total), Hybrid Interval Timer CSV importer.
