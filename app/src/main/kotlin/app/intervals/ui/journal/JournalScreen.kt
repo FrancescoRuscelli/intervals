@@ -60,6 +60,14 @@ import java.time.YearMonth
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerDefaults
+import androidx.compose.foundation.pager.PagerSnapDistance
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import java.time.temporal.ChronoUnit
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
@@ -74,22 +82,33 @@ fun JournalScreen(vm: AppViewModel) {
     val p = LocalPalette.current
     val zone = remember { ZoneId.systemDefault() }
     val today = remember { LocalDate.now(zone) }
-    var monthText by rememberSaveable { mutableStateOf(YearMonth.from(today).toString()) }
-    val month = YearMonth.parse(monthText)
+    // one calendar page per month, swipe or arrows; the last page is this month
+    val firstMonth = remember { YearMonth.of(2000, 1) }
+    val monthCount = remember(today) { ChronoUnit.MONTHS.between(firstMonth, YearMonth.from(today)).toInt() + 1 }
+    val pager = rememberPagerState(initialPage = monthCount - 1) { monthCount }
+    val scope = rememberCoroutineScope()
+    val month = firstMonth.plusMonths(pager.currentPage.toLong())
     var dayText by rememberSaveable { mutableStateOf(today.toString()) }
     val selectedDay = LocalDate.parse(dayText)
     val from = month.atDay(1).atStartOfDay(zone).toInstant().toEpochMilli()
     val to = month.plusMonths(1).atDay(1).atStartOfDay(zone).toInstant().toEpochMilli()
     val flow = remember(from, to) { vm.sessions(from, to) }
-    val sessions by flow.collectAsState(initial = emptyList())
+    val loadedSessions by flow.collectAsState(initial = null)
+    val sessions = loadedSessions.orEmpty()
     val byDay = sessions.groupBy { it.day(zone) }
     val gymFlow = remember(month) { vm.gymDaysBetween(month.atDay(1).toString(), month.plusMonths(1).atDay(1).toString()) }
-    val gymDays by gymFlow.collectAsState(initial = emptyList())
+    val loadedGymDays by gymFlow.collectAsState(initial = null)
+    val gymDays = loadedGymDays.orEmpty()
     val gymDates = remember(gymDays) { gymDays.map(LocalDate::parse).toSet() }
     val gymDayFlow = remember(dayText) { vm.gymDay(dayText) }
     val gymOfDay by gymDayFlow.collectAsState(initial = emptyList())
     val exercises by vm.exercises.collectAsState()
     val sum = summary(sessions, zone)
+    // swiped to another month: select its last trained day (or today / its last day), once its data is loaded
+    LaunchedEffect(month, loadedSessions, loadedGymDays) {
+        if (YearMonth.from(selectedDay) == month || loadedSessions == null || loadedGymDays == null) return@LaunchedEffect
+        dayText = ((byDay.keys + gymDates).maxOrNull() ?: if (month == YearMonth.from(today)) today else month.atEndOfMonth()).toString()
+    }
     var editing by remember { mutableStateOf<Session?>(null) }
     var deleting by remember { mutableStateOf<Session?>(null) }
 
@@ -97,10 +116,10 @@ fun JournalScreen(vm: AppViewModel) {
         item {
             Row(Modifier.fillMaxWidth().padding(start = 4.dp, top = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("Journal", color = p.text, fontSize = 30.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                IconButton(onClick = { monthText = month.minusMonths(1).toString() }) { Icon(AppIcons.Back, "Previous month", tint = p.text) }
+                IconButton(onClick = { scope.launch { pager.animateScrollToPage(pager.currentPage - 1) } }, enabled = pager.currentPage > 0) { Icon(AppIcons.Back, "Previous month", tint = p.text) }
                 Text(month.month.getDisplayName(TextStyle.FULL, Locale.ENGLISH) + " " + month.year, color = p.text, fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, modifier = Modifier.width(118.dp))
-                IconButton(onClick = { monthText = month.plusMonths(1).toString() }, enabled = month < YearMonth.from(today)) {
+                IconButton(onClick = { scope.launch { pager.animateScrollToPage(pager.currentPage + 1) } }, enabled = month < YearMonth.from(today)) {
                     Icon(AppIcons.Back, "Next month", tint = if (month < YearMonth.from(today)) p.text else p.faint,
                         modifier = Modifier.size(24.dp).scale(scaleX = -1f, scaleY = 1f))
                 }
@@ -114,7 +133,12 @@ fun JournalScreen(vm: AppViewModel) {
                 Tile("Time", hm(sum.totalSec), Modifier.weight(1f))
             }
         }
-        item { Calendar(month, today, selectedDay, byDay, gymDates) { dayText = it.toString() } }
+        item {
+            HorizontalPager(pager, key = { it }, verticalAlignment = Alignment.Top,
+                flingBehavior = PagerDefaults.flingBehavior(pager, pagerSnapDistance = PagerSnapDistance.atMost(1))) { page ->
+                MonthCalendar(vm, firstMonth.plusMonths(page.toLong()), today, selectedDay, zone) { dayText = it.toString() }
+            }
+        }
         item {
             Text(
                 selectedDay.format(DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.ENGLISH)),
@@ -173,6 +197,17 @@ private fun Tile(label: String, value: String, modifier: Modifier) {
         Text(label, color = p.muted, fontSize = 12.sp)
         Text(value, color = p.text, style = NumberStyle, fontSize = 22.sp)
     }
+}
+
+/** A month's calendar with its own data, so the pages next to the current one show their dots while swiping. */
+@Composable
+private fun MonthCalendar(vm: AppViewModel, month: YearMonth, today: LocalDate, selected: LocalDate, zone: ZoneId, onPick: (LocalDate) -> Unit) {
+    val from = month.atDay(1).atStartOfDay(zone).toInstant().toEpochMilli()
+    val to = month.plusMonths(1).atDay(1).atStartOfDay(zone).toInstant().toEpochMilli()
+    val sessions by remember(from, to) { vm.sessions(from, to) }.collectAsState(initial = emptyList())
+    val gymDays by remember(month) { vm.gymDaysBetween(month.atDay(1).toString(), month.plusMonths(1).atDay(1).toString()) }
+        .collectAsState(initial = emptyList())
+    Calendar(month, today, selected, sessions.groupBy { it.day(zone) }, gymDays.map(LocalDate::parse).toSet(), onPick)
 }
 
 @Composable
@@ -269,7 +304,7 @@ private fun GymDayCard(sets: List<app.intervals.core.GymSet>, exercises: Map<Lon
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Gym", color = p.text, fontSize = 15.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                Text("${byExercise.size} exercises · ${sets.size} sets", color = p.muted, fontSize = 12.sp)
+                Text("${byExercise.size} exercise${if (byExercise.size == 1) "" else "s"} · ${sets.size} set${if (sets.size == 1) "" else "s"}", color = p.muted, fontSize = 12.sp)
             }
             byExercise.forEach { (id, exSets) ->
                 val ex = exercises[id] ?: return@forEach

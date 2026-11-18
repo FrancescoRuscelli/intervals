@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerDefaults
+import androidx.compose.foundation.pager.PagerSnapDistance
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
@@ -89,7 +91,11 @@ fun GymScreen(vm: AppViewModel) {
         if (i >= 0) pager.scrollToPage(i)
         vm.gymFocusDay = null
     }
-    HorizontalPager(pager, reverseLayout = true, key = { pages[it] }, modifier = Modifier.fillMaxSize()) { i ->
+    HorizontalPager(
+        pager, reverseLayout = true, key = { pages[it] }, modifier = Modifier.fillMaxSize(),
+        // one day per swipe, even a fast one
+        flingBehavior = PagerDefaults.flingBehavior(pager, pagerSnapDistance = PagerSnapDistance.atMost(1)),
+    ) { i ->
         DayPage(vm, pages[i], i, pages.size, pager, byId)
     }
 }
@@ -105,7 +111,7 @@ private fun DayPage(vm: AppViewModel, day: String, index: Int, count: Int, pager
             Column(Modifier.weight(1f)) {
                 Text(dayTitle(day), color = p.text, fontSize = 30.sp, fontWeight = FontWeight.Bold)
                 val n = sets?.size ?: 0
-                Text(if (n == 0) "No sets" else "$n sets · ${groups.size} exercises", color = p.muted, fontSize = 13.sp)
+                Text(if (n == 0) "No sets" else "$n set${if (n == 1) "" else "s"} · ${groups.size} exercise${if (groups.size == 1) "" else "s"}", color = p.muted, fontSize = 13.sp)
             }
             IconButton(enabled = index < count - 1, onClick = { scope.launch { pager.animateScrollToPage(index + 1) } }) {
                 Icon(AppIcons.Back, "Day before", tint = if (index < count - 1) p.text else p.faint)
