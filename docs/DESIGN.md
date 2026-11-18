@@ -53,7 +53,10 @@ Rules:
 
 ## Screens (see mockups)
 
-Bottom bar: **Intervals · Gym · Journal · Stats · Settings** (5 tabs).
+Bottom bar (2026-11-18, option **D**, to confirm after trying it): **Today · Intervals · Gym · Journal**; Stats inside the Journal,
+Settings as ⚙ at the top right. **Today** (home, mockup "Home · Today"): the last 7 days (strip per day, tap = that day in the
+Journal), big **Intervals ▶** / **Gym ▶**, Quick start (recent workouts and groups), Done today. Not built yet.
+(Before: Intervals · Gym · Journal · Stats · Settings, 5 tabs.)
 
 Improvements (2026-11-17, in the mockups): each workout card shows **last time** (date, rounds, logged values;
 yellow dot if stopped); **Finished** compares each logged value with last time ("▲ 2.5 kg") and marks records (PR);

@@ -99,7 +99,7 @@ class Component extends DCLogic {
       stats: 'M5 20v-8M12 20V5M19 20v-5',
       settings: 'M12 9a3 3 0 1 0 0 6a3 3 0 0 0 0-6M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1'
     };
-    const nav = [['Intervals', NI.timer, 'Main.dc.html', true], ['Gym', NI.gym, 'GymToday.dc.html'], ['Journal', NI.journal, 'Journal.dc.html'], ['Stats', NI.stats, 'Stats.dc.html'], ['Settings', NI.settings, 'Settings.dc.html']]
+    const nav = [['Intervals', NI.timer, 'Main.dc.html', true], ['Gym', NI.gym, 'GymToday.dc.html'], ['Journal', NI.journal, 'GymVisual3.dc.html'], ['Stats', NI.stats, 'Stats.dc.html'], ['Settings', NI.settings, 'Settings.dc.html']]
       .map(([label, icon, href, on]) => ({ label, icon, href, color: on ? t.accentText : t.muted, bg: on ? t.tint : 'transparent', fw: on ? 700 : 600 }));
     return {
       t, nav,

@@ -12,477 +12,352 @@
   "boards": {
     "Main.dc.html": {
       "x": 0,
-      "y": 0,
+      "y": 2160,
       "w": 390,
       "h": 844,
-      "title": "1 · Intervals list (5 tabs, last time on each card)"
-    },
-    "Editor.dc.html": {
-      "x": 470,
-      "y": 0,
-      "w": 390,
-      "h": 844,
-      "title": "2 · Edit workout"
+      "title": "1 · Intervals list"
     },
     "Series.dc.html": {
       "x": 940,
-      "y": 0,
+      "y": 2160,
       "w": 390,
       "h": 1420,
-      "title": "3 · Edit series (with logged fields)"
+      "title": "3 · Edit series"
     },
     "Player.dc.html": {
       "x": 1410,
-      "y": 0,
+      "y": 2160,
       "w": 390,
       "h": 844,
-      "title": "4 · Player (big disc, rounds ring)"
+      "title": "4 · Player"
     },
     "Import.dc.html": {
-      "x": 1880,
-      "y": 0,
+      "x": 3290,
+      "y": 2160,
       "w": 390,
       "h": 844,
-      "title": "5 · Import from old app"
+      "title": "7 · Import from Hybrid"
     },
     "MainLight.dc.html": {
       "x": 0,
-      "y": 1800,
+      "y": 6240,
       "w": 390,
       "h": 844,
       "title": "1 · Workout list (light)"
     },
-    "EditorLight.dc.html": {
-      "x": 470,
-      "y": 1800,
-      "w": 390,
-      "h": 844,
-      "title": "2 · Edit workout (light)"
-    },
     "SeriesLight.dc.html": {
-      "x": 940,
-      "y": 1800,
+      "x": 470,
+      "y": 6240,
       "w": 390,
       "h": 1420,
       "title": "3 · Edit series (light)"
     },
     "PlayerLight.dc.html": {
-      "x": 1410,
-      "y": 1800,
+      "x": 940,
+      "y": 6240,
       "w": 390,
       "h": 844,
       "title": "4 · Player (light)"
     },
     "ImportLight.dc.html": {
       "x": 1880,
-      "y": 1800,
+      "y": 6240,
       "w": 390,
       "h": 844,
       "title": "5 · Import (light)"
     },
     "PlayerDiscLandscape.dc.html": {
-      "x": 0,
-      "y": 3600,
+      "x": 4700,
+      "y": 2160,
       "w": 844,
       "h": 390,
-      "title": "4 · Player landscape (dark)"
+      "title": "4e · Player landscape (to do)"
     },
     "PlayerDiscLandscapeLight.dc.html": {
-      "x": 924,
-      "y": 3600,
+      "x": 3290,
+      "y": 6240,
       "w": 844,
       "h": 390,
       "title": "4 · Player landscape (light)"
     },
-    "Journal.dc.html": {
-      "x": 2350,
-      "y": 0,
-      "w": 390,
-      "h": 844,
-      "title": "6 · Journal"
-    },
-    "JournalLight.dc.html": {
-      "x": 2350,
-      "y": 1800,
-      "w": 390,
-      "h": 844,
-      "title": "6 · Journal (light)"
-    },
     "Stats.dc.html": {
-      "x": 2820,
-      "y": 0,
+      "x": 940,
+      "y": 260,
       "w": 390,
       "h": 844,
-      "title": "7 · Stats"
+      "title": "Stats · Intervals (Gym tab: see G13)"
     },
     "Settings.dc.html": {
-      "x": 3290,
-      "y": 0,
+      "x": 1410,
+      "y": 260,
       "w": 390,
       "h": 1120,
-      "title": "8 · Settings"
+      "title": "Settings"
     },
     "Finish.dc.html": {
-      "x": 3760,
-      "y": 0,
+      "x": 2350,
+      "y": 2160,
       "w": 390,
       "h": 960,
-      "title": "9 · Finished (compare with last time, PR)"
+      "title": "5 · Finished"
     },
     "StatsLight.dc.html": {
-      "x": 2820,
-      "y": 1800,
+      "x": 2350,
+      "y": 6240,
       "w": 390,
       "h": 844,
       "title": "7 · Stats (light)"
     },
     "SettingsLight.dc.html": {
-      "x": 3290,
-      "y": 1800,
+      "x": 2820,
+      "y": 6240,
       "w": 390,
       "h": 1120,
       "title": "8 · Settings (light)"
     },
     "FinishLight.dc.html": {
-      "x": 3760,
-      "y": 1800,
+      "x": 1410,
+      "y": 6240,
       "w": 390,
       "h": 960,
       "title": "9 · Finished (light)"
     },
     "PlayerLive.dc.html": {
-      "x": 1848,
-      "y": 3600,
+      "x": 5624,
+      "y": 2160,
       "w": 390,
       "h": 844,
-      "title": "Live · Liquid (bubbles, maybe later)",
+      "title": "Idea · Liquid bubbles (maybe later)",
       "is_interactive": true
     },
-    "EditorSelect.dc.html": {
-      "x": 470,
-      "y": -1400,
-      "w": 390,
-      "h": 844,
-      "title": "2b · Edit workout: selecting series"
-    },
     "PlayerRest.dc.html": {
-      "x": 1410,
-      "y": -1400,
+      "x": 1880,
+      "y": 2160,
       "w": 390,
       "h": 844,
-      "title": "4b · Player: rest between rounds, edit load"
+      "title": "4b · Player: rest between rounds, edit load (to do)"
     },
     "PlayerLiveRounds.dc.html": {
-      "x": 1880,
-      "y": -1400,
+      "x": 3760,
+      "y": 2160,
       "w": 390,
       "h": 844,
-      "title": "4c · Live: rounds ring inside, last 3 s zoom in",
+      "title": "4c · Live demo: Calm (default)",
       "is_interactive": true
     },
     "Palette.dc.html": {
-      "x": 2350,
-      "y": -1400,
+      "x": 1880,
+      "y": 260,
       "w": 900,
       "h": 1220,
       "title": "Palette: purple, pink, yellow, teal"
     },
     "PlayerLiveSpin.dc.html": {
-      "x": 3330,
-      "y": -1400,
+      "x": 4230,
+      "y": 2160,
       "w": 390,
       "h": 844,
-      "title": "4d · Live: crazy spin (optional, in Settings)",
+      "title": "4d · Live demo: Crazy spin (setting)",
       "is_interactive": true
     },
     "GymToday.dc.html": {
       "x": 0,
-      "y": -2900,
+      "y": 4260,
       "w": 390,
       "h": 844,
       "title": "G1 · Gym today (table, same sets grouped, swipe for other days)"
     },
     "GymExercise.dc.html": {
-      "x": 470,
-      "y": -2900,
+      "x": 940,
+      "y": 4260,
       "w": 390,
       "h": 844,
       "title": "G2 · Log a set (tweak: exercise: plain / per side / bands)"
     },
     "GymNewExercise.dc.html": {
-      "x": 940,
-      "y": -2900,
+      "x": 1880,
+      "y": 4260,
       "w": 390,
       "h": 844,
       "title": "G3 · New exercise: what you write down (bands, per side)"
     },
     "GymGroup.dc.html": {
-      "x": 1410,
-      "y": -2900,
+      "x": 4230,
+      "y": 4260,
       "w": 390,
       "h": 844,
       "title": "G4 · Group of exercises"
     },
     "GymHistory.dc.html": {
-      "x": 1880,
-      "y": -2900,
+      "x": 3290,
+      "y": 4260,
       "w": 390,
       "h": 1000,
       "title": "G5 · Graphs per exercise (tweak: graph · your real data)"
     },
     "GymSetNote.dc.html": {
-      "x": 2350,
-      "y": -2900,
+      "x": 1410,
+      "y": 4260,
       "w": 390,
       "h": 844,
       "title": "G7 · A set: quick notes (tap tags in Play)",
       "is_interactive": true
     },
     "GymImport.dc.html": {
-      "x": 2820,
-      "y": -2900,
+      "x": 5640,
+      "y": 4260,
       "w": 390,
       "h": 1300,
       "title": "G8 · Import from FitNotes (with your real numbers)"
     },
     "GymPick.dc.html": {
-      "x": 0,
-      "y": -4900,
+      "x": 470,
+      "y": 4260,
       "w": 390,
       "h": 844,
       "title": "G9 · Add exercise or start a group (tweak: typing)"
     },
     "GymSession.dc.html": {
-      "x": 470,
-      "y": -4900,
+      "x": 4700,
+      "y": 4260,
       "w": 390,
       "h": 844,
       "title": "G10 · Group in progress (tweak: rest counting / past target)"
     },
     "GymFinish.dc.html": {
-      "x": 940,
-      "y": -4900,
+      "x": 5170,
+      "y": 4260,
       "w": 390,
       "h": 844,
       "title": "G11 · Gym workout done"
     },
-    "GymJournal.dc.html": {
-      "x": 1410,
-      "y": -4900,
-      "w": 390,
-      "h": 844,
-      "title": "G12 · Journal: gym (purple) + intervals (pink)"
-    },
     "GymStats.dc.html": {
-      "x": 1880,
-      "y": -4900,
+      "x": 6110,
+      "y": 4260,
       "w": 390,
       "h": 1250,
       "title": "G13 · Stats: Gym tab, records, real rest vs target"
     },
     "GymRecords.dc.html": {
-      "x": 3290,
-      "y": -2900,
+      "x": 3760,
+      "y": 4260,
       "w": 390,
       "h": 1000,
       "title": "G14 · Records: real rep maxes + estimated"
     },
     "GymExHistory.dc.html": {
-      "x": 3760,
-      "y": -2900,
+      "x": 2820,
+      "y": 4260,
       "w": 390,
       "h": 1000,
       "title": "G15 · Exercise history: every workout, your real Deadlift"
     },
     "GymEditExercise.dc.html": {
-      "x": 4230,
-      "y": -2900,
+      "x": 2350,
+      "y": 4260,
       "w": 390,
       "h": 1240,
       "title": "G16 · Edit exercise: steps, merge, delete (tweak: sheet)",
       "is_interactive": true
     },
     "GymVisual3.dc.html": {
-      "x": 0,
-      "y": -6400,
+      "x": 470,
+      "y": 260,
       "w": 390,
       "h": 1000,
-      "title": "What you trained (chosen: day strip)"
+      "title": "Journal · day strips, All / Gym / Intervals"
     },
     "IntervalsProgress.dc.html": {
-      "x": 3800,
-      "y": -1400,
+      "x": 2820,
+      "y": 2160,
       "w": 390,
       "h": 900,
-      "title": "Intervals: progress of a logged value (Load L vs R, records)"
+      "title": "6 · Progress of a logged value (to do)"
     },
     "EditorV2.dc.html": {
-      "x": 940,
-      "y": -6400,
+      "x": 470,
+      "y": 2160,
       "w": 390,
       "h": 1000,
-      "title": "2 · Edit workout v2: in play order (tweak: workout)"
-    },
-    "NavA.dc.html": {
-      "x": 0,
-      "y": -7900,
-      "w": 390,
-      "h": 844,
-      "title": "Bottom bar A · 3 tabs (Stats inside Journal, ⚙ top)"
-    },
-    "NavB.dc.html": {
-      "x": 470,
-      "y": -7900,
-      "w": 390,
-      "h": 844,
-      "title": "Bottom bar B · 2 tabs (📅 Journal and ⚙ at the top)"
-    },
-    "NavC.dc.html": {
-      "x": 940,
-      "y": -7900,
-      "w": 390,
-      "h": 844,
-      "title": "Bottom bar C · 4 tabs (only Settings moves to ⚙)"
+      "title": "2 · Edit workout (in play order)"
     },
     "NavD.dc.html": {
-      "x": 1410,
-      "y": -7900,
+      "x": 0,
+      "y": 260,
       "w": 390,
       "h": 900,
-      "title": "Bottom bar D · Today · Intervals · Gym · Journal (last 7 days)"
-    },
-    "NavE.dc.html": {
-      "x": 1880,
-      "y": -7900,
-      "w": 390,
-      "h": 900,
-      "title": "Bottom bar E · Today · Journal (start everything from Today)"
-    },
-    "NavF.dc.html": {
-      "x": 2350,
-      "y": -7900,
-      "w": 390,
-      "h": 900,
-      "title": "Bottom bar F · Today · Train · Journal"
-    },
-    "NavG.dc.html": {
-      "x": 2820,
-      "y": -7900,
-      "w": 390,
-      "h": 900,
-      "title": "F · the Train tab (Intervals | Gym)"
+      "title": "Home · Today (bar: Today · Intervals · Gym · Journal)"
     }
   },
   "order": [
-    "Main.dc.html",
-    "Editor.dc.html",
-    "Series.dc.html",
-    "Player.dc.html",
-    "Import.dc.html",
-    "Journal.dc.html",
-    "MainLight.dc.html",
-    "EditorLight.dc.html",
-    "SeriesLight.dc.html",
-    "PlayerLight.dc.html",
-    "ImportLight.dc.html",
-    "JournalLight.dc.html",
-    "PlayerDiscLandscape.dc.html",
-    "PlayerDiscLandscapeLight.dc.html",
+    "NavD.dc.html",
+    "GymVisual3.dc.html",
     "Stats.dc.html",
     "Settings.dc.html",
-    "Finish.dc.html",
-    "StatsLight.dc.html",
-    "SettingsLight.dc.html",
-    "FinishLight.dc.html",
-    "PlayerLive.dc.html",
-    "EditorSelect.dc.html",
-    "PlayerRest.dc.html",
-    "PlayerLiveRounds.dc.html",
     "Palette.dc.html",
+    "Main.dc.html",
+    "EditorV2.dc.html",
+    "Series.dc.html",
+    "Player.dc.html",
+    "PlayerRest.dc.html",
+    "Finish.dc.html",
+    "IntervalsProgress.dc.html",
+    "Import.dc.html",
+    "PlayerLiveRounds.dc.html",
     "PlayerLiveSpin.dc.html",
+    "PlayerDiscLandscape.dc.html",
+    "PlayerLive.dc.html",
     "GymToday.dc.html",
-    "GymExercise.dc.html",
-    "GymNewExercise.dc.html",
-    "GymGroup.dc.html",
-    "GymHistory.dc.html",
-    "GymSetNote.dc.html",
-    "GymImport.dc.html",
     "GymPick.dc.html",
+    "GymExercise.dc.html",
+    "GymSetNote.dc.html",
+    "GymNewExercise.dc.html",
+    "GymEditExercise.dc.html",
+    "GymExHistory.dc.html",
+    "GymHistory.dc.html",
+    "GymRecords.dc.html",
+    "GymGroup.dc.html",
     "GymSession.dc.html",
     "GymFinish.dc.html",
-    "GymJournal.dc.html",
+    "GymImport.dc.html",
     "GymStats.dc.html",
-    "GymRecords.dc.html",
-    "GymExHistory.dc.html",
-    "GymEditExercise.dc.html",
-    "GymVisual3.dc.html",
-    "IntervalsProgress.dc.html",
-    "EditorV2.dc.html",
-    "NavA.dc.html",
-    "NavB.dc.html",
-    "NavC.dc.html",
-    "NavD.dc.html",
-    "NavE.dc.html",
-    "NavF.dc.html",
-    "NavG.dc.html"
+    "MainLight.dc.html",
+    "SeriesLight.dc.html",
+    "PlayerLight.dc.html",
+    "FinishLight.dc.html",
+    "ImportLight.dc.html",
+    "StatsLight.dc.html",
+    "SettingsLight.dc.html",
+    "PlayerDiscLandscapeLight.dc.html"
   ],
   "notes": {
-    "head": {
+    "home": {
       "x": 0,
-      "y": -260,
-      "text": "Dark mode",
+      "y": 0,
+      "text": "Home, Journal, Stats, Settings (bar D chosen for now)",
       "kind": "title1",
-      "maxW": 4150,
-      "w": 240
+      "maxW": 2780
     },
-    "lighthead": {
+    "intervals": {
       "x": 0,
-      "y": 1520,
+      "y": 1900,
+      "text": "Intervals",
+      "kind": "title1",
+      "maxW": 6014
+    },
+    "gym": {
+      "x": 0,
+      "y": 4000,
+      "text": "Gym",
+      "kind": "title1",
+      "maxW": 6500
+    },
+    "light": {
+      "x": 0,
+      "y": 5980,
       "text": "Light mode",
       "kind": "title1",
-      "maxW": 4150
-    },
-    "discland": {
-      "x": 0,
-      "y": 3320,
-      "text": "Player: landscape and live demo",
-      "kind": "title1",
-      "maxW": 2238
-    },
-    "gymhead": {
-      "x": 0,
-      "y": -3200,
-      "text": "Gym: strength log (proposal)",
-      "kind": "title1",
-      "maxW": 4620
-    },
-    "gymhead2": {
-      "x": 0,
-      "y": -5200,
-      "text": "Gym: more screens",
-      "kind": "title1",
-      "maxW": 2740
-    },
-    "visual": {
-      "x": 0,
-      "y": -6700,
-      "text": "Gym: what you trained",
-      "kind": "title1",
-      "maxW": 400
-    },
-    "editorv2": {
-      "x": 940,
-      "y": -6700,
-      "text": "Edit workout: proposal",
-      "kind": "title1",
-      "maxW": 400
-    },
-    "navopts": {
-      "x": 0,
-      "y": -8200,
-      "text": "Bottom bar: options",
-      "kind": "title1",
-      "maxW": 3210
+      "maxW": 4134
     }
   },
   "designSystems": [],
