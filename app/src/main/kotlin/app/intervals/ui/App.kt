@@ -75,6 +75,8 @@ fun App(vm: AppViewModel) {
                 Overlay.EditWorkout -> EditWorkoutScreen(vm)
                 is Overlay.EditSeries -> EditSeriesScreen(vm, top)
                 Overlay.Player -> vm.player?.let { app.intervals.player.PlayerScreen(it, settings.keepScreenOn) { it.stop() } }
+                is Overlay.GymLog -> app.intervals.ui.gym.GymLogScreen(vm, top.exerciseId, top.day)
+                is Overlay.GymPick -> app.intervals.ui.gym.GymPickScreen(vm, top.day)
                 Overlay.GymImport -> vm.gymImport?.let { app.intervals.ui.gym.GymImportScreen(it, { vm.cancelGymImport() }, { vm.confirmGymImport() }) }
                 Overlay.Finished -> vm.finished?.let { app.intervals.player.FinishedScreen(it) { note, values, repeat -> vm.saveSession(note, values, repeat) } }
                 null -> Unit

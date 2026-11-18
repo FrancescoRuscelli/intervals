@@ -131,6 +131,24 @@ class IntervalsRepository(
     /** The sets of [exerciseId] on the last day it was done before [day]. */
     suspend fun lastSets(exerciseId: Long, day: String): List<GymSet> = gymDao.lastBefore(exerciseId, day).map { it.toSet() }
 
+    fun exerciseDay(exerciseId: Long, day: String): Flow<List<GymSet>> =
+        gymDao.observeExerciseDay(exerciseId, day).map { list -> list.map { it.toSet() } }
+
+    /** Exercise id → the last day it was done. */
+    val lastUsed: Flow<Map<Long, String>> = gymDao.observeLastUsed().map { list -> list.associate { it.exerciseId to it.day } }
+
+    /** Adds sets at the end of their day, in order; returns their ids. */
+    suspend fun addSets(sets: List<GymSet>): List<Long> = db.withTransaction {
+        sets.map { s -> gymDao.insertSet(s.copy(id = 0, order = gymDao.nextPosition(s.day)).toEntity()) }
+    }
+
+    suspend fun updateSet(set: GymSet) = gymDao.updateSet(set.toEntity())
+
+    suspend fun deleteSet(id: Long) = gymDao.deleteSet(id)
+
+    /** Returns the new exercise's id. */
+    suspend fun addExercise(exercise: Exercise): Long = gymDao.insertExercise(exercise.copy(id = 0).toEntity())
+
     suspend fun gymSetCount(): Int = gymDao.countSets()
 
     /** Replaces the whole gym log with an import (exercises keep the importer's ids). Returns the sets written. */

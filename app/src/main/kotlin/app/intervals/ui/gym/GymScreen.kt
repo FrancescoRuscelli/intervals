@@ -4,6 +4,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -127,6 +128,9 @@ private fun DayPage(vm: AppViewModel, day: String, index: Int, count: Int, pager
             if (sets?.isEmpty() == true) item {
                 Text("Nothing logged on this day.", color = p.muted, fontSize = 15.sp, modifier = Modifier.padding(top = 8.dp))
             }
+            if (sets != null) item {
+                BigButton("+ Add exercise", p.tint, p.accentText, { vm.openGymPick(day) })
+            }
         }
     }
 }
@@ -163,7 +167,10 @@ private fun ExerciseCard(vm: AppViewModel, ex: Exercise, sets: List<GymSet>, day
     val cols = columns(ex)
     val rows = remember(sets) { dayRows(sets) }
     val last by produceState<List<GymSet>?>(null, ex.id, day) { value = vm.lastSets(ex.id, day) }
-    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(p.surface).padding(14.dp)) {
+    Column(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(p.surface)
+            .clickable(onClickLabel = "Log ${ex.name}") { vm.openGymLog(ex.id, day) }.padding(14.dp),
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(ex.name, color = p.text, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
             Text(if (sets.size == 1) "1 set" else "${sets.size} sets", color = p.pink, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
@@ -218,7 +225,7 @@ private fun cell(f: GymField, s: GymSet, ex: Exercise): String = when (f) {
     GymField.BANDS -> ""
 }
 
-private fun bandColor(b: Band) = when (b) {
+internal fun bandColor(b: Band) = when (b) {
     Band.GREEN -> Color(0xFF43A047)
     Band.PURPLE -> Color(0xFF8E44D8)
     Band.BLACK -> Color(0xFF16181C)

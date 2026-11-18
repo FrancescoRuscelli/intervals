@@ -122,6 +122,28 @@ interface GymDao {
     @Query("SELECT COUNT(*) FROM gym_sets")
     suspend fun countSets(): Int
 
+    @Query("SELECT * FROM gym_sets WHERE exerciseId = :exerciseId AND day = :day ORDER BY position, id")
+    fun observeExerciseDay(exerciseId: Long, day: String): Flow<List<GymSetEntity>>
+
+    /** When each exercise was last done. */
+    @Query("SELECT exerciseId, MAX(day) AS day FROM gym_sets GROUP BY exerciseId")
+    fun observeLastUsed(): Flow<List<ExerciseLastDay>>
+
+    @Query("SELECT COALESCE(MAX(position), -1) + 1 FROM gym_sets WHERE day = :day")
+    suspend fun nextPosition(day: String): Int
+
+    @Insert
+    suspend fun insertSet(set: GymSetEntity): Long
+
+    @Update
+    suspend fun updateSet(set: GymSetEntity)
+
+    @Query("DELETE FROM gym_sets WHERE id = :id")
+    suspend fun deleteSet(id: Long)
+
+    @Insert
+    suspend fun insertExercise(exercise: ExerciseEntity): Long
+
     @Insert
     suspend fun insertExercises(exercises: List<ExerciseEntity>)
 
@@ -131,3 +153,5 @@ interface GymDao {
     @Query("DELETE FROM exercises")
     suspend fun deleteAllExercises()
 }
+
+data class ExerciseLastDay(val exerciseId: Long, val day: String)

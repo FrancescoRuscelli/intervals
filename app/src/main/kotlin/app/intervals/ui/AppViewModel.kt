@@ -47,6 +47,8 @@ sealed interface Overlay {
     data object Player : Overlay
     data object Finished : Overlay
     data object GymImport : Overlay
+    data class GymLog(val exerciseId: Long, val day: String) : Overlay
+    data class GymPick(val day: String) : Overlay
     /** [pos] null = a new series. */
     data class EditSeries(val pos: SeriesPos?, val template: Series) : Overlay
 }
@@ -289,6 +291,46 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun gymDay(day: String): Flow<List<GymSet>> = repo.gymDay(day)
 
     fun gymDaysBetween(from: String, to: String): Flow<List<String>> = repo.gymDaysBetween(from, to)
+
+    /** Exercise id → last day done, for "recent" in the picker. */
+    val lastUsed: StateFlow<Map<Long, String>> = repo.lastUsed.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
+    fun exerciseDay(exerciseId: Long, day: String): Flow<List<GymSet>> = repo.exerciseDay(exerciseId, day)
+
+    fun openGymLog(exerciseId: Long, day: String) { overlays += Overlay.GymLog(exerciseId, day) }
+
+    fun openGymPick(day: String) { overlays += Overlay.GymPick(day) }
+
+    /** Rest clock: when the last set was logged today (SystemClock.elapsedRealtime); null = not resting. */
+    var lastSetAt by mutableStateOf<Long?>(null)
+        private set
+
+    /** Logs sets (one, or one per side); on today, the real rest since the last set is saved on the first one. */
+    fun logSets(sets: List<GymSet>) = viewModelScope.launch {
+        val now = android.os.SystemClock.elapsedRealtime()
+        val today = sets.firstOrNull()?.day == java.time.LocalDate.now().toString()
+        // shortcut: the clock lives in memory, so a rest across an app restart is not saved
+        val rest = lastSetAt?.let { ((now - it) / 1000).toInt() }?.takeIf { today && it < 3 * 3600 }
+        repo.addSets(sets.mapIndexed { i, s -> s.copy(restSec = if (i == 0) rest else null) })
+        if (today) lastSetAt = now
+    }
+
+    fun updateGymSet(set: GymSet) = viewModelScope.launch { repo.updateSet(set) }
+
+    fun deleteGymSet(id: Long) = viewModelScope.launch { repo.deleteSet(id) }
+
+    /** Creates an exercise and opens its log in place of the picker. */
+    fun createExercise(exercise: Exercise, day: String) = viewModelScope.launch {
+        val id = repo.addExercise(exercise)
+        overlays.removeAll { it is Overlay.GymPick }
+        openGymLog(id, day)
+    }
+
+    /** Picked an exercise: its log replaces the picker. */
+    fun pickExercise(exerciseId: Long, day: String) {
+        overlays.removeAll { it is Overlay.GymPick }
+        openGymLog(exerciseId, day)
+    }
 
     /** A day the Gym tab should show when it opens (e.g. tapped in the Journal); cleared once shown. */
     var gymFocusDay by mutableStateOf<String?>(null)

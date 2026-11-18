@@ -222,7 +222,14 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
   - [x] Import preview: days / sets / exercises, comments → data, pairs, skipped; replaces the gym log only on Import (warns how many sets)
   - [x] Gym tab: one page per day (today first, older to the left: swipe or arrows); a card per exercise with
         Set · kg · reps table, identical sets ×N, L R labels, band dots, notes, "last time N sets · top set"
-  - [ ] NEXT: log screen (G2: tiles − / +, Log set, rest clock counting up, sides), add exercise or group, edit a set
+  - [x] Log screen (G2): last time in the header; L / R / Both (after a set it switches side; Both writes L and R);
+        tiles with − / + (weight by the exercise's step, reps 1, time 5 s; tap the number to type), band dots (tap = ×1, ×2, none);
+        Log set; rest clock counting up from the last set today, buzz once at the rest target (VIBRATE), real rest saved on the set;
+        the day's sets ("rested 2:10", note); tap a set: quick tags (Max, Bad form, Assisted, Failed, +½ rep), note, edit values, delete (asks)
+        - shortcut: the rest clock is in memory, a rest across an app restart is not saved
+  - [x] Add exercise (G9 without groups): search, recent first, all A–Z, "+ New exercise" (name, fields, left/right apart, assist)
+  - [x] Gym day: tap a card = log that exercise on that day (past days editable); "+ Add exercise" at the end
+  - [x] Journal: swipe between months (one per swipe), the selected day follows
   - [x] Journal: purple dot on gym days (pink / yellow = interval sessions), a gym day counts as a session and a day trained;
         the day's Gym card lists each exercise with its sets ("90 × 5 (5 sets)") and the notes; tap = that day in the Gym tab
   - [ ] then: history / graph / records per exercise, edit exercise (merge, delete), groups, gym in Stats, Journal filter All / Gym / Intervals
