@@ -57,6 +57,9 @@ import app.intervals.ui.NumberStyle
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
@@ -80,6 +83,12 @@ fun JournalScreen(vm: AppViewModel) {
     val flow = remember(from, to) { vm.sessions(from, to) }
     val sessions by flow.collectAsState(initial = emptyList())
     val byDay = sessions.groupBy { it.day(zone) }
+    val gymFlow = remember(month) { vm.gymDaysBetween(month.atDay(1).toString(), month.plusMonths(1).atDay(1).toString()) }
+    val gymDays by gymFlow.collectAsState(initial = emptyList())
+    val gymDates = remember(gymDays) { gymDays.map(LocalDate::parse).toSet() }
+    val gymDayFlow = remember(dayText) { vm.gymDay(dayText) }
+    val gymOfDay by gymDayFlow.collectAsState(initial = emptyList())
+    val exercises by vm.exercises.collectAsState()
     val sum = summary(sessions, zone)
     var editing by remember { mutableStateOf<Session?>(null) }
     var deleting by remember { mutableStateOf<Session?>(null) }
@@ -99,12 +108,13 @@ fun JournalScreen(vm: AppViewModel) {
         }
         item {
             Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Tile("Sessions", "${sum.sessions}", Modifier.weight(1f))
-                Tile("Days trained", "${sum.days}", Modifier.weight(1f))
+                // a gym day counts as one session
+                Tile("Sessions", "${sum.sessions + gymDays.size}", Modifier.weight(1f))
+                Tile("Days trained", "${(byDay.keys + gymDates).size}", Modifier.weight(1f))
                 Tile("Time", hm(sum.totalSec), Modifier.weight(1f))
             }
         }
-        item { Calendar(month, today, selectedDay, byDay) { dayText = it.toString() } }
+        item { Calendar(month, today, selectedDay, byDay, gymDates) { dayText = it.toString() } }
         item {
             Text(
                 selectedDay.format(DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.ENGLISH)),
@@ -112,7 +122,11 @@ fun JournalScreen(vm: AppViewModel) {
             )
         }
         val ofDay = byDay[selectedDay].orEmpty().sortedBy { it.startedAt }
-        if (ofDay.isEmpty()) item {
+        if (gymOfDay.isNotEmpty()) item(key = "gym") {
+            GymDayCard(gymOfDay, exercises.associateBy { it.id }) { vm.openGymDay(dayText) }
+            Spacer(Modifier.height(8.dp))
+        }
+        if (ofDay.isEmpty() && gymOfDay.isEmpty()) item {
             Text(
                 if (selectedDay == today) "Nothing yet today. Sessions appear here when you finish or stop a workout."
                 else "No sessions this day.",
@@ -162,7 +176,7 @@ private fun Tile(label: String, value: String, modifier: Modifier) {
 }
 
 @Composable
-private fun Calendar(month: YearMonth, today: LocalDate, selected: LocalDate, byDay: Map<LocalDate, List<Session>>, onPick: (LocalDate) -> Unit) {
+private fun Calendar(month: YearMonth, today: LocalDate, selected: LocalDate, byDay: Map<LocalDate, List<Session>>, gym: Set<LocalDate>, onPick: (LocalDate) -> Unit) {
     val p = LocalPalette.current
     Column(
         Modifier.padding(top = 12.dp).fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(p.surface)
@@ -177,7 +191,7 @@ private fun Calendar(month: YearMonth, today: LocalDate, selected: LocalDate, by
         val cells = List(lead) { null } + (1..month.lengthOfMonth()).map { month.atDay(it) }
         cells.chunked(7).forEach { week ->
             Row(Modifier.fillMaxWidth()) {
-                week.forEach { d -> DayCell(d, today, selected, byDay[d].orEmpty(), onPick, Modifier.weight(1f)) }
+                week.forEach { d -> DayCell(d, today, selected, byDay[d].orEmpty(), d in gym, onPick, Modifier.weight(1f)) }
                 repeat(7 - week.size) { Spacer(Modifier.weight(1f)) }
             }
         }
@@ -185,7 +199,7 @@ private fun Calendar(month: YearMonth, today: LocalDate, selected: LocalDate, by
 }
 
 @Composable
-private fun DayCell(d: LocalDate?, today: LocalDate, selected: LocalDate, sessions: List<Session>, onPick: (LocalDate) -> Unit, modifier: Modifier) {
+private fun DayCell(d: LocalDate?, today: LocalDate, selected: LocalDate, sessions: List<Session>, gym: Boolean, onPick: (LocalDate) -> Unit, modifier: Modifier) {
     val p = LocalPalette.current
     Box(modifier.height(46.dp), contentAlignment = Alignment.Center) {
         if (d == null) return@Box
@@ -199,9 +213,11 @@ private fun DayCell(d: LocalDate?, today: LocalDate, selected: LocalDate, sessio
             horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
         ) {
             Text("${d.dayOfMonth}", color = if (sel) p.onAccent else if (future) p.faint else p.text, fontSize = 14.sp,
-                fontWeight = if (sessions.isNotEmpty() || sel) FontWeight.Bold else FontWeight.Normal)
+                fontWeight = if (sessions.isNotEmpty() || gym || sel) FontWeight.Bold else FontWeight.Normal)
             Row(Modifier.height(6.dp).padding(top = 1.dp), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                sessions.take(3).forEach { s ->
+                // purple = gym, then the interval sessions (pink completed, yellow stopped)
+                if (gym) Box(Modifier.size(5.dp).clip(CircleShape).background(if (sel) p.onAccent else p.accentText))
+                sessions.take(if (gym) 2 else 3).forEach { s ->
                     Box(Modifier.size(5.dp).clip(CircleShape).background(
                         if (sel) p.onAccent else if (s.completed) p.pink else p.yellow,
                     ))
@@ -236,6 +252,38 @@ private fun SessionCard(s: Session, zone: ZoneId, onNote: () -> Unit, onLongPres
                 color = if (s.note.isBlank()) p.accentText else p.muted, fontSize = 13.sp,
                 fontStyle = if (s.note.isBlank()) FontStyle.Normal else FontStyle.Italic,
             )
+        }
+    }
+}
+
+/** The gym sets of a day as one card: each exercise with its rows ("80 × 5 ×3, 85 × 3"), then the notes. Tap = open in Gym. */
+@Composable
+private fun GymDayCard(sets: List<app.intervals.core.GymSet>, exercises: Map<Long, app.intervals.core.Exercise>, onOpen: () -> Unit) {
+    val p = LocalPalette.current
+    val byExercise = sets.groupBy { it.exerciseId }
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(p.surface).clickable(onClick = onOpen).padding(14.dp),
+    ) {
+        Box(Modifier.width(5.dp).height(56.dp).clip(RoundedCornerShape(3.dp)).background(p.accent))
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Gym", color = p.text, fontSize = 15.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                Text("${byExercise.size} exercises · ${sets.size} sets", color = p.muted, fontSize = 12.sp)
+            }
+            byExercise.forEach { (id, exSets) ->
+                val ex = exercises[id] ?: return@forEach
+                val rows = app.intervals.core.dayRows(exSets).joinToString(", ") { r ->
+                    (if (r.set.side != null) r.label + " " else "") + r.set.summary(ex) + if (r.count > 1) " (${r.count} sets)" else ""
+                }
+                Text(buildAnnotatedString {
+                    withStyle(SpanStyle(color = p.text, fontWeight = FontWeight.SemiBold)) { append(ex.name) }
+                    append("  $rows")
+                }, color = p.soft, fontSize = 13.sp)
+            }
+            sets.map { it.note }.filter { it.isNotEmpty() }.distinct().forEach {
+                Text("“$it”", color = p.muted, fontSize = 13.sp, fontStyle = FontStyle.Italic)
+            }
         }
     }
 }

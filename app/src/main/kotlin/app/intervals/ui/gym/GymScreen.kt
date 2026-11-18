@@ -27,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -83,6 +84,11 @@ fun GymScreen(vm: AppViewModel) {
     val pages = remember(list, today) { if (list.first() == today) list else listOf(today) + list }
     val byId = remember(exercises) { exercises.associateBy { it.id } }
     val pager = rememberPagerState { pages.size }
+    LaunchedEffect(vm.gymFocusDay, pages) {
+        val i = vm.gymFocusDay?.let(pages::indexOf) ?: return@LaunchedEffect
+        if (i >= 0) pager.scrollToPage(i)
+        vm.gymFocusDay = null
+    }
     HorizontalPager(pager, reverseLayout = true, key = { pages[it] }, modifier = Modifier.fillMaxSize()) { i ->
         DayPage(vm, pages[i], i, pages.size, pager, byId)
     }

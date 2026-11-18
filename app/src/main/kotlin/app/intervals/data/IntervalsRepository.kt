@@ -124,6 +124,8 @@ class IntervalsRepository(
     /** Days with sets, newest first (yyyy-MM-dd). */
     val gymDays: Flow<List<String>> = gymDao.observeDays()
 
+    fun gymDaysBetween(from: String, to: String): Flow<List<String>> = gymDao.observeDaysBetween(from, to)
+
     fun gymDay(day: String): Flow<List<GymSet>> = gymDao.observeDay(day).map { list -> list.map { it.toSet() } }
 
     /** The sets of [exerciseId] on the last day it was done before [day]. */

@@ -112,6 +112,10 @@ interface GymDao {
     )
     suspend fun lastBefore(exerciseId: Long, day: String): List<GymSetEntity>
 
+    /** Days with sets in [from, to) (yyyy-MM-dd), e.g. one month for the calendar. */
+    @Query("SELECT DISTINCT day FROM gym_sets WHERE day >= :from AND day < :to")
+    fun observeDaysBetween(from: String, to: String): Flow<List<String>>
+
     @Query("SELECT * FROM gym_sets ORDER BY day, position, id")
     suspend fun getSets(): List<GymSetEntity>
 

@@ -288,6 +288,16 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun gymDay(day: String): Flow<List<GymSet>> = repo.gymDay(day)
 
+    fun gymDaysBetween(from: String, to: String): Flow<List<String>> = repo.gymDaysBetween(from, to)
+
+    /** A day the Gym tab should show when it opens (e.g. tapped in the Journal); cleared once shown. */
+    var gymFocusDay by mutableStateOf<String?>(null)
+
+    fun openGymDay(day: String) {
+        gymFocusDay = day
+        tab = Tab.GYM
+    }
+
     suspend fun lastSets(exerciseId: Long, day: String): List<GymSet> = repo.lastSets(exerciseId, day)
 
     /** The FitNotes import waiting for the user to press Import. */

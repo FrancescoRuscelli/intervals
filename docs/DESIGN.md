@@ -223,6 +223,8 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
   - [x] Gym tab: one page per day (today first, older to the left: swipe or arrows); a card per exercise with
         Set · kg · reps table, identical sets ×N, L R labels, band dots, notes, "last time N sets · top set"
   - [ ] NEXT: log screen (G2: tiles − / +, Log set, rest clock counting up, sides), add exercise or group, edit a set
-  - [ ] then: history / graph / records per exercise, edit exercise (merge, delete), groups, gym in Journal and Stats
+  - [x] Journal: purple dot on gym days (pink / yellow = interval sessions), a gym day counts as a session and a day trained;
+        the day's Gym card lists each exercise with its sets ("90 × 5 (5 sets)") and the notes; tap = that day in the Gym tab
+  - [ ] then: history / graph / records per exercise, edit exercise (merge, delete), groups, gym in Stats, Journal filter All / Gym / Intervals
   - not yet: groups suggested from the import, records recomputed (FitNotes PR flags not imported)
 - [ ] App icon (to decide: e.g. purple disc with segmented ring)
