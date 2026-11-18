@@ -180,7 +180,7 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
     `IntervalsRepository` is the only way the screens touch data (add / edit / duplicate below / reorder / delete workouts,
     import, sessions per month, notes, last values for the next session, settings, export / restore backup).
     Deleting a workout keeps its sessions (unlinked, name kept). A bad backup file changes nothing.
-  - Tests: 16 in `core`, 8 database tests in `app` (Robolectric, run on the PC)
+  - Tests: 16 in `core`, 8 database tests in `app` (Robolectric, run on the PC); with the gym (2026-11-18): 40 in `core`, 12 in `app`
 - [ ] Step 4: screens (in progress)
   - [x] Theme (palette, light / dark / system), line icons from the mockup paths, 5-tab bottom bar
   - [x] Intervals list: search, tag chips, cards (total, round bar, info), long-press menu (edit, duplicate, move, delete), import Hybrid CSV, empty state
@@ -194,7 +194,8 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
         with logged values and note (tap = edit note, long-press = delete)
   - [x] Stats: Week / Month / Year, time · sessions · completed %, minutes chart (current period purple), most done workouts
   - [x] Workout cards: "Last: Tue · 4/4 · hang · Load L 10 · R 8 kg" (yellow dot if stopped), "Never done yet"
-  - [ ] NEXT: Gym 1 (data model + FitNotes .fitnotes importer), import preview screen; "last time" on cards; swipe-to-delete in the editor
+  - [x] Gym 1: data model + FitNotes `.fitnotes` importer + import preview (Settings or empty Gym tab)
+  - [ ] swipe-to-delete in the editor
 - [ ] Step 5: player (in progress)
   - [x] core: play state at any time, cues (names, 3-2-1 beeps, end), previous / next (tests)
   - [x] player screen: disc (series ring sized by time, rounded ends, current thicker, dot; rounds ring inside emptying;
@@ -208,5 +209,20 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
         rest between rounds editing of logged values (4b), set per round
 - [ ] Step 6: install on the Pixel 8a, real workout test, energy profiling
 - [x] Gym mockups G1–G16 (placement: own tab)
-- [ ] Gym: data model, database, screens, FitNotes importer (after the interval screens? to decide)
+- [ ] Gym (in progress, 2026-11-18)
+  - [x] `core`: `Exercise` (fields, per side, assist, weight step, rest target, notes), `GymSet` (day, order, side, weight, reps,
+        time, distance, bands, note, real rest), `Band`; `dayRows` (identical sets in a row = one row ×N), top set, set text
+  - [x] FitNotes importer (`FitNotesImport` in core, `FitNotesReader` reads the SQLite file in app): (Left)/(Right) pairs → one
+        per-side exercise, one-side-only ones per-side too; comments → side / bands (emojis win over color words) / note as written;
+        unused exercises skipped; fields from the FitNotes type (0 weight+reps, 3 weight+time, 7 reps, 9 time) + bands;
+        weight step and rest from FitNotes; assist guessed from the name ("Deloaded", "Assisted").
+        Real backup (2026-11-18): 275 days, 5,233 sets, 65 exercises (87 unused skipped), 11 pairs, 4 one-sided;
+        comments: 377 sides, 161 bands, 26 notes. Check: `./gradlew :app:testDebugUnitTest -Pfitnotes=/path/to/file.fitnotes`
+  - [x] Database v2 (tables `exercises`, `gym_sets`; Room auto-migration from v1, data kept); gym in backup / restore
+  - [x] Import preview: days / sets / exercises, comments → data, pairs, skipped; replaces the gym log only on Import (warns how many sets)
+  - [x] Gym tab: one page per day (today first, older to the left: swipe or arrows); a card per exercise with
+        Set · kg · reps table, identical sets ×N, L R labels, band dots, notes, "last time N sets · top set"
+  - [ ] NEXT: log screen (G2: tiles − / +, Log set, rest clock counting up, sides), add exercise or group, edit a set
+  - [ ] then: history / graph / records per exercise, edit exercise (merge, delete), groups, gym in Journal and Stats
+  - not yet: groups suggested from the import, records recomputed (FitNotes PR flags not imported)
 - [ ] App icon (to decide: e.g. purple disc with segmented ring)

@@ -63,7 +63,7 @@ fun App(vm: AppViewModel) {
                 Box(Modifier.padding(inner)) {
                     when (vm.tab) {
                         Tab.INTERVALS -> IntervalsListScreen(vm)
-                        Tab.GYM -> ComingSoon("Gym", "The strength log comes after the interval screens.")
+                        Tab.GYM -> app.intervals.ui.gym.GymScreen(vm)
                         Tab.JOURNAL -> app.intervals.ui.journal.JournalScreen(vm)
                         Tab.STATS -> app.intervals.ui.stats.StatsScreen(vm)
                         Tab.SETTINGS -> app.intervals.ui.settings.SettingsScreen(vm)
@@ -75,6 +75,7 @@ fun App(vm: AppViewModel) {
                 Overlay.EditWorkout -> EditWorkoutScreen(vm)
                 is Overlay.EditSeries -> EditSeriesScreen(vm, top)
                 Overlay.Player -> vm.player?.let { app.intervals.player.PlayerScreen(it, settings.keepScreenOn) { it.stop() } }
+                Overlay.GymImport -> vm.gymImport?.let { app.intervals.ui.gym.GymImportScreen(it, { vm.cancelGymImport() }, { vm.confirmGymImport() }) }
                 Overlay.Finished -> vm.finished?.let { app.intervals.player.FinishedScreen(it) { note, values, repeat -> vm.saveSession(note, values, repeat) } }
                 null -> Unit
             }
@@ -105,19 +106,5 @@ private fun BottomBar(current: Tab, onSelect: (Tab) -> Unit) {
                 ),
             )
         }
-    }
-}
-
-@Composable
-private fun ComingSoon(title: String, text: String) {
-    val p = LocalPalette.current
-    Column(
-        Modifier.fillMaxSize().padding(24.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(title, color = p.text, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(8.dp))
-        Text(text, color = p.muted, fontSize = 15.sp)
     }
 }

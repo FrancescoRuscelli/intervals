@@ -67,6 +67,7 @@ fun SettingsScreen(vm: AppViewModel) {
             if (pendingRestore == null) vm.message = "Could not read the file"
         }
     }
+    val pickFitNotes = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let(vm::previewFitNotes) }
     val pickCsv = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
             val text = runCatching { context.contentResolver.openInputStream(uri)?.use { it.readBytes().decodeToString() } }.getOrNull()
@@ -109,7 +110,8 @@ fun SettingsScreen(vm: AppViewModel) {
 
         Group("Your data") {
             ActionRow("Import from Hybrid Interval Timer", "The .csv backup of the old app") { pickCsv.launch(arrayOf("text/*", "*/*")) }
-            ActionRow("Back up to a file", "Workouts, journal and settings, as one .json file") {
+            ActionRow("Import from FitNotes", "The .fitnotes backup (keeps your comments); replaces the gym log") { pickFitNotes.launch(arrayOf("*/*")) }
+            ActionRow("Back up to a file", "Workouts, journal, gym and settings, as one .json file") {
                 saveBackup.launch("intervals-backup-${LocalDate.now()}.json")
             }
             ActionRow("Restore from a file", "Replaces everything in the app") { pickRestore.launch(arrayOf("application/json", "*/*")) }

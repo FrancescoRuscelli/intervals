@@ -8,6 +8,11 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import app.intervals.core.AppSettings
+import app.intervals.core.Exercise
+import app.intervals.core.FitNotesImport
+import app.intervals.core.GymSet
+import app.intervals.data.FitNotesReader
+import app.intervals.data.NotFitNotesException
 import app.intervals.core.Block
 import app.intervals.core.HybridImport
 import app.intervals.core.LoggedValue
@@ -30,6 +35,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 
 enum class Tab { INTERVALS, GYM, JOURNAL, STATS, SETTINGS }
 
@@ -38,9 +46,13 @@ sealed interface Overlay {
     data object EditWorkout : Overlay
     data object Player : Overlay
     data object Finished : Overlay
+    data object GymImport : Overlay
     /** [pos] null = a new series. */
     data class EditSeries(val pos: SeriesPos?, val template: Series) : Overlay
 }
+
+/** A FitNotes import to confirm; [existingSets] already in the app are replaced. */
+data class GymImportPreview(val result: FitNotesImport.Result, val fileName: String, val existingSets: Int)
 
 /** The workout being edited: [id] null for a new one. */
 data class Draft(val id: Long?, val workout: Workout, val original: Workout) {
@@ -70,6 +82,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         if (overlays.last() == Overlay.Player || overlays.last() == Overlay.Finished) return true // handled by those screens
         val top = overlays.removeAt(overlays.lastIndex)
         if (top == Overlay.EditWorkout) draft = null
+        if (top == Overlay.GymImport) gymImport = null
         return true
     }
 
@@ -265,5 +278,64 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         } catch (e: Exception) {
             "Not restored: ${e.message ?: "the file is not an Intervals backup"}. Nothing was changed."
         }
+    }
+
+    // ---- gym ----
+
+    val exercises: StateFlow<List<Exercise>> = repo.exercises.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    /** Days with sets, newest first; null while loading. */
+    val gymDays: StateFlow<List<String>?> = repo.gymDays.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    fun gymDay(day: String): Flow<List<GymSet>> = repo.gymDay(day)
+
+    suspend fun lastSets(exerciseId: Long, day: String): List<GymSet> = repo.lastSets(exerciseId, day)
+
+    /** The FitNotes import waiting for the user to press Import. */
+    var gymImport by mutableStateOf<GymImportPreview?>(null)
+        private set
+
+    /** Reads a FitNotes backup and shows what it would import; nothing is changed yet. */
+    fun previewFitNotes(uri: android.net.Uri) = viewModelScope.launch {
+        val app = getApplication<android.app.Application>()
+        val result = try {
+            withContext(Dispatchers.IO) {
+                // SQLite needs a real file: copy the picked one to the cache, read it, delete it
+                val tmp = java.io.File.createTempFile("fitnotes", ".db", app.cacheDir)
+                try {
+                    app.contentResolver.openInputStream(uri)?.use { input -> tmp.outputStream().use { input.copyTo(it) } }
+                        ?: throw NotFitNotesException("Could not read the file")
+                    FitNotesImport.convert(FitNotesReader.read(tmp))
+                } finally {
+                    tmp.delete()
+                }
+            }
+        } catch (e: NotFitNotesException) {
+            message = e.message
+            return@launch
+        } catch (e: java.io.IOException) {
+            message = "Could not read the file"
+            return@launch
+        }
+        if (result.sets.isEmpty()) {
+            message = "Nothing to import: the FitNotes backup has no sets"
+            return@launch
+        }
+        val name = app.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)
+            ?.use { c -> if (c.moveToFirst()) c.getString(0) else null } ?: "FitNotes backup"
+        gymImport = GymImportPreview(result, name, repo.gymSetCount())
+        overlays += Overlay.GymImport
+    }
+
+    fun confirmGymImport() = viewModelScope.launch {
+        val preview = gymImport ?: return@launch
+        val n = repo.replaceGym(preview.result)
+        cancelGymImport()
+        tab = Tab.GYM
+        message = "Imported ${preview.result.days} days, $n sets, ${preview.result.exercises.size} exercises"
+    }
+
+    fun cancelGymImport() {
+        gymImport = null
+        overlays.remove(Overlay.GymImport)
     }
 }
