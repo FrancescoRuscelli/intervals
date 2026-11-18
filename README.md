@@ -32,10 +32,10 @@ export JAVA_HOME=/snap/android-studio/current/jbr      # path for the snap insta
 ```powershell
 $env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
 .\gradlew.bat :core:test :app:testDebugUnitTest :app:assembleDebug
-& "$env:LOCALAPPDATA\Android\Sdk\platform-toolsdb.exe" install -r appuild\outputspk\debugpp-debug.apk
+& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" install -r app\build\outputs\apk\debug\app-debug.apk
 ```
 
-`local.properties`: `sdk.dir=C\:\Users\<you>\AppData\Local\Android\Sdk`. The SDK can be installed without the
+`local.properties`: `sdk.dir=C:\\Users\\<you>\\AppData\\Local\\Android\\Sdk` (double backslashes). The SDK can be installed without the
 Android Studio wizard: unzip the command-line tools to `Sdk\cmdline-tools\latest`, then
 `android sdk install platforms/android-37.0 build-tools/37.0.0 platform-tools`.
 Don't commit `gradle/gradle-daemon-jvm.properties` if Gradle creates it.
