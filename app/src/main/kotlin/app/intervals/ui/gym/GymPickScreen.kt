@@ -1,5 +1,11 @@
 package app.intervals.ui.gym
 
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -54,6 +60,8 @@ fun GymPickScreen(vm: AppViewModel, day: String) {
     val q = query.trim()
     val found = exercises.filter { q.isNotEmpty() && it.name.contains(q, ignoreCase = true) }
     val recent = exercises.filter { it.id in lastUsed }.sortedByDescending { lastUsed[it.id] }.take(8)
+    val groups by vm.groups.collectAsStateWithLifecycle()
+    val names = exercises.associate { it.id to it.name }
 
     Column(Modifier.fillMaxSize().background(p.bg).statusBarsPadding().navigationBarsPadding()) {
         Row(Modifier.fillMaxWidth().padding(start = 4.dp, end = 16.dp, top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -69,6 +77,35 @@ fun GymPickScreen(vm: AppViewModel, day: String) {
                         modifier = Modifier.fillMaxWidth().clickable { creating = q }.padding(vertical = 14.dp, horizontal = 4.dp))
                 }
             } else {
+                item {
+                    Row(Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                        SectionTitle("Start a group", Modifier.weight(1f))
+                        Text("+ New group", color = p.accentText, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.clickable { vm.editGroup(null) }.padding(6.dp))
+                    }
+                }
+                if (groups.isEmpty()) item {
+                    Text("Groups are exercises you do together, e.g. Legs: Squat · Deadlift. Make one with + New group.",
+                        color = p.faint, fontSize = 13.sp, modifier = Modifier.padding(bottom = 8.dp))
+                }
+                items(groups, key = { "g" + it.id }) { g ->
+                    Row(
+                        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(p.group)
+                            .clickable(onClickLabel = "Start ${g.name}") { vm.startGroup(g.id, day) }.padding(start = 10.dp, top = 8.dp, bottom = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Box(Modifier.size(34.dp).clip(CircleShape).background(p.accent), contentAlignment = Alignment.Center) {
+                            Icon(AppIcons.Play, null, tint = p.onAccent, modifier = Modifier.size(14.dp))
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(g.name, color = p.text, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                            Text(g.items.mapNotNull { names[it.exerciseId] }.joinToString(" · "), color = p.muted, fontSize = 12.sp, maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                        }
+                        IconButton(onClick = { vm.editGroup(g.id) }) { Icon(AppIcons.Edit, "Edit ${g.name}", tint = p.muted, modifier = Modifier.size(18.dp)) }
+                    }
+                }
                 item {
                     Text("+ New exercise", color = p.accentText, fontSize = 16.sp, fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.fillMaxWidth().clickable { creating = "" }.padding(vertical = 14.dp, horizontal = 4.dp))

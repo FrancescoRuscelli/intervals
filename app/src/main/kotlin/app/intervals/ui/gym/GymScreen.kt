@@ -1,5 +1,6 @@
 package app.intervals.ui.gym
 
+import app.intervals.core.planLabel
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -107,6 +108,11 @@ private fun DayPage(vm: AppViewModel, day: String, index: Int, count: Int, pager
     val scope = rememberCoroutineScope()
     val sets by vm.gymDay(day).collectAsStateWithLifecycle(null)
     val groups = remember(sets) { sets.orEmpty().groupBy { it.exerciseId }.toList() }
+    val allGroups by vm.groups.collectAsStateWithLifecycle()
+    val active = vm.activeGroups[day]?.let { id -> allGroups.firstOrNull { it.id == id } }
+    // a started group: its exercises in order (logged or still to do), then the others logged that day
+    val inGroup = active?.items?.map { it.exerciseId }?.toSet().orEmpty()
+    val loggedById = groups.toMap()
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 4.dp, top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
@@ -122,10 +128,30 @@ private fun DayPage(vm: AppViewModel, day: String, index: Int, count: Int, pager
             }
         }
         LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            items(groups, key = { it.first }) { (id, exSets) ->
+            if (active != null) item(key = "group") {
+                Row(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(p.group).padding(start = 14.dp, end = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f).padding(vertical = 10.dp)) {
+                        Text(active.name, color = p.accentText, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                        val done = active.items.count { it.exerciseId in loggedById }
+                        Text("group · $done of ${active.items.size} exercises started", color = p.muted, fontSize = 12.sp)
+                    }
+                    androidx.compose.material3.TextButton(onClick = { vm.endGroup(day) }) { Text("End", color = p.accentText) }
+                }
+            }
+            active?.items?.forEach { item ->
+                val ex = byId[item.exerciseId] ?: return@forEach
+                val logged = loggedById[item.exerciseId]
+                item(key = "p" + item.exerciseId) {
+                    if (logged != null) ExerciseCard(vm, ex, logged, day, item) else PlannedCard(vm, ex, item, day)
+                }
+            }
+            items(groups.filter { it.first !in inGroup }, key = { it.first }) { (id, exSets) ->
                 byId[id]?.let { ExerciseCard(vm, it, exSets, day) }
             }
-            if (sets?.isEmpty() == true) item {
+            if (sets?.isEmpty() == true && active == null) item {
                 Text("Nothing logged on this day.", color = p.muted, fontSize = 15.sp, modifier = Modifier.padding(top = 8.dp))
             }
             if (sets != null) item {
@@ -162,7 +188,7 @@ private fun header(f: GymField, ex: Exercise) = when (f) {
 }
 
 @Composable
-private fun ExerciseCard(vm: AppViewModel, ex: Exercise, sets: List<GymSet>, day: String) {
+private fun ExerciseCard(vm: AppViewModel, ex: Exercise, sets: List<GymSet>, day: String, plan: app.intervals.core.GroupItem? = null) {
     val p = LocalPalette.current
     val cols = columns(ex)
     val rows = remember(sets) { dayRows(sets) }
@@ -173,8 +199,12 @@ private fun ExerciseCard(vm: AppViewModel, ex: Exercise, sets: List<GymSet>, day
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(ex.name, color = p.text, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-            Text(if (sets.size == 1) "1 set" else "${sets.size} sets", color = p.pink, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+            Text(
+                if (plan?.planSets != null) "${sets.size} of ${plan.planSets} sets" else if (sets.size == 1) "1 set" else "${sets.size} sets",
+                color = p.pink, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+            )
         }
+        if (plan != null && plan.planNote.isNotBlank()) Text(plan.planNote, color = p.muted, fontSize = 12.sp)
         Spacer(Modifier.height(8.dp))
         Row(Modifier.fillMaxWidth()) {
             Text("Set", color = p.muted, fontSize = 12.sp, modifier = Modifier.width(56.dp))
@@ -242,6 +272,27 @@ fun BandDots(bands: List<Band>) {
                 Modifier.size(13.dp).clip(CircleShape).background(bandColor(b))
                     .then(if (b == Band.BLACK) Modifier.border(1.5.dp, Color(0xFF5A5F68), CircleShape) else Modifier)
             )
+        }
+    }
+}
+
+/** An exercise of the started group not logged yet: its plan and last time; tap to log it. */
+@Composable
+private fun PlannedCard(vm: AppViewModel, ex: Exercise, item: app.intervals.core.GroupItem, day: String) {
+    val p = LocalPalette.current
+    val last by produceState<List<GymSet>?>(null, ex.id, day) { value = vm.lastSets(ex.id, day) }
+    Column(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).border(2.dp, p.line, RoundedCornerShape(16.dp))
+            .clickable(onClickLabel = "Log ${ex.name}") { vm.openGymLog(ex.id, day) }.padding(14.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(ex.name, color = p.soft, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+            Text("to do", color = p.muted, fontSize = 13.sp)
+        }
+        Text(item.planLabel(), color = p.muted, fontSize = 13.sp, modifier = Modifier.padding(top = 4.dp))
+        last?.let { l ->
+            val top = topSet(l, ex)
+            Text(if (top == null) "first time" else "last time ${l.size} sets · ${top.summary(ex)}", color = p.faint, fontSize = 12.sp, modifier = Modifier.padding(top = 2.dp))
         }
     }
 }

@@ -9,6 +9,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import app.intervals.core.AppSettings
 import app.intervals.core.Exercise
+import app.intervals.core.GymGroup
 import app.intervals.core.FitNotesImport
 import app.intervals.core.GymSet
 import app.intervals.data.FitNotesReader
@@ -50,6 +51,8 @@ sealed interface Overlay {
     data class GymLog(val exerciseId: Long, val day: String) : Overlay
     data class GymPick(val day: String) : Overlay
     data class EditExercise(val exerciseId: Long) : Overlay
+    /** [groupId] null = a new group. */
+    data class EditGroup(val groupId: Long?) : Overlay
     /** [pos] null = a new series. */
     data class EditSeries(val pos: SeriesPos?, val template: Series) : Overlay
 }
@@ -335,6 +338,36 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun openGymPick(day: String) { overlays += Overlay.GymPick(day) }
+
+    // ---- gym groups ----
+
+    val groups: StateFlow<List<GymGroup>> = repo.groups.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** The group started on each day (kept in memory: after an app restart the plan is gone, the sets stay). */
+    val activeGroups = androidx.compose.runtime.mutableStateMapOf<String, Long>()
+
+    fun startGroup(groupId: Long, day: String) {
+        activeGroups[day] = groupId
+        overlays.removeAll { it is Overlay.GymPick }
+        gymFocusDay = day
+    }
+
+    fun endGroup(day: String) { activeGroups.remove(day) }
+
+    fun editGroup(groupId: Long?) { overlays += Overlay.EditGroup(groupId) }
+
+    fun saveGroup(group: GymGroup) = viewModelScope.launch {
+        if (group.id == 0L) repo.addGroup(group) else repo.updateGroup(group)
+        overlays.removeAll { it is Overlay.EditGroup }
+        message = "Saved “${group.name}”"
+    }
+
+    fun deleteGroup(group: GymGroup) = viewModelScope.launch {
+        repo.deleteGroup(group.id)
+        activeGroups.entries.removeAll { it.value == group.id }
+        overlays.removeAll { it is Overlay.EditGroup }
+        message = "Deleted “${group.name}”"
+    }
 
     /** Rest clock: when the last set was logged today (SystemClock.elapsedRealtime); null = not resting. */
     var lastSetAt by mutableStateOf<Long?>(null)

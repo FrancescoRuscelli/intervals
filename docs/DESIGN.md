@@ -251,6 +251,12 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
   - [x] Journal filter chips All / Gym (purple) / Intervals (pink): dots, cards and totals follow
   - [x] Stats: Intervals · Gym · Both tabs; Gym = gym days / sets / exercises in the period, gym days per week (12 weeks, this week purple),
         recent records (30 days, each exercise's main graph), most trained (sets), real rest vs target (only rests logged in the app)
-  - [ ] then: groups (new table, start a group from Add exercise, plan per exercise, suggested from the import)
+  - [x] Groups (database v3, table `gym_groups`, in backups): Add exercise starts with "Start a group" (▶, exercises listed, pencil = edit)
+        and "+ New group"; group editor: name, exercises in order (up / down / remove, + Add exercise), optional plan per exercise
+        (sets and/or a note, "plan: 4 sets · 3 × 8 @ 40 kg"); starting a group shows on that day a group bar (End) and its exercises
+        in order: logged ones with "2 of 4 sets", the others as outlined "to do" cards with plan and last time; tap = log.
+        The FitNotes import creates suggested groups (exercises done together on ≥ 3 days, named after the main one, "Deadlift day").
+        Shortcut: the started group is kept in memory (after an app restart the plan bar is gone, the sets stay).
+  - [ ] next: G10-style group run (rest clock "next: …"), group colors / day strip in the Journal (chosen design), light mode for gym screens
   - not yet: groups suggested from the import, records recomputed (FitNotes PR flags not imported)
 - [ ] App icon (to decide: e.g. purple disc with segmented ring)
