@@ -343,6 +343,20 @@
       "w": 390,
       "h": 844,
       "title": "Bottom bar C · 4 tabs (only Settings moves to ⚙)"
+    },
+    "NavD.dc.html": {
+      "x": 1410,
+      "y": -7900,
+      "w": 390,
+      "h": 900,
+      "title": "Bottom bar D · Today · Intervals · Gym · Journal"
+    },
+    "NavE.dc.html": {
+      "x": 1880,
+      "y": -7900,
+      "w": 390,
+      "h": 900,
+      "title": "Bottom bar E · Today · Journal (start everything from Today)"
     }
   },
   "order": [
@@ -392,7 +406,9 @@
     "EditorV2.dc.html",
     "NavA.dc.html",
     "NavB.dc.html",
-    "NavC.dc.html"
+    "NavC.dc.html",
+    "NavD.dc.html",
+    "NavE.dc.html"
   ],
   "notes": {
     "head": {
@@ -450,7 +466,7 @@
       "y": -8200,
       "text": "Bottom bar: options",
       "kind": "title1",
-      "maxW": 1330
+      "maxW": 2270
     }
   },
   "designSystems": [],
