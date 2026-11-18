@@ -126,6 +126,7 @@ private fun DayPage(vm: AppViewModel, day: String, index: Int, count: Int, pager
             IconButton(enabled = index > 0, onClick = { scope.launch { pager.animateScrollToPage(index - 1) } }) {
                 Icon(AppIcons.Back, "Day after", tint = if (index > 0) p.text else p.faint, modifier = Modifier.rotate(180f))
             }
+            IconButton(onClick = { vm.openSettings() }) { Icon(AppIcons.Settings, "Settings", tint = p.text) }
         }
         LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             if (active != null) item(key = "group") {

@@ -55,7 +55,9 @@ Rules:
 
 Bottom bar (2026-11-18, option **D**, to confirm after trying it): **Today · Intervals · Gym · Journal**; Stats inside the Journal,
 Settings as ⚙ at the top right. **Today** (home, mockup "Home · Today"): the last 7 days (strip per day, tap = that day in the
-Journal), big **Intervals ▶** / **Gym ▶**, Quick start (recent workouts and groups), Done today. Not built yet.
+Journal), big **Intervals ▶** / **Gym ▶**, Quick start (recent workouts and groups), Done today. **Built 2026-11-18**:
+the app opens on Today; the Journal has **Calendar | Stats** at the top; ⚙ (Settings) on Today, Intervals, Gym and Journal.
+Quick start = the 4 most recent among interval workouts (▶ starts the player) and groups (▶ starts the group on today in the Gym tab).
 (Before: Intervals · Gym · Journal · Stats · Settings, 5 tabs.)
 
 Improvements (2026-11-17, in the mockups): each workout card shows **last time** (date, rounds, logged values;

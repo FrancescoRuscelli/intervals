@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -62,11 +64,10 @@ fun App(vm: AppViewModel) {
             ) { inner ->
                 Box(Modifier.padding(inner)) {
                     when (vm.tab) {
+                        Tab.TODAY -> app.intervals.ui.today.TodayScreen(vm)
                         Tab.INTERVALS -> IntervalsListScreen(vm)
                         Tab.GYM -> app.intervals.ui.gym.GymScreen(vm)
                         Tab.JOURNAL -> app.intervals.ui.journal.JournalScreen(vm)
-                        Tab.STATS -> app.intervals.ui.stats.StatsScreen(vm)
-                        Tab.SETTINGS -> app.intervals.ui.settings.SettingsScreen(vm)
                     }
                 }
             }
@@ -76,6 +77,14 @@ fun App(vm: AppViewModel) {
                 is Overlay.EditSeries -> EditSeriesScreen(vm, top)
                 Overlay.Player -> vm.player?.let { app.intervals.player.PlayerScreen(it, settings.keepScreenOn) { it.stop() } }
                 is Overlay.GymLog -> app.intervals.ui.gym.GymLogScreen(vm, top.exerciseId, top.day)
+                Overlay.Settings -> androidx.compose.foundation.layout.Column(
+                    Modifier.fillMaxSize().background(p.bg).statusBarsPadding().navigationBarsPadding(),
+                ) {
+                    androidx.compose.material3.IconButton(onClick = { vm.back() }, modifier = Modifier.padding(start = 4.dp, top = 4.dp)) {
+                        androidx.compose.material3.Icon(AppIcons.Back, "Back", tint = p.text)
+                    }
+                    app.intervals.ui.settings.SettingsScreen(vm)
+                }
                 is Overlay.GymPick -> app.intervals.ui.gym.GymPickScreen(vm, top.day)
                 is Overlay.EditExercise -> app.intervals.ui.gym.EditExerciseScreen(vm, top.exerciseId)
                 is Overlay.EditGroup -> app.intervals.ui.gym.EditGroupScreen(vm, top.groupId)
@@ -92,11 +101,10 @@ private fun BottomBar(current: Tab, onSelect: (Tab) -> Unit) {
     val p = LocalPalette.current
     NavigationBar(containerColor = p.sheet, tonalElevation = 0.dp) {
         val items: List<Triple<Tab, String, ImageVector>> = listOf(
+            Triple(Tab.TODAY, "Today", AppIcons.Today),
             Triple(Tab.INTERVALS, "Intervals", AppIcons.Intervals),
             Triple(Tab.GYM, "Gym", AppIcons.Gym),
             Triple(Tab.JOURNAL, "Journal", AppIcons.Journal),
-            Triple(Tab.STATS, "Stats", AppIcons.Stats),
-            Triple(Tab.SETTINGS, "Settings", AppIcons.Settings),
         )
         items.forEach { (tab, label, icon) ->
             NavigationBarItem(

@@ -81,6 +81,29 @@ import java.util.Locale
 @Composable
 fun JournalScreen(vm: AppViewModel) {
     val p = LocalPalette.current
+    var stats by rememberSaveable { mutableStateOf(false) }
+    Column(Modifier.fillMaxSize()) {
+        Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("Journal", color = p.text, fontSize = 30.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+            IconButton(onClick = { vm.openSettings() }) { Icon(AppIcons.Settings, "Settings", tint = p.text) }
+        }
+        Row(Modifier.padding(horizontal = 16.dp, vertical = 6.dp).fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(p.surface).padding(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            listOf("Calendar", "Stats").forEachIndexed { i, label ->
+                val on = (i == 1) == stats
+                Box(
+                    Modifier.weight(1f).height(36.dp).clip(RoundedCornerShape(9.dp)).background(if (on) p.accent else Color.Transparent).clickable { stats = i == 1 },
+                    contentAlignment = Alignment.Center,
+                ) { Text(label, color = if (on) p.onAccent else p.muted, fontSize = 14.sp, fontWeight = FontWeight.SemiBold) }
+            }
+        }
+        if (stats) app.intervals.ui.stats.StatsScreen(vm, showTitle = false) else JournalCalendar(vm)
+    }
+}
+
+@Composable
+private fun JournalCalendar(vm: AppViewModel) {
+    val p = LocalPalette.current
     val zone = remember { ZoneId.systemDefault() }
     val today = remember { LocalDate.now(zone) }
     // one calendar page per month, swipe or arrows; the last page is this month
@@ -121,13 +144,20 @@ fun JournalScreen(vm: AppViewModel) {
         if (YearMonth.from(selectedDay) == month || loadedSessions == null || loadedGymDays == null) return@LaunchedEffect
         dayText = ((byDay.keys + gymDates).maxOrNull() ?: if (month == YearMonth.from(today)) today else month.atEndOfMonth()).toString()
     }
+    // opened from Today's week: show that day
+    LaunchedEffect(vm.journalFocusDay) {
+        val d = vm.journalFocusDay?.let(LocalDate::parse) ?: return@LaunchedEffect
+        dayText = d.toString()
+        pager.scrollToPage(ChronoUnit.MONTHS.between(firstMonth, YearMonth.from(d)).toInt())
+        vm.journalFocusDay = null
+    }
     var editing by remember { mutableStateOf<Session?>(null) }
     var deleting by remember { mutableStateOf<Session?>(null) }
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp)) {
         item {
-            Row(Modifier.fillMaxWidth().padding(start = 4.dp, top = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("Journal", color = p.text, fontSize = 30.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+            Row(Modifier.fillMaxWidth().padding(start = 4.dp, top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                Spacer(Modifier.weight(1f))
                 IconButton(onClick = { scope.launch { pager.animateScrollToPage(pager.currentPage - 1) } }, enabled = pager.currentPage > 0) { Icon(AppIcons.Back, "Previous month", tint = p.text) }
                 Text(month.month.getDisplayName(TextStyle.FULL, Locale.ENGLISH) + " " + month.year, color = p.text, fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, modifier = Modifier.width(118.dp))
@@ -301,7 +331,7 @@ private fun DayCell(d: LocalDate?, today: LocalDate, selected: LocalDate, sessio
 }
 
 @Composable
-private fun SessionCard(s: Session, zone: ZoneId, onNote: () -> Unit, onLongPress: () -> Unit) {
+internal fun SessionCard(s: Session, zone: ZoneId, onNote: () -> Unit, onLongPress: () -> Unit) {
     val p = LocalPalette.current
     val time = Instant.ofEpochMilli(s.startedAt).atZone(zone).toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm"))
     Row(
@@ -331,7 +361,7 @@ private fun SessionCard(s: Session, zone: ZoneId, onNote: () -> Unit, onLongPres
 
 /** The gym sets of a day as one card: each exercise with its rows ("80 × 5 ×3, 85 × 3"), then the notes. Tap = open in Gym. */
 @Composable
-private fun GymDayCard(
+internal fun GymDayCard(
     sets: List<app.intervals.core.GymSet>, exercises: Map<Long, app.intervals.core.Exercise>,
     groups: List<app.intervals.core.GymGroup>, records: Int, onOpen: () -> Unit,
 ) {

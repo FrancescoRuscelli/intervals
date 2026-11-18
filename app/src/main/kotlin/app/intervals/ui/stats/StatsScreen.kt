@@ -57,7 +57,7 @@ private enum class Period(val label: String) { WEEK("Week"), MONTH("Month"), YEA
 
 /** Week / Month / Year: time, sessions, completed; minutes chart; most done workouts. */
 @Composable
-fun StatsScreen(vm: AppViewModel) {
+fun StatsScreen(vm: AppViewModel, showTitle: Boolean = true) {
     val p = LocalPalette.current
     val zone = remember { ZoneId.systemDefault() }
     val today = remember { LocalDate.now(zone) }
@@ -79,7 +79,8 @@ fun StatsScreen(vm: AppViewModel) {
     val sum = summary(inPeriod, zone)
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
-        Text("Stats", color = p.text, fontSize = 30.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp, top = 16.dp, bottom = 12.dp))
+        if (showTitle) Text("Stats", color = p.text, fontSize = 30.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp, top = 16.dp, bottom = 12.dp))
+        else Spacer(Modifier.height(8.dp))
         // Intervals · Gym · Both
         Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(18.dp)) {
             listOf("Intervals", "Gym", "Both").forEachIndexed { i, t ->

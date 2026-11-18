@@ -40,7 +40,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 
-enum class Tab { INTERVALS, GYM, JOURNAL, STATS, SETTINGS }
+enum class Tab { TODAY, INTERVALS, GYM, JOURNAL }
 
 /** Screens shown on top of the tabs, newest last. */
 sealed interface Overlay {
@@ -48,6 +48,7 @@ sealed interface Overlay {
     data object Player : Overlay
     data object Finished : Overlay
     data object GymImport : Overlay
+    data object Settings : Overlay
     data class GymLog(val exerciseId: Long, val day: String) : Overlay
     data class GymPick(val day: String) : Overlay
     data class EditExercise(val exerciseId: Long) : Overlay
@@ -76,7 +77,14 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     val settings: StateFlow<AppSettings> =
         repo.settings.stateIn(viewModelScope, SharingStarted.Eagerly, AppSettings())
 
-    var tab by mutableStateOf(Tab.INTERVALS)
+    var tab by mutableStateOf(Tab.TODAY)
+
+    /** A day to show when the Journal opens (from Today's week); consumed by the Journal. */
+    var journalFocusDay by mutableStateOf<String?>(null)
+
+    fun openJournalDay(day: String) { journalFocusDay = day; tab = Tab.JOURNAL }
+
+    fun openSettings() { overlays += Overlay.Settings }
     val overlays = mutableStateListOf<Overlay>()
     var draft by mutableStateOf<Draft?>(null)
         private set

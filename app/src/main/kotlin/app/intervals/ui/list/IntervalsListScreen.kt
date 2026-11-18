@@ -137,6 +137,7 @@ fun IntervalsListScreen(vm: AppViewModel) {
                     IconButton(onClick = { pickCsv.launch(arrayOf("text/*", "application/octet-stream", "*/*")) }) {
                         Icon(AppIcons.Import, contentDescription = "Import from Hybrid Interval Timer", tint = p.text)
                     }
+                    IconButton(onClick = { vm.openSettings() }) { Icon(AppIcons.Settings, "Settings", tint = p.text) }
                     Box {
                         IconButton(onClick = { menu = true }) { Icon(AppIcons.More, "More options", tint = p.text) }
                         DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
