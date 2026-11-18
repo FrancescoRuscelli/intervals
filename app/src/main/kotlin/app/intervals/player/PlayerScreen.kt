@@ -107,7 +107,8 @@ fun PlayerScreen(c: PlayerController, keepScreenOn: Boolean, discAnimation: app.
         }
 
         if (st != null) Info(c, st)
-        Controls(c)
+        // during the coin flip the buttons step aside (nothing to pause any more)
+        if (c.celebrating) Spacer(Modifier.height(120.dp)) else Controls(c)
     }
 
     if (askStop) {
