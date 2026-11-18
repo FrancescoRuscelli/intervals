@@ -51,6 +51,8 @@ android {
 
     testOptions {
         unitTests.isIncludeAndroidResources = true
+        // optional: also import a real FitNotes backup, ./gradlew :app:testDebugUnitTest -Pfitnotes=/path/to/file.fitnotes
+        unitTests.all { t -> project.findProperty("fitnotes")?.let { t.systemProperty("fitnotes", it.toString()) } }
     }
 }
 

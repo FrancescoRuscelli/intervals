@@ -13,6 +13,9 @@ data class Backup(
     val workouts: List<SavedWorkout>,
     val sessions: List<Session>,
     val settings: AppSettings = AppSettings(),
+    /** Gym log; missing in backups made before the gym existed. */
+    val exercises: List<Exercise> = emptyList(),
+    val gymSets: List<GymSet> = emptyList(),
 )
 
 class BackupException(message: String, cause: Throwable? = null) : Exception(message, cause)
@@ -53,11 +56,17 @@ object BackupJson {
         }
         val ids = backup.workouts.map { it.id }
         if (ids.size != ids.toSet().size) throw BackupException("The backup file is damaged: two workouts have the same id.")
+        val exIds = backup.exercises.map { it.id }.toSet()
+        if (exIds.size != backup.exercises.size) throw BackupException("The backup file is damaged: two exercises have the same id.")
+        if (backup.gymSets.any { it.exerciseId !in exIds }) throw BackupException("The backup file is damaged: a set has no exercise.")
         return backup
     }
 
     fun encodeWorkout(workout: Workout): String = compact.encodeToString(Workout.serializer(), workout)
     fun decodeWorkout(json: String): Workout = compact.decodeFromString(Workout.serializer(), json)
+
+    fun encodeExercise(exercise: Exercise): String = compact.encodeToString(Exercise.serializer(), exercise)
+    fun decodeExercise(json: String): Exercise = compact.decodeFromString(Exercise.serializer(), json)
 
     fun encodeSettings(settings: AppSettings): String = compact.encodeToString(AppSettings.serializer(), settings)
 

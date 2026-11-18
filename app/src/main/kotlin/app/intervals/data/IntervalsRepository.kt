@@ -4,6 +4,10 @@ import androidx.room.withTransaction
 import app.intervals.core.AppSettings
 import app.intervals.core.Backup
 import app.intervals.core.BackupJson
+import app.intervals.core.Band
+import app.intervals.core.Exercise
+import app.intervals.core.FitNotesImport
+import app.intervals.core.GymSet
 import app.intervals.core.LoggedValue
 import app.intervals.core.SavedWorkout
 import app.intervals.core.Session
@@ -14,7 +18,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 /** What a restore brought back, to show the user. */
-data class RestoreResult(val workouts: Int, val sessions: Int)
+data class RestoreResult(val workouts: Int, val sessions: Int, val gymSets: Int = 0)
 
 /** The only door to the stored data: the screens and the player use this, never the DAOs. */
 class IntervalsRepository(
@@ -24,6 +28,7 @@ class IntervalsRepository(
     private val workoutDao = db.workouts()
     private val sessionDao = db.sessions()
     private val settingsDao = db.settings()
+    private val gymDao = db.gym()
 
     // ---- workouts ----
 
@@ -112,6 +117,28 @@ class IntervalsRepository(
     suspend fun lastValues(workoutId: Long): List<LoggedValue> =
         sessionDao.lastWithValues(workoutId)?.toSession()?.lastValues().orEmpty()
 
+    // ---- gym ----
+
+    val exercises: Flow<List<Exercise>> = gymDao.observeExercises().map { list -> list.map { it.toExercise() } }
+
+    /** Days with sets, newest first (yyyy-MM-dd). */
+    val gymDays: Flow<List<String>> = gymDao.observeDays()
+
+    fun gymDay(day: String): Flow<List<GymSet>> = gymDao.observeDay(day).map { list -> list.map { it.toSet() } }
+
+    /** The sets of [exerciseId] on the last day it was done before [day]. */
+    suspend fun lastSets(exerciseId: Long, day: String): List<GymSet> = gymDao.lastBefore(exerciseId, day).map { it.toSet() }
+
+    suspend fun gymSetCount(): Int = gymDao.countSets()
+
+    /** Replaces the whole gym log with an import (exercises keep the importer's ids). Returns the sets written. */
+    suspend fun replaceGym(result: FitNotesImport.Result): Int = db.withTransaction {
+        gymDao.deleteAllExercises() // sets go with them (cascade)
+        gymDao.insertExercises(result.exercises.map { it.toEntity() })
+        gymDao.insertSets(result.sets.map { it.toEntity() })
+        result.sets.size
+    }
+
     // ---- settings ----
 
     val settings: Flow<AppSettings> = settingsDao.observe().map { BackupJson.decodeSettings(it) }
@@ -129,6 +156,8 @@ class IntervalsRepository(
                 workouts = workoutDao.getAll().map { it.toSaved() },
                 sessions = sessionDao.getAll().map { it.toSession() },
                 settings = BackupJson.decodeSettings(settingsDao.get()),
+                exercises = gymDao.getExercises().map { it.toExercise() },
+                gymSets = gymDao.getSets().map { it.toSet() },
             )
         )
     }
@@ -151,8 +180,11 @@ class IntervalsRepository(
                 sessionDao.insertValues(s.values.map { it.toEntity(id) })
             }
             settingsDao.put(SettingsEntity(json = BackupJson.encodeSettings(backup.settings)))
+            gymDao.deleteAllExercises()
+            gymDao.insertExercises(backup.exercises.map { it.toEntity() })
+            gymDao.insertSets(backup.gymSets.map { it.toEntity() })
         }
-        return RestoreResult(backup.workouts.size, backup.sessions.size)
+        return RestoreResult(backup.workouts.size, backup.sessions.size, backup.gymSets.size)
     }
 }
 
@@ -183,4 +215,19 @@ private fun SessionWithValues.toSession() = Session(
     values = values.sortedBy { it.id }.map {
         LoggedValue(it.series, it.field, it.unit, it.round, it.side?.let(Side::valueOf), it.value)
     },
+)
+
+private fun Exercise.toEntity() = ExerciseEntity(id, name, BackupJson.encodeExercise(this))
+
+private fun ExerciseEntity.toExercise() = BackupJson.decodeExercise(json).copy(id = id, name = name)
+
+private fun GymSet.toEntity() = GymSetEntity(
+    id, exerciseId, day, order, side?.name, weightKg, reps, timeSec, distance,
+    bands.joinToString(",") { it.name }, note, restSec,
+)
+
+private fun GymSetEntity.toSet() = GymSet(
+    id = id, exerciseId = exerciseId, day = day, order = position, side = side?.let(Side::valueOf),
+    weightKg = weightKg, reps = reps, timeSec = timeSec, distance = distance,
+    bands = bands.split(',').filter(String::isNotEmpty).map(Band::valueOf), note = note, restSec = restSec,
 )

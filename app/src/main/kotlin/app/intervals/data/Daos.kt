@@ -89,3 +89,41 @@ interface SettingsDao {
     @Upsert
     suspend fun put(settings: SettingsEntity)
 }
+
+@Dao
+interface GymDao {
+    @Query("SELECT * FROM exercises ORDER BY name COLLATE NOCASE")
+    fun observeExercises(): Flow<List<ExerciseEntity>>
+
+    @Query("SELECT * FROM exercises ORDER BY id")
+    suspend fun getExercises(): List<ExerciseEntity>
+
+    @Query("SELECT * FROM gym_sets WHERE day = :day ORDER BY position, id")
+    fun observeDay(day: String): Flow<List<GymSetEntity>>
+
+    /** Days with sets, newest first. */
+    @Query("SELECT DISTINCT day FROM gym_sets ORDER BY day DESC")
+    fun observeDays(): Flow<List<String>>
+
+    /** The sets of an exercise on its last day before [day]. */
+    @Query(
+        """SELECT * FROM gym_sets WHERE exerciseId = :exerciseId AND day =
+           (SELECT MAX(day) FROM gym_sets WHERE exerciseId = :exerciseId AND day < :day) ORDER BY position, id"""
+    )
+    suspend fun lastBefore(exerciseId: Long, day: String): List<GymSetEntity>
+
+    @Query("SELECT * FROM gym_sets ORDER BY day, position, id")
+    suspend fun getSets(): List<GymSetEntity>
+
+    @Query("SELECT COUNT(*) FROM gym_sets")
+    suspend fun countSets(): Int
+
+    @Insert
+    suspend fun insertExercises(exercises: List<ExerciseEntity>)
+
+    @Insert
+    suspend fun insertSets(sets: List<GymSetEntity>)
+
+    @Query("DELETE FROM exercises")
+    suspend fun deleteAllExercises()
+}

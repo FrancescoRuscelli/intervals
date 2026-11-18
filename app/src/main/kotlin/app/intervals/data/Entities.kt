@@ -71,3 +71,36 @@ data class SessionWithValues(
     @Relation(parentColumn = "id", entityColumn = "sessionId")
     val values: List<LoggedValueEntity>,
 )
+
+// ---- gym ----
+
+/** A gym exercise; its settings (fields, per side, step, rest…) as JSON, like workouts. */
+@Entity(tableName = "exercises")
+data class ExerciseEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val json: String,
+)
+
+@Entity(
+    tableName = "gym_sets",
+    foreignKeys = [ForeignKey(ExerciseEntity::class, ["id"], ["exerciseId"], onDelete = ForeignKey.CASCADE)],
+    indices = [Index("exerciseId"), Index("day")],
+)
+data class GymSetEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val exerciseId: Long,
+    /** yyyy-MM-dd */
+    val day: String,
+    val position: Int,
+    /** "LEFT", "RIGHT" or null. */
+    val side: String?,
+    val weightKg: Double?,
+    val reps: Int?,
+    val timeSec: Int?,
+    val distance: Double?,
+    /** Band names separated by commas, e.g. "GREEN,PURPLE,PURPLE"; empty = none. */
+    val bands: String,
+    val note: String,
+    val restSec: Int?,
+)
