@@ -94,7 +94,7 @@ new **Progress** screen per workout: a graph per logged field (left vs right) an
    (time, length, completed / stopped in round x, **note**). Sessions are logged automatically, with their logged field values (load, edge…). No manual sessions, no RPE.
 7. **Stats**: Week / Month / Year; time, sessions, completed; minutes per week chart; most done workouts.
 8. **Settings**: theme (System / Light / Dark), accent color (purple default), voice names + language, beeps, volume,
-   lower music during cues, 3-2-1 countdown, disc animation (Calm / Crazy spin), keep screen on, lock controls; import, **backup to file**, **restore**.
+   lower music during cues, 3-2-1 countdown, disc spin (circular slider, 5 stops), keep screen on, lock controls; import, **backup to file**, **restore**.
 9. **Finished**: completed disc, time / rounds / series, **logged values to confirm** (per side, *Set per round*), note for the journal, *Repeat*, *Save to journal*.
 
 Style: **pure black** backgrounds in dark mode (OLED), Space Grotesk-like numbers, and a four-color palette (agreed 2026-11-17, "Palette" board):
@@ -218,8 +218,11 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
   - [x] foreground service (mediaPlayback) + partial wake lock only while a workout runs; notification on the lock screen
         with series, round, live countdown (system chronometer, no per-second updates), Pause / Next; the running workout lives
         in the Application (survives the activity); screen off: the clock sleeps until the next cue / segment (no 10 Hz ticking)
-  - [x] Crazy spin (setting): at each new segment the disc with its text turns 1.5 times (from upside down to upright, 0.7 s),
-        the series ring swings back and the rounds ring the other way (spring); Calm = only the inflate
+  - [x] **Disc spin**, a circular slider in Settings (drag the knob or tap a stop; a small disc in the middle shows it):
+        0 No spin (only the inflate, default) · 1 A little (quarter turn) · 2 More (one turn, rings sway) ·
+        3 Crazy (1.5 turns, the series ring swings back and the rounds ring the other way) · 4 Always (the disc with its numbers
+        and the rings turn slowly all the time, each ring its own way; redraws continuously while on screen).
+        Setting `spin` 0..4 (older settings: Calm = 0, Crazy spin = 3).
   - [x] Coin flip at the end of a completed workout (both settings): the clock freezes, the disc turns 3.5 times around its
         vertical axis (1.4 s) with a small lift and lands on its back, purple "done ✓"; then Finished (stopped workouts: no flip)
   - [ ] landscape,

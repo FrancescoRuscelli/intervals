@@ -1,5 +1,6 @@
 package app.intervals.ui.settings
 
+import app.intervals.core.spinLevel
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -81,9 +82,9 @@ fun SettingsScreen(vm: AppViewModel) {
         Group("Look") {
             Text("Theme", color = p.text, fontSize = 15.sp, modifier = Modifier.padding(top = 10.dp, bottom = 8.dp))
             Segmented(listOf("System", "Light", "Dark"), s.theme.ordinal) { i -> set { it.copy(theme = ThemeMode.entries[i]) } }
-            Text("Disc animation", color = p.text, fontSize = 15.sp, modifier = Modifier.padding(top = 14.dp))
-            Text("What the disc does at each new series", color = p.muted, fontSize = 12.sp, modifier = Modifier.padding(bottom = 8.dp))
-            Segmented(listOf("Calm", "Crazy spin"), s.discAnimation.ordinal) { i -> set { it.copy(discAnimation = DiscAnimation.entries[i]) } }
+            Text("Disc spin", color = p.text, fontSize = 15.sp, modifier = Modifier.padding(top = 14.dp))
+            Text("What the disc does at each new series · drag the knob", color = p.muted, fontSize = 12.sp, modifier = Modifier.padding(bottom = 8.dp))
+            SpinDial(s.spinLevel) { lvl -> set { it.copy(spin = lvl, discAnimation = if (lvl >= 3) DiscAnimation.CRAZY_SPIN else DiscAnimation.CALM) } }
             Spacer(Modifier.height(10.dp))
         }
 

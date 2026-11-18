@@ -1,5 +1,6 @@
 package app.intervals.player
 
+import androidx.compose.animation.core.animateFloat
 import kotlinx.coroutines.launch
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
@@ -68,7 +69,7 @@ import app.intervals.ui.NumberStyle
 private val DoneGrey = Color(0xFF3A3E46)
 
 @Composable
-fun PlayerScreen(c: PlayerController, keepScreenOn: Boolean, discAnimation: app.intervals.core.DiscAnimation = app.intervals.core.DiscAnimation.CALM, onClose: () -> Unit) {
+fun PlayerScreen(c: PlayerController, keepScreenOn: Boolean, spinLevel: Int = 0, onClose: () -> Unit) {
     val p = LocalPalette.current
     var askStop by remember { mutableStateOf(false) }
     val view = LocalView.current
@@ -102,7 +103,7 @@ fun PlayerScreen(c: PlayerController, keepScreenOn: Boolean, discAnimation: app.
         }
 
         Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-            if (st != null) Disc(c, st, discAnimation == app.intervals.core.DiscAnimation.CRAZY_SPIN, Modifier.padding(16.dp).fillMaxWidth().aspectRatio(1f))
+            if (st != null) Disc(c, st, spinLevel, Modifier.padding(16.dp).fillMaxWidth().aspectRatio(1f))
             if (c.countdown > 0) GetReady(c.countdown)
         }
 
@@ -123,7 +124,7 @@ fun PlayerScreen(c: PlayerController, keepScreenOn: Boolean, discAnimation: app.
 }
 
 @Composable
-private fun Disc(c: PlayerController, st: PlayState, crazy: Boolean, modifier: Modifier) {
+private fun Disc(c: PlayerController, st: PlayState, spinLevel: Int, modifier: Modifier) {
     val p = LocalPalette.current
     val seg = st.segment
     val color = Color(seg.color)
@@ -135,16 +136,21 @@ private fun Disc(c: PlayerController, st: PlayState, crazy: Boolean, modifier: M
         inflate.snapTo(0.55f)
         inflate.animateTo(1f, spring(dampingRatio = 0.55f, stiffness = Spring.StiffnessMediumLow))
     }
-    // Crazy spin: the disc whirls 1.5 turns and settles upright; the series ring swings back, the rounds ring the other way
+    // spin at each new segment, by level: 1 a quarter turn, 2 one turn (rings sway), 3 crazy: 1.5 turns, rings swing
     val spin = remember { Animatable(0f) }
     val swing = remember { Animatable(0f) }
     LaunchedEffect(st.index) {
-        if (!crazy || st.index == 0) return@LaunchedEffect
-        launch { swing.snapTo(1f); swing.animateTo(0f, spring(dampingRatio = 0.35f, stiffness = Spring.StiffnessLow)) }
-        spin.snapTo(-180f)
-        spin.animateTo(360f, tween(700, easing = FastOutSlowInEasing))
-        spin.snapTo(0f)
+        if (spinLevel !in 1..3 || st.index == 0) return@LaunchedEffect
+        val (from, ms, sw) = when (spinLevel) { 1 -> Triple(-90f, 450, 0f); 2 -> Triple(-360f, 600, 0.4f); else -> Triple(-540f, 700, 1f) }
+        if (sw > 0f) launch { swing.snapTo(sw); swing.animateTo(0f, spring(dampingRatio = 0.35f, stiffness = Spring.StiffnessLow)) }
+        spin.snapTo(from)
+        spin.animateTo(0f, tween(ms, easing = FastOutSlowInEasing))
     }
+    // 4 = always: the disc (with its numbers) and the rings turn slowly all the time, the rings the other way
+    val always = if (spinLevel == 4 && !c.celebrating) {
+        val t = androidx.compose.animation.core.rememberInfiniteTransition(label = "spin")
+        t.animateFloat(0f, 360f, androidx.compose.animation.core.infiniteRepeatable(tween(8000, easing = androidx.compose.animation.core.LinearEasing)), label = "disc").value
+    } else 0f
     // the end of a completed workout: a coin flip around the vertical axis, landing on its back ("done ✓")
     val flip = remember { Animatable(0f) }
     LaunchedEffect(c.celebrating) {
@@ -167,8 +173,8 @@ private fun Disc(c: PlayerController, st: PlayState, crazy: Boolean, modifier: M
         val sizePx = constraints.maxWidth.toFloat()
         Canvas(Modifier.fillMaxSize()) {
             val outer = size.minDimension / 2f - 14.dp.toPx()
-            rotate(-50f * swing.value) { drawSeriesRing(roundSegs, st, elapsedSec, outer, p.teal) }
-            rotate(50f * swing.value) { drawRoundsRing(c, st, outer - 24.dp.toPx(), p.accent) }
+            rotate(-50f * swing.value - always * 0.5f) { drawSeriesRing(roundSegs, st, elapsedSec, outer, p.teal) }
+            rotate(50f * swing.value + always * 0.75f) { drawRoundsRing(c, st, outer - 24.dp.toPx(), p.accent) }
         }
         val discDp = (sizePx / LocalDensityPx()).dp
         val density = LocalDensityPx()
@@ -176,7 +182,7 @@ private fun Disc(c: PlayerController, st: PlayState, crazy: Boolean, modifier: M
         Box(
             Modifier.size(discDp - 108.dp)
                 .graphicsLayer {
-                    rotationZ = spin.value
+                    rotationZ = spin.value + always
                     rotationY = flip.value
                     cameraDistance = 14f * density
                     scaleX = inflate.value * lift

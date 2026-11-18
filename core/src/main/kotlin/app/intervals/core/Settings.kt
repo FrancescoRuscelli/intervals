@@ -25,6 +25,8 @@ data class AppSettings(
     val duckMusic: Boolean = true,
     val countdown: Boolean = true,
     val discAnimation: DiscAnimation = DiscAnimation.CALM,
+    /** Disc spin 0..4 (none, a little, more, crazy, always); -1 = not set yet, taken from [discAnimation]. */
+    val spin: Int = -1,
     val keepScreenOn: Boolean = true,
     val lockControls: Boolean = false,
 ) {
@@ -32,3 +34,8 @@ data class AppSettings(
         require(volume in 0f..1f) { "volume must be in 0..1" }
     }
 }
+
+/** How much the disc spins, 0 = no spin … 4 = always spinning (older settings: Calm = 0, Crazy spin = 3). */
+val AppSettings.spinLevel: Int get() = if (spin in 0..4) spin else if (discAnimation == DiscAnimation.CRAZY_SPIN) 3 else 0
+
+val SPIN_LABELS = listOf("No spin", "A little", "More", "Crazy", "Always")
