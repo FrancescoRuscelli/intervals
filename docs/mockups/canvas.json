@@ -349,7 +349,7 @@
       "y": -7900,
       "w": 390,
       "h": 900,
-      "title": "Bottom bar D · Today · Intervals · Gym · Journal"
+      "title": "Bottom bar D · Today · Intervals · Gym · Journal (last 7 days)"
     },
     "NavE.dc.html": {
       "x": 1880,
@@ -357,6 +357,20 @@
       "w": 390,
       "h": 900,
       "title": "Bottom bar E · Today · Journal (start everything from Today)"
+    },
+    "NavF.dc.html": {
+      "x": 2350,
+      "y": -7900,
+      "w": 390,
+      "h": 900,
+      "title": "Bottom bar F · Today · Train · Journal"
+    },
+    "NavG.dc.html": {
+      "x": 2820,
+      "y": -7900,
+      "w": 390,
+      "h": 900,
+      "title": "F · the Train tab (Intervals | Gym)"
     }
   },
   "order": [
@@ -408,7 +422,9 @@
     "NavB.dc.html",
     "NavC.dc.html",
     "NavD.dc.html",
-    "NavE.dc.html"
+    "NavE.dc.html",
+    "NavF.dc.html",
+    "NavG.dc.html"
   ],
   "notes": {
     "head": {
@@ -466,7 +482,7 @@
       "y": -8200,
       "text": "Bottom bar: options",
       "kind": "title1",
-      "maxW": 2270
+      "maxW": 3210
     }
   },
   "designSystems": [],

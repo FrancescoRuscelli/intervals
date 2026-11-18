@@ -24,7 +24,7 @@
   <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; padding: 8px 16px 0">
     <sc-for list="{{week}}" as="d" hint-placeholder-count="7">
       <div style="height: 58px; border-radius: 14px; background: {{d.bg}}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px">
-        <span style="font-size: 11px; color: #9AA0AA">{{d.wd}}</span>
+        <span style="font-size: 10px; color: #9AA0AA">{{d.wd}}</span>
         <span style="font-size: 15px; font-weight: 700; color: {{d.fg}}">{{d.n}}</span>
         <span style="display: flex; gap: 1px; width: 26px; height: 4px; border-radius: 2px; overflow: hidden">
           <sc-for list="{{d.strip}}" as="s" hint-placeholder-count="2"><span style="flex: {{s.f}}; background: {{s.c}}"></span></sc-for>
@@ -84,7 +84,7 @@
   </nav>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"variant":{"editor":"enum","options":["D 4 tabs","E 2 tabs"],"default":"D 4 tabs"},"$preview":{"width":390,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"variant":{"editor":"enum","options":["D 4 tabs","E 2 tabs","F 3 tabs"],"default":"D 4 tabs"},"$preview":{"width":390,"height":900}}'>
 class Component extends DCLogic {
   renderVals() {
     const v = this.props.variant ?? 'D 4 tabs';
@@ -96,14 +96,16 @@ class Component extends DCLogic {
     };
     const tab = (label, d, on) => ({ label, d, color: on ? '#C4B1FF' : '#9AA0AA', bg: on ? '#2A2340' : 'transparent', fw: on ? 700 : 600 });
     const G = '#8BC34A', B = '#5B8DEF', O = '#FF8A50', P = '#E91E63';
+    // the last 7 days, ending today (on the right)
     const week = [
-      ['Mo', 16, []], ['Tu', 17, [[13, G], [3, G], [4, G]]], ['We', 18, [[5, G], [4, O], [1, P]], true],
-      ['Th', 19, []], ['Fr', 20, []], ['Sa', 21, []], ['Su', 22, []]
+      ['Th', 12, []], ['Fr', 13, [[11, O], [7, O]]], ['Sa', 14, []], ['Su', 15, [[3, B], [5, B], [1, P]]],
+      ['Mo', 16, [[1, P]]], ['Tu', 17, [[13, G], [3, G], [4, G]]], ['We', 18, [[5, G], [4, O], [1, P]], true]
     ].map(([wd, n, strip, today]) => ({
-      wd, n, strip: strip.map(([f, c]) => ({ f, c })),
-      bg: today ? '#2A2340' : '#111216', fg: n > 18 ? '#4A4F58' : '#F2F3F5'
+      wd: today ? 'Today' : wd, n, strip: strip.map(([f, c]) => ({ f, c })),
+      bg: today ? '#2A2340' : '#111216', fg: '#F2F3F5'
     }));
-    const D = v.startsWith('D');
+    const D = v.startsWith('D'), F = v.startsWith('F');
+    const train = 'M4 8h4l3 8 3-12 3 8h3';
     return {
       week,
       quick: [
@@ -116,10 +118,12 @@ class Component extends DCLogic {
         { t: 'Intervals · hangboard 70%', r: '5:25 · completed', s: 'hang · Load L +12.5 · R +10 kg', c: P }
       ],
       tabs: D ? [tab('Today', I.today, true), tab('Intervals', I.timer), tab('Gym', I.gym), tab('Journal', I.journal)]
-              : [tab('Today', I.today, true), tab('Journal', I.journal)],
-      cols: D ? 4 : 2,
+          : F ? [tab('Today', I.today, true), tab('Train', train), tab('Journal', I.journal)]
+          : [tab('Today', I.today, true), tab('Journal', I.journal)],
+      cols: D ? 4 : F ? 3 : 2,
       note: D ? 'D · Today is home: start, quick start, what you did. Intervals and Gym tabs keep the full lists. Journal has Stats inside. ⚙ top right.'
-              : 'E · only Today and Journal. "Intervals ▶" opens your workout list, "Gym ▶" the gym day (groups, exercises). ⚙ top right.'
+          : F ? 'F · three tabs: now · my training · the past. Train has Intervals | Gym at the top (next board). Journal has Stats inside. ⚙ top right.'
+          : 'E · only Today and Journal. "Intervals ▶" opens your workout list, "Gym ▶" the gym day (groups, exercises). ⚙ top right.'
     };
   }
 }
