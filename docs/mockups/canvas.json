@@ -322,6 +322,27 @@
       "w": 390,
       "h": 1000,
       "title": "2 · Edit workout v2: in play order (tweak: workout)"
+    },
+    "NavA.dc.html": {
+      "x": 0,
+      "y": -7900,
+      "w": 390,
+      "h": 844,
+      "title": "Bottom bar A · 3 tabs (Stats inside Journal, ⚙ top)"
+    },
+    "NavB.dc.html": {
+      "x": 470,
+      "y": -7900,
+      "w": 390,
+      "h": 844,
+      "title": "Bottom bar B · 2 tabs (📅 Journal and ⚙ at the top)"
+    },
+    "NavC.dc.html": {
+      "x": 940,
+      "y": -7900,
+      "w": 390,
+      "h": 844,
+      "title": "Bottom bar C · 4 tabs (only Settings moves to ⚙)"
     }
   },
   "order": [
@@ -368,7 +389,10 @@
     "GymEditExercise.dc.html",
     "GymVisual3.dc.html",
     "IntervalsProgress.dc.html",
-    "EditorV2.dc.html"
+    "EditorV2.dc.html",
+    "NavA.dc.html",
+    "NavB.dc.html",
+    "NavC.dc.html"
   ],
   "notes": {
     "head": {
@@ -420,6 +444,13 @@
       "text": "Edit workout: proposal",
       "kind": "title1",
       "maxW": 400
+    },
+    "navopts": {
+      "x": 0,
+      "y": -8200,
+      "text": "Bottom bar: options",
+      "kind": "title1",
+      "maxW": 1330
     }
   },
   "designSystems": [],
