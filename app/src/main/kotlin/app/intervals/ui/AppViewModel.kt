@@ -303,6 +303,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     /** Exercise id → last day done, for "recent" in the picker. */
     val lastUsed: StateFlow<Map<Long, String>> = repo.lastUsed.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
+    fun exerciseAll(exerciseId: Long) = repo.exerciseAll(exerciseId)
+
     fun exerciseDay(exerciseId: Long, day: String): Flow<List<GymSet>> = repo.exerciseDay(exerciseId, day)
 
     fun openGymLog(exerciseId: Long, day: String) { overlays += Overlay.GymLog(exerciseId, day) }

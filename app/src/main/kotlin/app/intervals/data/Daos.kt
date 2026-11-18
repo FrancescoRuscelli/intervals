@@ -122,6 +122,9 @@ interface GymDao {
     @Query("SELECT COUNT(*) FROM gym_sets")
     suspend fun countSets(): Int
 
+    @Query("SELECT * FROM gym_sets WHERE exerciseId = :exerciseId ORDER BY day, position, id")
+    fun observeExerciseAll(exerciseId: Long): Flow<List<GymSetEntity>>
+
     @Query("SELECT * FROM gym_sets WHERE exerciseId = :exerciseId AND day = :day ORDER BY position, id")
     fun observeExerciseDay(exerciseId: Long, day: String): Flow<List<GymSetEntity>>
 

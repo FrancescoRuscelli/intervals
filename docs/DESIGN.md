@@ -240,6 +240,11 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
   - [x] Journal: swipe between months (one per swipe), the selected day follows
   - [x] Journal: purple dot on gym days (pink / yellow = interval sessions), a gym day counts as a session and a day trained;
         the day's Gym card lists each exercise with its sets ("90 × 5 (5 sets)") and the notes; tap = that day in the Gym tab
-  - [ ] then: history / graph / records per exercise, edit exercise (merge, delete), groups, gym in Stats, Journal filter All / Gym / Intervals
+  - [x] Exercise tabs **Log · History · Graph · Records** (`GymStats` in core, tests):
+        History = every day newest first (rows ×N, notes, rests; tap = open that day);
+        Graph = chips for the graphs that fit (estimated 1RM Epley ≤ 12 reps, max weight / least assist, volume, max reps, total reps,
+        longest time, rest), 3 M / 6 M / 1 Y / All, per-side exercises draw left (pink) vs right (teal), records yellow, trend dashed, tap = that day;
+        Records = heaviest per reps (beaten faded), estimated 1RM + 2–10 reps; holds / reps-only / bands: longest, most reps, heaviest
+  - [ ] then: edit exercise (merge, delete), groups, gym in Stats, Journal filter All / Gym / Intervals
   - not yet: groups suggested from the import, records recomputed (FitNotes PR flags not imported)
 - [ ] App icon (to decide: e.g. purple disc with segmented ring)

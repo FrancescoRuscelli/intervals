@@ -111,6 +111,7 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
     var editing by remember { mutableStateOf<GymSet?>(null) }
     var noteFor by remember { mutableStateOf<GymSet?>(null) }
     var typing by remember { mutableStateOf<GymField?>(null) }
+    var tab by androidx.compose.runtime.saveable.rememberSaveable(exerciseId) { mutableStateOf(0) }
 
     // start from today's last set, else from last time; the side after the last one done
     LaunchedEffect(sets != null, lastTime != null) {
@@ -145,7 +146,24 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
             }
         }
 
-        LazyColumn(
+        // Log · History · Graph · Records
+        Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.Center) {
+            listOf("Log", "History", "Graph", "Records").forEachIndexed { i, t ->
+                val on = i == tab
+                Column(Modifier.clickable { tab = i }.padding(horizontal = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(t, color = if (on) p.text else p.faint, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(vertical = 8.dp))
+                    Box(Modifier.width(36.dp).height(2.dp).background(if (on) p.accent else Color.Transparent))
+                }
+            }
+        }
+        Box(Modifier.fillMaxWidth().height(1.dp).background(p.surface))
+        val allSets by remember(exerciseId) { vm.exerciseAll(exerciseId) }.collectAsStateWithLifecycle(emptyList())
+        when (tab) {
+            1 -> Box(Modifier.weight(1f)) { ExerciseHistory(ex, allSets) { d -> vm.openGymLog(exerciseId, d) } }
+            2 -> Box(Modifier.weight(1f)) { ExerciseGraph(ex, allSets) }
+            3 -> Box(Modifier.weight(1f)) { ExerciseRecords(ex, allSets) }
+        }
+        if (tab == 0) LazyColumn(
             Modifier.weight(1f), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             if (ex.perSide && editing == null) item {
