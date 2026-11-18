@@ -155,6 +155,22 @@ interface GymDao {
 
     @Query("DELETE FROM exercises")
     suspend fun deleteAllExercises()
+
+    @Update
+    suspend fun updateExercise(exercise: ExerciseEntity)
+
+    /** Deletes the exercise; its sets go with it (cascade). */
+    @Query("DELETE FROM exercises WHERE id = :id")
+    suspend fun deleteExercise(id: Long)
+
+    /** Moves every set of [from] to [into] (merge). */
+    @Query("UPDATE gym_sets SET exerciseId = :into WHERE exerciseId = :from")
+    suspend fun moveSets(from: Long, into: Long)
+
+    @Query("SELECT exerciseId, COUNT(*) AS sets, MIN(day) AS firstDay FROM gym_sets GROUP BY exerciseId")
+    fun observeCounts(): Flow<List<ExerciseCount>>
 }
 
 data class ExerciseLastDay(val exerciseId: Long, val day: String)
+
+data class ExerciseCount(val exerciseId: Long, val sets: Int, val firstDay: String)

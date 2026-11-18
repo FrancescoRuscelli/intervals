@@ -245,6 +245,9 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
         Graph = chips for the graphs that fit (estimated 1RM Epley ≤ 12 reps, max weight / least assist, volume, max reps, total reps,
         longest time, rest), 3 M / 6 M / 1 Y / All, per-side exercises draw left (pink) vs right (teal), records yellow, trend dashed, tap = that day;
         Records = heaviest per reps (beaten faded), estimated 1RM + 2–10 reps; holds / reps-only / bands: longest, most reps, heaviest
-  - [ ] then: edit exercise (merge, delete), groups, gym in Stats, Journal filter All / Gym / Intervals
+  - [x] Edit exercise (pencil on the log screen): name (history kept), notes, fields, weight step chips, rest target chips,
+        left/right apart, assisted; "In your log: N sets since …"; merge another exercise into it (similar names first, confirm);
+        delete with its sets (confirm). Tested in the database tests.
+  - [ ] then: groups, gym in Stats, Journal filter All / Gym / Intervals
   - not yet: groups suggested from the import, records recomputed (FitNotes PR flags not imported)
 - [ ] App icon (to decide: e.g. purple disc with segmented ring)

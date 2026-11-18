@@ -49,6 +49,7 @@ sealed interface Overlay {
     data object GymImport : Overlay
     data class GymLog(val exerciseId: Long, val day: String) : Overlay
     data class GymPick(val day: String) : Overlay
+    data class EditExercise(val exerciseId: Long) : Overlay
     /** [pos] null = a new series. */
     data class EditSeries(val pos: SeriesPos?, val template: Series) : Overlay
 }
@@ -308,6 +309,29 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun exerciseDay(exerciseId: Long, day: String): Flow<List<GymSet>> = repo.exerciseDay(exerciseId, day)
 
     fun openGymLog(exerciseId: Long, day: String) { overlays += Overlay.GymLog(exerciseId, day) }
+
+    fun editExercise(id: Long) { overlays += Overlay.EditExercise(id) }
+
+    val exerciseCounts: StateFlow<Map<Long, Pair<Int, String>>> =
+        repo.exerciseCounts.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
+    fun saveExercise(ex: Exercise) = viewModelScope.launch {
+        repo.updateExercise(ex)
+        overlays.removeAll { it is Overlay.EditExercise }
+        message = "Saved"
+    }
+
+    fun deleteExercise(ex: Exercise) = viewModelScope.launch {
+        repo.deleteExercise(ex.id)
+        overlays.removeAll { (it is Overlay.EditExercise && it.exerciseId == ex.id) || (it is Overlay.GymLog && it.exerciseId == ex.id) }
+        message = "Deleted “${ex.name}” and its sets"
+    }
+
+    fun mergeExercise(from: Exercise, into: Exercise) = viewModelScope.launch {
+        repo.mergeExercises(from.id, into.id)
+        overlays.removeAll { it is Overlay.GymLog && it.exerciseId == from.id }
+        message = "“${from.name}” merged into “${into.name}”"
+    }
 
     fun openGymPick(day: String) { overlays += Overlay.GymPick(day) }
 

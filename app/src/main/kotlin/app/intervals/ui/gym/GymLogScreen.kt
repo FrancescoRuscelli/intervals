@@ -144,6 +144,7 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
                     color = p.muted, fontSize = 13.sp, maxLines = 2,
                 )
             }
+            IconButton(onClick = { vm.editExercise(exerciseId) }) { Icon(AppIcons.Edit, "Edit exercise", tint = p.muted) }
         }
 
         // Log · History · Graph · Records

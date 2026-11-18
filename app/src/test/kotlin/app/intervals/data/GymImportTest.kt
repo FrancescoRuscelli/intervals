@@ -98,6 +98,24 @@ class GymImportTest {
     }
 
     @Test
+    fun mergeAndDeleteExercises() = runTest {
+        val f = listOf(app.intervals.core.GymField.WEIGHT, app.intervals.core.GymField.REPS)
+        val a = repo.addExercise(app.intervals.core.Exercise(name = "Block Pulls", fields = f))
+        val b = repo.addExercise(app.intervals.core.Exercise(name = "Block Pull (5sec)", fields = f))
+        val s = app.intervals.core.GymSet(exerciseId = b, day = "2026-03-02", order = 0, weightKg = 40.0, reps = 7, note = "5 s")
+        repo.addSets(listOf(s, s.copy(weightKg = 42.0)))
+        repo.addSets(listOf(s.copy(exerciseId = a, day = "2026-03-03")))
+        repo.mergeExercises(from = b, into = a)
+        assertEquals(3, repo.exerciseAll(a).first().size)
+        assertEquals(listOf("Block Pulls"), repo.exercises.first().map { it.name })
+        assertEquals(3 to "2026-03-02", repo.exerciseCounts.first()[a])
+        repo.updateExercise(repo.exercises.first().single().copy(name = "Block Pull 20mm", weightStep = 1.0))
+        assertEquals(1.0, repo.exercises.first().single().weightStep)
+        repo.deleteExercise(a)
+        assertEquals(0, repo.gymSetCount())
+    }
+
+    @Test
     fun otherFilesAreRefused() {
         val f = File.createTempFile("notfitnotes", ".fitnotes").apply { writeText("hello") }
         assertFailsWith<NotFitNotesException> { FitNotesReader.read(f) }

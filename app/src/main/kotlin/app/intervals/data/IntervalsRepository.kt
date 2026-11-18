@@ -152,6 +152,22 @@ class IntervalsRepository(
     /** Returns the new exercise's id. */
     suspend fun addExercise(exercise: Exercise): Long = gymDao.insertExercise(exercise.copy(id = 0).toEntity())
 
+    suspend fun updateExercise(exercise: Exercise) = gymDao.updateExercise(exercise.toEntity())
+
+    /** Deletes the exercise and all its sets. */
+    suspend fun deleteExercise(id: Long) = gymDao.deleteExercise(id)
+
+    /** Moves all sets of [from] to [into], then deletes [from]. */
+    suspend fun mergeExercises(from: Long, into: Long) = db.withTransaction {
+        require(from != into) { "cannot merge an exercise into itself" }
+        gymDao.moveSets(from, into)
+        gymDao.deleteExercise(from)
+    }
+
+    /** Number of sets and first day of each exercise. */
+    val exerciseCounts: Flow<Map<Long, Pair<Int, String>>> =
+        gymDao.observeCounts().map { list -> list.associate { it.exerciseId to (it.sets to it.firstDay) } }
+
     suspend fun gymSetCount(): Int = gymDao.countSets()
 
     /** Replaces the whole gym log with an import (exercises keep the importer's ids). Returns the sets written. */
