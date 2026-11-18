@@ -309,6 +309,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun exerciseAll(exerciseId: Long) = repo.exerciseAll(exerciseId)
     fun gymSetsSince(from: String) = repo.gymSetsSince(from)
+    fun gymSetsBetween(from: String, to: String) = repo.gymSetsBetween(from, to)
 
     fun exerciseDay(exerciseId: Long, day: String): Flow<List<GymSet>> = repo.exerciseDay(exerciseId, day)
 

@@ -119,6 +119,9 @@ interface GymDao {
     @Query("SELECT * FROM gym_sets ORDER BY day, position, id")
     suspend fun getSets(): List<GymSetEntity>
 
+    @Query("SELECT * FROM gym_sets WHERE day >= :from AND day < :to ORDER BY day, position, id")
+    fun observeSetsBetween(from: String, to: String): Flow<List<GymSetEntity>>
+
     @Query("SELECT * FROM gym_sets WHERE day >= :from ORDER BY day, position, id")
     fun observeSetsSince(from: String): Flow<List<GymSetEntity>>
 

@@ -133,6 +133,9 @@ class IntervalsRepository(
     /** The sets of [exerciseId] on the last day it was done before [day]. */
     suspend fun lastSets(exerciseId: Long, day: String): List<GymSet> = gymDao.lastBefore(exerciseId, day).map { it.toSet() }
 
+    /** Gym sets in [from, to) (yyyy-MM-dd), e.g. one month for the calendar strips. */
+    fun gymSetsBetween(from: String, to: String): Flow<List<GymSet>> = gymDao.observeSetsBetween(from, to).map { list -> list.map { it.toSet() } }
+
     /** All gym sets from [from] (yyyy-MM-dd) on, for Stats. */
     fun gymSetsSince(from: String): Flow<List<GymSet>> = gymDao.observeSetsSince(from).map { list -> list.map { it.toSet() } }
 

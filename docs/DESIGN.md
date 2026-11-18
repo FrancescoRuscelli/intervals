@@ -257,6 +257,10 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
         in order: logged ones with "2 of 4 sets", the others as outlined "to do" cards with plan and last time; tap = log.
         The FitNotes import creates suggested groups (exercises done together on ≥ 3 days, named after the main one, "Deadlift day").
         Shortcut: the started group is kept in memory (after an app restart the plan bar is gone, the sets stay).
-  - [ ] next: G10-style group run (rest clock "next: …"), group colors / day strip in the Journal (chosen design), light mode for gym screens
+  - [x] Journal like G12 + the chosen day strip: filter chips under the title; calendar gym days show a **day strip** (split by
+        exercise, sized by sets, colored by group; grey = no group), interval sessions keep their dots; soft selected day;
+        gym card "Gym · Legs · Shoulders" with records ("1 PR"), a labeled strip ("DS 13 · BBS 3 · Dea 4") and the sets.
+        Groups have a color (soft palette, auto by position, changeable in the group editor).
+  - [ ] next: G10-style group run (rest clock "next: …"), light mode for gym screens
   - not yet: groups suggested from the import, records recomputed (FitNotes PR flags not imported)
 - [ ] App icon (to decide: e.g. purple disc with segmented ring)

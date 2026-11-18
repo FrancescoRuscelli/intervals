@@ -84,6 +84,8 @@ data class GymGroup(
     val id: Long = 0,
     val name: String,
     val items: List<GroupItem>,
+    /** 0xAARRGGBB used in the Journal day strip; null = picked from [GROUP_COLORS] by position. */
+    val color: Long? = null,
 ) {
     init {
         require(name.isNotBlank()) { "a group needs a name" }

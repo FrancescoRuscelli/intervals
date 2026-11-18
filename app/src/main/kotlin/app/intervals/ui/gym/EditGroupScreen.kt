@@ -49,6 +49,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.intervals.core.GroupItem
 import app.intervals.core.GymGroup
 import app.intervals.core.planLabel
+import app.intervals.core.GROUP_COLORS
+import app.intervals.core.colorAt
 import app.intervals.ui.AppIcons
 import app.intervals.ui.AppViewModel
 import app.intervals.ui.LocalPalette
@@ -90,6 +92,18 @@ fun EditGroupScreen(vm: AppViewModel, groupId: Long?) {
                     Box(Modifier.fillMaxWidth().height(2.dp).background(p.accent))
                     Text("${g.items.size} exercise${if (g.items.size == 1) "" else "s"} · a plan is optional: going over or stopping early is fine",
                         color = p.muted, fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
+                    Text("Color in the Journal", color = p.muted, fontSize = 12.sp, modifier = Modifier.padding(top = 14.dp, bottom = 6.dp))
+                    val index = groups.indexOfFirst { it.id == g.id }.let { if (it < 0) groups.size else it }
+                    val current = g.colorAt(index)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        GROUP_COLORS.forEach { c ->
+                            Box(
+                                Modifier.weight(1f).height(32.dp).clip(RoundedCornerShape(10.dp)).background(androidx.compose.ui.graphics.Color(c))
+                                    .border(3.dp, if (c == current) p.text else androidx.compose.ui.graphics.Color.Transparent, RoundedCornerShape(10.dp))
+                                    .clickable(onClickLabel = "Group color") { g = g.copy(color = c) },
+                            )
+                        }
+                    }
                 }
             }
             itemsIndexed(g.items) { i, item ->
