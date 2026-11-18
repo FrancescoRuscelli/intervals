@@ -104,3 +104,12 @@ data class GymSetEntity(
     val note: String,
     val restSec: Int?,
 )
+
+/** A group of exercises (name + ordered exercises with optional plans, as JSON). */
+@Entity(tableName = "gym_groups")
+data class GymGroupEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val position: Int,
+    val name: String,
+    val json: String,
+)

@@ -98,6 +98,22 @@ class GymImportTest {
     }
 
     @Test
+    fun groupsAndBackup() = runTest {
+        val f = listOf(app.intervals.core.GymField.WEIGHT, app.intervals.core.GymField.REPS)
+        val a = repo.addExercise(app.intervals.core.Exercise(name = "Deep Squat", fields = f))
+        val b = repo.addExercise(app.intervals.core.Exercise(name = "Deadlift", fields = f))
+        val gid = repo.addGroup(app.intervals.core.GymGroup(name = "Legs", items = listOf(app.intervals.core.GroupItem(a), app.intervals.core.GroupItem(b, 4))))
+        repo.updateGroup(repo.groups.first().single().copy(name = "Legs A"))
+        assertEquals(listOf("Legs A"), repo.groups.first().map { it.name })
+        assertEquals(4, repo.groups.first().single().items[1].planSets)
+        val text = repo.exportBackup()
+        repo.deleteGroup(gid)
+        assertEquals(0, repo.groups.first().size)
+        repo.restoreBackup(text)
+        assertEquals(listOf("Legs A"), repo.groups.first().map { it.name })
+    }
+
+    @Test
     fun mergeAndDeleteExercises() = runTest {
         val f = listOf(app.intervals.core.GymField.WEIGHT, app.intervals.core.GymField.REPS)
         val a = repo.addExercise(app.intervals.core.Exercise(name = "Block Pulls", fields = f))

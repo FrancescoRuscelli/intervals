@@ -1,5 +1,7 @@
 package app.intervals.data
 
+import app.intervals.core.suggestGroups
+import app.intervals.core.GymGroup
 import androidx.room.withTransaction
 import app.intervals.core.AppSettings
 import app.intervals.core.Backup
@@ -157,6 +159,19 @@ class IntervalsRepository(
 
     suspend fun updateExercise(exercise: Exercise) = gymDao.updateExercise(exercise.toEntity())
 
+    // ---- gym groups ----
+
+    val groups: Flow<List<GymGroup>> = gymDao.observeGroups().map { list -> list.map { it.toGroup() } }
+
+    suspend fun addGroup(group: GymGroup): Long = gymDao.insertGroup(group.copy(id = 0).toEntity(gymDao.nextGroupPosition()))
+
+    suspend fun updateGroup(group: GymGroup) = db.withTransaction {
+        val pos = gymDao.getGroups().firstOrNull { it.id == group.id }?.position ?: gymDao.nextGroupPosition()
+        gymDao.updateGroup(group.toEntity(pos))
+    }
+
+    suspend fun deleteGroup(id: Long) = gymDao.deleteGroup(id)
+
     /** Deletes the exercise and all its sets. */
     suspend fun deleteExercise(id: Long) = gymDao.deleteExercise(id)
 
@@ -176,8 +191,11 @@ class IntervalsRepository(
     /** Replaces the whole gym log with an import (exercises keep the importer's ids). Returns the sets written. */
     suspend fun replaceGym(result: FitNotesImport.Result): Int = db.withTransaction {
         gymDao.deleteAllExercises() // sets go with them (cascade)
+        gymDao.deleteAllGroups()
         gymDao.insertExercises(result.exercises.map { it.toEntity() })
         gymDao.insertSets(result.sets.map { it.toEntity() })
+        // groups suggested from the days: exercises done together often (rename or delete them freely)
+        gymDao.insertGroups(suggestGroups(result.sets, result.exercises).mapIndexed { i, g -> g.toEntity(i) })
         result.sets.size
     }
 
@@ -200,6 +218,7 @@ class IntervalsRepository(
                 settings = BackupJson.decodeSettings(settingsDao.get()),
                 exercises = gymDao.getExercises().map { it.toExercise() },
                 gymSets = gymDao.getSets().map { it.toSet() },
+                groups = gymDao.getGroups().map { it.toGroup() },
             )
         )
     }
@@ -225,6 +244,8 @@ class IntervalsRepository(
             gymDao.deleteAllExercises()
             gymDao.insertExercises(backup.exercises.map { it.toEntity() })
             gymDao.insertSets(backup.gymSets.map { it.toEntity() })
+            gymDao.deleteAllGroups()
+            gymDao.insertGroups(backup.groups.mapIndexed { i, g -> g.toEntity(i) })
         }
         return RestoreResult(backup.workouts.size, backup.sessions.size, backup.gymSets.size)
     }
@@ -260,6 +281,12 @@ private fun SessionWithValues.toSession() = Session(
 )
 
 private fun Exercise.toEntity() = ExerciseEntity(id, name, BackupJson.encodeExercise(this))
+
+private val groupJson = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
+
+private fun GymGroup.toEntity(position: Int) = GymGroupEntity(id, position, name, groupJson.encodeToString(GymGroup.serializer(), this))
+
+private fun GymGroupEntity.toGroup() = groupJson.decodeFromString(GymGroup.serializer(), json).copy(id = id, name = name)
 
 private fun ExerciseEntity.toExercise() = BackupJson.decodeExercise(json).copy(id = id, name = name)
 

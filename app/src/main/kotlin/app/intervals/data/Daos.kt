@@ -162,6 +162,30 @@ interface GymDao {
     @Update
     suspend fun updateExercise(exercise: ExerciseEntity)
 
+    @Query("SELECT * FROM gym_groups ORDER BY position, id")
+    fun observeGroups(): Flow<List<GymGroupEntity>>
+
+    @Query("SELECT * FROM gym_groups ORDER BY position, id")
+    suspend fun getGroups(): List<GymGroupEntity>
+
+    @Query("SELECT COALESCE(MAX(position), -1) + 1 FROM gym_groups")
+    suspend fun nextGroupPosition(): Int
+
+    @Insert
+    suspend fun insertGroup(group: GymGroupEntity): Long
+
+    @Insert
+    suspend fun insertGroups(groups: List<GymGroupEntity>)
+
+    @Update
+    suspend fun updateGroup(group: GymGroupEntity)
+
+    @Query("DELETE FROM gym_groups WHERE id = :id")
+    suspend fun deleteGroup(id: Long)
+
+    @Query("DELETE FROM gym_groups")
+    suspend fun deleteAllGroups()
+
     /** Deletes the exercise; its sets go with it (cascade). */
     @Query("DELETE FROM exercises WHERE id = :id")
     suspend fun deleteExercise(id: Long)

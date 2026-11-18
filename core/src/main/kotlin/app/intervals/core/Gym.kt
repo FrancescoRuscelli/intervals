@@ -63,3 +63,29 @@ data class GymSet(
         require(timeSec == null || timeSec >= 0) { "timeSec must be >= 0" }
     }
 }
+
+/** One exercise in a group, with an optional plan (just a reminder: going over or stopping early is fine). */
+@Serializable
+data class GroupItem(
+    val exerciseId: Long,
+    /** Planned sets; null = no plan. */
+    val planSets: Int? = null,
+    /** Free text of the plan, e.g. "3 × 8 @ 40 kg". */
+    val planNote: String = "",
+) {
+    init {
+        require(planSets == null || planSets >= 1) { "planSets must be >= 1" }
+    }
+}
+
+/** A group of exercises you start together, e.g. "Legs". */
+@Serializable
+data class GymGroup(
+    val id: Long = 0,
+    val name: String,
+    val items: List<GroupItem>,
+) {
+    init {
+        require(name.isNotBlank()) { "a group needs a name" }
+    }
+}

@@ -16,6 +16,8 @@ data class Backup(
     /** Gym log; missing in backups made before the gym existed. */
     val exercises: List<Exercise> = emptyList(),
     val gymSets: List<GymSet> = emptyList(),
+    /** Groups of exercises; missing in older backups. */
+    val groups: List<GymGroup> = emptyList(),
 )
 
 class BackupException(message: String, cause: Throwable? = null) : Exception(message, cause)
@@ -59,6 +61,7 @@ object BackupJson {
         val exIds = backup.exercises.map { it.id }.toSet()
         if (exIds.size != backup.exercises.size) throw BackupException("The backup file is damaged: two exercises have the same id.")
         if (backup.gymSets.any { it.exerciseId !in exIds }) throw BackupException("The backup file is damaged: a set has no exercise.")
+        if (backup.groups.any { g -> g.items.any { it.exerciseId !in exIds } }) throw BackupException("The backup file is damaged: a group has an unknown exercise.")
         return backup
     }
 
