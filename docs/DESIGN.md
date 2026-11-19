@@ -164,6 +164,10 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
   Start a group on top; then folding sections, each exercise once: Done today (open), Recent = 14 days (open), one per group,
   Everything else A–Z (closed). Each row: name, L·R badge, "✓ N sets" if done that day or the last day. Logic: `pickSections` in core.
 - **L and R colors** (2026-11-19): pink = L, teal = R everywhere (as the graph lines): side switch, highlighted set column, row labels.
+- **Free timer for timed sets** (2026-11-19, mockup G18, no ring/disc): exercises with Time get a full-width card instead of the
+  Time tile. Ready: the time (tap to type) + START (teal). Running: counter with tenths on a card in the side's color, "last time
+  0:18 on the left", STOP (pink), screen kept on, Log set waits. Stopped: measured time rounded to the second, − / + 1 s,
+  Time again; Log set saves it and the card is ready again. (G17g "sets by kilos" was tried and discarded.)
 - **Bands are a specification** (2026-11-19): a choice spec can be **"several"** (tap = ×1, again ×2, again none; value
   "green+purple+purple", text "green+purple×2") and each option can have **a color you pick** (palette in the spec dialog).
   The built-in BANDS field is gone from the forms; old data converts once at start (`upgradeGym`: exercises with BANDS get the

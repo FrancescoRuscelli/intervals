@@ -35,6 +35,7 @@ import androidx.compose.foundation.layout.widthIn
 import app.intervals.core.loadBlocks
 import app.intervals.core.boxText
 import androidx.compose.runtime.Composable
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -109,6 +110,9 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
     var editing by remember { mutableStateOf<GymSet?>(null) }
     var noteFor by remember { mutableStateOf<GymSet?>(null) }
     var typing by remember { mutableStateOf<GymField?>(null) }
+    // free timer for timed sets (mockup G18): started at (elapsedRealtime) while running; measured = stopped, time filled in
+    var timerFrom by remember(exerciseId) { mutableStateOf<Long?>(null) }
+    var measured by remember(exerciseId) { mutableStateOf(false) }
     var typingSpec by remember { mutableStateOf<app.intervals.core.Spec?>(null) }
     var tab by androidx.compose.runtime.saveable.rememberSaveable(exerciseId) { mutableStateOf(0) }
 
@@ -182,13 +186,13 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
                 }
             }
             item {
-                val tiles = listOf(GymField.WEIGHT, GymField.REPS, GymField.TIME, GymField.DISTANCE).filter { it in ex.fields }
+                // time has its own card with the timer, below
+                val tiles = listOf(GymField.WEIGHT, GymField.REPS, GymField.DISTANCE).filter { it in ex.fields }
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     tiles.forEach { f ->
                         val (label, text, unit) = when (f) {
                             GymField.WEIGHT -> Triple("Weight", formatKg(v.weightKg), "kg")
                             GymField.REPS -> Triple("Reps", "${v.reps}", "")
-                            GymField.TIME -> Triple("Time", formatTime(v.timeSec), "")
                             else -> Triple("Distance", formatKg(v.distance), "")
                         }
                         StepTile(label, text, unit, Modifier.weight(1f),
@@ -198,16 +202,33 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
                     }
                 }
             }
+            if (GymField.TIME in ex.fields) item {
+                val sideNow = when (side) { SideChoice.LEFT -> Side.LEFT; SideChoice.RIGHT -> Side.RIGHT; else -> null }
+                val last = lastTime.orEmpty().let { l -> (sideNow?.let { sd -> l.firstOrNull { it.side == sd } } ?: l.firstOrNull())?.timeSec }
+                TimerCard(
+                    seconds = v.timeSec, startedAt = timerFrom, measured = measured, side = sideNow,
+                    lastText = last?.let { "last time " + formatTime(it) + when (sideNow) { Side.LEFT -> " on the left"; Side.RIGHT -> " on the right"; null -> "" } },
+                    onType = { typing = GymField.TIME },
+                    onStart = { timerFrom = android.os.SystemClock.elapsedRealtime(); measured = false },
+                    onStop = { ms -> change { it.copy(timeSec = ((ms + 500) / 1000).toInt()) }; timerFrom = null; measured = true },
+                    onNudge = { d -> change { it.copy(timeSec = (it.timeSec + d).coerceAtLeast(0)) } },
+                )
+            }
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                     val e = editing
                     if (e == null) {
+                        val timing = timerFrom != null
                         BigButton(
-                            when (side) { SideChoice.LEFT -> "Log set · L"; SideChoice.RIGHT -> "Log set · R"; SideChoice.BOTH -> "Log L + R"; null -> "Log set" },
-                            p.accent, p.onAccent,
+                            if (timing) "Stop the timer first"
+                            else when (side) { SideChoice.LEFT -> "Log set · L"; SideChoice.RIGHT -> "Log set · R"; SideChoice.BOTH -> "Log L + R"; null -> "Log set" },
+                            if (timing) p.tint else p.accent, if (timing) p.faint else p.onAccent,
                             {
-                                vm.logSets(side.sides().map { s -> v.into(GymSet(exerciseId = ex.id, day = day, order = 0, side = s), ex) }, ex.restSec)
-                                side = side?.afterSet()
+                                if (!timing) {
+                                    vm.logSets(side.sides().map { s -> v.into(GymSet(exerciseId = ex.id, day = day, order = 0, side = s), ex) }, ex.restSec)
+                                    side = side?.afterSet()
+                                    measured = false
+                                }
                             },
                             Modifier.weight(1f),
                         )
@@ -499,6 +520,78 @@ private fun SpecTiles(
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * The time of a timed set (mockup G18): ready = the value (tap to type) + START; running = a counter with tenths in the side's
+ * color, the last time underneath, STOP, screen kept on; stopped = the measured time (rounded to the second), − / + 1 s, Time again.
+ */
+@Composable
+private fun TimerCard(
+    seconds: Int, startedAt: Long?, measured: Boolean, side: Side?, lastText: String?,
+    onType: () -> Unit, onStart: () -> Unit, onStop: (Long) -> Unit, onNudge: (Int) -> Unit,
+) {
+    val p = LocalPalette.current
+    val running = startedAt != null
+    val tint = side?.let { p.sideColor(it) } ?: p.accent
+    val elapsed by produceState(0L, startedAt) {
+        if (startedAt == null) return@produceState
+        while (true) {
+            value = android.os.SystemClock.elapsedRealtime() - startedAt
+            delay(100)
+        }
+    }
+    // the phone must not sleep in the middle of a hold
+    val view = androidx.compose.ui.platform.LocalView.current
+    androidx.compose.runtime.DisposableEffect(running) {
+        view.keepScreenOn = running
+        onDispose { view.keepScreenOn = false }
+    }
+    Column(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(if (running) tint.copy(alpha = 0.14f) else p.surface)
+            .border(if (running) 2.dp else 1.dp, if (running) tint else p.line, RoundedCornerShape(20.dp)).padding(14.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            when { running -> "Holding" + when (side) { Side.LEFT -> " \u00B7 left"; Side.RIGHT -> " \u00B7 right"; null -> "" }; measured -> "Time \u00B7 measured"; else -> "Time" },
+            color = p.muted, fontSize = 13.sp,
+        )
+        if (running) {
+            val sec = (elapsed / 1000).toInt()
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(formatTime(sec), color = p.text, fontSize = 64.sp, style = NumberStyle, maxLines = 1)
+                Text("." + (elapsed % 1000 / 100), color = tint, fontSize = 28.sp, style = NumberStyle, modifier = Modifier.padding(bottom = 8.dp))
+            }
+        } else {
+            Text(formatTime(seconds), color = if (measured) p.text else p.soft, fontSize = 64.sp, style = NumberStyle, maxLines = 1,
+                modifier = Modifier.clickable(onClickLabel = "Type the time", onClick = onType))
+        }
+        Text(
+            when {
+                running -> lastText ?: "first time"
+                measured -> "rounded to the second \u00B7 adjust if you started late"
+                else -> "Start when you begin, Stop when you let go \u00B7 or tap the time to type it"
+            },
+            color = p.muted, fontSize = 12.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+        )
+        if (measured && !running) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("\u2212 1 s" to -1, "+ 1 s" to 1).forEach { (label, d) ->
+                    Box(Modifier.weight(1f).height(46.dp).clip(RoundedCornerShape(12.dp)).background(p.tint).clickable(onClickLabel = label) { onNudge(d) },
+                        contentAlignment = Alignment.Center) { Text(label, color = p.accentText, fontSize = 15.sp, fontWeight = FontWeight.Bold) }
+                }
+                Box(Modifier.weight(1.2f).height(46.dp).clip(RoundedCornerShape(12.dp)).background(p.bg).clickable(onClick = onStart),
+                    contentAlignment = Alignment.Center) { Text("Time again", color = p.soft, fontSize = 14.sp, fontWeight = FontWeight.SemiBold) }
+            }
+        } else {
+            Box(
+                Modifier.fillMaxWidth().height(68.dp).clip(RoundedCornerShape(20.dp)).background(if (running) p.pink else p.teal)
+                    .clickable(onClickLabel = if (running) "Stop the timer" else "Start the timer") { if (running) onStop(elapsed) else onStart() },
+                contentAlignment = Alignment.Center,
+            ) { Text(if (running) "STOP" else "START", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp) }
         }
     }
 }
