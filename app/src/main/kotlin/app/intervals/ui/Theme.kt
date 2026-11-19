@@ -96,3 +96,16 @@ fun IntervalsTheme(mode: ThemeMode, content: @Composable () -> Unit) {
         MaterialTheme(colorScheme = scheme, typography = Typography(), content = content)
     }
 }
+
+/** Left and right, the same two colors everywhere (as in the graphs): pink = L, teal = R. */
+fun Palette.sideColor(side: app.intervals.core.Side): Color = if (side == app.intervals.core.Side.LEFT) pink else teal
+
+/** A light background of the side's color. */
+fun Palette.sideTint(side: app.intervals.core.Side): Color = sideColor(side).copy(alpha = 0.16f)
+
+/** The color of a row label: "L" pink, "R" teal, anything else (numbers, "L R") [other]. */
+fun Palette.labelColor(label: String, other: Color): Color = when (label) {
+    "L" -> pink
+    "R" -> teal
+    else -> other
+}

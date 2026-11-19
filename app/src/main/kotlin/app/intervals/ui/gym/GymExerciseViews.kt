@@ -64,6 +64,7 @@ import app.intervals.core.summary
 import app.intervals.core.topSet
 import app.intervals.core.trend
 import app.intervals.ui.LocalPalette
+import app.intervals.ui.labelColor
 import app.intervals.ui.NumberStyle
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -99,7 +100,7 @@ fun ExerciseHistory(ex: Exercise, all: List<GymSet>, onOpenDay: (String) -> Unit
                 }
                 dayRows(sets).forEach { row ->
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(row.label, color = p.muted, fontSize = 13.sp, modifier = Modifier.width(44.dp))
+                        Text(row.label, color = p.labelColor(row.label, p.muted), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.width(44.dp))
                         Text(row.set.summary(ex), color = p.text, style = NumberStyle, fontSize = 15.sp, modifier = Modifier.weight(1f))
                         if (row.count > 1) {
                             Box(Modifier.clip(RoundedCornerShape(10.dp)).background(p.workTint).padding(horizontal = 7.dp, vertical = 2.dp)) {

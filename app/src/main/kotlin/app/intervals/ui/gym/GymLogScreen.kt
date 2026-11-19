@@ -70,6 +70,8 @@ import app.intervals.core.toggleTag
 import app.intervals.ui.AppIcons
 import app.intervals.ui.AppViewModel
 import app.intervals.ui.LocalPalette
+import app.intervals.ui.sideTint
+import app.intervals.ui.sideColor
 import app.intervals.ui.NumberStyle
 import app.intervals.ui.list.BigButton
 import java.time.LocalDate
@@ -175,7 +177,7 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
             Modifier.weight(1f), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             if (ex.perSide && editing == null) item {
-                Segmented(listOf("L", "R", "Both"), side?.ordinal ?: 0) { side = SideChoice.entries[it] }
+                Segmented(listOf("L", "R", "Both"), side?.ordinal ?: 0, listOf(p.pink, p.teal, p.accent)) { side = SideChoice.entries[it] }
             }
             if (ex.specs.isNotEmpty()) item {
                 SpecTiles(ex.specs, v.specs, onType = { typingSpec = it }) { name, value ->
@@ -363,16 +365,18 @@ private fun SideColumn(
 ) {
     val p = LocalPalette.current
     Column(
-        modifier.alpha(if (dimmed) 0.55f else 1f).clip(RoundedCornerShape(16.dp)).background(if (highlighted) p.group else p.surface)
-            .border(if (highlighted) 2.dp else 1.dp, if (highlighted) p.accent else p.line, RoundedCornerShape(16.dp)).padding(10.dp),
+        // the side's own color: pink L, teal R (purple only without a side)
+        modifier.alpha(if (dimmed) 0.55f else 1f).clip(RoundedCornerShape(16.dp))
+            .background(if (highlighted) side?.let { p.sideTint(it) } ?: p.group else p.surface)
+            .border(if (highlighted) 2.dp else 1.dp, if (highlighted) side?.let { p.sideColor(it) } ?: p.accent else p.line, RoundedCornerShape(16.dp)).padding(10.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         if (side != null) Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(24.dp).clip(CircleShape).background(if (highlighted) p.accent else p.tint), contentAlignment = Alignment.Center) {
-                Text(side.letter, color = if (highlighted) p.onAccent else p.accentText, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Box(Modifier.size(24.dp).clip(CircleShape).background(p.sideColor(side)), contentAlignment = Alignment.Center) {
+                Text(side.letter, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
             Text("  ${sets.size} set${if (sets.size == 1) "" else "s"}", color = p.muted, fontSize = 12.sp, modifier = Modifier.weight(1f))
-            if (next) Text("next", color = p.accentText, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            if (next) Text("next", color = p.sideColor(side), fontSize = 11.sp, fontWeight = FontWeight.Bold)
         }
         if (sets.isEmpty()) Text("none yet", color = p.faint, fontSize = 13.sp)
         loadBlocks(sets, ex).forEach { b ->
@@ -455,12 +459,13 @@ private fun NumberDialog(title: String, initial: String, decimal: Boolean, onDis
 }
 
 @Composable
-private fun Segmented(options: List<String>, selected: Int, onSelect: (Int) -> Unit) {
+/** [colors] = the selected background of each option (default: purple). */
+private fun Segmented(options: List<String>, selected: Int, colors: List<Color>? = null, onSelect: (Int) -> Unit) {
     val p = LocalPalette.current
     Row(Modifier.fillMaxWidth().height(48.dp).clip(RoundedCornerShape(12.dp)).background(p.surface).padding(4.dp)) {
         options.forEachIndexed { i, o ->
             Box(
-                Modifier.weight(1f).fillMaxSize().clip(RoundedCornerShape(9.dp)).background(if (i == selected) p.accent else Color.Transparent)
+                Modifier.weight(1f).fillMaxSize().clip(RoundedCornerShape(9.dp)).background(if (i == selected) colors?.getOrNull(i) ?: p.accent else Color.Transparent)
                     .clickable { onSelect(i) },
                 contentAlignment = Alignment.Center,
             ) { Text(o, color = if (i == selected) p.onAccent else p.soft, fontSize = 15.sp, fontWeight = FontWeight.SemiBold) }

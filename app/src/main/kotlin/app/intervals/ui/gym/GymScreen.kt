@@ -58,6 +58,7 @@ import app.intervals.core.topSet
 import app.intervals.ui.AppIcons
 import app.intervals.ui.AppViewModel
 import app.intervals.ui.LocalPalette
+import app.intervals.ui.labelColor
 import app.intervals.ui.NumberStyle
 import app.intervals.ui.list.BigButton
 import kotlinx.coroutines.launch
@@ -205,7 +206,7 @@ private fun SetRowView(row: SetRow, ex: Exercise, cols: List<GymField>) {
     val s = row.set
     Column(Modifier.fillMaxWidth().padding(vertical = 5.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(row.label, color = p.soft, fontSize = 15.sp, style = NumberStyle, modifier = Modifier.width(56.dp))
+            Text(row.label, color = p.labelColor(row.label, p.soft), fontSize = 15.sp, style = NumberStyle, modifier = Modifier.width(56.dp))
             cols.forEach { f ->
                 Box(Modifier.weight(1f)) {
                     when (f) {
