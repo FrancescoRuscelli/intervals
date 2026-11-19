@@ -46,4 +46,21 @@ class GymLogTest {
         assertEquals("Failed · ring finger", toggleTag("ring finger", "Failed"))
         assertEquals("ring finger", toggleTag("Failed · ring finger", "Failed"))
     }
+
+    @Test
+    fun pickListHasEachExerciseOnceInItsSection() {
+        fun ex(id: Long, name: String, side: Boolean = false) = Exercise(id, name, listOf(GymField.WEIGHT, GymField.REPS), perSide = side)
+        val all = listOf(ex(1, "Squat"), ex(2, "Deadlift"), ex(3, "Block Pulls", true), ex(4, "Pinch", true), ex(5, "Bench"), ex(6, "Curl"))
+        val legs = GymGroup(1, "Legs", listOf(GroupItem(1), GroupItem(2), GroupItem(6)))
+        val used = mapOf(1L to "2026-11-19", 3L to "2026-11-17", 5L to "2026-10-01", 6L to "2026-11-10")
+        val s = pickSections(all, setOf(1L), used, listOf(legs), "2026-11-19")
+        assertEquals(
+            listOf("Done today" to listOf("Squat"), "Recent" to listOf("Block Pulls", "Curl"), "Legs" to listOf("Deadlift"),
+                "Everything else A–Z" to listOf("Bench", "Pinch")),
+            s.map { it.title to it.exercises.map(Exercise::name) },
+        )
+        val oneSide = pickSections(all, setOf(1L), used, listOf(legs), "2026-11-19", SideFilter.ONE_SIDE)
+        assertEquals(listOf("Recent" to listOf("Block Pulls"), "Everything else A–Z" to listOf("Pinch")),
+            oneSide.map { it.title to it.exercises.map(Exercise::name) })
+    }
 }

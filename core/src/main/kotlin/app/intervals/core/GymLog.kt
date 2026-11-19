@@ -41,3 +41,42 @@ fun toggleTag(note: String, tag: String): String {
     val parts = note.split(" · ").map(String::trim).filter(String::isNotEmpty)
     return (if (tag in parts) parts - tag else listOf(tag) + parts).joinToString(" · ")
 }
+
+/** Filter of the add-exercise list. */
+enum class SideFilter { ALL, ONE_SIDE, BOTH_SIDES }
+
+/** A folding section of the add-exercise list. */
+data class PickSection(val key: String, val title: String, val exercises: List<Exercise>)
+
+/**
+ * The add-exercise list, each exercise once, in this order: done on [day], recent (the 14 days before), one section per group,
+ * then everything else A–Z. Empty sections are left out.
+ */
+fun pickSections(
+    exercises: List<Exercise>,
+    doneOnDay: Set<Long>,
+    lastUsed: Map<Long, String>,
+    groups: List<GymGroup>,
+    day: String,
+    filter: SideFilter = SideFilter.ALL,
+): List<PickSection> {
+    val shown = exercises.filter {
+        when (filter) {
+            SideFilter.ALL -> true
+            SideFilter.ONE_SIDE -> it.perSide
+            SideFilter.BOTH_SIDES -> !it.perSide
+        }
+    }
+    val byId = shown.associateBy { it.id }
+    val taken = mutableSetOf<Long>()
+    fun take(list: List<Exercise>) = list.filter { taken.add(it.id) }
+    val since = java.time.LocalDate.parse(day).minusDays(14).toString()
+    val out = mutableListOf<PickSection>()
+    out += PickSection("today", "Done today", take(shown.filter { it.id in doneOnDay }))
+    out += PickSection("recent", "Recent", take(
+        shown.filter { (lastUsed[it.id] ?: "") in since..day }.sortedByDescending { lastUsed[it.id] }
+    ))
+    groups.forEach { g -> out += PickSection("g${g.id}", g.name, take(g.items.mapNotNull { byId[it.exerciseId] })) }
+    out += PickSection("rest", "Everything else A–Z", take(shown.sortedBy { it.name.lowercase() }))
+    return out.filter { it.exercises.isNotEmpty() }
+}

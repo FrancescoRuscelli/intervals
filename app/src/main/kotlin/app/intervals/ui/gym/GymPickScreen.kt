@@ -31,6 +31,11 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.widthIn
+import app.intervals.core.SideFilter
+import app.intervals.core.pickSections
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,31 +54,56 @@ import app.intervals.ui.AppViewModel
 import app.intervals.ui.LocalPalette
 import app.intervals.ui.editor.SectionTitle
 
-/** Add an exercise to a day: search, recent first, then all A–Z; or a new one (mockup G9). */
+/**
+ * Add an exercise to a day (mockup G9, reorganised 2026-11-19): search + New, a filter All · L·R · Both sides, then folding sections
+ * with each exercise once: done today, recent, one per group, everything else A–Z. Start a group stays on top.
+ */
 @Composable
 fun GymPickScreen(vm: AppViewModel, day: String) {
     val p = LocalPalette.current
     val exercises by vm.exercises.collectAsStateWithLifecycle()
     val lastUsed by vm.lastUsed.collectAsStateWithLifecycle()
+    val groups by vm.groups.collectAsStateWithLifecycle()
+    val daySets by remember(day) { vm.gymDay(day) }.collectAsStateWithLifecycle(emptyList())
+    val doneCount = remember(daySets) { daySets.groupingBy { it.exerciseId }.eachCount() }
     var query by remember { mutableStateOf("") }
     var creating by remember { mutableStateOf<String?>(null) }
+    var filter by remember { mutableStateOf(SideFilter.ALL) }
+    // open sections; groups and the long A–Z list start closed
+    val open = remember { mutableStateMapOf("today" to true, "recent" to true) }
     val q = query.trim()
-    val found = exercises.filter { q.isNotEmpty() && it.name.contains(q, ignoreCase = true) }
-    val recent = exercises.filter { it.id in lastUsed }.sortedByDescending { lastUsed[it.id] }.take(8)
-    val groups by vm.groups.collectAsStateWithLifecycle()
     val names = exercises.associate { it.id to it.name }
+    val sections = remember(exercises, doneCount, lastUsed, groups, day, filter) {
+        pickSections(exercises, doneCount.keys, lastUsed, groups, day, filter)
+    }
+    fun pick(ex: Exercise) = vm.pickExercise(ex.id, day)
 
     Column(Modifier.fillMaxSize().background(p.bg).statusBarsPadding().navigationBarsPadding()) {
-        Row(Modifier.fillMaxWidth().padding(start = 4.dp, end = 16.dp, top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().padding(start = 4.dp, end = 12.dp, top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = { vm.back() }) { Icon(AppIcons.Close, "Close", tint = p.text) }
-            OutlinedTextField(query, { query = it }, placeholder = { Text("Search or name a new exercise") }, singleLine = true,
-                modifier = Modifier.weight(1f))
+            OutlinedTextField(query, { query = it }, placeholder = { Text("Search") }, singleLine = true, modifier = Modifier.weight(1f))
+            Spacer(Modifier.width(8.dp))
+            Box(
+                Modifier.height(52.dp).clip(RoundedCornerShape(14.dp)).background(p.tint).clickable(onClickLabel = "New exercise") { creating = q }
+                    .padding(horizontal = 14.dp),
+                contentAlignment = Alignment.Center,
+            ) { Text("+ New", color = p.accentText, fontSize = 15.sp, fontWeight = FontWeight.SemiBold) }
         }
-        LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(SideFilter.ALL to "All", SideFilter.ONE_SIDE to "L · R", SideFilter.BOTH_SIDES to "Both sides").forEach { (f, label) ->
+                val on = f == filter
+                Text(label, color = if (on) p.onAccent else p.soft, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(if (on) p.accent else p.surface)
+                        .clickable { filter = f }.padding(horizontal = 14.dp, vertical = 8.dp))
+            }
+        }
+        LazyColumn(contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             if (q.isNotEmpty()) {
-                items(found, key = { "f" + it.id }) { ExerciseRow(it, lastUsed[it.id]) { vm.pickExercise(it.id, day) } }
-                if (found.none { it.name.equals(q, ignoreCase = true) }) item {
-                    Text("+ New exercise “$q”", color = p.accentText, fontSize = 16.sp, fontWeight = FontWeight.SemiBold,
+                val found = sections.flatMap { it.exercises }.distinctBy { it.id }.filter { it.name.contains(q, ignoreCase = true) }
+                    .sortedBy { it.name.lowercase() }
+                items(found, key = { "f" + it.id }) { ExerciseRow(it, doneCount[it.id], lastUsed[it.id]) { pick(it) } }
+                if (exercises.none { it.name.equals(q, ignoreCase = true) }) item {
+                    Text("+ New exercise \u201C$q\u201D", color = p.accentText, fontSize = 16.sp, fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.fillMaxWidth().clickable { creating = q }.padding(vertical = 14.dp, horizontal = 4.dp))
                 }
             } else {
@@ -85,13 +115,9 @@ fun GymPickScreen(vm: AppViewModel, day: String) {
                                 modifier = Modifier.clickable { vm.editGroup(null) }.padding(6.dp))
                         }
                     }
-                    if (groups.isEmpty()) item {
-                        Text("Groups are exercises you do together, e.g. Legs: Squat · Deadlift. Make one with + New group.",
-                            color = p.muted, fontSize = 13.sp, modifier = Modifier.padding(bottom = 8.dp))
-                    }
                     items(groups, key = { "g" + it.id }) { g ->
                         Row(
-                            Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(p.group)
+                            Modifier.fillMaxWidth().padding(bottom = 6.dp).clip(RoundedCornerShape(16.dp)).background(p.group)
                                 .clickable(onClickLabel = "Start ${g.name}") { vm.startGroup(g.id, day) }.padding(start = 10.dp, top = 8.dp, bottom = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -108,16 +134,22 @@ fun GymPickScreen(vm: AppViewModel, day: String) {
                         }
                     }
                 }
-                item {
-                    Text("+ New exercise", color = p.accentText, fontSize = 16.sp, fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.fillMaxWidth().clickable { creating = "" }.padding(vertical = 14.dp, horizontal = 4.dp))
+                if (sections.isEmpty()) item {
+                    Text("No exercises here yet: + New makes one.", color = p.muted, fontSize = 14.sp, modifier = Modifier.padding(top = 8.dp))
                 }
-                if (recent.isNotEmpty()) {
-                    item { SectionTitle("Recent exercises", Modifier.padding(top = 6.dp, bottom = 4.dp)) }
-                    items(recent, key = { "r" + it.id }) { ExerciseRow(it, lastUsed[it.id]) { vm.pickExercise(it.id, day) } }
+                sections.forEach { sec ->
+                    val isOpen = open[sec.key] == true
+                    item(key = "h" + sec.key) {
+                        Row(
+                            Modifier.fillMaxWidth().clickable { open[sec.key] = !isOpen }.padding(top = 14.dp, bottom = 6.dp, start = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(if (isOpen) "\u25BE" else "\u25B8", color = p.muted, fontSize = 14.sp, modifier = Modifier.width(18.dp))
+                            SectionTitle("${sec.title} \u00B7 ${sec.exercises.size}")
+                        }
+                    }
+                    if (isOpen) items(sec.exercises, key = { sec.key + it.id }) { ExerciseRow(it, doneCount[it.id], lastUsed[it.id]) { pick(it) } }
                 }
-                item { SectionTitle("All, A–Z · ${exercises.size}", Modifier.padding(top = 10.dp, bottom = 4.dp)) }
-                items(exercises, key = { "a" + it.id }) { ExerciseRow(it, lastUsed[it.id]) { vm.pickExercise(it.id, day) } }
             }
         }
     }
@@ -130,19 +162,22 @@ fun GymPickScreen(vm: AppViewModel, day: String) {
     }
 }
 
+/** One line: name, an L·R badge for per-side ones, and on the right "done 5 sets" (today) or the last day. */
 @Composable
-private fun ExerciseRow(ex: Exercise, lastDay: String?, onClick: () -> Unit) {
+private fun ExerciseRow(ex: Exercise, doneToday: Int?, lastDay: String?, onClick: () -> Unit) {
     val p = LocalPalette.current
-    Column(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 10.dp, horizontal = 4.dp)) {
-        Text(ex.name, color = p.text, fontSize = 16.sp)
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(vertical = 12.dp, horizontal = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(ex.name, color = p.text, fontSize = 16.sp, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f, fill = false))
+        if (ex.perSide) Text("L\u00B7R", color = p.accentText, fontSize = 11.sp, fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(start = 8.dp).clip(RoundedCornerShape(6.dp)).background(p.tint).padding(horizontal = 6.dp, vertical = 2.dp))
+        Spacer(Modifier.weight(1f).widthIn(min = 8.dp))
         Text(
-            buildList {
-                add(ex.fields.joinToString(" · ") { it.name.lowercase() })
-                if (ex.perSide) add("L · R")
-                if (ex.assist) add("assist")
-                lastDay?.let { add("last " + shortDay(it)) }
-            }.joinToString(" · "),
-            color = p.muted, fontSize = 12.sp,
+            if (doneToday != null) "\u2713 $doneToday set${if (doneToday == 1) "" else "s"}" else lastDay?.let(::shortDay) ?: "never",
+            color = if (doneToday != null) p.pink else p.muted, fontSize = 13.sp,
         )
     }
 }
