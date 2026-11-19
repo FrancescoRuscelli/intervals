@@ -163,6 +163,12 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
 - **Add exercise list** (reorganised 2026-11-19, chosen option "sections + L/R filter"): search + "+ New" (a side filter was tried and removed);
   Start a group on top; then folding sections, each exercise once: Done today (open), Recent = 14 days (open), one per group,
   Everything else A–Z (closed). Each row: name, L·R badge, "✓ N sets" if done that day or the last day. Logic: `pickSections` in core.
+- **Sets during a workout** (2026-11-19, mockup G17f chosen over G17a–e): the log screen's sets are **blocks by load**
+  ("45 kg · 40 mm" with boxes 5 · 5 · 4 = reps, or the time for time-only exercises). Per-side exercises: **two columns L | R**,
+  the side selected at the top highlighted (purple border, "next"), the other dimmed; Both = both highlighted. Two-sided
+  exercises: one column. A box with a pink edge has a note; tap a box = that set (tags, note, edit values, delete; the dialog shows
+  the real rest). Logic: `loadBlocks` / `boxText` / `loadText` in core.
+- Weight and other tiles: long values (15.25) get a smaller font so the number and its unit stay on one line.
 - **Each side remembers its own values** (2026-11-19): on a per-side exercise, L starts from the last L set (today, else last time's
   first L), R from the last R; switching side on the log screen reloads that side's values.
 - Not wanted (from your FitNotes data, never used): routines, body weight, measurements, goals, plate calculator.

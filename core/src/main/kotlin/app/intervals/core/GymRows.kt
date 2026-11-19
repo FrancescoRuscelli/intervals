@@ -71,3 +71,32 @@ private fun GymSet.valuesText(ex: Exercise): String = buildList {
     if (GymField.TIME in ex.fields) timeSec?.let { add(formatTime(it)) }
     if (GymField.DISTANCE in ex.fields) distance?.let { add(formatKg(it)) }
 }.joinToString(" × ")
+
+/** One block of an exercise's day (mockup G17f): the sets done at the same load, e.g. "45 kg · 40 mm" with reps 5 · 5 · 4. */
+data class LoadBlock(val label: String, val sets: List<GymSet>)
+
+/** What each box of a block shows: the reps, else the time, else the distance. */
+fun boxField(ex: Exercise): GymField? = listOf(GymField.REPS, GymField.TIME, GymField.DISTANCE).firstOrNull { it in ex.fields }
+
+fun GymSet.boxText(ex: Exercise): String = when (boxField(ex)) {
+    GymField.REPS -> reps?.toString() ?: "–"
+    GymField.TIME -> timeSec?.let(::formatTime) ?: "–"
+    GymField.DISTANCE -> distance?.let(::formatKg) ?: "–"
+    else -> "✓"
+}
+
+/** The load of a set without the box value: "45 kg", "−20 kg", "40 mm · 🟢🟣", "+10 kg · 0:07"… empty when there is none. */
+fun GymSet.loadText(ex: Exercise): String {
+    val box = boxField(ex)
+    return buildList {
+        specsText(ex).takeIf(String::isNotEmpty)?.let(::add)
+        if (GymField.WEIGHT in ex.fields) weightKg?.let { add((if (ex.assist && it != 0.0) "−" else "") + formatKg(it) + " kg") }
+        if (GymField.BANDS in ex.fields && bands.isNotEmpty()) add(bands.sortedBy { it.ordinal }.joinToString("") { bandEmoji.getValue(it) })
+        if (GymField.TIME in ex.fields && box != GymField.TIME) timeSec?.let { add(formatTime(it)) }
+        if (GymField.DISTANCE in ex.fields && box != GymField.DISTANCE) distance?.let { add(formatKg(it)) }
+    }.joinToString(" · ")
+}
+
+/** One side's sets (or all of a two-sided exercise) as blocks by load, in the order each load first appears. */
+fun loadBlocks(sets: List<GymSet>, ex: Exercise): List<LoadBlock> =
+    sets.groupBy { it.loadText(ex) }.map { (label, s) -> LoadBlock(label.ifEmpty { "Sets" }, s) }

@@ -46,4 +46,21 @@ class GymRowsTest {
         assertEquals(listOf(1, 1, 1), rows.map { it.count })
         assertEquals(listOf(2), dayRows(listOf(a, a)).map { it.count })
     }
+
+    @Test
+    fun blocksByLoadPerSide() {
+        val bp = Exercise(4, "Block Pulls", listOf(GymField.WEIGHT, GymField.REPS), perSide = true)
+        val r = { kg: Double, n: Int -> set(kg, n, Side.RIGHT) }
+        val l = { kg: Double, n: Int -> set(kg, n, Side.LEFT) }
+        val day = listOf(r(50.0, 5), l(45.0, 5), r(50.0, 5), l(45.0, 4), r(52.0, 3), l(47.0, 3), r(52.0, 2))
+        val right = loadBlocks(day.filter { it.side == Side.RIGHT }, bp)
+        assertEquals(listOf("50 kg" to listOf("5", "5"), "52 kg" to listOf("3", "2")), right.map { it.label to it.sets.map { s -> s.boxText(bp) } })
+        // time-only: the boxes are the times, no load
+        val hs = Exercise(5, "Handstand", listOf(GymField.TIME))
+        val t = GymSet(exerciseId = 5, day = "2026-11-17", order = 0, timeSec = 40)
+        assertEquals(listOf("Sets" to listOf("0:40", "0:40")), loadBlocks(listOf(t, t), hs).map { it.label to it.sets.map { s -> s.boxText(hs) } })
+        // assist and specs go in the label
+        val oap = Exercise(6, "OAP", listOf(GymField.WEIGHT, GymField.REPS), assist = true, specs = listOf(Spec("Ring", choices = listOf("low", "high"))))
+        assertEquals("high · −20 kg", set(20.0, 3).copy(specs = mapOf("Ring" to "high")).loadText(oap))
+    }
 }

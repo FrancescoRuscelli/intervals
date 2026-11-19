@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -30,6 +29,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.ui.draw.alpha
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
+import app.intervals.core.loadBlocks
+import app.intervals.core.boxText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -221,13 +225,13 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
 
             val list = sets.orEmpty()
             if (list.isNotEmpty()) item {
-                Text("SETS", color = p.muted, fontSize = 13.sp, letterSpacing = 0.6.sp, fontWeight = FontWeight.SemiBold,
+                Text("SETS · ${list.size}", color = p.muted, fontSize = 13.sp, letterSpacing = 0.6.sp, fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(top = 4.dp))
             }
-            itemsIndexed(list, key = { _, s -> s.id }) { i, s ->
-                SetLine(i + 1, s, ex, s.id == editing?.id) { noteFor = s }
+            if (list.isNotEmpty()) item {
+                SetBlocks(list, ex, if (editing == null) side else null, editing?.id) { noteFor = it }
             }
-            if (list.isNotEmpty()) item { Text("Tap a set to edit it or add a note", color = p.muted, fontSize = 12.sp) }
+            if (list.isNotEmpty()) item { Text("Tap a number to edit that set or add a note · pink edge = has a note", color = p.muted, fontSize = 12.sp) }
         }
     }
 
@@ -285,8 +289,10 @@ private fun StepTile(label: String, value: String, unit: String, modifier: Modif
     Column(modifier.clip(RoundedCornerShape(16.dp)).background(p.surface).padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Text(label, color = p.muted, fontSize = 13.sp)
         Row(Modifier.clickable(onClickLabel = "Type $label", onClick = onTap).padding(vertical = 6.dp), verticalAlignment = Alignment.Bottom) {
-            Text(value, color = p.text, fontSize = 40.sp, style = NumberStyle)
-            if (unit.isNotEmpty()) Text(" $unit", color = p.muted, fontSize = 15.sp, modifier = Modifier.padding(bottom = 8.dp))
+            // longer numbers (15.25) get smaller, so the value and its unit stay on one line
+            val size = when { value.length <= 3 -> 40; value.length == 4 -> 34; value.length == 5 -> 29; else -> 25 }
+            Text(value, color = p.text, fontSize = size.sp, style = NumberStyle, maxLines = 1, softWrap = false)
+            if (unit.isNotEmpty()) Text(" $unit", color = p.muted, fontSize = 15.sp, maxLines = 1, softWrap = false, modifier = Modifier.padding(bottom = 8.dp))
         }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             app.intervals.ui.editor.StepButton(AppIcons.Minus, "$label less", p.tint, p.accentText, 52, onMinus)
@@ -316,25 +322,72 @@ private fun BandsTile(bands: List<Band>, onTap: (Band) -> Unit) {
     }
 }
 
+/**
+ * The day's sets as blocks by load (mockup G17f). Per-side: two columns L | R, the side you're on ([active]) highlighted
+ * and the other dimmed; sets without a side go below, full width. Each box is one set (reps, or time); tap it to open the set.
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun SetLine(n: Int, s: GymSet, ex: Exercise, editing: Boolean, onClick: () -> Unit) {
+private fun SetBlocks(sets: List<GymSet>, ex: Exercise, active: SideChoice?, editingId: Long?, onOpen: (GymSet) -> Unit) {
+    if (!ex.perSide) {
+        SideColumn(null, sets, ex, highlighted = false, dimmed = false, editingId, onOpen, Modifier.fillMaxWidth())
+        return
+    }
+    val left = sets.filter { it.side == Side.LEFT }
+    val right = sets.filter { it.side == Side.RIGHT }
+    val none = sets.filter { it.side == null }
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            listOf(Side.LEFT to left, Side.RIGHT to right).forEach { (sd, list) ->
+                val on = active == SideChoice.BOTH || (active == SideChoice.LEFT && sd == Side.LEFT) || (active == SideChoice.RIGHT && sd == Side.RIGHT)
+                SideColumn(sd, list, ex, highlighted = on, dimmed = active != null && !on, editingId, onOpen, Modifier.weight(1f),
+                    next = on && active != SideChoice.BOTH)
+            }
+        }
+        if (none.isNotEmpty()) SideColumn(null, none, ex, highlighted = false, dimmed = false, editingId, onOpen, Modifier.fillMaxWidth())
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun SideColumn(
+    side: Side?, sets: List<GymSet>, ex: Exercise, highlighted: Boolean, dimmed: Boolean, editingId: Long?,
+    onOpen: (GymSet) -> Unit, modifier: Modifier, next: Boolean = false,
+) {
     val p = LocalPalette.current
     Column(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
-            .background(if (editing) p.tint else Color.Transparent).clickable(onClick = onClick).padding(horizontal = 8.dp, vertical = 8.dp),
+        modifier.alpha(if (dimmed) 0.55f else 1f).clip(RoundedCornerShape(16.dp)).background(if (highlighted) p.group else p.surface)
+            .border(if (highlighted) 2.dp else 1.dp, if (highlighted) p.accent else p.line, RoundedCornerShape(16.dp)).padding(10.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(s.side?.letter ?: "$n", color = p.muted, fontSize = 15.sp, style = NumberStyle, modifier = Modifier.width(32.dp))
-            if (GymField.BANDS in ex.fields && s.bands.isNotEmpty()) {
-                BandDots(s.bands)
-                Spacer(Modifier.width(8.dp))
+        if (side != null) Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(24.dp).clip(CircleShape).background(if (highlighted) p.accent else p.tint), contentAlignment = Alignment.Center) {
+                Text(side.letter, color = if (highlighted) p.onAccent else p.accentText, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
-            // the bands are the dots; the text is the rest ("× 5")
-            Text(s.copy(bands = emptyList()).summary(ex).ifEmpty { "–" },
-                color = p.text, fontSize = 17.sp, style = NumberStyle, modifier = Modifier.weight(1f))
-            s.restSec?.let { Text("rested ${formatTime(it)}", color = p.muted, fontSize = 12.sp) }
+            Text("  ${sets.size} set${if (sets.size == 1) "" else "s"}", color = p.muted, fontSize = 12.sp, modifier = Modifier.weight(1f))
+            if (next) Text("next", color = p.accentText, fontSize = 11.sp, fontWeight = FontWeight.Bold)
         }
-        if (s.note.isNotEmpty()) Text(s.note, color = p.muted, fontSize = 13.sp, fontStyle = FontStyle.Italic, modifier = Modifier.padding(start = 32.dp))
+        if (sets.isEmpty()) Text("none yet", color = p.faint, fontSize = 13.sp)
+        loadBlocks(sets, ex).forEach { b ->
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(b.label, color = p.text, fontSize = 17.sp, style = NumberStyle, maxLines = 2)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    b.sets.forEach { s ->
+                        val editing = s.id == editingId
+                        Box(
+                            Modifier.heightIn(min = 36.dp).widthIn(min = 36.dp).clip(RoundedCornerShape(10.dp))
+                                .background(if (editing) p.accent else p.bg)
+                                .border(1.dp, if (s.note.isNotEmpty()) p.pink else p.line, RoundedCornerShape(10.dp))
+                                .clickable(onClickLabel = "Set ${s.boxText(ex)}" + if (s.note.isNotEmpty()) ", note: ${s.note}" else "") { onOpen(s) }
+                                .padding(horizontal = 8.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(s.boxText(ex), color = if (editing) p.onAccent else p.text, fontSize = 16.sp, style = NumberStyle)
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -346,7 +399,7 @@ private fun SetDialog(s: GymSet, ex: Exercise, onDismiss: () -> Unit, onSave: (G
     var confirmDelete by remember { mutableStateOf(false) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text((s.side?.let { it.letter + " · " } ?: "") + s.summary(ex)) },
+        title = { Text((s.side?.let { it.letter + " · " } ?: "") + s.summary(ex) + (s.restSec?.let { " · rested ${formatTime(it)}" } ?: "")) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
