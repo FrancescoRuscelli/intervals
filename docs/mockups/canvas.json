@@ -336,6 +336,27 @@
       "w": 390,
       "h": 844,
       "title": "G18 · Free timer for a timed set: Start / Stop (tweak: state)"
+    },
+    "GymVariants.dc.html": {
+      "x": 9870,
+      "y": 4260,
+      "w": 390,
+      "h": 844,
+      "title": "G19a · Variants in the log: deep · half · normal (stays on the last)"
+    },
+    "GymVariantsEdit.dc.html": {
+      "x": 10340,
+      "y": 4260,
+      "w": 390,
+      "h": 844,
+      "title": "G19b · Edit exercise: its variants"
+    },
+    "GymVariantsGraph.dc.html": {
+      "x": 10810,
+      "y": 4260,
+      "w": 390,
+      "h": 844,
+      "title": "G19c · Graph and records per variant"
     }
   },
   "order": [
@@ -384,7 +405,10 @@
     "GymSetsD.dc.html",
     "GymSetsE.dc.html",
     "GymSetsF.dc.html",
-    "GymTimer.dc.html"
+    "GymTimer.dc.html",
+    "GymVariants.dc.html",
+    "GymVariantsEdit.dc.html",
+    "GymVariantsGraph.dc.html"
   ],
   "notes": {
     "home": {
@@ -422,6 +446,14 @@
       "text": "Choose one: how an exercise's sets are grouped during a workout (same Block Pulls session, 11 sets, real phone size)",
       "size": "l",
       "fill": "purple"
+    },
+    "variants": {
+      "x": 9870,
+      "y": 3880,
+      "w": 1330,
+      "text": "Variants: one exercise, several ways of doing it (Squat: deep / half / normal; Pull Up: full / upper half / lower half)",
+      "size": "l",
+      "fill": "teal"
     }
   },
   "designSystems": [],

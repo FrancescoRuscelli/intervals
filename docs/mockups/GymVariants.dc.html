@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gym, exercise variants</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #000000; color: #F2F3F5; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+  <header style="display: flex; align-items: center; gap: 4px; padding: 12px 8px 0">
+    <button aria-label="Back" style="width: 44px; height: 44px; flex: none; border: 0; border-radius: 22px; background: transparent; color: inherit; display: flex; align-items: center; justify-content: center">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+    </button>
+    <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center">
+      <span style="font-size: 17px; font-weight: 700">{{title}}</span>
+      <span style="font-size: 12px; color: #9AA0AA">{{subtitle}}</span>
+    </span>
+    <span style="width: 44px; flex: none"></span>
+  </header>
+
+  <sc-if value="{{isLog}}" hint-placeholder-val="{{ true }}">
+    <div style="padding: 12px 16px 0; display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 12px; color: #9AA0AA; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase">Variant · stays on the last one</span>
+      <div role="group" aria-label="Variant" style="display: flex; padding: 3px; border-radius: 14px; background: #1A1C21">
+        <sc-for list="{{variants}}" as="v" hint-placeholder-count="3">
+          <button aria-pressed="{{v.on}}" style="flex: 1; height: 42px; border: 0; border-radius: 11px; background: {{v.bg}}; color: {{v.fg}}; font-size: 15px; font-weight: 700">{{v.name}}</button>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 12px 16px 0">
+      <div style="padding: 10px; border-radius: 20px; background: #1A1C21; display: flex; flex-direction: column; align-items: center; gap: 6px">
+        <span style="font-size: 12px; color: #9AA0AA; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase">Weight</span>
+        <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 34px; font-weight: 700; line-height: 1.3">90<span style="font-size: 15px; color: #9AA0AA; margin-left: 4px">kg</span></span>
+        <span style="display: flex; gap: 8px; width: 100%">
+          <button aria-label="Weight minus 2.5" style="flex: 1; height: 44px; border: 0; border-radius: 12px; background: #2A2340; color: #C4B1FF; font-size: 22px; font-weight: 700">−</button>
+          <button aria-label="Weight plus 2.5" style="flex: 1; height: 44px; border: 0; border-radius: 12px; background: #2A2340; color: #C4B1FF; font-size: 22px; font-weight: 700">+</button>
+        </span>
+      </div>
+      <div style="padding: 10px; border-radius: 20px; background: #1A1C21; display: flex; flex-direction: column; align-items: center; gap: 6px">
+        <span style="font-size: 12px; color: #9AA0AA; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase">Reps</span>
+        <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 34px; font-weight: 700; line-height: 1.3">5</span>
+        <span style="display: flex; gap: 8px; width: 100%">
+          <button aria-label="Reps minus 1" style="flex: 1; height: 44px; border: 0; border-radius: 12px; background: #2A2340; color: #C4B1FF; font-size: 22px; font-weight: 700">−</button>
+          <button aria-label="Reps plus 1" style="flex: 1; height: 44px; border: 0; border-radius: 12px; background: #2A2340; color: #C4B1FF; font-size: 22px; font-weight: 700">+</button>
+        </span>
+      </div>
+    </div>
+
+    <div style="display: flex; padding: 12px 16px 0">
+      <button style="flex: 1; height: 56px; border: 0; border-radius: 18px; background: #7C3AED; color: #FFFFFF; font-size: 17px; font-weight: 700">Log set · normal</button>
+    </div>
+
+    <section aria-label="Sets today" style="flex: 1; overflow: hidden; margin-top: 14px; padding: 0 16px; display: flex; flex-direction: column; gap: 10px">
+      <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: #9AA0AA; padding: 0 4px">Sets · 7 · by variant</span>
+      <sc-for list="{{groups}}" as="g" hint-placeholder-count="2">
+        <div style="padding: 10px; border-radius: 16px; background: {{g.bg}}; border: {{g.border}}; display: flex; flex-direction: column; gap: 8px">
+          <span style="display: flex; align-items: center; gap: 8px">
+            <span style="padding: 3px 10px; border-radius: 10px; background: {{g.tagBg}}; color: {{g.tagFg}}; font-size: 13px; font-weight: 800">{{g.name}}</span>
+            <span style="font-size: 12px; color: #9AA0AA">{{g.count}}</span>
+            <span style="margin-left: auto; font-size: 11px; font-weight: 700; color: #C4B1FF">{{g.now}}</span>
+          </span>
+          <sc-for list="{{g.blocks}}" as="b" hint-placeholder-count="2">
+            <span style="display: flex; align-items: center; gap: 8px">
+              <span style="width: 58px; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 16px; font-weight: 700">{{b.kg}}<span style="font-size: 11px; color: #9AA0AA"> kg</span></span>
+              <sc-for list="{{b.reps}}" as="x" hint-placeholder-count="2">
+                <span style="min-width: 32px; height: 32px; padding: 0 6px; box-sizing: border-box; border-radius: 9px; background: #000000; border: 1px solid #2A2D34; display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 15px; font-weight: 600">{{x}}</span>
+              </sc-for>
+            </span>
+          </sc-for>
+        </div>
+      </sc-for>
+    </section>
+  </sc-if>
+
+  <sc-if value="{{isEdit}}" hint-placeholder-val="{{ false }}">
+    <div style="flex: 1; padding: 14px 20px 0; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <span style="font-size: 12px; color: #9AA0AA">Name</span>
+        <span style="font-size: 24px; font-weight: 700; padding-bottom: 6px; border-bottom: 2px solid #7C3AED">Squat</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 15px">Variants</span>
+        <span style="font-size: 12px; color: #9AA0AA">Different ways of doing it. Each set keeps its variant; the log starts from the last one you used. Records and graphs can be seen per variant.</span>
+        <sc-for list="{{editRows}}" as="r" hint-placeholder-count="3">
+          <div style="display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 6px 0 14px; border-radius: 14px; background: #1A1C21">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6E747E" stroke-width="2" stroke-linecap="round"><path d="M8 6h.01M8 12h.01M8 18h.01M16 6h.01M16 12h.01M16 18h.01"></path></svg>
+            <span style="flex: 1; font-size: 16px; font-weight: 600">{{r.name}}</span>
+            <span style="font-size: 12px; color: #9AA0AA">{{r.sets}}</span>
+            <button aria-label="Rename {{r.name}}" style="width: 40px; height: 40px; border: 0; border-radius: 20px; background: transparent; color: #9AA0AA; display: flex; align-items: center; justify-content: center">
+              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4z"></path></svg>
+            </button>
+          </div>
+        </sc-for>
+        <button style="height: 44px; border: 1px dashed #3B2F63; border-radius: 14px; background: transparent; color: #C4B1FF; font-size: 15px; font-weight: 600">+ Add variant</button>
+        <span style="font-size: 12px; color: #6E747E">Drag to reorder (the order of the buttons in the log). A variant with sets can't be removed, only renamed or merged into another.</span>
+      </div>
+      <div style="padding: 12px 14px; border-radius: 14px; background: #111216; display: flex; flex-direction: column; gap: 4px">
+        <span style="font-size: 13px; font-weight: 600">Other examples</span>
+        <span style="font-size: 12px; color: #9AA0AA">Pull Up: full · upper half · lower half</span>
+        <span style="font-size: 12px; color: #9AA0AA">Block Pulls: normal · squeezed · 2 fingers</span>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{isGraph}}" hint-placeholder-val="{{ false }}">
+    <nav role="tablist" style="display: flex; justify-content: center; gap: 22px; padding: 10px 16px 0; border-bottom: 1px solid #1A1C21">
+      <sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+        <span role="tab" aria-selected="{{t.on}}" style="padding: 6px 2px 10px; border-bottom: 2px solid {{t.line}}; color: {{t.fg}}; font-size: 14px; font-weight: 600">{{t.label}}</span>
+      </sc-for>
+    </nav>
+    <div style="padding: 12px 16px 0; display: flex; gap: 8px">
+      <sc-for list="{{filters}}" as="f" hint-placeholder-count="4">
+        <button aria-pressed="{{f.on}}" style="height: 36px; padding: 0 14px; border: 1px solid {{f.border}}; border-radius: 18px; background: {{f.bg}}; color: {{f.fg}}; font-size: 14px; font-weight: 600">{{f.label}}</button>
+      </sc-for>
+    </div>
+    <div style="margin: 12px 16px 0; padding: 12px; border-radius: 16px; background: #1A1C21">
+      <span style="font-size: 13px; color: #9AA0AA">Max weight · normal · 6 months</span>
+      <svg role="img" aria-label="Max weight of normal squats rising from 77.5 to 100 kg" width="326" height="150" viewBox="0 0 326 150" style="display: block; margin-top: 8px">
+        <path d="M0 140H326M0 95H326M0 50H326M0 5H326" stroke="#23262C" stroke-width="1"></path>
+        <path d="M6 128L40 118L74 104L108 96L142 80L176 66L210 30L244 22L278 46L318 40" fill="none" stroke="#7C3AED" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+        <circle cx="244" cy="22" r="5" fill="#FFC107"></circle>
+        <text x="236" y="14" fill="#FFC107" font-size="11" font-family="Inter" font-weight="700">100</text>
+      </svg>
+    </div>
+    <div style="margin: 12px 16px 0; padding: 12px 14px; border-radius: 16px; background: #1A1C21; display: flex; flex-direction: column; gap: 10px">
+      <span style="font-size: 13px; color: #9AA0AA">Records · heaviest per variant</span>
+      <sc-for list="{{records}}" as="r" hint-placeholder-count="3">
+        <span style="display: flex; align-items: center; gap: 10px">
+          <span style="width: 70px; padding: 3px 0; border-radius: 10px; background: {{r.bg}}; color: {{r.fg}}; font-size: 13px; font-weight: 800; text-align: center">{{r.name}}</span>
+          <span style="flex: 1; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 17px; font-weight: 700">{{r.best}}</span>
+          <span style="font-size: 12px; color: #9AA0AA">{{r.day}}</span>
+        </span>
+      </sc-for>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"view":{"editor":"enum","options":["log","edit","graph"],"default":"log"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const view = this.props.view ?? 'log';
+    const variants = ['deep', 'half', 'normal'].map((name) => {
+      const on = name === 'normal';
+      return { name, on: on ? 'true' : 'false', bg: on ? '#7C3AED' : 'transparent', fg: on ? '#FFFFFF' : '#C9CDD3' };
+    });
+    // 17 Nov: deep ramp, then normal at 90 (now), the deep back-off still to come
+    const groups = [
+      { name: 'deep', count: '4 sets', now: '', blocks: [{ kg: '40', reps: ['5'] }, { kg: '60', reps: ['5'] }, { kg: '70', reps: ['5'] }, { kg: '80', reps: ['3'] }] },
+      { name: 'normal', count: '3 sets', now: 'now', blocks: [{ kg: '90', reps: ['5', '5', '5'] }] }
+    ].map((g) => Object.assign(g, g.now
+      ? { bg: '#1C1828', border: '2px solid #7C3AED', tagBg: '#7C3AED', tagFg: '#FFFFFF' }
+      : { bg: '#0E0F12', border: '1px solid #1A1C21', tagBg: '#2A2340', tagFg: '#C4B1FF' }));
+    const editRows = [{ name: 'deep', sets: '463 sets' }, { name: 'half', sets: 'none yet' }, { name: 'normal', sets: '240 sets' }];
+    const tabs = [['Log'], ['History'], ['Graph', true], ['Records']]
+      .map(([label, on]) => ({ label, on: on ? 'true' : 'false', fg: on ? '#F2F3F5' : '#6E747E', line: on ? '#7C3AED' : 'transparent' }));
+    const filters = ['All', 'deep', 'half', 'normal'].map((label) => {
+      const on = label === 'normal';
+      return { label, on: on ? 'true' : 'false', bg: on ? '#2A2340' : '#111216', border: on ? '#7C3AED' : '#2A2D34', fg: on ? '#C4B1FF' : '#C9CDD3' };
+    });
+    const records = [
+      { name: 'normal', best: '100 × 5', day: '31 May', bg: '#7C3AED', fg: '#FFFFFF' },
+      { name: 'deep', best: '87.5 × 5', day: '27 Feb', bg: '#2A2340', fg: '#C4B1FF' },
+      { name: 'half', best: '–', day: 'none yet', bg: '#2A2340', fg: '#C4B1FF' }
+    ];
+    const titles = { log: ['Squat', 'Last · Mon · deep 40–80 · normal 90 × 5 ×5 · deep 70–60'], edit: ['Edit exercise', 'Squat'], graph: ['Squat', 'Graph and records per variant'] };
+    return {
+      title: titles[view][0], subtitle: titles[view][1],
+      isLog: view === 'log', isEdit: view === 'edit', isGraph: view === 'graph',
+      variants, groups, editRows, tabs, filters, records
+    };
+  }
+}
+</script>
+</body>
+</html>
