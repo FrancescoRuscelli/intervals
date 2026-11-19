@@ -212,6 +212,14 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
 
 ## Plan / status
 
+### To clean up later (2026-11-19, keep until the user says so)
+
+Safety copies made while changing the phone's gym data by hand (groups, Deep → normal squat sets, Squat variants):
+- on the phone, in the app's private folder `databases/`: `before-groups.db*`, `before-squat.db*`, `before-variants.db*`
+  (about 1.8 MB; the app ignores them). Remove with
+  `adb shell "run-as app.intervals sh -c 'cd /data/data/app.intervals/databases && rm before-*'"`
+- on the Windows PC: the folders `C:\Users\franc\PycharmProjects\intervals-phone-backup-*` (also the one from 2026-11-18).
+
 ### Asked 2026-11-18, intervals part (done)
 
 - [x] **Times without typing**: every time (series, change side, warm-up, rest between rounds, gym time) opens a dialog with
