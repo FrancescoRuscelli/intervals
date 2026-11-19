@@ -1,6 +1,8 @@
 package app.intervals.core
 
 import kotlinx.serialization.SerializationException
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
@@ -78,6 +80,13 @@ object BackupJson {
 
     fun encodeExercise(exercise: Exercise): String = compact.encodeToString(Exercise.serializer(), exercise)
     fun decodeExercise(json: String): Exercise = compact.decodeFromString(Exercise.serializer(), json)
+
+    /** A set's specifications for the database; empty map = "". */
+    fun encodeSpecs(specs: Map<String, String>): String =
+        if (specs.isEmpty()) "" else compact.encodeToString(MapSerializer(String.serializer(), String.serializer()), specs)
+
+    fun decodeSpecs(json: String): Map<String, String> =
+        if (json.isBlank()) emptyMap() else compact.decodeFromString(MapSerializer(String.serializer(), String.serializer()), json)
 
     fun encodeSettings(settings: AppSettings): String = compact.encodeToString(AppSettings.serializer(), settings)
 

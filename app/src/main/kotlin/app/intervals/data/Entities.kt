@@ -103,6 +103,8 @@ data class GymSetEntity(
     val bands: String,
     val note: String,
     val restSec: Int?,
+    /** Your specifications as JSON, e.g. {"Width":"40"}; empty = none (added in v5). */
+    @androidx.room.ColumnInfo(defaultValue = "") val specs: String = "",
 )
 
 /** A group of exercises (name + ordered exercises with optional plans, as JSON). */

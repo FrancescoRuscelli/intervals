@@ -39,7 +39,7 @@ fun dayRows(sets: List<GymSet>): List<SetRow> {
 val Side.letter: String get() = if (this == Side.LEFT) "L" else "R"
 
 fun GymSet.sameValues(o: GymSet) =
-    weightKg == o.weightKg && reps == o.reps && timeSec == o.timeSec && distance == o.distance && bands == o.bands
+    weightKg == o.weightKg && reps == o.reps && timeSec == o.timeSec && distance == o.distance && bands == o.bands && specs == o.specs
 
 /** The best set: heaviest (least assist), then most reps, longest, most bands. */
 fun topSet(sets: List<GymSet>, ex: Exercise): GymSet? = sets.maxWithOrNull(
@@ -57,8 +57,14 @@ private val bandEmoji = mapOf(
     Band.RED to "🔴", Band.YELLOW to "🟡",
 )
 
-/** One-line text of a set, e.g. "80 × 5", "−20 × 3", "🟢🟣 × 5", "+10 × 0:07", "0:40". */
-fun GymSet.summary(ex: Exercise): String = buildList {
+/** One-line text of a set, e.g. "80 × 5", "−20 × 3", "🟢🟣 × 5", "+10 × 0:07", "0:40"; specs first: "40 mm · 20 × 5". */
+fun GymSet.summary(ex: Exercise): String = listOfNotNull(specsText(ex).ifEmpty { null }, valuesText(ex).ifEmpty { null }).joinToString(" · ")
+
+/** The set's specifications in the exercise's order, e.g. "40 mm · half crimp"; empty when none. */
+fun GymSet.specsText(ex: Exercise): String =
+    ex.specs.mapNotNull { sp -> specs[sp.name]?.takeIf(String::isNotBlank)?.let(sp::text) }.joinToString(" · ")
+
+private fun GymSet.valuesText(ex: Exercise): String = buildList {
     if (GymField.WEIGHT in ex.fields) weightKg?.let { add((if (ex.assist && it != 0.0) "−" else "") + formatKg(it)) }
     if (GymField.BANDS in ex.fields && bands.isNotEmpty()) add(bands.sortedBy { it.ordinal }.joinToString("") { bandEmoji.getValue(it) })
     if (GymField.REPS in ex.fields) reps?.let { add("$it") }

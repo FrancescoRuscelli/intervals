@@ -32,4 +32,18 @@ class GymRowsTest {
         assertEquals("1.25", formatKg(1.25))
         assertEquals("2:05", formatTime(125))
     }
+
+    @Test
+    fun specsComeFirstAndKeepRowsApart() {
+        val pinch = Exercise(3, "Pinch", listOf(GymField.WEIGHT, GymField.REPS), perSide = true,
+            specs = listOf(Spec("Width", "mm", step = 5.0), Spec("Grip", choices = listOf("open", "thumb"))))
+        val a = set(20.0, 5).copy(specs = mapOf("Width" to "40", "Grip" to "thumb"))
+        assertEquals("40 mm · thumb · 20 × 5", a.summary(pinch))
+        // a spec not set on the set is simply left out
+        assertEquals("40 mm · 20 × 5", a.copy(specs = mapOf("Width" to "40")).summary(pinch))
+        // same weight and reps on another width: two rows, not ×2
+        val rows = dayRows(listOf(a, a.copy(specs = mapOf("Width" to "50", "Grip" to "thumb")), a))
+        assertEquals(listOf(1, 1, 1), rows.map { it.count })
+        assertEquals(listOf(2), dayRows(listOf(a, a)).map { it.count })
+    }
 }

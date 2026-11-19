@@ -77,9 +77,11 @@ private data class Values(
     val timeSec: Int = 0,
     val distance: Double = 0.0,
     val bands: List<Band> = emptyList(),
+    /** Your specifications (spec name → value); a spec with no value yet is missing. */
+    val specs: Map<String, String> = emptyMap(),
 )
 
-private fun GymSet.toValues() = Values(weightKg ?: 0.0, reps ?: 0, timeSec ?: 0, distance ?: 0.0, bands)
+private fun GymSet.toValues() = Values(weightKg ?: 0.0, reps ?: 0, timeSec ?: 0, distance ?: 0.0, bands, specs)
 
 private fun Values.into(s: GymSet, ex: Exercise) = s.copy(
     weightKg = weightKg.takeIf { GymField.WEIGHT in ex.fields },
@@ -87,6 +89,7 @@ private fun Values.into(s: GymSet, ex: Exercise) = s.copy(
     timeSec = timeSec.takeIf { GymField.TIME in ex.fields },
     distance = distance.takeIf { GymField.DISTANCE in ex.fields },
     bands = if (GymField.BANDS in ex.fields) bands else emptyList(),
+    specs = specs.filterKeys { k -> ex.specs.any { it.name == k } },
 )
 
 /** Log sets of one exercise on one day (mockup G2): tiles with − / +, Log set, rest clock counting up, the sets done. */
@@ -103,6 +106,7 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
     var editing by remember { mutableStateOf<GymSet?>(null) }
     var noteFor by remember { mutableStateOf<GymSet?>(null) }
     var typing by remember { mutableStateOf<GymField?>(null) }
+    var typingSpec by remember { mutableStateOf<app.intervals.core.Spec?>(null) }
     var tab by androidx.compose.runtime.saveable.rememberSaveable(exerciseId) { mutableStateOf(0) }
 
     // start from today's last set, else from last time; the side after the last one done
@@ -115,6 +119,13 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
             Side.RIGHT -> SideChoice.LEFT
             null -> SideChoice.RIGHT
         }
+    }
+    // each side starts from its own last set: switching to L brings back the last L values, R the last R
+    LaunchedEffect(side) {
+        val today = sets ?: return@LaunchedEffect
+        val last = lastTime ?: return@LaunchedEffect
+        val s = when (side) { SideChoice.LEFT -> Side.LEFT; SideChoice.RIGHT -> Side.RIGHT; else -> return@LaunchedEffect }
+        if (editing == null) startValues(today, last, s)?.let { values = it.toValues() }
     }
     val v = values ?: Values()
     fun change(f: (Values) -> Values) { values = f(v) }
@@ -161,6 +172,11 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
         ) {
             if (ex.perSide && editing == null) item {
                 Segmented(listOf("L", "R", "Both"), side?.ordinal ?: 0) { side = SideChoice.entries[it] }
+            }
+            if (ex.specs.isNotEmpty()) item {
+                SpecTiles(ex.specs, v.specs, onType = { typingSpec = it }) { name, value ->
+                    change { it.copy(specs = if (value == null) it.specs - name else it.specs + (name to value)) }
+                }
             }
             if (GymField.BANDS in ex.fields) item { BandsTile(v.bands) { b -> change { it.copy(bands = it.bands.tap(b)) } } }
             item {
@@ -235,6 +251,10 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
             }
             typing = null
         }
+    }
+    typingSpec?.let { sp ->
+        NumberDialog(sp.name + if (sp.unit.isNotBlank()) " (${sp.unit})" else "", v.specs[sp.name] ?: "", decimal = true,
+            onDismiss = { typingSpec = null }) { n -> change { it.copy(specs = it.specs + (sp.name to formatKg(n))) }; typingSpec = null }
     }
     noteFor?.let { s ->
         SetDialog(s, ex, onDismiss = { noteFor = null },
@@ -383,6 +403,49 @@ private fun Segmented(options: List<String>, selected: Int, onSelect: (Int) -> U
                     .clickable { onSelect(i) },
                 contentAlignment = Alignment.Center,
             ) { Text(o, color = if (i == selected) p.onAccent else p.soft, fontSize = 15.sp, fontWeight = FontWeight.SemiBold) }
+        }
+    }
+}
+
+/**
+ * Your specifications: a number gets a tile with − / + (tap it to type), a choice a row of chips (tap again to clear).
+ * [onChange] gets null to clear a value.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun SpecTiles(
+    specs: List<app.intervals.core.Spec>,
+    values: Map<String, String>,
+    onType: (app.intervals.core.Spec) -> Unit,
+    onChange: (String, String?) -> Unit,
+) {
+    val p = LocalPalette.current
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        val numbers = specs.filter { !it.isChoice }
+        numbers.chunked(2).forEach { pair ->
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                pair.forEach { sp ->
+                    val cur = values[sp.name]?.replace(',', '.')?.toDoubleOrNull()
+                    StepTile(sp.name, cur?.let(::formatKg) ?: "–", sp.unit, Modifier.weight(1f),
+                        onTap = { onType(sp) },
+                        onMinus = { onChange(sp.name, formatKg(((cur ?: 0.0) - sp.step).coerceAtLeast(0.0))) },
+                        onPlus = { onChange(sp.name, formatKg((cur ?: 0.0) + sp.step)) })
+                }
+                if (pair.size == 1) Spacer(Modifier.weight(1f))
+            }
+        }
+        specs.filter { it.isChoice }.forEach { sp ->
+            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(p.surface).padding(12.dp)) {
+                Text(sp.name, color = p.muted, fontSize = 13.sp)
+                FlowRow(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    sp.choices.forEach { c ->
+                        val on = values[sp.name] == c
+                        Text(c, color = if (on) p.onAccent else p.soft, fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(if (on) p.accent else p.bg)
+                                .clickable { onChange(sp.name, if (on) null else c) }.padding(horizontal = 14.dp, vertical = 10.dp))
+                    }
+                }
+            }
         }
     }
 }

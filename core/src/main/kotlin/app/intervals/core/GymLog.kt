@@ -6,8 +6,13 @@ enum class SideChoice { LEFT, RIGHT, BOTH }
 /** Quick notes offered on a set; the user's own text goes in the note too. */
 val QUICK_TAGS = listOf("Max", "Bad form", "Assisted", "Failed", "+½ rep")
 
-/** The values the log screen starts from: the last set done today, else the first set of last time. */
-fun startValues(today: List<GymSet>, lastTime: List<GymSet>): GymSet? = today.lastOrNull() ?: lastTime.firstOrNull()
+/**
+ * The values the log screen starts from: the last set done today, else the first set of last time.
+ * With a [side], that side's sets come first: L starts from the last L, R from the last R.
+ */
+fun startValues(today: List<GymSet>, lastTime: List<GymSet>, side: Side? = null): GymSet? =
+    side?.let { s -> today.lastOrNull { it.side == s } ?: lastTime.firstOrNull { it.side == s } }
+        ?: today.lastOrNull() ?: lastTime.firstOrNull()
 
 /** After a set on one side, the next is on the other; "both" stays both. */
 fun SideChoice.afterSet(): SideChoice = when (this) {

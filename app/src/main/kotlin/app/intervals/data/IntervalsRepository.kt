@@ -306,11 +306,12 @@ private fun ExerciseEntity.toExercise() = BackupJson.decodeExercise(json).copy(i
 
 private fun GymSet.toEntity() = GymSetEntity(
     id, exerciseId, day, order, side?.name, weightKg, reps, timeSec, distance,
-    bands.joinToString(",") { it.name }, note, restSec,
+    bands.joinToString(",") { it.name }, note, restSec, BackupJson.encodeSpecs(specs),
 )
 
 private fun GymSetEntity.toSet() = GymSet(
     id = id, exerciseId = exerciseId, day = day, order = position, side = side?.let(Side::valueOf),
     weightKg = weightKg, reps = reps, timeSec = timeSec, distance = distance,
     bands = bands.split(',').filter(String::isNotEmpty).map(Band::valueOf), note = note, restSec = restSec,
+    specs = BackupJson.decodeSpecs(specs),
 )

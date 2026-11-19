@@ -154,6 +154,14 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
   - Comments become data: "L"/"R" → side, band emojis (🟢🟣🔴⚫🟡, "nero", "green+purple"…) → bands,
     the rest kept as notes **exactly as written (Italian)**.
   - Suggest groups from exercises done on the same day; skip unused exercises and categories; recompute records.
+- **Your specifications** (2026-11-19): an exercise can have its own specs, e.g. *Width* (number, mm, step 5) or
+  *Grip* (choice: open / half crimp / full crimp). Added in Edit exercise ("+ Add specification"; a spec's name is fixed once made,
+  the sets keep their values under it). On the log screen a number spec is a tile with − / + (tap to type), a choice a row of chips
+  (tap again to clear). Each set keeps its values (`GymSet.specs`, DB v5 column `specs`), starting from the last set; shown first
+  in every set text ("40 mm · thumb · 20 × 5"); sets with different specs never merge into one ×N row.
+  Not yet: records / graphs split by spec (e.g. max at 40 mm vs 50 mm).
+- **Each side remembers its own values** (2026-11-19): on a per-side exercise, L starts from the last L set (today, else last time's
+  first L), R from the last R; switching side on the log screen reloads that side's values.
 - Not wanted (from your FitNotes data, never used): routines, body weight, measurements, goals, plate calculator.
 
 ## Energy efficiency (agreed goal: very efficient)

@@ -14,6 +14,17 @@ class GymLogTest {
     }
 
     @Test
+    fun eachSideStartsFromItsOwnLastSet() {
+        val l = set(45.0).copy(side = Side.LEFT); val r = set(50.0).copy(side = Side.RIGHT)
+        assertEquals(45.0, startValues(listOf(l, r), emptyList(), Side.LEFT)?.weightKg)
+        assertEquals(50.0, startValues(listOf(l, r), emptyList(), Side.RIGHT)?.weightKg)
+        // today only R so far: L comes from last time's L
+        assertEquals(40.0, startValues(listOf(r), listOf(set(40.0).copy(side = Side.LEFT), r), Side.LEFT)?.weightKg)
+        // never done on that side: anything
+        assertEquals(50.0, startValues(listOf(r), emptyList(), Side.LEFT)?.weightKg)
+    }
+
+    @Test
     fun sidesAlternateAndBothWritesTwo() {
         assertEquals(SideChoice.RIGHT, SideChoice.LEFT.afterSet())
         assertEquals(SideChoice.BOTH, SideChoice.BOTH.afterSet())

@@ -30,6 +30,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -69,6 +70,8 @@ fun EditExerciseScreen(vm: AppViewModel, exerciseId: Long) {
     var merging by remember { mutableStateOf(false) }
     var mergeFrom by remember { mutableStateOf<Exercise?>(null) }
     var deleting by remember { mutableStateOf(false) }
+    // the spec being added (null name = new) or changed
+    var specEdit by remember { mutableStateOf<Pair<Int?, app.intervals.core.Spec?>?>(null) }
     val (nSets, first) = counts[exerciseId] ?: (0 to null)
     BackHandler { vm.back() }
 
@@ -123,6 +126,25 @@ fun EditExerciseScreen(vm: AppViewModel, exerciseId: Long) {
                 }
             }
             Column {
+                Text("Your specifications", color = p.text, fontSize = 15.sp)
+                Text("e.g. pinch width (mm) or grip (open, half crimp); each set keeps its own, starting from the last", color = p.muted, fontSize = 12.sp)
+                e.specs.forEachIndexed { i, sp ->
+                    Row(
+                        Modifier.padding(top = 8.dp).fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(p.surface)
+                            .clickable { specEdit = i to sp }.padding(start = 14.dp, top = 6.dp, bottom = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(sp.name, color = p.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                            Text(if (sp.isChoice) sp.choices.joinToString(" · ") else "number" + (if (sp.unit.isNotBlank()) " in ${sp.unit}" else "") + " · step ${formatKg(sp.step)}",
+                                color = p.muted, fontSize = 12.sp)
+                        }
+                        IconButton(onClick = { e = e.copy(specs = e.specs - sp) }) { Icon(AppIcons.Close, "Remove ${sp.name}", tint = p.muted) }
+                    }
+                }
+                Pill("+ Add specification", false, Modifier.padding(top = 8.dp)) { specEdit = null to null }
+            }
+            Column {
                 Text("Rest: buzz me after", color = p.text, fontSize = 15.sp)
                 Text("the clock counts up and keeps going", color = p.muted, fontSize = 12.sp)
                 FlowRow(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -175,6 +197,13 @@ fun EditExerciseScreen(vm: AppViewModel, exerciseId: Long) {
             dismissButton = { TextButton(onClick = { mergeFrom = null }) { Text("Cancel") } },
         )
     }
+    specEdit?.let { (index, current) ->
+        SpecDialog(current, taken = e.specs.filterIndexed { i, _ -> i != index }.map { it.name.lowercase() }.toSet(),
+            onDismiss = { specEdit = null }) { sp ->
+            e = e.copy(specs = if (index == null) e.specs + sp else e.specs.toMutableList().also { it[index] = sp })
+            specEdit = null
+        }
+    }
     if (deleting) {
         AlertDialog(
             onDismissRequest = { deleting = false },
@@ -223,4 +252,54 @@ private fun ActionLine(label: String, sub: String?, color: Color, onClick: () ->
         Text(label, color = color, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
         if (sub != null) Text(sub, color = p.muted, fontSize = 12.sp)
     }
+}
+
+/**
+ * Add or change a specification: a name, then a number (unit, step) or a choice (its options, comma separated).
+ * The name of an existing one is fixed: the sets keep their values under it.
+ */
+@Composable
+private fun SpecDialog(current: app.intervals.core.Spec?, taken: Set<String>, onDismiss: () -> Unit, onDone: (app.intervals.core.Spec) -> Unit) {
+    val p = LocalPalette.current
+    var name by remember { mutableStateOf(current?.name ?: "") }
+    var choice by remember { mutableStateOf(current?.isChoice ?: false) }
+    var unit by remember { mutableStateOf(current?.unit ?: "") }
+    var step by remember { mutableStateOf(current?.step?.let(::formatKg) ?: "1") }
+    var options by remember { mutableStateOf(current?.choices?.joinToString(", ") ?: "") }
+    val choices = options.split(',').map(String::trim).filter(String::isNotEmpty).distinct()
+    val stepN = step.replace(',', '.').toDoubleOrNull()?.takeIf { it > 0 }
+    val clash = name.trim().lowercase() in taken
+    val ok = name.isNotBlank() && !clash && if (choice) choices.size >= 2 else stepN != null
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(if (current == null) "New specification" else current.name) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                if (current == null) OutlinedTextField(name, { name = it }, label = { Text("Name, e.g. Width") }, singleLine = true, isError = clash,
+                    supportingText = if (clash) ({ Text("Already used on this exercise") }) else null)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Pill("Number", !choice, Modifier.weight(1f)) { choice = false }
+                    Pill("Choice", choice, Modifier.weight(1f)) { choice = true }
+                }
+                if (choice) {
+                    OutlinedTextField(options, { options = it }, label = { Text("Options, comma separated") },
+                        placeholder = { Text("small, medium, large") })
+                    Text("At least two.", color = p.muted, fontSize = 12.sp)
+                } else Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(unit, { unit = it }, label = { Text("Unit") }, placeholder = { Text("mm") }, singleLine = true, modifier = Modifier.weight(1f))
+                    OutlinedTextField(step, { step = it }, label = { Text("Step − / +") }, singleLine = true, modifier = Modifier.weight(1f),
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal))
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(enabled = ok, onClick = {
+                onDone(
+                    if (choice) app.intervals.core.Spec(name.trim(), choices = choices)
+                    else app.intervals.core.Spec(name.trim(), unit = unit.trim(), step = stepN ?: 1.0)
+                )
+            }) { Text(if (current == null) "Add" else "OK") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
 }

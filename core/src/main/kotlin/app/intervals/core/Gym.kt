@@ -11,6 +11,30 @@ enum class Band { GREEN, PURPLE, BLACK, RED, YELLOW }
 @Serializable
 enum class GymField { WEIGHT, REPS, TIME, DISTANCE, BANDS }
 
+/**
+ * Something you specify yourself on an exercise, e.g. "Pinch width" in mm, or "Grip" with choices (open, half crimp…).
+ * A number when [choices] is empty, else one of the choices. Each set keeps its value, starting from the last set's.
+ */
+@Serializable
+data class Spec(
+    val name: String,
+    /** Shown after a number, e.g. "mm"; unused for a choice. */
+    val unit: String = "",
+    /** Step of the − / + buttons for a number. */
+    val step: Double = 1.0,
+    val choices: List<String> = emptyList(),
+) {
+    init {
+        require(name.isNotBlank()) { "a specification needs a name" }
+        require(step > 0) { "step must be > 0" }
+    }
+
+    val isChoice: Boolean get() = choices.isNotEmpty()
+
+    /** "40 mm", "half crimp". */
+    fun text(value: String): String = if (isChoice || unit.isBlank()) value else "$value $unit"
+}
+
 /** A strength exercise you created (no preset list, no categories). */
 @Serializable
 data class Exercise(
@@ -26,9 +50,12 @@ data class Exercise(
     /** Rest target, seconds: the rest clock buzzes here and keeps counting. */
     val restSec: Int = 180,
     val notes: String = "",
+    /** Your own specifications, e.g. pinch width; values are on each set. */
+    val specs: List<Spec> = emptyList(),
 ) {
     init {
         require(name.isNotBlank()) { "an exercise needs a name" }
+        require(specs.map { it.name.lowercase() }.toSet().size == specs.size) { "two specifications have the same name" }
         require(fields.isNotEmpty()) { "an exercise needs at least one field" }
         require(weightStep > 0) { "weightStep must be > 0" }
         require(restSec >= 0) { "restSec must be >= 0" }
@@ -55,6 +82,8 @@ data class GymSet(
     val note: String = "",
     /** Real rest before this set, seconds; null when unknown (e.g. imported). */
     val restSec: Int? = null,
+    /** Spec name → value as shown ("40" for a number, "half crimp" for a choice). */
+    val specs: Map<String, String> = emptyMap(),
 ) {
     init {
         LocalDate.parse(day) // throws on a bad date
