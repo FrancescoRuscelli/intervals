@@ -315,6 +315,13 @@
       "w": 390,
       "h": 844,
       "title": "G17d · Blocks by load in two columns: L | R"
+    },
+    "GymSetsE.dc.html": {
+      "x": 8460,
+      "y": 4260,
+      "w": 390,
+      "h": 844,
+      "title": "G17e · Sets follow the Left / Right / Both switch (tweak: side)"
     }
   },
   "order": [
@@ -360,7 +367,8 @@
     "GymSetsGrouping.dc.html",
     "GymSetsB.dc.html",
     "GymSetsC.dc.html",
-    "GymSetsD.dc.html"
+    "GymSetsD.dc.html",
+    "GymSetsE.dc.html"
   ],
   "notes": {
     "home": {
@@ -394,7 +402,7 @@
     "setsgrouping": {
       "x": 6580,
       "y": 3880,
-      "w": 1800,
+      "w": 2270,
       "text": "Choose one: how an exercise's sets are grouped during a workout (same Block Pulls session, 11 sets, real phone size)",
       "size": "l",
       "fill": "purple"

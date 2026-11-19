@@ -27,9 +27,9 @@ button{font-family:inherit}
   </header>
 
   <div role="group" aria-label="Side" style="display: flex; align-self: center; margin-top: 12px; padding: 3px; border-radius: 12px; background: #1A1C21">
-    <button aria-pressed="true" style="width: 74px; height: 34px; border: 0; border-radius: 9px; background: #F2F3F5; color: #000000; font-size: 14px; font-weight: 700">Left</button>
-    <button aria-pressed="false" style="width: 74px; height: 34px; border: 0; border-radius: 9px; background: transparent; color: #9AA0AA; font-size: 14px; font-weight: 700">Right</button>
-    <button aria-pressed="false" style="width: 74px; height: 34px; border: 0; border-radius: 9px; background: transparent; color: #9AA0AA; font-size: 14px; font-weight: 700">Both</button>
+    <sc-for list="{{sides}}" as="sd" hint-placeholder-count="3">
+      <button aria-pressed="{{sd.on}}" style="width: 74px; height: 34px; border: 0; border-radius: 9px; background: {{sd.bg}}; color: {{sd.fg}}; font-size: 14px; font-weight: 700">{{sd.label}}</button>
+    </sc-for>
   </div>
 
   <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 12px 16px 0">
@@ -52,7 +52,7 @@ button{font-family:inherit}
   </div>
 
   <div style="display: flex; gap: 10px; padding: 12px 16px 0">
-    <button style="flex: 1; height: 56px; border: 0; border-radius: 18px; background: #7C3AED; color: #FFFFFF; font-size: 17px; font-weight: 700">Log set · L</button>
+    <button style="flex: 1; height: 56px; border: 0; border-radius: 18px; background: #7C3AED; color: #FFFFFF; font-size: 17px; font-weight: 700">{{logLabel}}</button>
   </div>
 
   <div role="timer" aria-label="Resting 1 minute 12 seconds" style="align-self: center; margin-top: 10px; height: 30px; padding: 0 14px; border-radius: 15px; background: #0E3B35; color: #5EEAD4; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600">
@@ -122,6 +122,20 @@ button{font-family:inherit}
       <span style="padding: 8px 4px 0; font-size: 12px; color: #9AA0AA">pink edge = has a note · tap a number for that set</span>
     </sc-if>
 
+    <sc-if value="{{isE}}" hint-placeholder-val="{{ false }}">
+      <sc-for list="{{oneSide.blocks}}" as="b" hint-placeholder-count="2">
+        <div style="display: flex; flex-direction: column; gap: 8px; padding: 12px 4px; border-bottom: 1px solid #16181C">
+          <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 20px; font-weight: 700">{{b.load}}</span>
+          <span style="display: flex; flex-wrap: wrap; gap: 8px">
+            <sc-for list="{{b.reps}}" as="x" hint-placeholder-count="3">
+              <span style="min-width: 44px; height: 44px; padding: 0 8px; box-sizing: border-box; border-radius: 12px; background: #1A1C21; border: 1px solid {{x.edge}}; display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 19px; font-weight: 600">{{x.v}}</span>
+            </sc-for>
+          </span>
+        </div>
+      </sc-for>
+      <span style="margin-top: 10px; align-self: flex-start; padding: 8px 12px; border-radius: 12px; background: #111216; color: #9AA0AA; font-size: 13px">{{oneSide.other}}</span>
+    </sc-if>
+
     <sc-if value="{{isC}}" hint-placeholder-val="{{ false }}">
       <sc-for list="{{newest}}" as="r" hint-placeholder-count="4">
         <div style="display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 4px; border-bottom: 1px solid #16181C">
@@ -139,7 +153,7 @@ button{font-family:inherit}
   </section>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"layout":{"editor":"enum","options":["A side by side","B blocks by load","C folded, newest on top","D blocks in two columns L | R"],"default":"A side by side"},"$preview":{"width":390,"height":844}}'>
+<script type="text/x-dc" data-dc-script data-props='{"layout":{"editor":"enum","options":["A side by side","B blocks by load","C folded, newest on top","D blocks in two columns L | R","E follows the side switch"],"default":"A side by side"},"side":{"editor":"enum","options":["Left","Right","Both"],"default":"Left"},"$preview":{"width":390,"height":844}}'>
 class Component extends DCLogic {
   renderVals() {
     const layout = this.props.layout ?? 'A side by side';
@@ -169,11 +183,23 @@ class Component extends DCLogic {
       const n = bs.reduce((s, b) => s + b.reps.length, 0);
       return { side, count: n + ' sets', blocks: bs };
     });
+    // E: the list follows the side switch; Both = the two columns of D
+    const side = layout.startsWith('E') ? (this.props.side ?? 'Left') : 'Left';
+    const sides = ['Left', 'Right', 'Both'].map((label) => {
+      const on = label === side;
+      return { label, on: on ? 'true' : 'false', bg: on ? '#F2F3F5' : 'transparent', fg: on ? '#000000' : '#9AA0AA' };
+    });
+    const mine = side === 'Right' ? columns[1] : columns[0];
+    const other = side === 'Right' ? columns[0] : columns[1];
+    const oneSide = { blocks: mine.blocks, other: (side === 'Right' ? 'Left' : 'Right') + ': ' + other.count + ' · switch above to see them' };
+    const isE = layout.startsWith('E') && side !== 'Both';
+    const isD = layout.startsWith('D') || (layout.startsWith('E') && side === 'Both');
     const hint = layout.startsWith('A') ? 'one row = R and L of the same set' : layout.startsWith('B') ? 'one row per side and weight'
-      : layout.startsWith('D') ? 'each side, its weights' : 'newest first';
+      : isE ? side + ' only · ' + mine.count : isD ? 'each side, its weights' : 'newest first';
     return {
-      pairs, blocks, newest, columns, hint,
-      isA: layout.startsWith('A'), isB: layout.startsWith('B'), isC: layout.startsWith('C'), isD: layout.startsWith('D')
+      pairs, blocks, newest, columns, hint, sides, oneSide,
+      logLabel: side === 'Right' ? 'Log set · R' : side === 'Both' ? 'Log L + R' : 'Log set · L',
+      isA: layout.startsWith('A'), isB: layout.startsWith('B'), isC: layout.startsWith('C'), isD, isE
     };
   }
 }
