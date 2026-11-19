@@ -34,6 +34,9 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.widthIn
 import app.intervals.core.loadBlocks
 import app.intervals.core.boxText
+import app.intervals.core.variantOf
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import kotlinx.coroutines.delay
 import androidx.compose.runtime.LaunchedEffect
@@ -84,9 +87,11 @@ private data class Values(
     val distance: Double = 0.0,
     /** Your specifications (spec name → value); a spec with no value yet is missing. */
     val specs: Map<String, String> = emptyMap(),
+    /** The variant (e.g. "deep"); null = the exercise's first. */
+    val variant: String? = null,
 )
 
-private fun GymSet.toValues() = Values(weightKg ?: 0.0, reps ?: 0, timeSec ?: 0, distance ?: 0.0, specs)
+private fun GymSet.toValues() = Values(weightKg ?: 0.0, reps ?: 0, timeSec ?: 0, distance ?: 0.0, specs, variant)
 
 private fun Values.into(s: GymSet, ex: Exercise) = s.copy(
     weightKg = weightKg.takeIf { GymField.WEIGHT in ex.fields },
@@ -94,6 +99,8 @@ private fun Values.into(s: GymSet, ex: Exercise) = s.copy(
     timeSec = timeSec.takeIf { GymField.TIME in ex.fields },
     distance = distance.takeIf { GymField.DISTANCE in ex.fields },
     specs = specs.filterKeys { k -> ex.specs.any { it.name == k } },
+    // always written, so reordering the variants later never changes what this set was
+    variant = if (ex.variants.isEmpty()) null else variant?.takeIf { it in ex.variants } ?: ex.variants.first(),
 )
 
 /** Log sets of one exercise on one day (mockup G2): tiles with − / +, Log set, rest clock counting up, the sets done. */
@@ -169,14 +176,36 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
         }
         Box(Modifier.fillMaxWidth().height(1.dp).background(p.surface))
         val allSets by remember(exerciseId) { vm.exerciseAll(exerciseId) }.collectAsStateWithLifecycle(emptyList())
+        // with variants, History / Graph / Records can show one variant (mockup G19c)
+        var variantFilter by androidx.compose.runtime.saveable.rememberSaveable(exerciseId) { mutableStateOf<String?>(null) }
+        if (tab != 0 && ex.variants.isNotEmpty()) {
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, top = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                (listOf<String?>(null) + ex.variants).forEach { f ->
+                    val on = f == variantFilter
+                    Text(f ?: "All", color = if (on) p.accentText else p.soft, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.clip(RoundedCornerShape(18.dp)).background(if (on) p.tint else p.surface)
+                            .border(1.dp, if (on) p.accent else p.line, RoundedCornerShape(18.dp))
+                            .clickable { variantFilter = f }.padding(horizontal = 14.dp, vertical = 8.dp))
+                }
+            }
+        }
+        val shown = if (variantFilter == null) allSets else allSets.filter { it.variantOf(ex) == variantFilter }
         when (tab) {
-            1 -> Box(Modifier.weight(1f)) { ExerciseHistory(ex, allSets) { d -> vm.openGymLog(exerciseId, d) } }
-            2 -> Box(Modifier.weight(1f)) { ExerciseGraph(ex, allSets) }
-            3 -> Box(Modifier.weight(1f)) { ExerciseRecords(ex, allSets) }
+            1 -> Box(Modifier.weight(1f)) { ExerciseHistory(ex, shown) { d -> vm.openGymLog(exerciseId, d) } }
+            2 -> Box(Modifier.weight(1f)) { ExerciseGraph(ex, shown) }
+            3 -> Box(Modifier.weight(1f)) { ExerciseRecords(ex, shown) }
         }
         if (tab == 0) LazyColumn(
             Modifier.weight(1f), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            if (ex.variants.isNotEmpty()) item {
+                val cur = v.variant?.takeIf { it in ex.variants } ?: ex.variants.first()
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("VARIANT \u00B7 STAYS ON THE LAST ONE", color = p.muted, fontSize = 12.sp, letterSpacing = 0.4.sp, fontWeight = FontWeight.SemiBold)
+                    Segmented(ex.variants, ex.variants.indexOf(cur)) { i -> change { it.copy(variant = ex.variants[i]) } }
+                }
+            }
             if (ex.perSide && editing == null) item {
                 Segmented(listOf("L", "R", "Both"), side?.ordinal ?: 0, listOf(p.pink, p.teal, p.accent)) { side = SideChoice.entries[it] }
             }
@@ -221,7 +250,8 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
                         val timing = timerFrom != null
                         BigButton(
                             if (timing) "Stop the timer first"
-                            else when (side) { SideChoice.LEFT -> "Log set · L"; SideChoice.RIGHT -> "Log set · R"; SideChoice.BOTH -> "Log L + R"; null -> "Log set" },
+                            else when (side) { SideChoice.LEFT -> "Log set · L"; SideChoice.RIGHT -> "Log set · R"; SideChoice.BOTH -> "Log L + R"; null -> "Log set" } +
+                                (if (ex.variants.isNotEmpty()) " \u00B7 " + (v.variant?.takeIf { it in ex.variants } ?: ex.variants.first()) else ""),
                             if (timing) p.tint else p.accent, if (timing) p.faint else p.onAccent,
                             {
                                 if (!timing) {
@@ -248,7 +278,8 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
                     modifier = Modifier.padding(top = 4.dp))
             }
             if (list.isNotEmpty()) item {
-                SetBlocks(list, ex, if (editing == null) side else null, editing?.id) { noteFor = it }
+                if (ex.variants.isEmpty()) SetBlocks(list, ex, if (editing == null) side else null, editing?.id) { noteFor = it }
+                else VariantBlocks(list, ex, v.variant?.takeIf { it in ex.variants } ?: ex.variants.first(), if (editing == null) side else null, editing?.id) { noteFor = it }
             }
         }
     }
@@ -592,6 +623,32 @@ private fun TimerCard(
                     .clickable(onClickLabel = if (running) "Stop the timer" else "Start the timer") { if (running) onStop(elapsed) else onStart() },
                 contentAlignment = Alignment.Center,
             ) { Text(if (running) "STOP" else "START", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp) }
+        }
+    }
+}
+
+/** The day's sets split by variant (mockup G19a): one box per variant, the one you're on outlined with "now". */
+@Composable
+private fun VariantBlocks(sets: List<GymSet>, ex: Exercise, current: String, active: SideChoice?, editingId: Long?, onOpen: (GymSet) -> Unit) {
+    val p = LocalPalette.current
+    val byVariant = sets.groupBy { it.variantOf(ex) ?: "" }
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        (ex.variants + byVariant.keys.filter { it !in ex.variants }).filter { it in byVariant }.forEach { name ->
+            val now = name == current
+            val list = byVariant.getValue(name)
+            Column(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(if (now) p.group else Color.Transparent)
+                    .border(if (now) 2.dp else 1.dp, if (now) p.accent else p.line, RoundedCornerShape(16.dp)).padding(10.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(name, color = if (now) p.onAccent else p.accentText, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold,
+                        modifier = Modifier.clip(RoundedCornerShape(10.dp)).background(if (now) p.accent else p.tint).padding(horizontal = 10.dp, vertical = 3.dp))
+                    Text("  ${list.size} set${if (list.size == 1) "" else "s"}", color = p.muted, fontSize = 12.sp, modifier = Modifier.weight(1f))
+                    if (now) Text("now", color = p.accentText, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                }
+                SetBlocks(list, ex, if (now) active else null, editingId, onOpen)
+            }
         }
     }
 }

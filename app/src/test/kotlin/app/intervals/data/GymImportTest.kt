@@ -87,6 +87,29 @@ class GymImportTest {
     }
 
     @Test
+    fun variantsRenameMergeAndReorder() = runTest {
+        val F = listOf(app.intervals.core.GymField.WEIGHT, app.intervals.core.GymField.REPS)
+        val deep = repo.addExercise(app.intervals.core.Exercise(name = "Barbell Deep Squat", fields = F))
+        val normal = repo.addExercise(app.intervals.core.Exercise(name = "Barbell Squat", fields = F))
+        repo.addSets(listOf(
+            app.intervals.core.GymSet(exerciseId = deep, day = "2026-11-17", order = 0, weightKg = 70.0, reps = 5),
+            app.intervals.core.GymSet(exerciseId = normal, day = "2026-11-17", order = 0, weightKg = 90.0, reps = 5),
+        ))
+        // the deep one becomes "Squat" with variants; its old sets have none = the first, "deep"
+        val squat = repo.exercises.first().first { it.id == deep }.copy(name = "Squat", variants = listOf("deep", "normal"))
+        repo.saveExercise(squat, emptyMap(), null)
+        // merge the normal squats in, as "normal"
+        repo.mergeExercises(normal, deep, asVariant = "normal")
+        suspend fun day() = repo.exerciseDay(deep, "2026-11-17").first().map { it.weightKg to it.variant }
+        assertEquals(listOf(70.0 to "deep", 90.0 to "normal"), day())
+        assertEquals(mapOf<String?, Int>("deep" to 1, "normal" to 1), repo.variantCounts(deep).first())
+        // reorder and rename: the sets follow their variant, not its place
+        repo.saveExercise(squat.copy(variants = listOf("normal", "deep low")), mapOf("deep" to "deep low"), "deep")
+        assertEquals(listOf(70.0 to "deep low", 90.0 to "normal"), day())
+        assertEquals(1, repo.exercises.first().size)
+    }
+
+    @Test
     fun oldDataIsUpgradedOnce() = runTest {
         // what the phone had before: an assisted exercise (positive weights) and one with built-in bands
         val oap = repo.addExercise(app.intervals.core.Exercise(name = "Deloaded OAP", fields = listOf(app.intervals.core.GymField.WEIGHT, app.intervals.core.GymField.REPS), assist = true))

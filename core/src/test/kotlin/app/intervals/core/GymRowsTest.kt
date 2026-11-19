@@ -91,4 +91,19 @@ class GymRowsTest {
         assertEquals("green+purple×2+red · 5", s.single().summary(ex.single()))
         assertEquals(ex to s, upgradeGym(ex, s))
     }
+
+    @Test
+    fun variantsInTheTextAndRows() {
+        val squat = Exercise(10, "Squat", listOf(GymField.WEIGHT, GymField.REPS), variants = listOf("deep", "half", "normal"))
+        val deep = set(70.0, 5).copy(exerciseId = 10)
+        val normal = set(90.0, 5).copy(exerciseId = 10, variant = "normal")
+        // no variant = the first one
+        assertEquals("deep · 70 × 5", deep.summary(squat))
+        assertEquals("normal · 90 × 5", normal.summary(squat))
+        assertEquals("70 kg", deep.loadText(squat)) // blocks are already split by variant
+        // same weight and reps, other variant: not one row
+        assertEquals(listOf(1, 1), dayRows(listOf(normal, normal.copy(variant = "half"))).map { it.count })
+        val plain = Exercise(11, "Deadlift", listOf(GymField.WEIGHT, GymField.REPS))
+        assertEquals("70 × 5", deep.summary(plain))
+    }
 }

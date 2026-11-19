@@ -50,7 +50,7 @@ fun dayRows(sets: List<GymSet>): List<SetRow> {
 val Side.letter: String get() = if (this == Side.LEFT) "L" else "R"
 
 fun GymSet.sameValues(o: GymSet) =
-    weightKg == o.weightKg && reps == o.reps && timeSec == o.timeSec && distance == o.distance && bands == o.bands && specs == o.specs
+    weightKg == o.weightKg && reps == o.reps && timeSec == o.timeSec && distance == o.distance && bands == o.bands && specs == o.specs && variant == o.variant
 
 /** The best set: heaviest (less assist = a higher negative), then most reps, longest. */
 fun topSet(sets: List<GymSet>, ex: Exercise): GymSet? = sets.maxWithOrNull(
@@ -65,7 +65,8 @@ fun formatKg(kg: Double): String =
 fun formatTime(sec: Int): String = "%d:%02d".format(sec / 60, sec % 60)
 
 /** One-line text of a set, e.g. "80 × 5", "−20 × 3", "+10 × 0:07", "0:40"; specs first: "40 mm · 20 × 5", "green+purple · 5". */
-fun GymSet.summary(ex: Exercise): String = listOfNotNull(specsText(ex).ifEmpty { null }, valuesText(ex).ifEmpty { null }).joinToString(" · ")
+fun GymSet.summary(ex: Exercise): String =
+    listOfNotNull(variantOf(ex), specsText(ex).ifEmpty { null }, valuesText(ex).ifEmpty { null }).joinToString(" · ")
 
 /** The set's specifications in the exercise's order, e.g. "40 mm · half crimp"; empty when none. */
 fun GymSet.specsText(ex: Exercise): String =

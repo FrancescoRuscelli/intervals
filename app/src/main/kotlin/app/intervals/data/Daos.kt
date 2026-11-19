@@ -215,6 +215,19 @@ interface GymDao {
     @Query("UPDATE gym_sets SET exerciseId = :into WHERE exerciseId = :from")
     suspend fun moveSets(from: Long, into: Long)
 
+    @Query("UPDATE gym_sets SET variant = :new WHERE exerciseId = :exerciseId AND variant = :old")
+    suspend fun renameVariant(exerciseId: Long, old: String, new: String)
+
+    /** Sets without a variant get [variant] (so reordering the variants never changes what they were). */
+    @Query("UPDATE gym_sets SET variant = :variant WHERE exerciseId = :exerciseId AND variant IS NULL")
+    suspend fun fillVariant(exerciseId: Long, variant: String)
+
+    @Query("UPDATE gym_sets SET variant = :variant WHERE exerciseId = :exerciseId")
+    suspend fun setVariant(exerciseId: Long, variant: String)
+
+    @Query("SELECT variant, COUNT(*) AS sets FROM gym_sets WHERE exerciseId = :exerciseId GROUP BY variant")
+    fun observeVariantCounts(exerciseId: Long): Flow<List<VariantCount>>
+
     @Query("SELECT exerciseId, COUNT(*) AS sets, MIN(day) AS firstDay FROM gym_sets GROUP BY exerciseId")
     fun observeCounts(): Flow<List<ExerciseCount>>
 }
@@ -222,3 +235,5 @@ interface GymDao {
 data class ExerciseLastDay(val exerciseId: Long, val day: String)
 
 data class ExerciseCount(val exerciseId: Long, val sets: Int, val firstDay: String)
+
+data class VariantCount(val variant: String?, val sets: Int)

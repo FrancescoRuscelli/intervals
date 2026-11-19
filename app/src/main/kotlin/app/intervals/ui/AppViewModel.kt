@@ -352,8 +352,9 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     val exerciseCounts: StateFlow<Map<Long, Pair<Int, String>>> =
         repo.exerciseCounts.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
-    fun saveExercise(ex: Exercise) = viewModelScope.launch {
-        repo.updateExercise(ex)
+    /** [renames]: variants renamed (old → new); [wasFirst]: the first variant before editing (sets without one keep it). */
+    fun saveExercise(ex: Exercise, renames: Map<String, String> = emptyMap(), wasFirst: String? = null) = viewModelScope.launch {
+        repo.saveExercise(ex, renames, wasFirst)
         overlays.removeAll { it is Overlay.EditExercise }
         message = "Saved"
     }
@@ -364,8 +365,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         message = "Deleted “${ex.name}” and its sets"
     }
 
-    fun mergeExercise(from: Exercise, into: Exercise) = viewModelScope.launch {
-        repo.mergeExercises(from.id, into.id)
+    fun variantCounts(exerciseId: Long) = repo.variantCounts(exerciseId)
+
+    fun mergeExercise(from: Exercise, into: Exercise, asVariant: String? = null) = viewModelScope.launch {
+        repo.mergeExercises(from.id, into.id, asVariant)
         overlays.removeAll { it is Overlay.GymLog && it.exerciseId == from.id }
         message = "“${from.name}” merged into “${into.name}”"
     }

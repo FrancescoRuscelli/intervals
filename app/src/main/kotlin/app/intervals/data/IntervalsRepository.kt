@@ -203,11 +203,32 @@ class IntervalsRepository(
     suspend fun deleteExercise(id: Long) = gymDao.deleteExercise(id)
 
     /** Moves all sets of [from] to [into], then deletes [from]. */
-    suspend fun mergeExercises(from: Long, into: Long) = db.withTransaction {
+    /** Moves every set of [from] into [into] and deletes [from]; with [asVariant] its sets become that variant of [into]. */
+    suspend fun mergeExercises(from: Long, into: Long, asVariant: String? = null) = db.withTransaction {
         require(from != into) { "cannot merge an exercise into itself" }
+        if (asVariant != null) {
+            // the target's own sets keep what they were (its first variant) before the new ones arrive
+            gymDao.getExercises().firstOrNull { it.id == into }?.toExercise()?.variants?.firstOrNull()?.let { gymDao.fillVariant(into, it) }
+            gymDao.setVariant(from, asVariant)
+        }
         gymDao.moveSets(from, into)
         gymDao.deleteExercise(from)
     }
+
+    /**
+     * Saves an exercise whose variants may have changed: renamed variants carry their sets along ([renames] old → new),
+     * and sets without a variant get what they counted as before ([wasFirst], the old first variant), so reordering is safe.
+     */
+    suspend fun saveExercise(exercise: Exercise, renames: Map<String, String>, wasFirst: String?) = db.withTransaction {
+        renames.forEach { (old, new) -> if (old != new) gymDao.renameVariant(exercise.id, old, new) }
+        val first = (wasFirst?.let { renames[it] ?: it }) ?: exercise.variants.firstOrNull()
+        if (exercise.variants.isNotEmpty() && first != null) gymDao.fillVariant(exercise.id, first)
+        gymDao.updateExercise(exercise.toEntity())
+    }
+
+    /** Sets per variant of an exercise (null = sets without one). */
+    fun variantCounts(exerciseId: Long): Flow<Map<String?, Int>> =
+        gymDao.observeVariantCounts(exerciseId).map { list -> list.associate { it.variant to it.sets } }
 
     /** Number of sets and first day of each exercise. */
     val exerciseCounts: Flow<Map<Long, Pair<Int, String>>> =
@@ -322,12 +343,12 @@ private fun ExerciseEntity.toExercise() = BackupJson.decodeExercise(json).copy(i
 
 private fun GymSet.toEntity() = GymSetEntity(
     id, exerciseId, day, order, side?.name, weightKg, reps, timeSec, distance,
-    bands.joinToString(",") { it.name }, note, restSec, BackupJson.encodeSpecs(specs),
+    bands.joinToString(",") { it.name }, note, restSec, BackupJson.encodeSpecs(specs), variant,
 )
 
 private fun GymSetEntity.toSet() = GymSet(
     id = id, exerciseId = exerciseId, day = day, order = position, side = side?.let(Side::valueOf),
     weightKg = weightKg, reps = reps, timeSec = timeSec, distance = distance,
     bands = bands.split(',').filter(String::isNotEmpty).map(Band::valueOf), note = note, restSec = restSec,
-    specs = BackupJson.decodeSpecs(specs),
+    specs = BackupJson.decodeSpecs(specs), variant = variant,
 )

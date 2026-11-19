@@ -78,8 +78,14 @@ data class Exercise(
     val notes: String = "",
     /** Your own specifications, e.g. pinch width; values are on each set. */
     val specs: List<Spec> = emptyList(),
+    /**
+     * Ways of doing it, e.g. Squat: deep / half / normal; each set keeps its own (mockup G19). In this order on the log screen.
+     * A set without one counts as the first.
+     */
+    val variants: List<String> = emptyList(),
 ) {
     init {
+        require(variants.map { it.lowercase() }.toSet().size == variants.size) { "two variants have the same name" }
         require(name.isNotBlank()) { "an exercise needs a name" }
         require(specs.map { it.name.lowercase() }.toSet().size == specs.size) { "two specifications have the same name" }
         require(fields.isNotEmpty()) { "an exercise needs at least one field" }
@@ -111,6 +117,8 @@ data class GymSet(
     val restSec: Int? = null,
     /** Spec name → value as shown ("40" for a number, "half crimp" for a choice). */
     val specs: Map<String, String> = emptyMap(),
+    /** The exercise variant (e.g. "deep"); null = the exercise's first variant, or none. */
+    val variant: String? = null,
 ) {
     init {
         LocalDate.parse(day) // throws on a bad date
@@ -119,6 +127,9 @@ data class GymSet(
         require(timeSec == null || timeSec >= 0) { "timeSec must be >= 0" }
     }
 }
+
+/** The set's variant: its own, else the exercise's first; null when the exercise has no variants. */
+fun GymSet.variantOf(ex: Exercise): String? = if (ex.variants.isEmpty()) null else variant ?: ex.variants.first()
 
 /** One exercise in a group, with an optional plan (just a reminder: going over or stopping early is fine). */
 @Serializable

@@ -77,6 +77,11 @@ fun EditExerciseScreen(vm: AppViewModel, exerciseId: Long) {
     var askRest by remember { mutableStateOf(false) }
     // the spec being added (null name = new) or changed
     var specEdit by remember { mutableStateOf<Pair<Int?, app.intervals.core.Spec?>?>(null) }
+    // variants (mockup G19b): renames carry the sets along when saved; the variant being renamed / added
+    var renames by remember(exerciseId) { mutableStateOf(emptyMap<String, String>()) }
+    var variantEdit by remember { mutableStateOf<Pair<Int?, String>?>(null) }
+    val variantCounts by remember(exerciseId) { vm.variantCounts(exerciseId) }.collectAsStateWithLifecycle(emptyMap())
+    var mergeAs by remember { mutableStateOf<String?>(null) }
     val (nSets, first) = counts[exerciseId] ?: (0 to null)
     BackHandler { vm.back() }
 
@@ -88,7 +93,7 @@ fun EditExerciseScreen(vm: AppViewModel, exerciseId: Long) {
                 exercises.none { it.id != e.id && it.name.equals(e.name.trim(), ignoreCase = true) }
             Box(
                 Modifier.height(40.dp).clip(RoundedCornerShape(20.dp)).background(if (ok) p.accent else p.tint)
-                    .clickable(enabled = ok) { vm.saveExercise(e.copy(name = e.name.trim(), notes = e.notes.trim())) }.padding(horizontal = 18.dp),
+                    .clickable(enabled = ok) { vm.saveExercise(e.copy(name = e.name.trim(), notes = e.notes.trim()), renames, original.variants.firstOrNull()) }.padding(horizontal = 18.dp),
                 contentAlignment = Alignment.Center,
             ) { Text("Save", color = if (ok) p.onAccent else p.faint, fontSize = 15.sp, fontWeight = FontWeight.SemiBold) }
         }
@@ -137,6 +142,30 @@ fun EditExerciseScreen(vm: AppViewModel, exerciseId: Long) {
                 Pill("+ Add specification", false, Modifier.padding(top = 8.dp)) { specEdit = null to null }
             }
             SlotLine("Rest: buzz me after", "the clock counts up and keeps going", formatTime(e.restSec)) { askRest = true }
+            Column {
+                Text("Variants", color = p.text, fontSize = 15.sp)
+                Text("Different ways of doing it, e.g. deep / half / normal. Each set keeps its variant; the log starts from the last one you used.",
+                    color = p.muted, fontSize = 12.sp)
+                e.variants.forEachIndexed { i, name ->
+                    // sets of this variant: by its saved name (before a rename), plus the ones without a variant for the first
+                    val savedName = renames.entries.firstOrNull { it.value == name }?.key ?: name
+                    val n = (variantCounts[savedName] ?: 0) + if (savedName == original.variants.firstOrNull()) variantCounts[null] ?: 0 else 0
+                    Row(
+                        Modifier.padding(top = 8.dp).fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(p.surface).padding(start = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(name, color = p.text, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                        Text(if (n == 0) "none yet" else "$n sets", color = p.muted, fontSize = 12.sp)
+                        IconButton(enabled = i > 0, onClick = {
+                            e = e.copy(variants = e.variants.toMutableList().also { l -> l.add(i - 1, l.removeAt(i)) })
+                        }) { Icon(AppIcons.Up, "Move $name up", tint = if (i > 0) p.muted else p.faint) }
+                        IconButton(onClick = { variantEdit = i to name }) { Icon(AppIcons.Edit, "Rename $name", tint = p.muted) }
+                        // a variant with sets can't go: its sets would lose what they were
+                        if (n == 0) IconButton(onClick = { e = e.copy(variants = e.variants - name) }) { Icon(AppIcons.Close, "Remove $name", tint = p.muted) }
+                    }
+                }
+                Pill("+ Add variant", false, Modifier.padding(top = 8.dp)) { variantEdit = null to "" }
+            }
             Column(Modifier.clip(RoundedCornerShape(16.dp)).background(p.surface).padding(horizontal = 14.dp)) {
                 SwitchLine("Left and right apart", "each set is L or R; turning it off keeps old sets with their side", e.perSide) { e = e.copy(perSide = it) }
             }
@@ -177,8 +206,23 @@ fun EditExerciseScreen(vm: AppViewModel, exerciseId: Long) {
         AlertDialog(
             onDismissRequest = { mergeFrom = null },
             title = { Text("Merge “${from.name}”?") },
-            text = { Text("Its $n sets move to “${original.name}”, with their sides and notes, and “${from.name}” is deleted. This can't be undone (a backup from Settings can).") },
-            confirmButton = { TextButton(onClick = { vm.mergeExercise(from, original); mergeFrom = null }) { Text("Merge $n sets") } },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("Its $n sets move to “${original.name}”, with their sides and notes, and “${from.name}” is deleted. This can't be undone (a backup from Settings can).")
+                    // e.g. Barbell Squat merged into Squat as its "normal" variant
+                    if (original.variants.isNotEmpty()) {
+                        Text("Its sets become the variant:", color = p.muted, fontSize = 13.sp)
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            original.variants.forEach { v -> Pill(v, mergeAs == v) { mergeAs = v } }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(enabled = original.variants.isEmpty() || mergeAs != null, onClick = {
+                    vm.mergeExercise(from, original, mergeAs); mergeFrom = null; mergeAs = null
+                }) { Text("Merge $n sets") }
+            },
             dismissButton = { TextButton(onClick = { mergeFrom = null }) { Text("Cancel") } },
         )
     }
@@ -187,6 +231,18 @@ fun EditExerciseScreen(vm: AppViewModel, exerciseId: Long) {
             onDismiss = { specEdit = null }) { sp ->
             e = e.copy(specs = if (index == null) e.specs + sp else e.specs.toMutableList().also { it[index] = sp })
             specEdit = null
+        }
+    }
+    variantEdit?.let { (index, old) ->
+        VariantDialog(old, taken = e.variants.filterIndexed { i, _ -> i != index }.map { it.lowercase() }.toSet(), onDismiss = { variantEdit = null }) { name ->
+            if (index == null) e = e.copy(variants = e.variants + name)
+            else {
+                e = e.copy(variants = e.variants.toMutableList().also { it[index] = name })
+                // remember the rename from the saved name, so its sets follow on Save
+                val saved = renames.entries.firstOrNull { it.value == old }?.key ?: old
+                if (saved in original.variants) renames = renames + (saved to name)
+            }
+            variantEdit = null
         }
     }
     if (askStep) StepDialog(e.weightStep, onDismiss = { askStep = false }) { e = e.copy(weightStep = it); askStep = false }
@@ -369,3 +425,20 @@ private val SPEC_COLORS = listOf(
     0xFF43A047, 0xFF8E44D8, 0xFF16181C, 0xFFE53935, 0xFFFFC107,
     0xFFE91E63, 0xFF3F51B5, 0xFF03A9F4, 0xFF00BCD4, 0xFFCDDC39, 0xFFFF9800, 0xFF795548, 0xFF9E9E9E, 0xFFFFFFFF,
 )
+
+/** Name a new variant, or rename one (its sets follow when you save). */
+@Composable
+private fun VariantDialog(current: String, taken: Set<String>, onDismiss: () -> Unit, onDone: (String) -> Unit) {
+    var name by remember { mutableStateOf(current) }
+    val clash = name.trim().lowercase() in taken
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(if (current.isEmpty()) "New variant" else "Rename \u201C$current\u201D") },
+        text = {
+            OutlinedTextField(name, { name = it }, label = { Text("e.g. deep, half, upper half") }, singleLine = true, isError = clash,
+                supportingText = if (clash) ({ Text("This exercise already has it") }) else null)
+        },
+        confirmButton = { TextButton(enabled = name.isNotBlank() && !clash, onClick = { onDone(name.trim()) }) { Text("OK") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
+}

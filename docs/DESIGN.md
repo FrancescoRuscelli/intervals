@@ -164,6 +164,12 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
   Start a group on top; then folding sections, each exercise once: Done today (open), Recent = 14 days (open), one per group,
   Everything else A–Z (closed). Each row: name, L·R badge, "✓ N sets" if done that day or the last day. Logic: `pickSections` in core.
 - **L and R colors** (2026-11-19): pink = L, teal = R everywhere (as the graph lines): side switch, highlighted set column, row labels.
+- **Variants** (2026-11-19, mockups G19a–c): an exercise has its own variants (Squat: deep / half / normal; Pull Up: full /
+  upper half / lower half). Log: a row of the variants on top, staying on the last one used; "Log set · normal"; the day's sets
+  split into one box per variant (the current one outlined, "now"). Each set keeps its variant (`GymSet.variant`, DB v6; a set
+  without one counts as the first). Edit exercise: add, rename (its sets follow on Save), move up, remove only when it has no sets.
+  Merge an exercise into one with variants = choose which variant its sets become (e.g. Barbell Squat → Squat "normal").
+  History / Graph / Records: filter All / each variant; records per variant. Set text: "normal · 90 × 5".
 - **Free timer for timed sets** (2026-11-19, mockup G18, no ring/disc): exercises with Time get a full-width card instead of the
   Time tile. Ready: the time (tap to type) + START (teal). Running: counter with tenths on a card in the side's color, "last time
   0:18 on the left", STOP (pink), screen kept on, Log set waits. Stopped: measured time rounded to the second, − / + 1 s,
