@@ -330,15 +330,8 @@
       "h": 844,
       "title": "G17f · Two columns, the side you're on highlighted (tweak: side)"
     },
-    "GymSetsByKilo.dc.html": {
-      "x": 9400,
-      "y": 4260,
-      "w": 390,
-      "h": 844,
-      "title": "G17g · Sets by kilos: one row per weight, L | R cells (tweak: side)"
-    },
     "GymTimer.dc.html": {
-      "x": 9870,
+      "x": 9400,
       "y": 4260,
       "w": 390,
       "h": 844,
@@ -391,7 +384,6 @@
     "GymSetsD.dc.html",
     "GymSetsE.dc.html",
     "GymSetsF.dc.html",
-    "GymSetsByKilo.dc.html",
     "GymTimer.dc.html"
   ],
   "notes": {
@@ -426,7 +418,7 @@
     "setsgrouping": {
       "x": 6580,
       "y": 3880,
-      "w": 3680,
+      "w": 3210,
       "text": "Choose one: how an exercise's sets are grouped during a workout (same Block Pulls session, 11 sets, real phone size)",
       "size": "l",
       "fill": "purple"
