@@ -110,6 +110,20 @@ class GymImportTest {
     }
 
     @Test
+    fun groupsFollowMergesAndDeletes() = runTest {
+        val F = listOf(app.intervals.core.GymField.WEIGHT, app.intervals.core.GymField.REPS)
+        val a = repo.addExercise(app.intervals.core.Exercise(name = "A", fields = F))
+        val b = repo.addExercise(app.intervals.core.Exercise(name = "B", fields = F))
+        val c = repo.addExercise(app.intervals.core.Exercise(name = "C", fields = F))
+        repo.addGroup(app.intervals.core.GymGroup(name = "Legs", items = listOf(a, b, c).map { app.intervals.core.GroupItem(it) }))
+        repo.addGroup(app.intervals.core.GymGroup(name = "Only B", items = listOf(app.intervals.core.GroupItem(b))))
+        repo.mergeExercises(b, a)   // B into A: Legs already has A, so B just goes; "Only B" gets A
+        repo.deleteExercise(c)
+        val g = repo.groups.first().associate { it.name to it.items.map { i -> i.exerciseId } }
+        assertEquals(mapOf("Legs" to listOf(a), "Only B" to listOf(a)), g)
+    }
+
+    @Test
     fun oldDataIsUpgradedOnce() = runTest {
         // what the phone had before: an assisted exercise (positive weights) and one with built-in bands
         val oap = repo.addExercise(app.intervals.core.Exercise(name = "Deloaded OAP", fields = listOf(app.intervals.core.GymField.WEIGHT, app.intervals.core.GymField.REPS), assist = true))

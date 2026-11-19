@@ -200,7 +200,21 @@ class IntervalsRepository(
     suspend fun deleteGroup(id: Long) = gymDao.deleteGroup(id)
 
     /** Deletes the exercise and all its sets. */
-    suspend fun deleteExercise(id: Long) = gymDao.deleteExercise(id)
+    suspend fun deleteExercise(id: Long) = db.withTransaction {
+        gymDao.deleteExercise(id)
+        replaceInGroups(id, null)
+    }
+
+    /** An exercise that is gone leaves its groups; merged, it is replaced there by [with] (unless the group already has it). */
+    private suspend fun replaceInGroups(id: Long, with: Long?) {
+        for (e in gymDao.getGroups()) {
+            val g = e.toGroup()
+            if (g.items.none { it.exerciseId == id }) continue
+            val keep = with != null && g.items.none { it.exerciseId == with }
+            val items = g.items.mapNotNull { if (it.exerciseId != id) it else if (keep) it.copy(exerciseId = with!!) else null }
+            gymDao.updateGroup(g.copy(items = items).toEntity(e.position))
+        }
+    }
 
     /** Moves all sets of [from] to [into], then deletes [from]. */
     /** Moves every set of [from] into [into] and deletes [from]; with [asVariant] its sets become that variant of [into]. */
@@ -213,6 +227,7 @@ class IntervalsRepository(
         }
         gymDao.moveSets(from, into)
         gymDao.deleteExercise(from)
+        replaceInGroups(from, into)
     }
 
     /**
