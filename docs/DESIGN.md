@@ -160,6 +160,9 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
   (tap again to clear). Each set keeps its values (`GymSet.specs`, DB v5 column `specs`), starting from the last set; shown first
   in every set text ("40 mm · thumb · 20 × 5"); sets with different specs never merge into one ×N row.
   Not yet: records / graphs split by spec (e.g. max at 40 mm vs 50 mm).
+- **Add exercise list** (reorganised 2026-11-19, chosen option "sections + L/R filter"): search + "+ New"; filter All / L·R / Both sides;
+  Start a group on top; then folding sections, each exercise once: Done today (open), Recent = 14 days (open), one per group,
+  Everything else A–Z (closed). Each row: name, L·R badge, "✓ N sets" if done that day or the last day. Logic: `pickSections` in core.
 - **Each side remembers its own values** (2026-11-19): on a per-side exercise, L starts from the last L set (today, else last time's
   first L), R from the last R; switching side on the log screen reloads that side's values.
 - Not wanted (from your FitNotes data, never used): routines, body weight, measurements, goals, plate calculator.
