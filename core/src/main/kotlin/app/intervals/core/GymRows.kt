@@ -9,10 +9,20 @@ data class SetRow(
     val label: String,
     val set: GymSet,
     val count: Int,
-)
+    /** Every set folded into this row, in order. */
+    val sets: List<GymSet> = listOf(set),
+) {
+    /** The real rest before the row's sets: "2:10", or the range "2:05–2:30" when they differ; null when none was timed. */
+    val restText: String?
+        get() {
+            val r = sets.mapNotNull { it.restSec }
+            if (r.isEmpty()) return null
+            return if (r.min() == r.max()) formatTime(r.min()) else formatTime(r.min()) + "–" + formatTime(r.max())
+        }
+}
 
 fun dayRows(sets: List<GymSet>): List<SetRow> {
-    class Acc(val from: Int, var to: Int, val sides: MutableList<Side>, val set: GymSet, var count: Int)
+    class Acc(val from: Int, var to: Int, val sides: MutableList<Side>, val set: GymSet, var count: Int, val all: MutableList<GymSet> = mutableListOf(set))
     val out = mutableListOf<Acc>()
     sets.forEachIndexed { i, s ->
         val last = out.lastOrNull()
@@ -21,6 +31,7 @@ fun dayRows(sets: List<GymSet>): List<SetRow> {
         ) {
             last.to = i + 1
             last.count++
+            last.all += s
             s.side?.let { if (it !in last.sides) last.sides += it }
         } else {
             out += Acc(i + 1, i + 1, listOfNotNull(s.side).toMutableList(), s, 1)
@@ -32,7 +43,7 @@ fun dayRows(sets: List<GymSet>): List<SetRow> {
             a.count > 1 -> "${a.from}–${a.to}"
             else -> "${a.from}"
         }
-        SetRow(label, a.set, a.count)
+        SetRow(label, a.set, a.count, a.all)
     }
 }
 

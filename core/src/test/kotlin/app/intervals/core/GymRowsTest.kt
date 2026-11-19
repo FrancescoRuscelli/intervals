@@ -12,6 +12,10 @@ class GymRowsTest {
     fun identicalSetsInARowBecomeOneRow() {
         val rows = dayRows(listOf(set(60.0, 5), set(80.0, 5), set(80.0, 5), set(80.0, 5), set(85.0, 3)))
         assertEquals(listOf("1" to 1, "2–4" to 3, "5" to 1), rows.map { it.label to it.count })
+        // rests on the side of each row: one value, or the range of a folded row
+        val timed = dayRows(listOf(set(60.0, 5), set(80.0, 5).copy(restSec = 125), set(80.0, 5).copy(restSec = 150), set(80.0, 5).copy(restSec = 130)))
+        assertEquals(listOf(null, "2:05–2:30"), timed.map { it.restText })
+        assertEquals("2:05", dayRows(listOf(set(80.0, 5).copy(restSec = 125))).single().restText)
         assertEquals("85 × 3", topSet(rows.map { it.set }, squat)!!.summary(squat))
     }
 

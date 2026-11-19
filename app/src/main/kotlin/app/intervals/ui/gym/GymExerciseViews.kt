@@ -108,11 +108,11 @@ fun ExerciseHistory(ex: Exercise, all: List<GymSet>, onOpenDay: (String) -> Unit
                                 Text("×${row.count}", color = p.workText, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                             }
                         }
+                        // the real rest before these sets, on the side of their row
+                        row.restText?.let { Text(it, color = p.muted, fontSize = 12.sp, textAlign = TextAlign.End, modifier = Modifier.width(76.dp)) }
                     }
                     if (row.set.note.isNotBlank()) Text(row.set.note, color = p.muted, fontSize = 12.sp, fontStyle = FontStyle.Italic, modifier = Modifier.padding(start = 44.dp))
                 }
-                val rests = sets.mapNotNull { it.restSec }
-                if (rests.isNotEmpty()) Text("rests " + rests.joinToString(" · ") { formatTime(it) }, color = p.muted, fontSize = 11.sp)
             }
         }
     }
