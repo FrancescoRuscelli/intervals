@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gym, sets by kilos</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #000000; color: #F2F3F5; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+  <header style="display: flex; align-items: center; gap: 4px; padding: 12px 8px 0">
+    <button aria-label="Back" style="width: 44px; height: 44px; flex: none; border: 0; border-radius: 22px; background: transparent; color: inherit; display: flex; align-items: center; justify-content: center">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+    </button>
+    <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center">
+      <span style="font-size: 17px; font-weight: 700">Block Pulls</span>
+      <span style="font-size: 12px; color: #9AA0AA">Last · Tue · L 45 × 5 · R 47 × 5</span>
+    </span>
+    <span style="width: 44px; flex: none"></span>
+  </header>
+
+  <div role="group" aria-label="Side" style="display: flex; align-self: center; margin-top: 12px; padding: 3px; border-radius: 12px; background: #1A1C21">
+    <sc-for list="{{sides}}" as="sd" hint-placeholder-count="3">
+      <button aria-pressed="{{sd.on}}" style="width: 74px; height: 34px; border: 0; border-radius: 9px; background: {{sd.bg}}; color: {{sd.fg}}; font-size: 14px; font-weight: 700">{{sd.label}}</button>
+    </sc-for>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 12px 16px 0">
+    <div style="padding: 10px; border-radius: 20px; background: #1A1C21; display: flex; flex-direction: column; align-items: center; gap: 6px">
+      <span style="font-size: 12px; color: #9AA0AA; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase">Weight</span>
+      <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 34px; font-weight: 700; line-height: 1.3">47<span style="font-size: 15px; color: #9AA0AA; margin-left: 4px">kg</span></span>
+      <span style="display: flex; gap: 8px; width: 100%">
+        <button aria-label="Weight minus 1" style="flex: 1; height: 44px; border: 0; border-radius: 12px; background: #2A2340; color: #C4B1FF; font-size: 22px; font-weight: 700">−</button>
+        <button aria-label="Weight plus 1" style="flex: 1; height: 44px; border: 0; border-radius: 12px; background: #2A2340; color: #C4B1FF; font-size: 22px; font-weight: 700">+</button>
+      </span>
+    </div>
+    <div style="padding: 10px; border-radius: 20px; background: #1A1C21; display: flex; flex-direction: column; align-items: center; gap: 6px">
+      <span style="font-size: 12px; color: #9AA0AA; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase">Reps</span>
+      <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 34px; font-weight: 700; line-height: 1.3">3</span>
+      <span style="display: flex; gap: 8px; width: 100%">
+        <button aria-label="Reps minus 1" style="flex: 1; height: 44px; border: 0; border-radius: 12px; background: #2A2340; color: #C4B1FF; font-size: 22px; font-weight: 700">−</button>
+        <button aria-label="Reps plus 1" style="flex: 1; height: 44px; border: 0; border-radius: 12px; background: #2A2340; color: #C4B1FF; font-size: 22px; font-weight: 700">+</button>
+      </span>
+    </div>
+  </div>
+
+  <div style="display: flex; padding: 12px 16px 0">
+    <button style="flex: 1; height: 56px; border: 0; border-radius: 18px; background: {{logBg}}; color: #FFFFFF; font-size: 17px; font-weight: 700">{{logLabel}}</button>
+  </div>
+
+  <section aria-label="Sets today, by weight" style="flex: 1; overflow: hidden; margin-top: 14px; padding: 0 16px; display: flex; flex-direction: column">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 0 4px 8px">
+      <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: #9AA0AA">Sets · 11 · by weight</span>
+      <span style="font-size: 12px; color: #6E747E">same kilos, same row</span>
+    </div>
+    <div style="display: grid; grid-template-columns: 70px 1fr 1fr; gap: 8px; align-items: center; padding: 0 4px 6px">
+      <span style="font-size: 12px; color: #9AA0AA; font-weight: 700">kg</span>
+      <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #F48FB1"><span style="width: 18px; height: 18px; border-radius: 9px; background: #E91E63; color: #FFFFFF; font-size: 11px; display: flex; align-items: center; justify-content: center">L</span>{{lCount}}</span>
+      <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #5EEAD4"><span style="width: 18px; height: 18px; border-radius: 9px; background: #00BFA5; color: #FFFFFF; font-size: 11px; display: flex; align-items: center; justify-content: center">R</span>{{rCount}}</span>
+    </div>
+    <sc-for list="{{rows}}" as="r" hint-placeholder-count="3">
+      <div style="display: grid; grid-template-columns: 70px 1fr 1fr; gap: 8px; align-items: stretch; padding: 6px 4px; border-top: 1px solid #16181C">
+        <span style="align-self: center; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 20px; font-weight: 700">{{r.kg}}<span style="font-size: 12px; color: #9AA0AA; margin-left: 3px">kg</span></span>
+        <span style="min-height: 44px; padding: 6px; box-sizing: border-box; border-radius: 12px; background: {{r.lBg}}; border: {{r.lBorder}}; opacity: {{r.lOp}}; display: flex; flex-wrap: wrap; gap: 5px; align-items: center">
+          <sc-for list="{{r.l}}" as="x" hint-placeholder-count="2">
+            <span style="min-width: 30px; height: 30px; padding: 0 6px; box-sizing: border-box; border-radius: 8px; background: #000000; border: 1px solid {{x.edge}}; display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 15px; font-weight: 600">{{x.v}}</span>
+          </sc-for>
+          <sc-if value="{{r.lEmpty}}" hint-placeholder-val="{{ false }}"><span style="color: #4A4F58; font-size: 14px; padding-left: 4px">–</span></sc-if>
+        </span>
+        <span style="min-height: 44px; padding: 6px; box-sizing: border-box; border-radius: 12px; background: {{r.rBg}}; border: {{r.rBorder}}; opacity: {{r.rOp}}; display: flex; flex-wrap: wrap; gap: 5px; align-items: center">
+          <sc-for list="{{r.r}}" as="x" hint-placeholder-count="2">
+            <span style="min-width: 30px; height: 30px; padding: 0 6px; box-sizing: border-box; border-radius: 8px; background: #000000; border: 1px solid {{x.edge}}; display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 15px; font-weight: 600">{{x.v}}</span>
+          </sc-for>
+          <sc-if value="{{r.rEmpty}}" hint-placeholder-val="{{ false }}"><span style="color: #4A4F58; font-size: 14px; padding-left: 4px">–</span></sc-if>
+        </span>
+      </div>
+    </sc-for>
+    <span style="padding: 10px 4px 0; font-size: 12px; color: #6E747E">lightest on top, as you build up · pink edge = note</span>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"side":{"editor":"enum","options":["Left","Right","Both"],"default":"Left"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const side = this.props.side ?? 'Left';
+    const PINK = '#E91E63', TEAL = '#00BFA5';
+    const rep = (v, note) => ({ v, edge: note ? PINK : '#2A2D34' });
+    // the same session as G17, with weights both sides share
+    const data = [
+      { kg: '45', l: [rep('5'), rep('5')], r: [rep('5')] },
+      { kg: '47', l: [rep('4'), rep('3'), rep('3')], r: [rep('5'), rep('5', true)] },
+      { kg: '50', l: [], r: [rep('3'), rep('3'), rep('2')] }
+    ];
+    const lOn = side !== 'Right', rOn = side !== 'Left';
+    const rows = data.map((d) => ({
+      kg: d.kg, l: d.l, r: d.r, lEmpty: d.l.length === 0, rEmpty: d.r.length === 0,
+      lBg: lOn ? 'rgba(233,30,99,0.14)' : '#0E0F12', lBorder: lOn ? '1px solid rgba(233,30,99,0.55)' : '1px solid #1A1C21', lOp: lOn ? '1' : '0.55',
+      rBg: rOn ? 'rgba(0,191,165,0.14)' : '#0E0F12', rBorder: rOn ? '1px solid rgba(0,191,165,0.55)' : '1px solid #1A1C21', rOp: rOn ? '1' : '0.55'
+    }));
+    const sides = ['Left', 'Right', 'Both'].map((label) => {
+      const on = label === side;
+      const bg = label === 'Left' ? PINK : label === 'Right' ? TEAL : '#7C3AED';
+      return { label, on: on ? 'true' : 'false', bg: on ? bg : 'transparent', fg: on ? '#FFFFFF' : '#9AA0AA' };
+    });
+    return {
+      rows, sides, lCount: '5 sets', rCount: '6 sets',
+      logLabel: side === 'Right' ? 'Log set · R' : side === 'Both' ? 'Log L + R' : 'Log set · L',
+      logBg: side === 'Right' ? TEAL : side === 'Both' ? '#7C3AED' : PINK
+    };
+  }
+}
+</script>
+</body>
+</html>
