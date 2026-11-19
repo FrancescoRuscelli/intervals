@@ -42,9 +42,6 @@ fun toggleTag(note: String, tag: String): String {
     return (if (tag in parts) parts - tag else listOf(tag) + parts).joinToString(" · ")
 }
 
-/** Filter of the add-exercise list. */
-enum class SideFilter { ALL, ONE_SIDE, BOTH_SIDES }
-
 /** A folding section of the add-exercise list. */
 data class PickSection(val key: String, val title: String, val exercises: List<Exercise>)
 
@@ -58,15 +55,8 @@ fun pickSections(
     lastUsed: Map<Long, String>,
     groups: List<GymGroup>,
     day: String,
-    filter: SideFilter = SideFilter.ALL,
 ): List<PickSection> {
-    val shown = exercises.filter {
-        when (filter) {
-            SideFilter.ALL -> true
-            SideFilter.ONE_SIDE -> it.perSide
-            SideFilter.BOTH_SIDES -> !it.perSide
-        }
-    }
+    val shown = exercises
     val byId = shown.associateBy { it.id }
     val taken = mutableSetOf<Long>()
     fun take(list: List<Exercise>) = list.filter { taken.add(it.id) }

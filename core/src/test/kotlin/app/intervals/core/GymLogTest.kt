@@ -59,8 +59,5 @@ class GymLogTest {
                 "Everything else A–Z" to listOf("Bench", "Pinch")),
             s.map { it.title to it.exercises.map(Exercise::name) },
         )
-        val oneSide = pickSections(all, setOf(1L), used, listOf(legs), "2026-11-19", SideFilter.ONE_SIDE)
-        assertEquals(listOf("Recent" to listOf("Block Pulls"), "Everything else A–Z" to listOf("Pinch")),
-            oneSide.map { it.title to it.exercises.map(Exercise::name) })
     }
 }

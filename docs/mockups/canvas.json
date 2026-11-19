@@ -287,6 +287,27 @@
       "w": 390,
       "h": 900,
       "title": "Home · Today (bar: Today · Intervals · Gym · Journal)"
+    },
+    "GymSetsGrouping.dc.html": {
+      "x": 6580,
+      "y": 4260,
+      "w": 390,
+      "h": 844,
+      "title": "G17a · Sets during a workout: L | R side by side"
+    },
+    "GymSetsB.dc.html": {
+      "x": 7050,
+      "y": 4260,
+      "w": 390,
+      "h": 844,
+      "title": "G17b · Sets during a workout: blocks by load"
+    },
+    "GymSetsC.dc.html": {
+      "x": 7520,
+      "y": 4260,
+      "w": 390,
+      "h": 844,
+      "title": "G17c · Sets during a workout: folded, newest on top"
     }
   },
   "order": [
@@ -328,7 +349,10 @@
     "ImportLight.dc.html",
     "StatsLight.dc.html",
     "SettingsLight.dc.html",
-    "PlayerDiscLandscapeLight.dc.html"
+    "PlayerDiscLandscapeLight.dc.html",
+    "GymSetsGrouping.dc.html",
+    "GymSetsB.dc.html",
+    "GymSetsC.dc.html"
   ],
   "notes": {
     "home": {
@@ -358,6 +382,14 @@
       "text": "Light mode",
       "kind": "title1",
       "maxW": 4134
+    },
+    "setsgrouping": {
+      "x": 6580,
+      "y": 3880,
+      "w": 1330,
+      "text": "Choose one: how an exercise's sets are grouped during a workout (same Block Pulls session, 11 sets, real phone size)",
+      "size": "l",
+      "fill": "purple"
     }
   },
   "designSystems": [],

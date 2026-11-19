@@ -34,7 +34,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.widthIn
-import app.intervals.core.SideFilter
 import app.intervals.core.pickSections
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -55,7 +54,7 @@ import app.intervals.ui.LocalPalette
 import app.intervals.ui.editor.SectionTitle
 
 /**
- * Add an exercise to a day (mockup G9, reorganised 2026-11-19): search + New, a filter All · L·R · Both sides, then folding sections
+ * Add an exercise to a day (mockup G9, reorganised 2026-11-19): search + New, then folding sections
  * with each exercise once: done today, recent, one per group, everything else A–Z. Start a group stays on top.
  */
 @Composable
@@ -68,13 +67,12 @@ fun GymPickScreen(vm: AppViewModel, day: String) {
     val doneCount = remember(daySets) { daySets.groupingBy { it.exerciseId }.eachCount() }
     var query by remember { mutableStateOf("") }
     var creating by remember { mutableStateOf<String?>(null) }
-    var filter by remember { mutableStateOf(SideFilter.ALL) }
     // open sections; groups and the long A–Z list start closed
     val open = remember { mutableStateMapOf("today" to true, "recent" to true) }
     val q = query.trim()
     val names = exercises.associate { it.id to it.name }
-    val sections = remember(exercises, doneCount, lastUsed, groups, day, filter) {
-        pickSections(exercises, doneCount.keys, lastUsed, groups, day, filter)
+    val sections = remember(exercises, doneCount, lastUsed, groups, day) {
+        pickSections(exercises, doneCount.keys, lastUsed, groups, day)
     }
     fun pick(ex: Exercise) = vm.pickExercise(ex.id, day)
 
@@ -89,15 +87,7 @@ fun GymPickScreen(vm: AppViewModel, day: String) {
                 contentAlignment = Alignment.Center,
             ) { Text("+ New", color = p.accentText, fontSize = 15.sp, fontWeight = FontWeight.SemiBold) }
         }
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf(SideFilter.ALL to "All", SideFilter.ONE_SIDE to "L · R", SideFilter.BOTH_SIDES to "Both sides").forEach { (f, label) ->
-                val on = f == filter
-                Text(label, color = if (on) p.onAccent else p.soft, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(if (on) p.accent else p.surface)
-                        .clickable { filter = f }.padding(horizontal = 14.dp, vertical = 8.dp))
-            }
-        }
-        LazyColumn(contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        LazyColumn(contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             if (q.isNotEmpty()) {
                 val found = sections.flatMap { it.exercises }.distinctBy { it.id }.filter { it.name.contains(q, ignoreCase = true) }
                     .sortedBy { it.name.lowercase() }
