@@ -111,13 +111,13 @@ fun TodayScreen(vm: AppViewModel) {
                             .background(if (isToday) p.tint else p.surface).clickable { vm.openJournalDay(d.toString()) },
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        Spacer(Modifier.height(8.dp))
+                        Spacer(Modifier.height(5.dp))
                         Text(if (isToday) "Today" else d.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.ENGLISH),
                             color = if (isToday) p.accentText else p.muted, fontSize = 10.sp, maxLines = 1)
-                        Text("${d.dayOfMonth}", color = p.text, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                        Text("${d.dayOfMonth}", color = p.text, fontSize = 15.sp, fontWeight = FontWeight.Bold, lineHeight = 17.sp)
                         // fixed slot for the marks, so every day's name and number sit at the same height
                         Column(Modifier.height(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                            if (strip.isNotEmpty()) Row(Modifier.padding(top = 2.dp).width(26.dp).height(4.dp).clip(RoundedCornerShape(2.dp)),
+                            if (strip.isNotEmpty()) Row(Modifier.width(26.dp).height(4.dp).clip(RoundedCornerShape(2.dp)),
                                 horizontalArrangement = Arrangement.spacedBy(1.dp)) {
                                 strip.forEach { Box(Modifier.weight(it.sets.toFloat()).height(4.dp).background(Color(it.color))) }
                             }
