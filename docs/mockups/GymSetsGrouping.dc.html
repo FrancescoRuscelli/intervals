@@ -101,10 +101,11 @@ button{font-family:inherit}
     <sc-if value="{{isD}}" hint-placeholder-val="{{ false }}">
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
         <sc-for list="{{columns}}" as="col" hint-placeholder-count="2">
-          <div style="display: flex; flex-direction: column; gap: 8px; padding: 10px; border-radius: 16px; background: #0E0F12; border: 1px solid #1A1C21">
+          <div style="display: flex; flex-direction: column; gap: 8px; padding: 10px; border-radius: 16px; background: {{col.bg}}; border: {{col.border}}; opacity: {{col.op}}">
             <span style="display: flex; align-items: center; gap: 8px">
-              <span style="width: 24px; height: 24px; border-radius: 12px; background: #2A2340; color: #C4B1FF; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center">{{col.side}}</span>
+              <span style="width: 24px; height: 24px; border-radius: 12px; background: {{col.badgeBg}}; color: {{col.badgeFg}}; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center">{{col.side}}</span>
               <span style="font-size: 12px; color: #9AA0AA">{{col.count}}</span>
+              <span style="margin-left: auto; font-size: 11px; font-weight: 700; color: #C4B1FF">{{col.next}}</span>
             </span>
             <sc-for list="{{col.blocks}}" as="b" hint-placeholder-count="2">
               <div style="display: flex; flex-direction: column; gap: 6px; padding-top: 6px; border-top: 1px solid #1A1C21">
@@ -153,7 +154,7 @@ button{font-family:inherit}
   </section>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"layout":{"editor":"enum","options":["A side by side","B blocks by load","C folded, newest on top","D blocks in two columns L | R","E follows the side switch"],"default":"A side by side"},"side":{"editor":"enum","options":["Left","Right","Both"],"default":"Left"},"$preview":{"width":390,"height":844}}'>
+<script type="text/x-dc" data-dc-script data-props='{"layout":{"editor":"enum","options":["A side by side","B blocks by load","C folded, newest on top","D blocks in two columns L | R","E follows the side switch","F two columns, your side highlighted"],"default":"A side by side"},"side":{"editor":"enum","options":["Left","Right","Both"],"default":"Left"},"$preview":{"width":390,"height":844}}'>
 class Component extends DCLogic {
   renderVals() {
     const layout = this.props.layout ?? 'A side by side';
@@ -184,7 +185,22 @@ class Component extends DCLogic {
       return { side, count: n + ' sets', blocks: bs };
     });
     // E: the list follows the side switch; Both = the two columns of D
-    const side = layout.startsWith('E') ? (this.props.side ?? 'Left') : 'Left';
+    // F: always the two columns of D, the selected side's column highlighted
+    const switching = layout.startsWith('E') || layout.startsWith('F');
+    const side = switching ? (this.props.side ?? 'Left') : 'Left';
+    const highlight = layout.startsWith('F');
+    columns.forEach((col) => {
+      const active = highlight && (side === 'Both' || (side === 'Left') === (col.side === 'L'));
+      const dim = highlight && !active;
+      Object.assign(col, {
+        bg: active ? '#1C1828' : '#0E0F12',
+        border: active ? '2px solid #7C3AED' : '1px solid #1A1C21',
+        op: dim ? '0.55' : '1',
+        badgeBg: active ? '#7C3AED' : '#2A2340',
+        badgeFg: active ? '#FFFFFF' : '#C4B1FF',
+        next: active && side !== 'Both' ? 'next' : ''
+      });
+    });
     const sides = ['Left', 'Right', 'Both'].map((label) => {
       const on = label === side;
       return { label, on: on ? 'true' : 'false', bg: on ? '#F2F3F5' : 'transparent', fg: on ? '#000000' : '#9AA0AA' };
@@ -193,9 +209,10 @@ class Component extends DCLogic {
     const other = side === 'Right' ? columns[0] : columns[1];
     const oneSide = { blocks: mine.blocks, other: (side === 'Right' ? 'Left' : 'Right') + ': ' + other.count + ' · switch above to see them' };
     const isE = layout.startsWith('E') && side !== 'Both';
-    const isD = layout.startsWith('D') || (layout.startsWith('E') && side === 'Both');
+    const isD = layout.startsWith('D') || highlight || (layout.startsWith('E') && side === 'Both');
     const hint = layout.startsWith('A') ? 'one row = R and L of the same set' : layout.startsWith('B') ? 'one row per side and weight'
-      : isE ? side + ' only · ' + mine.count : isD ? 'each side, its weights' : 'newest first';
+      : isE ? side + ' only · ' + mine.count : highlight ? 'both sides · ' + (side === 'Both' ? 'L + R next' : side + ' next')
+      : isD ? 'each side, its weights' : 'newest first';
     return {
       pairs, blocks, newest, columns, hint, sides, oneSide,
       logLabel: side === 'Right' ? 'Log set · R' : side === 'Both' ? 'Log L + R' : 'Log set · L',
