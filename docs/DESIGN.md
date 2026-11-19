@@ -80,6 +80,11 @@ new **Progress** screen per workout: a graph per logged field (left vs right) an
    All ring segments have **rounded ends** (gaps kept the same width).
    **Last 3 seconds**: the time becomes a big 3 / 2 / 1; each number starts huge in the center,
    shrinking to its size in ~0.4 s (starts 4x bigger and faint, shrinks into the center with no drop, solid at the end; two-tone: in the disc color outside the disc, dark/white inside for contrast - option D of https://claude.ai/artifact/L3yeuVckD9uTiJQVpXf1sa). Live demo: 4c on the canvas.
+   **Where you are** (2026-11-19, option 6 of https://claude.ai/artifact/TiN6U7ZHbLVJa5iVWKSmpM): a small "k/n" chip rides
+   next to the dot outside the series ring = work series of this round (rests, change side, round rest and warm-up do not
+   count; a series whose name has "rest" or "change" is a rest; both sides of a per-side series are one; during a rest it
+   keeps the last number); a purple "r/n" chip sits on the rounds ring where it goes from grey to purple (hidden with 1 round).
+   Setting: Settings › Workout › "Series and round numbers" (on by default).
    **New series**: the disc inflates from the center, fast (~0.25 s, tiny overshoot), with its text.
    **Disc animation** setting: **Calm** (default, demo 4c) or **Crazy spin** (demo 4d): at every new series the disc with its name and time whirls
    1.5 turns and settles (~0.7 s), the series ring swings back and the rounds ring the other way. No always-spinning mode. Demo: 4d.
@@ -308,7 +313,7 @@ Safety copies made while changing the phone's gym data by hand (groups, Deep →
         delete with its sets (confirm). Tested in the database tests.
   - [x] Journal filter chips All / Gym (purple) / Intervals (pink): dots, cards and totals follow
   - [x] Stats: Intervals · Gym · Both tabs; Gym = gym days / sets / exercises in the period, gym days per week (12 weeks, this week purple),
-        recent records (30 days, each exercise's main graph), most trained (sets), real rest vs target (only rests logged in the app)
+        recent records (30 days, each exercise's main graph), most trained (sets) (the "rest between sets" card was removed 2026-11-19)
   - [x] Groups (database v3, table `gym_groups`, in backups): Add exercise starts with "Start a group" (▶, exercises listed, pencil = edit)
         and "+ New group"; group editor: name, exercises in order (up / down / remove, + Add exercise), optional plan per exercise
         (sets and/or a note, "plan: 4 sets · 3 × 8 @ 40 kg").

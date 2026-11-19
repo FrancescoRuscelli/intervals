@@ -27,6 +27,8 @@ data class AppSettings(
     /** Disc spin 0..4 (none, a little, more, crazy, always); -1 = not set yet, taken from [discAnimation]. */
     val spin: Int = -1,
     val keepScreenOn: Boolean = true,
+    /** Player: small "3/6" (work series) and "2/4" (rounds) chips on the rings. */
+    val showCounters: Boolean = true,
     val lockControls: Boolean = false,
 ) {
     init {

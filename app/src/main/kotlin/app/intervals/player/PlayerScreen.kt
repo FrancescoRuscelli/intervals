@@ -65,6 +65,11 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -83,7 +88,7 @@ import app.intervals.ui.NumberStyle
 private val DoneGrey = Color(0xFF3A3E46)
 
 @Composable
-fun PlayerScreen(c: PlayerController, keepScreenOn: Boolean, spinLevel: Int = 0, onClose: () -> Unit) {
+fun PlayerScreen(c: PlayerController, keepScreenOn: Boolean, spinLevel: Int = 0, showCounters: Boolean = true, onClose: () -> Unit) {
     val p = LocalPalette.current
     var askStop by remember { mutableStateOf(false) }
     val view = LocalView.current
@@ -133,7 +138,7 @@ fun PlayerScreen(c: PlayerController, keepScreenOn: Boolean, spinLevel: Int = 0,
             if (st != null) {
                 val color = st.segment.playerColor(p.teal)
                 val ink = if (color == p.teal || color.luminance() > 0.35f) Color(0xFF14080C) else Color.White
-                Disc(c, st, spinLevel, diameter, color, ink, intervalCountdown)
+                Disc(c, st, spinLevel, diameter, color, ink, intervalCountdown, showCounters)
                 if (intervalCountdown) {
                     val fontSize = with(LocalDensity.current) { (diameter * 0.38f).toSp() }
                     CountdownDigit(st.secLeft, outside = color, inside = ink, fontSize = fontSize, discSize = diameter - 108.dp)
@@ -166,6 +171,7 @@ private fun Disc(
     color: Color,
     ink: Color,
     intervalCountdown: Boolean,
+    showCounters: Boolean,
 ) {
     val p = LocalPalette.current
     val seg = st.segment
@@ -222,11 +228,18 @@ private fun Disc(
             while (true) withFrameMillis { frameMs.longValue = c.elapsedMs }
         }
     }
+    val work = c.plan.workCount(st)
+    val chipText = rememberTextMeasurer()
+    // the rings' extra turns (Crazy spin swing, Always spin); the chips follow them
+    fun seriesTurn() = -50f * swing.value - always * 0.5f
+    fun roundsTurn() = 50f * swing.value + always * 0.75f
     Box(
-        Modifier.size(discDp).clip(CircleShape).semantics {
+        Modifier.size(discDp).semantics {
             val round = "Round ${st.round} of ${st.rounds}"
-            stateDescription = if (st.inRound > 0) "$round, series ${st.inRound} of ${st.ofRound}" else round
+            stateDescription = work?.let { (k, n) -> "$round, series $k of $n" } ?: round
         }.clickable(
+            interactionSource = null,
+            indication = androidx.compose.material3.ripple(bounded = false, radius = discDp / 2),
             enabled = !c.starting && !c.celebrating,
             onClickLabel = if (showPause) "Resume" else "Pause",
             role = Role.Button,
@@ -243,9 +256,9 @@ private fun Disc(
         }) {
             val ms = minOf(frameMs.longValue, c.plan.totalSec * 1000L)
             val elapsedSec = ms / 1000.0
-            val outer = size.minDimension / 2f - 14.dp.toPx()
-            rotate(-50f * swing.value - always * 0.5f) { drawSeriesRing(roundSegs, st, elapsedSec, outer, p.teal) }
-            rotate(50f * swing.value + always * 0.75f) { drawRoundsRing(c, st, elapsedSec, outer - 24.dp.toPx(), p.accent) }
+            val outer = size.minDimension / 2f - RingInset.toPx()
+            rotate(seriesTurn()) { drawSeriesRing(roundSegs, st, elapsedSec, outer, p.teal) }
+            rotate(roundsTurn()) { drawRoundsRing(c, st, elapsedSec, outer - RingGap.toPx(), p.accent) }
         }
         // the disc: its own layer so it can spin (Crazy spin) and flip (end of the workout)
         Box(
@@ -281,6 +294,16 @@ private fun Disc(
                     }
                 }
             }
+        }
+        // where you are: "3/6" (work series of this round) by the dot, "2/4" (rounds) on the inner ring
+        if (showCounters) Canvas(Modifier.fillMaxSize().graphicsLayer { alpha = (1f - 3f * ringsHidden).coerceIn(0f, 1f) }) {
+            val t = minOf(frameMs.longValue, c.plan.totalSec * 1000L) / 1000.0
+            val outer = size.minDimension / 2f - RingInset.toPx()
+            if (work != null) seriesDotAngle(roundSegs, t)?.let { a ->
+                drawChip(chipText, "${work.first}/${work.second}", a + seriesTurn(), outer + 18.dp.toPx(), p.text, p.bg)
+            }
+            if (st.rounds > 1) drawChip(chipText, "${st.round}/${st.rounds}", roundsAngle(c, st, t) + roundsTurn(),
+                outer - RingGap.toPx(), p.accent, Color.White)
         }
     }
 }
@@ -333,6 +356,49 @@ private fun DrawScope.drawSeriesRing(segs: List<Segment>, st: PlayState, t: Doub
         val rad = Math.toRadians(it.toDouble())
         drawCircle(Color.White, 5.dp.toPx(), Offset(center.x + r * kotlin.math.cos(rad).toFloat(), center.y + r * kotlin.math.sin(rad).toFloat()))
     }
+}
+
+/** Outer ring radius = half the disc box minus this (room for the chips outside it); inner ring is [RingGap] further in. */
+private val RingInset = 24.dp
+private val RingGap = 20.dp
+
+/** Angle (degrees, 0 = 3 o'clock) of the dot on the series ring at [t] seconds; same layout as [drawSeriesRing]. */
+private fun seriesDotAngle(segs: List<Segment>, t: Double): Float? {
+    if (segs.isEmpty()) return null
+    val total = segs.sumOf { it.durationSec }.toFloat()
+    val gap = 3.5f
+    val usable = 360f - gap * segs.size
+    var a = -90f
+    for (s in segs) {
+        val sweep = usable * s.durationSec / total
+        if (s.startSec <= t && t < s.endSec) return a + sweep * ((t - s.startSec) / s.durationSec).toFloat()
+        a += sweep + gap
+    }
+    return null
+}
+
+/** Angle where the current round's piece of the rounds ring goes from done (grey) to left (purple). */
+private fun roundsAngle(c: PlayerController, st: PlayState, t: Double): Float {
+    val n = st.rounds
+    val gap = if (n > 1) 6f else 0f
+    val sweep = (360f - gap * n) / n
+    val segs = c.plan.roundSegments(st.round)
+    val start = segs.firstOrNull()?.startSec ?: 0
+    val end = segs.lastOrNull()?.endSec ?: 1
+    val frac = ((t - start) / (end - start)).toFloat().coerceIn(0f, 1f)
+    return -90f + (st.round - 1) * (sweep + gap) + sweep * frac
+}
+
+/** A small pill with [text], centered at [r] from the center at [angle] degrees; the text stays upright. */
+private fun DrawScope.drawChip(tm: TextMeasurer, text: String, angle: Float, r: Float, bg: Color, fg: Color) {
+    val layout = tm.measure(text, TextStyle(color = fg, fontSize = 12.sp, fontWeight = FontWeight.Bold))
+    val w = layout.size.width + 12.dp.toPx()
+    val h = layout.size.height + 2.dp.toPx()
+    val rad = Math.toRadians(angle.toDouble())
+    val cx = center.x + r * kotlin.math.cos(rad).toFloat()
+    val cy = center.y + r * kotlin.math.sin(rad).toFloat()
+    drawRoundRect(bg, Offset(cx - w / 2, cy - h / 2), Size(w, h), CornerRadius(h / 2))
+    drawText(layout, topLeft = Offset(cx - layout.size.width / 2f, cy - layout.size.height / 2f))
 }
 
 /** Inner thin ring: one piece per round; done grey, left purple, the current one empties as it runs. */

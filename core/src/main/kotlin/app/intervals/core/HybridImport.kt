@@ -103,10 +103,6 @@ object HybridImport {
         return Result(result, warnings)
     }
 
-    private fun isRestName(name: String): Boolean {
-        val n = name.lowercase()
-        return "rest" in n || "change" in n
-    }
 
     private fun isChangeName(name: String): Boolean {
         val n = name.lowercase()

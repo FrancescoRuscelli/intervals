@@ -13,6 +13,28 @@ class PlayerTest {
     private val plan = PlayerPlan(w)
 
     @Test
+    fun workCountSkipsRestsAndCountsBothSidesOnce() {
+        // hang, rest x3 (last rest skipped), then a per-side pull (left, change, right)
+        val pull = Series("pull", 6, 0xFF7C3AED, perSide = PerSide(changeSec = 3))
+        val wk = Workout("w", warmupSec = 5, rounds = 2, restBetweenRoundsSec = 30,
+            blocks = listOf(Block.Repeat(3, listOf(hang, rest), skipLast = true), Block.Single(pull)))
+        val p = PlayerPlan(wk)
+        fun at(sec: Int) = p.stateAt(sec * 1000L)!!.let { p.workCount(it) }
+        assertNull(at(0)) // warm-up
+        assertEquals(1 to 4, at(5)) // first hang
+        assertEquals(1 to 4, at(10)) // the rest after it keeps 1
+        assertEquals(2 to 4, at(14))
+        assertEquals(3 to 4, at(23)) // third hang
+        assertEquals(4 to 4, at(28)) // pull left
+        assertEquals(4 to 4, at(34)) // change side
+        assertEquals(4 to 4, at(37)) // pull right
+        assertEquals(4 to 4, at(43)) // rest between rounds
+        val r2 = p.stateAt(73_000)!!
+        assertEquals(2, r2.round)
+        assertEquals(1 to 4, p.workCount(r2))
+    }
+
+    @Test
     fun stateAlongTheWay() {
         assertEquals(31, plan.totalSec)
         val a = plan.stateAt(0)!!

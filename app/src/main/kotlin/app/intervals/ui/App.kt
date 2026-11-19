@@ -76,7 +76,7 @@ fun App(vm: AppViewModel) {
             when (val top = vm.overlays.lastOrNull()) {
                 Overlay.EditWorkout -> EditWorkoutScreen(vm)
                 is Overlay.EditSeries -> EditSeriesScreen(vm, top)
-                Overlay.Player -> vm.player?.let { app.intervals.player.PlayerScreen(it, settings.keepScreenOn, settings.spinLevel) { it.stop() } }
+                Overlay.Player -> vm.player?.let { app.intervals.player.PlayerScreen(it, settings.keepScreenOn, settings.spinLevel, settings.showCounters) { it.stop() } }
                 is Overlay.GymLog -> app.intervals.ui.gym.GymLogScreen(vm, top.exerciseId, top.day)
                 Overlay.Settings -> androidx.compose.foundation.layout.Column(
                     Modifier.fillMaxSize().background(p.bg).statusBarsPadding().navigationBarsPadding(),

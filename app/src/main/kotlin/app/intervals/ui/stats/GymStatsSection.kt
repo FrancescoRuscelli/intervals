@@ -47,7 +47,7 @@ import app.intervals.ui.LocalPalette
 import app.intervals.ui.NumberStyle
 import java.time.LocalDate
 
-/** Stats, Gym tab (mockup G13): days / sets / exercises, gym days per week, recent records, most trained, real rest vs target. */
+/** Stats, Gym tab (mockup G13): days / sets / exercises, gym days per week, recent records, most trained. */
 @Composable
 fun GymStatsSection(vm: AppViewModel, start: LocalDate, today: LocalDate) {
     val p = LocalPalette.current
@@ -138,31 +138,6 @@ fun GymStatsSection(vm: AppViewModel, start: LocalDate, today: LocalDate) {
                 }
                 Box(Modifier.padding(top = 4.dp).fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)).background(p.line)) {
                     Box(Modifier.fillMaxWidth(n.toFloat() / max).height(8.dp).clip(RoundedCornerShape(4.dp)).background(p.pink))
-                }
-            }
-        }
-    }
-
-    // real rest vs target (only exercises with rests logged in the app)
-    val rests = inPeriod.filter { it.restSec != null }.groupBy { it.exerciseId }
-        .mapNotNull { (id, s) -> byId[id]?.let { it to s.mapNotNull { x -> x.restSec }.average() } }
-        .sortedByDescending { it.second }.take(5)
-    if (rests.isNotEmpty()) SCard {
-        Text("Rest between sets", color = p.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-        Text("your real average · white mark = your target", color = p.muted, fontSize = 12.sp)
-        val scale = (rests.maxOf { maxOf(it.second, it.first.restSec.toDouble()) } * 1.15).coerceAtLeast(60.0)
-        rests.forEach { (ex, avg) ->
-            Column(Modifier.padding(top = 10.dp)) {
-                Row {
-                    Text(ex.name, color = p.text, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                    Text(formatTime(avg.toInt()) + " · target " + formatTime(ex.restSec), color = p.muted, fontSize = 12.sp)
-                }
-                Box(Modifier.padding(top = 4.dp).fillMaxWidth().height(14.dp)) {
-                    Box(Modifier.align(Alignment.CenterStart).fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)).background(p.line))
-                    Box(Modifier.align(Alignment.CenterStart).fillMaxWidth((avg / scale).toFloat()).height(8.dp).clip(RoundedCornerShape(4.dp)).background(p.teal))
-                    androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxWidth().height(14.dp)) {
-                        Box(Modifier.offset(x = maxWidth * (ex.restSec / scale).toFloat()).width(2.dp).height(14.dp).background(p.text))
-                    }
                 }
             }
         }

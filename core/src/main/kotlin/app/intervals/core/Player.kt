@@ -106,11 +106,30 @@ class PlayerPlan(val workout: Workout) {
     /** Segments of [round] (warm-up excluded): what the outer ring of the disc draws. */
     fun roundSegments(round: Int): List<Segment> = segs.filter { it.round == round && it.kind != SegmentKind.WARMUP }
 
+    /**
+     * The work series of [st]'s round as (number, how many): the one running, or during a rest the last one done.
+     * Rest-like series ([isRestName]), change side, rest between rounds and warm-up are not work; both sides of a
+     * per-side series are one. Null when the round has no work or none has started yet.
+     */
+    fun workCount(st: PlayState): Pair<Int, Int>? {
+        val work = segs.withIndex().filter { (_, s) ->
+            s.round == st.round && s.kind == SegmentKind.SERIES && !isRestName(s.name) && s.side != Side.RIGHT
+        }
+        val k = work.count { it.index <= st.index }
+        return if (work.isEmpty() || k == 0) null else k to work.size
+    }
+
     /** Rounds fully done before [elapsedMs]. */
     fun roundsDone(elapsedMs: Long): Int {
         val st = stateAt(elapsedMs) ?: return workout.rounds
         return if (st.segment.kind == SegmentKind.ROUND_REST) st.round else st.round - 1
     }
+}
+
+/** A series that is a pause, not work: its name says rest or change (e.g. "rest", "big rest", "change"). */
+fun isRestName(name: String): Boolean {
+    val n = name.lowercase()
+    return "rest" in n || "change" in n
 }
 
 /** What the voice says when a segment starts. */
