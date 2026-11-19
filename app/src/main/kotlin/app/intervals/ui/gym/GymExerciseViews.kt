@@ -53,9 +53,7 @@ import app.intervals.core.GymMetric
 import app.intervals.core.GymSet
 import app.intervals.core.MetricPoint
 import app.intervals.core.Side
-import app.intervals.core.bestE1rm
 import app.intervals.core.dayRows
-import app.intervals.core.estimatedFor
 import app.intervals.core.formatKg
 import app.intervals.core.formatTime
 import app.intervals.core.historyDays
@@ -262,7 +260,7 @@ private fun Chip(label: String, on: Boolean, onClick: () -> Unit) {
 
 // ---------- Records ----------
 
-/** Real records (heaviest per reps, beaten ones faded) and estimated maximums; holds and reps for the other kinds. */
+/** Real records (heaviest per reps, beaten ones faded); holds and reps for the other kinds. No estimates. */
 @Composable
 fun ExerciseRecords(ex: Exercise, all: List<GymSet>) {
     val p = LocalPalette.current
@@ -297,24 +295,6 @@ fun ExerciseRecords(ex: Exercise, all: List<GymSet>) {
                     }
                     Text("Faded = beaten by more reps with as much (or less assist). Tap the Graph tab for the history.",
                         color = p.muted, fontSize = 11.sp, modifier = Modifier.padding(top = 8.dp))
-                }
-            }
-            if (hasW && hasR && !ex.assist) item {
-                val best = bestE1rm(sets)
-                if (best != null) Card("Estimated maximums$title", "from ${best.second.summary(ex)} · ${shortDay(best.second.day)}") {
-                    Text(formatKg(round1(best.first)) + " kg", color = p.text, style = NumberStyle, fontSize = 34.sp, fontWeight = FontWeight.Bold)
-                    Text("estimated 1RM (sets up to 12 reps)", color = p.muted, fontSize = 12.sp)
-                    listOf(2, 3, 5, 8, 10).forEach { r ->
-                        val est = estimatedFor(best.first, r)
-                        Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Text("$r reps", color = p.muted, fontSize = 13.sp, modifier = Modifier.width(60.dp))
-                            Box(Modifier.weight(1f).height(8.dp).clip(RoundedCornerShape(4.dp)).background(p.line)) {
-                                Box(Modifier.fillMaxWidth((est / best.first).toFloat()).height(8.dp).clip(RoundedCornerShape(4.dp)).background(p.accent))
-                            }
-                            Text(formatKg(Math.round(est * 2) / 2.0) + " kg", color = p.text, style = NumberStyle, fontSize = 14.sp,
-                                textAlign = TextAlign.End, modifier = Modifier.width(72.dp))
-                        }
-                    }
                 }
             }
             if (!(hasW && hasR)) item {

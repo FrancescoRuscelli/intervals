@@ -145,10 +145,10 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
 - **Variants stay separate exercises** (Block Pulls Squeezed, Pull Up (Second Half)…).
 - **Groups** of exercises (Pull day, Legs…), started from **Add exercise or group** (G9, "Start a group" section); Today stays clean.
 - Per exercise: **Log · History · Graph · Records** (History = every workout, newest first, tap to edit) (graphs and records as in FitNotes, only those that fit the exercise):
-  - Graphs per workout: estimated 1RM (Epley, sets ≤ 12 reps), max weight, volume, total reps, max reps,
+  - Graphs per workout (no estimates: removed 2026-11-19, not wanted): max weight, volume, total reps, max reps,
     weight for N reps, max time / distance; plus ours: left vs right on one graph, real rest vs target.
     Periods 3 M / 6 M / 1 Y / All, trend line, tap a point to open that workout; chosen graph remembered per exercise.
-  - Records: real heaviest weight per rep count (beaten ones faded) + estimated 2–10RM from the best 1RM.
+  - Records: real heaviest weight per rep count (beaten ones faded). PRs = heaviest weight (least assist), real sets only.
 - **Import from FitNotes**: from the `.fitnotes` backup (SQLite; the CSV export has no comments).
   - Merge "(Left)"/"(Right)" pairs into one per-side exercise (11 pairs; one-side-only ones become per-side too).
   - Comments become data: "L"/"R" → side, band emojis (🟢🟣🔴⚫🟡, "nero", "green+purple"…) → bands,
@@ -271,9 +271,9 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
         the day's Gym card lists each exercise with its sets ("90 × 5 (5 sets)") and the notes; tap = that day in the Gym tab
   - [x] Exercise tabs **Log · History · Graph · Records** (`GymStats` in core, tests):
         History = every day newest first (rows ×N, notes, rests; tap = open that day);
-        Graph = chips for the graphs that fit (estimated 1RM Epley ≤ 12 reps, max weight / least assist, volume, max reps, total reps,
+        Graph = chips for the graphs that fit (max weight / least assist, volume, max reps, total reps,
         longest time, rest), 3 M / 6 M / 1 Y / All, per-side exercises draw left (pink) vs right (teal), records yellow, trend dashed, tap = that day;
-        Records = heaviest per reps (beaten faded), estimated 1RM + 2–10 reps; holds / reps-only / bands: longest, most reps, heaviest
+        Records = heaviest per reps (beaten faded); holds / reps-only / bands: longest, most reps, heaviest
   - [x] Edit exercise (pencil on the log screen): name (history kept), notes, fields, weight step chips, rest target chips,
         left/right apart, assisted; "In your log: N sets since …"; merge another exercise into it (similar names first, confirm);
         delete with its sets (confirm). Tested in the database tests.
