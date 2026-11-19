@@ -231,7 +231,6 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
             if (list.isNotEmpty()) item {
                 SetBlocks(list, ex, if (editing == null) side else null, editing?.id) { noteFor = it }
             }
-            if (list.isNotEmpty()) item { Text("Tap a number to edit that set or add a note · pink edge = has a note", color = p.muted, fontSize = 12.sp) }
         }
     }
 
@@ -287,16 +286,23 @@ internal fun shortDay(day: String): String {
 private fun StepTile(label: String, value: String, unit: String, modifier: Modifier, onTap: () -> Unit, onMinus: () -> Unit, onPlus: () -> Unit) {
     val p = LocalPalette.current
     Column(modifier.clip(RoundedCornerShape(16.dp)).background(p.surface).padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(label, color = p.muted, fontSize = 13.sp)
-        Row(Modifier.clickable(onClickLabel = "Type $label", onClick = onTap).padding(vertical = 6.dp), verticalAlignment = Alignment.Bottom) {
-            // longer numbers (15.25) get smaller, so the value and its unit stay on one line
-            val size = when { value.length <= 3 -> 40; value.length == 4 -> 34; value.length == 5 -> 29; else -> 25 }
-            Text(value, color = p.text, fontSize = size.sp, style = NumberStyle, maxLines = 1, softWrap = false)
-            if (unit.isNotEmpty()) Text(" $unit", color = p.muted, fontSize = 15.sp, maxLines = 1, softWrap = false, modifier = Modifier.padding(bottom = 8.dp))
+        Text(label, color = p.muted, fontSize = 13.sp, maxLines = 1)
+        // every value the same size (21 and 18.5 alike), on a row of fixed height so all tiles line up; very long values shrink a bit
+        Row(
+            Modifier.height(52.dp).clickable(onClickLabel = "Type $label", onClick = onTap),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(value, color = p.text, fontSize = (if (value.length <= 6) 34 else 26).sp, style = NumberStyle, maxLines = 1, softWrap = false)
+            if (unit.isNotEmpty()) Text(" $unit", color = p.muted, fontSize = 15.sp, maxLines = 1, softWrap = false, modifier = Modifier.padding(top = 10.dp))
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            app.intervals.ui.editor.StepButton(AppIcons.Minus, "$label less", p.tint, p.accentText, 52, onMinus)
-            app.intervals.ui.editor.StepButton(AppIcons.Plus, "$label more", p.tint, p.accentText, 52, onPlus)
+        // − and + are two equal halves of the tile
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(Triple(AppIcons.Minus, "$label less", onMinus), Triple(AppIcons.Plus, "$label more", onPlus)).forEach { (icon, desc, action) ->
+                Box(
+                    Modifier.weight(1f).height(48.dp).clip(RoundedCornerShape(12.dp)).background(p.tint).clickable(onClickLabel = desc, onClick = action),
+                    contentAlignment = Alignment.Center,
+                ) { Icon(icon, desc, tint = p.accentText, modifier = Modifier.size(22.dp)) }
+            }
         }
     }
 }
