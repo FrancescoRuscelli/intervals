@@ -125,6 +125,28 @@ fun recentRecords(exercises: List<Exercise>, sets: List<GymSet>, since: String):
     }.sortedByDescending { it.day }
 }
 
-/** Sets per exercise, most first. */
-fun setsPerExercise(sets: List<GymSet>): List<Pair<Long, Int>> =
-    sets.groupingBy { it.exerciseId }.eachCount().toList().sortedByDescending { it.second }
+data class ExerciseTraining(
+    val exerciseId: Long,
+    val sets: Int,
+    val days: Int,
+    val reps: Long?,
+    val timeSec: Long?,
+) {
+    // If an exercise tracks both, rank by reps when it has any, or by its logged time otherwise.
+    val timed: Boolean get() = timeSec != null && (reps ?: 0L) == 0L
+    val work: Long? get() = if (timed) timeSec else reps
+}
+
+/** Totals for the supplied period. Sides and variants share the same exercise and training dates. */
+fun exerciseTraining(sets: List<GymSet>): List<ExerciseTraining> =
+    sets.groupBy { it.exerciseId }.map { (id, logged) ->
+        val reps = logged.mapNotNull { it.reps }
+        val seconds = logged.mapNotNull { it.timeSec }
+        ExerciseTraining(
+            exerciseId = id,
+            sets = logged.size,
+            days = logged.map { it.day }.toSet().size,
+            reps = reps.takeIf { it.isNotEmpty() }?.sumOf { it.toLong() },
+            timeSec = seconds.takeIf { it.isNotEmpty() }?.sumOf { it.toLong() },
+        )
+    }

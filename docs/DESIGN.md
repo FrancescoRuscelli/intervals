@@ -313,7 +313,7 @@ Safety copies made while changing the phone's gym data by hand (groups, Deep →
         delete with its sets (confirm). Tested in the database tests.
   - [x] Journal filter chips All / Gym (purple) / Intervals (pink): dots, cards and totals follow
   - [x] Stats: Intervals · Gym · Both tabs; Gym = gym days / sets / exercises in the period, gym days per week (12 weeks, this week purple),
-        recent records (30 days, each exercise's main graph), most trained (sets) (the "rest between sets" card was removed 2026-11-19)
+        recent records (30 days, each exercise's main graph), most trained (Sets · Days · Reps, with total time for holds)
   - [x] Groups (database v3, table `gym_groups`, in backups): Add exercise starts with "Start a group" (▶, exercises listed, pencil = edit)
         and "+ New group"; group editor: name, exercises in order (up / down / remove, + Add exercise), optional plan per exercise
         (sets and/or a note, "plan: 4 sets · 3 × 8 @ 40 kg").

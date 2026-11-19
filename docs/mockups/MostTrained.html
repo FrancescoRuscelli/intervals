@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Most trained · Intervals</title>
+  <style>
+    :root {
+      color-scheme: dark light;
+      --page: #000;
+      --card: #1a1c21;
+      --text: #f2f3f5;
+      --muted: #9aa0aa;
+      --track: #23262c;
+      --selected: #2a2340;
+      --accent: #c4b1ff;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --page: #f6f5fa;
+        --card: #fff;
+        --text: #17151f;
+        --muted: #5e5a6b;
+        --track: #e2e0ea;
+        --selected: #ede7fb;
+        --accent: #5b21b6;
+      }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--page); color: var(--text); font: 14px system-ui, sans-serif; }
+    main { max-width: 390px; margin: 20px auto; padding: 0 16px; }
+    article { background: var(--card); border-radius: 18px; padding: 14px; }
+    header { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+    h1 { margin: 0; font-size: 15px; font-weight: 600; }
+    fieldset { display: flex; gap: 2px; min-width: 0; margin: 0; padding: 2px; border: 1px solid var(--track); border-radius: 12px; }
+    label { position: relative; }
+    label span { display: grid; place-items: center; min-height: 44px; padding: 0 10px; border-radius: 9px; color: var(--muted); font-size: 12px; font-weight: 600; cursor: pointer; }
+    input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+    input:checked + span { background: var(--selected); color: var(--accent); }
+    input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 1px; }
+    #ranking { display: grid; gap: 12px; margin-top: 12px; }
+    h2 { margin: 2px 0 -6px; color: var(--muted); font-size: 12px; font-weight: 600; }
+    .name { font-weight: 500; }
+    .metrics { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+    strong { color: var(--text); font-size: 18px; font-weight: 650; }
+    .track { height: 8px; margin-top: 4px; overflow: hidden; border-radius: 4px; background: var(--track); }
+    .bar { height: 100%; border-radius: inherit; background: #e91e63; }
+  </style>
+</head>
+<body>
+  <main>
+    <article aria-labelledby="title">
+      <header>
+        <h1 id="title">Most trained</h1>
+        <fieldset aria-label="Rank exercises by">
+          <label><input type="radio" name="metric" value="sets" checked><span>Sets</span></label>
+          <label><input type="radio" name="metric" value="days"><span>Days</span></label>
+          <label><input type="radio" name="metric" value="work"><span>Reps</span></label>
+        </fieldset>
+      </header>
+      <div id="ranking"></div>
+    </article>
+  </main>
+  <script>
+    const exercises = [
+      { name: 'Squat', sets: 598, days: 54, work: 2900, unit: 'reps' },
+      { name: 'Pull Up', sets: 426, days: 67, work: 3168, unit: 'reps' },
+      { name: 'Deadlift', sets: 204, days: 38, work: 850, unit: 'reps' },
+      { name: 'Dead Hang', sets: 157, days: 46, work: 5921, unit: 'time' },
+      { name: 'Tuck Hold', sets: 89, days: 26, work: 2440, unit: 'time' },
+    ];
+    const metrics = ['sets', 'days', 'work'];
+    const number = new Intl.NumberFormat('en');
+    const ranking = document.querySelector('#ranking');
+
+    function label(exercise, metric) {
+      const value = exercise[metric];
+      if (metric !== 'work') return `${number.format(value)} ${metric}`;
+      if (exercise.unit === 'reps') return `${number.format(value)} reps`;
+      return `${Math.floor(value / 60)} min ${value % 60} s`;
+    }
+
+    function rows(exercises, metric) {
+      const sorted = exercises.toSorted((a, b) => b[metric] - a[metric]);
+      const scale = sorted[0][metric];
+      return sorted.map(exercise => `
+        <div>
+          <div class="name">${exercise.name}</div>
+          <div class="metrics">
+            <strong>${label(exercise, metric)}</strong>
+            <span>${metrics.filter(other => other !== metric).map(other => label(exercise, other)).join(' · ')}</span>
+          </div>
+          <div class="track" aria-hidden="true"><div class="bar" style="width:${100 * exercise[metric] / scale}%"></div></div>
+        </div>`).join('');
+    }
+
+    function render(metric) {
+      ranking.innerHTML = metric === 'work'
+        ? `<h2>Reps</h2>${rows(exercises.filter(exercise => exercise.unit === 'reps'), metric)}
+           <h2>Time</h2>${rows(exercises.filter(exercise => exercise.unit === 'time'), metric)}`
+        : rows(exercises, metric);
+    }
+
+    document.querySelector('fieldset').addEventListener('change', event => render(event.target.value));
+    render('sets');
+  </script>
+</body>
+</html>

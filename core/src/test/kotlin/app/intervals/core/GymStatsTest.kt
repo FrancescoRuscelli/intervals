@@ -92,6 +92,24 @@ class GymStatsTest {
         val rec = recentRecords(listOf(dl), sets + s("2026-11-11", 125.0, 1, order = 1), "2026-10-25")
         assertEquals(listOf("2026-11-11"), rec.map { it.day })
         assertEquals(GymMetric.MAX_WEIGHT, rec.single().metric)
-        assertEquals(listOf(1L to 5), setsPerExercise(sets))
+        assertEquals(listOf(ExerciseTraining(1, 5, 3, 21, null)), exerciseTraining(sets))
+    }
+
+    @Test
+    fun trainingTotalsUseDistinctDatesAndKeepRepsAndTimeSeparate() {
+        val left = s("2026-11-18", 25.0, 5, Side.LEFT)
+        val right = left.copy(side = Side.RIGHT, reps = 4, variant = "half")
+        val later = left.copy(day = "2026-11-19", reps = 3, timeSec = 10)
+        val hang = s("2026-11-18", null, 0, t = 25).copy(exerciseId = 2)
+        val unmeasured = s("2026-11-19", 20.0, null).copy(exerciseId = 3)
+        val totals = exerciseTraining(listOf(left, right, later, hang, hang.copy(timeSec = 40), unmeasured))
+
+        assertEquals(listOf(
+            ExerciseTraining(1, 3, 2, 12, 10),
+            ExerciseTraining(2, 2, 1, 0, 65),
+            ExerciseTraining(3, 1, 1, null, null),
+        ), totals)
+        assertEquals(listOf(12L, 65L, null), totals.map { it.work })
+        assertEquals(listOf(false, true, false), totals.map { it.timed })
     }
 }

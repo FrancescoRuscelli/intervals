@@ -10,17 +10,23 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,20 +34,27 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.intervals.core.Exercise
+import app.intervals.core.ExerciseTraining
 import app.intervals.core.GymMetric
+import app.intervals.core.GymSet
+import app.intervals.core.exerciseTraining
 import app.intervals.core.formatKg
 import app.intervals.core.formatTime
 import app.intervals.core.gymDaysPerWeek
 import app.intervals.core.recentRecords
-import app.intervals.core.setsPerExercise
 import app.intervals.ui.AppViewModel
 import app.intervals.ui.LocalPalette
 import app.intervals.ui.NumberStyle
@@ -56,8 +69,10 @@ fun GymStatsSection(vm: AppViewModel, start: LocalDate, today: LocalDate) {
     val flow = remember(from) { vm.gymSetsSince(from) }
     val all by flow.collectAsState(initial = emptyList())
     val exercises by vm.exercises.collectAsStateWithLifecycle()
-    val byId = exercises.associateBy { it.id }
-    val inPeriod = all.filter { it.day >= start.toString() }
+    val inPeriod = remember(all, start) {
+        val firstDay = start.toString()
+        all.filter { it.day >= firstDay }
+    }
 
     Row(Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Tile("Gym days", "${inPeriod.map { it.day }.distinct().size}", Modifier.weight(1f))
@@ -123,21 +138,98 @@ fun GymStatsSection(vm: AppViewModel, start: LocalDate, today: LocalDate) {
         }
     }
 
-    // most trained in the period
-    val top = setsPerExercise(inPeriod).take(6)
+    MostTrainedCard(inPeriod, exercises)
+}
+
+private enum class TrainingMetric(val label: String) {
+    SETS("Sets"), DAYS("Days"), REPS("Reps");
+
+    fun amount(training: ExerciseTraining): Long = when (this) {
+        SETS -> training.sets.toLong()
+        DAYS -> training.days.toLong()
+        REPS -> training.work ?: 0L
+    }
+
+    fun display(training: ExerciseTraining): String {
+        val amount = amount(training)
+        return when (this) {
+            SETS -> "%,d %s".format(amount, if (amount == 1L) "set" else "sets")
+            DAYS -> "%,d %s".format(amount, if (amount == 1L) "day" else "days")
+            REPS -> when {
+                training.work == null -> "—"
+                training.timed -> "%,d min %d s".format(amount / 60, amount % 60)
+                else -> "%,d %s".format(amount, if (amount == 1L) "rep" else "reps")
+            }
+        }
+    }
+}
+
+@Composable
+private fun MostTrainedCard(sets: List<GymSet>, exercises: List<Exercise>) {
+    val p = LocalPalette.current
+    val byId = remember(exercises) { exercises.associateBy { it.id } }
+    var selected by rememberSaveable { mutableIntStateOf(TrainingMetric.SETS.ordinal) }
+    val metric = TrainingMetric.entries[selected]
+    val totals = remember(sets) { exerciseTraining(sets) }
+    val groups = remember(totals, metric) {
+        val sections = if (metric == TrainingMetric.REPS) {
+            val (timed, counted) = totals.filter { it.work != null }.partition { it.timed }
+            listOf("Reps" to counted, "Time" to timed)
+        } else {
+            listOf(null to totals)
+        }
+        sections.filter { (_, rows) -> rows.isNotEmpty() }
+            .map { (label, rows) -> label to rows.sortedByDescending(metric::amount).take(6) }
+    }
+
     SCard {
-        Text("Most trained", color = p.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-        Text("sets in this period", color = p.muted, fontSize = 12.sp)
-        if (top.isEmpty()) Text("No sets in this period.", color = p.muted, fontSize = 14.sp, modifier = Modifier.padding(top = 8.dp))
-        val max = top.maxOfOrNull { it.second } ?: 1
-        top.forEach { (id, n) ->
-            Column(Modifier.padding(top = 10.dp)) {
-                Row {
-                    Text(byId[id]?.name ?: "?", color = p.text, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                    Text("$n", color = p.muted, fontSize = 13.sp)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Most trained", color = p.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+            Row(
+                Modifier.selectableGroup().border(1.dp, p.line, RoundedCornerShape(12.dp)).padding(2.dp),
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                TrainingMetric.entries.forEach { option ->
+                    val on = option == metric
+                    Box(
+                        Modifier.widthIn(min = 48.dp).heightIn(min = 48.dp).clip(RoundedCornerShape(9.dp))
+                            .background(if (on) p.accent else Color.Transparent)
+                            .selectable(on, role = Role.RadioButton) { selected = option.ordinal }
+                            .padding(horizontal = 8.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(option.label, color = if (on) p.onAccent else p.muted, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                    }
                 }
-                Box(Modifier.padding(top = 4.dp).fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)).background(p.line)) {
-                    Box(Modifier.fillMaxWidth(n.toFloat() / max).height(8.dp).clip(RoundedCornerShape(4.dp)).background(p.pink))
+            }
+        }
+        if (groups.isEmpty()) {
+            val message = if (totals.isEmpty()) "No sets in this period." else "No reps or time logged in this period."
+            Text(message, color = p.muted, fontSize = 14.sp, modifier = Modifier.padding(top = 8.dp))
+        }
+        groups.forEach { (label, rows) ->
+            if (label != null) {
+                Text(label, color = p.muted, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 12.dp))
+            }
+            val max = metric.amount(rows.first()).coerceAtLeast(1L)
+            rows.forEach { training ->
+                Column(Modifier.padding(top = 10.dp)) {
+                    Text(byId[training.exerciseId]?.name ?: "?", color = p.text, fontSize = 14.sp)
+                    Text(
+                        buildAnnotatedString {
+                            withStyle(SpanStyle(color = p.text, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)) {
+                                append(metric.display(training))
+                            }
+                            TrainingMetric.entries.filter { it != metric }.forEach {
+                                append(" · ")
+                                append(it.display(training))
+                            }
+                        },
+                        color = p.muted, fontSize = 12.sp, style = NumberStyle,
+                    )
+                    Box(Modifier.padding(top = 4.dp).fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)).background(p.line)) {
+                        Box(Modifier.fillMaxWidth(metric.amount(training).toFloat() / max).height(8.dp).clip(RoundedCornerShape(4.dp)).background(p.pink))
+                    }
                 }
             }
         }

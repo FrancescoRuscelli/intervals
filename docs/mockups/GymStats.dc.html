@@ -12,6 +12,15 @@
 <style>
 body{margin:0}
 button{font-family:inherit}
+.ranking-modes{display:flex;gap:2px;border:1px solid #2A2D34;border-radius:12px;padding:2px}
+.ranking-modes button{min-width:48px;min-height:48px;border:0;border-radius:9px;padding:0 8px;background:transparent;color:#9AA0AA;font-size:12px;font-weight:600;cursor:pointer}
+.ranking-modes button[aria-pressed="true"]{background:#C4B1FF;color:#1C1237}
+.ranking-group{margin:12px 0 0;color:#9AA0AA;font-size:12px;font-weight:600}
+.ranking-row{margin-top:10px}
+.ranking-metrics{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px;color:#9AA0AA;font-size:12px}
+.ranking-metrics strong{color:#F2F3F5;font-size:18px;font-weight:600}
+.ranking-track{height:8px;margin-top:4px;border-radius:4px;background:#23262C}
+.ranking-bar{height:100%;border-radius:inherit;background:#E91E63}
 </style>
 </helmet>
 <div style="width: 390px; height: 1250px; box-sizing: border-box; background: #000000; color: #F2F3F5; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
@@ -56,32 +65,26 @@ button{font-family:inherit}
     </sc-for>
   </section>
 
-  <section style="margin: 12px 16px 0; padding: 12px 14px; border-radius: 18px; background: #1A1C21; display: flex; flex-direction: column; gap: 8px">
-    <div style="display: flex; justify-content: space-between; align-items: baseline">
+  <section style="margin: 12px 16px 0; padding: 14px; border-radius: 18px; background: #1A1C21">
+    <div style="display: flex; justify-content: space-between; align-items: center">
       <h2 style="margin: 0; font-size: 15px; font-weight: 600">Most trained</h2>
-      <span style="font-size: 12px; color: #9AA0AA">sets, last 3 months</span>
-    </div>
-    <sc-for list="{{top}}" as="t" hint-placeholder-count="5">
-      <div style="display: flex; flex-direction: column; gap: 4px">
-        <div style="display: flex; justify-content: space-between; font-size: 13px"><span>{{t.name}}</span><span style="color: #9AA0AA; font-variant-numeric: tabular-nums">{{t.n}}</span></div>
-        <div style="height: 8px; border-radius: 4px; background: #23262C"><div style="width: {{t.w}}; height: 8px; border-radius: 4px; background: #E91E63"></div></div>
+      <div class="ranking-modes" role="group" aria-label="Rank exercises by">
+        <sc-for list="{{modes}}" as="mode" hint-placeholder-count="3">
+          <button type="button" aria-pressed="{{mode.pressed}}" onClick="{{mode.pick}}">{{mode.label}}</button>
+        </sc-for>
       </div>
-    </sc-for>
-  </section>
-
-  <section style="margin: 12px 16px 0; padding: 12px 14px; border-radius: 18px; background: #1A1C21; display: flex; flex-direction: column; gap: 10px">
-    <div style="display: flex; justify-content: space-between; align-items: baseline">
-      <h2 style="margin: 0; font-size: 15px; font-weight: 600">Rest between sets</h2>
-      <span style="font-size: 12px; color: #9AA0AA">your real average · ▏= your target</span>
     </div>
-    <sc-for list="{{rests}}" as="t" hint-placeholder-count="4">
-      <div style="display: flex; flex-direction: column; gap: 4px">
-        <div style="display: flex; justify-content: space-between; font-size: 13px"><span>{{t.name}}</span><span style="font-variant-numeric: tabular-nums"><b>{{t.avg}}</b><span style="color: #9AA0AA"> · target {{t.target}}</span></span></div>
-        <div style="position: relative; height: 8px; border-radius: 4px; background: #23262C">
-          <div style="width: {{t.w}}; height: 8px; border-radius: 4px; background: #00BFA5"></div>
-          <span style="position: absolute; top: -3px; left: {{t.mark}}; width: 2px; height: 14px; border-radius: 1px; background: #F2F3F5"></span>
+    <sc-for list="{{ranking}}" as="group" hint-placeholder-count="1">
+      <sc-if value="{{group.title}}" hint-placeholder-val="{{ false }}">
+        <h3 class="ranking-group">{{group.title}}</h3>
+      </sc-if>
+      <sc-for list="{{group.rows}}" as="t" hint-placeholder-count="5">
+        <div class="ranking-row">
+          <div style="font-size:14px">{{t.name}}</div>
+          <div class="ranking-metrics"><strong>{{t.primary}}</strong><span>· {{t.secondary}}</span></div>
+          <div class="ranking-track" aria-hidden="true"><div class="ranking-bar" style="width: {{t.width}}"></div></div>
         </div>
-      </div>
+      </sc-for>
     </sc-for>
   </section>
 
@@ -103,26 +106,46 @@ class Component extends DCLogic {
       return { d, label, cx: x + bw / 2, fill: i === data.length - 1 ? '#7C3AED' : '#4C3A80' };
     });
     const grid = [2, 4, 6].map((v) => ({ y: yOf(v), ty: yOf(v) + 3, label: String(v) }));
+    const metric = this.state?.metric || 'sets';
+    const options = [['sets', 'Sets'], ['days', 'Days'], ['work', 'Reps']];
+    const exercises = [
+      { name: 'Barbell Deep Squat', sets: 598, days: 54, work: 2900 },
+      { name: 'Pull Up', sets: 426, days: 67, work: 3168 },
+      { name: 'Deadlift', sets: 204, days: 38, work: 850 },
+      { name: 'Dead Hang', sets: 157, days: 46, work: 5921, timed: true },
+      { name: 'Tuck Hold', sets: 89, days: 26, work: 2440, timed: true }
+    ];
+    const display = (e, key) => {
+      const n = e[key];
+      if (key === 'work' && e.timed) return Math.floor(n / 60) + ' min ' + (n % 60) + ' s';
+      return n.toLocaleString('en') + ' ' + (key === 'work' ? 'reps' : key);
+    };
+    const groups = metric === 'work'
+      ? [['Reps', exercises.filter((e) => !e.timed)], ['Time', exercises.filter((e) => e.timed)]]
+      : [['', exercises]];
+    const ranking = groups.map(([title, group]) => {
+      group.sort((a, b) => b[metric] - a[metric]);
+      return {
+        title,
+        rows: group.map((e) => ({
+          name: e.name,
+          primary: display(e, metric),
+          secondary: options.map(([key]) => key).filter((key) => key !== metric).map((key) => display(e, key)).join(' · '),
+          width: (100 * e[metric] / group[0][metric]) + '%'
+        }))
+      };
+    });
     return {
       weeks, grid, weeksLabel: data.map((d) => d[1]).join(', '),
+      ranking,
+      modes: options.map(([key, label]) => ({
+        label, pressed: String(key === metric), pick: () => this.setState({ metric: key })
+      })),
       records: [
         { name: 'Barbell Deep Squat', when: 'today', v: '85 × 3' },
         { name: 'Pull Up', when: 'Sun 15', v: '+30 × 5' },
         { name: 'Pistol Squat (L)', when: 'Wed 11', v: '🟢🟣🔴 × 5' },
         { name: 'Box Pike Push Up', when: 'Fri 13', v: '6 reps' }
-      ],
-      rests: [
-        { name: 'Barbell Deep Squat', avg: '3:25', target: '3:00', w: '57%', mark: '50%' },
-        { name: 'Deadlift', avg: '3:50', target: '3:00', w: '64%', mark: '50%' },
-        { name: 'Pull Up', avg: '2:40', target: '3:00', w: '44%', mark: '50%' },
-        { name: 'Block Pulls', avg: '1:55', target: '2:00', w: '32%', mark: '33%' }
-      ],
-      top: [
-        { name: 'Barbell Deep Squat', n: 125, w: '100%' },
-        { name: 'Overhead Press', n: 78, w: '62%' },
-        { name: 'Pull Up', n: 65, w: '52%' },
-        { name: 'Deadlift', n: 55, w: '44%' },
-        { name: 'Box Pike Push Up', n: 50, w: '40%' }
       ]
     };
   }
