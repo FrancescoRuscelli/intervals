@@ -308,6 +308,13 @@
       "w": 390,
       "h": 844,
       "title": "G17c · Sets during a workout: folded, newest on top"
+    },
+    "GymSetsD.dc.html": {
+      "x": 7990,
+      "y": 4260,
+      "w": 390,
+      "h": 844,
+      "title": "G17d · Blocks by load in two columns: L | R"
     }
   },
   "order": [
@@ -352,7 +359,8 @@
     "PlayerDiscLandscapeLight.dc.html",
     "GymSetsGrouping.dc.html",
     "GymSetsB.dc.html",
-    "GymSetsC.dc.html"
+    "GymSetsC.dc.html",
+    "GymSetsD.dc.html"
   ],
   "notes": {
     "home": {
@@ -386,7 +394,7 @@
     "setsgrouping": {
       "x": 6580,
       "y": 3880,
-      "w": 1330,
+      "w": 1800,
       "text": "Choose one: how an exercise's sets are grouped during a workout (same Block Pulls session, 11 sets, real phone size)",
       "size": "l",
       "fill": "purple"

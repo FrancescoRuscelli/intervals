@@ -98,6 +98,30 @@ button{font-family:inherit}
       <span style="padding: 8px 4px 0; font-size: 12px; color: #9AA0AA">pink edge = has a note · tap a number for that set</span>
     </sc-if>
 
+    <sc-if value="{{isD}}" hint-placeholder-val="{{ false }}">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
+        <sc-for list="{{columns}}" as="col" hint-placeholder-count="2">
+          <div style="display: flex; flex-direction: column; gap: 8px; padding: 10px; border-radius: 16px; background: #0E0F12; border: 1px solid #1A1C21">
+            <span style="display: flex; align-items: center; gap: 8px">
+              <span style="width: 24px; height: 24px; border-radius: 12px; background: #2A2340; color: #C4B1FF; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center">{{col.side}}</span>
+              <span style="font-size: 12px; color: #9AA0AA">{{col.count}}</span>
+            </span>
+            <sc-for list="{{col.blocks}}" as="b" hint-placeholder-count="2">
+              <div style="display: flex; flex-direction: column; gap: 6px; padding-top: 6px; border-top: 1px solid #1A1C21">
+                <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 18px; font-weight: 700">{{b.load}}</span>
+                <span style="display: flex; flex-wrap: wrap; gap: 6px">
+                  <sc-for list="{{b.reps}}" as="x" hint-placeholder-count="3">
+                    <span style="min-width: 32px; height: 32px; padding: 0 6px; box-sizing: border-box; border-radius: 9px; background: #1A1C21; border: 1px solid {{x.edge}}; display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 16px; font-weight: 600">{{x.v}}</span>
+                  </sc-for>
+                </span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+      <span style="padding: 8px 4px 0; font-size: 12px; color: #9AA0AA">pink edge = has a note · tap a number for that set</span>
+    </sc-if>
+
     <sc-if value="{{isC}}" hint-placeholder-val="{{ false }}">
       <sc-for list="{{newest}}" as="r" hint-placeholder-count="4">
         <div style="display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 4px; border-bottom: 1px solid #16181C">
@@ -115,7 +139,7 @@ button{font-family:inherit}
   </section>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"layout":{"editor":"enum","options":["A side by side","B blocks by load","C folded, newest on top"],"default":"A side by side"},"$preview":{"width":390,"height":844}}'>
+<script type="text/x-dc" data-dc-script data-props='{"layout":{"editor":"enum","options":["A side by side","B blocks by load","C folded, newest on top","D blocks in two columns L | R"],"default":"A side by side"},"$preview":{"width":390,"height":844}}'>
 class Component extends DCLogic {
   renderVals() {
     const layout = this.props.layout ?? 'A side by side';
@@ -139,10 +163,17 @@ class Component extends DCLogic {
       { n: '3', text: 'L 45 × 4 · R 50 × 5', k: '', rest: '', note: 'R: senza mignolo' },
       { n: '2', text: 'L 45 × 5 · R 50 × 5', k: '', rest: '', note: '' }
     ];
-    const hint = layout.startsWith('A') ? 'one row = R and L of the same set' : layout.startsWith('B') ? 'one row per side and weight' : 'newest first';
+    // D: the blocks of B, L on the left and R on the right
+    const columns = ['L', 'R'].map((side) => {
+      const bs = blocks.filter((b) => b.side === side);
+      const n = bs.reduce((s, b) => s + b.reps.length, 0);
+      return { side, count: n + ' sets', blocks: bs };
+    });
+    const hint = layout.startsWith('A') ? 'one row = R and L of the same set' : layout.startsWith('B') ? 'one row per side and weight'
+      : layout.startsWith('D') ? 'each side, its weights' : 'newest first';
     return {
-      pairs, blocks, newest, hint,
-      isA: layout.startsWith('A'), isB: layout.startsWith('B'), isC: layout.startsWith('C')
+      pairs, blocks, newest, columns, hint,
+      isA: layout.startsWith('A'), isB: layout.startsWith('B'), isC: layout.startsWith('C'), isD: layout.startsWith('D')
     };
   }
 }
