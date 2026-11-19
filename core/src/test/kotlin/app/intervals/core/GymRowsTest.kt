@@ -30,8 +30,8 @@ class GymRowsTest {
 
     @Test
     fun assistTopIsTheLeastHelp() {
-        val oap = Exercise(2, "Deloaded One Arm Pull-Up", listOf(GymField.WEIGHT, GymField.REPS), perSide = true, assist = true)
-        val sets = listOf(set(25.0, 3), set(20.0, 3), set(22.5, 3))
+        val oap = Exercise(2, "Deloaded One Arm Pull-Up", listOf(GymField.WEIGHT, GymField.REPS), perSide = true)
+        val sets = listOf(set(-25.0, 3), set(-20.0, 3), set(-22.5, 3))
         assertEquals("−20 × 3", topSet(sets, oap)!!.summary(oap))
         assertEquals("1.25", formatKg(1.25))
         assertEquals("2:05", formatTime(125))
@@ -64,7 +64,19 @@ class GymRowsTest {
         val t = GymSet(exerciseId = 5, day = "2026-11-17", order = 0, timeSec = 40)
         assertEquals(listOf("Sets" to listOf("0:40", "0:40")), loadBlocks(listOf(t, t), hs).map { it.label to it.sets.map { s -> s.boxText(hs) } })
         // assist and specs go in the label
-        val oap = Exercise(6, "OAP", listOf(GymField.WEIGHT, GymField.REPS), assist = true, specs = listOf(Spec("Ring", choices = listOf("low", "high"))))
-        assertEquals("high · −20 kg", set(20.0, 3).copy(specs = mapOf("Ring" to "high")).loadText(oap))
+        val oap = Exercise(6, "OAP", listOf(GymField.WEIGHT, GymField.REPS), specs = listOf(Spec("Ring", choices = listOf("low", "high"))))
+        assertEquals("high · −20 kg", set(-20.0, 3).copy(specs = mapOf("Ring" to "high")).loadText(oap))
+    }
+
+    @Test
+    fun oldAssistFlagBecomesNegativeWeights() {
+        val old = Exercise(7, "Deloaded OAP", listOf(GymField.WEIGHT, GymField.REPS), assist = true)
+        val other = Exercise(8, "Squat", listOf(GymField.WEIGHT, GymField.REPS))
+        val sets = listOf(set(20.0, 3).copy(exerciseId = 7), set(-15.0, 3).copy(exerciseId = 7), set(80.0, 5).copy(exerciseId = 8))
+        val (ex, s) = withNegativeAssist(listOf(old, other), sets)
+        assertEquals(listOf(false, false), ex.map { it.assist })
+        assertEquals(listOf(-20.0, -15.0, 80.0), s.map { it.weightKg })
+        // twice = no change
+        assertEquals(ex to s, withNegativeAssist(ex, s))
     }
 }

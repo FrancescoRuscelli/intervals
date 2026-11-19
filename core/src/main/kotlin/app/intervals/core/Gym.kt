@@ -43,7 +43,10 @@ data class Exercise(
     val fields: List<GymField>,
     /** Each set is done on one side (L or R); one exercise, never separate "(Left)" / "(Right)" ones. */
     val perSide: Boolean = false,
-    /** The weight is taken off (e.g. a deloaded pull-up), shown as −. */
+    /**
+     * Old way to mark an assisted exercise (weights stored positive). Now an assisted set just has a negative weight;
+     * only read to convert old data, see [withNegativeAssist]. shortcut: kept so old backups still load.
+     */
     val assist: Boolean = false,
     /** Step of the − / + buttons for the weight, kg. */
     val weightStep: Double = 2.5,
@@ -72,7 +75,7 @@ data class GymSet(
     /** Place in the day (all exercises), 0 first. */
     val order: Int,
     val side: Side? = null,
-    /** kg; for an assist exercise, the weight taken off (stored positive). */
+    /** kg; negative = assisted (weight taken off, e.g. −20 on a deloaded pull-up). */
     val weightKg: Double? = null,
     val reps: Int? = null,
     val timeSec: Int? = null,
@@ -119,4 +122,15 @@ data class GymGroup(
     init {
         require(name.isNotBlank()) { "a group needs a name" }
     }
+}
+
+/**
+ * Converts the old "assist" flag: the exercise's positive weights become negative and the flag goes off.
+ * Exercises without the flag, and sets already negative, are left as they are, so running it twice changes nothing.
+ */
+fun withNegativeAssist(exercises: List<Exercise>, sets: List<GymSet>): Pair<List<Exercise>, List<GymSet>> {
+    val assisted = exercises.filter { it.assist }.map { it.id }.toSet()
+    if (assisted.isEmpty()) return exercises to sets
+    return exercises.map { if (it.assist) it.copy(assist = false) else it } to
+        sets.map { s -> if (s.exerciseId in assisted && (s.weightKg ?: 0.0) > 0) s.copy(weightKg = -s.weightKg!!) else s }
 }

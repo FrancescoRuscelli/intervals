@@ -163,6 +163,11 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
 - **Add exercise list** (reorganised 2026-11-19, chosen option "sections + L/R filter"): search + "+ New" (a side filter was tried and removed);
   Start a group on top; then folding sections, each exercise once: Done today (open), Recent = 14 days (open), one per group,
   Everything else A–Z (closed). Each row: name, L·R badge, "✓ N sets" if done that day or the last day. Logic: `pickSections` in core.
+- **Assisted = negative weight** (2026-11-19): no "assisted" switch; − goes below 0 (−20 kg = 20 kg taken off). "Heaviest",
+  records and PRs work the same for every exercise (−20 beats −25). Old data with the assist flag is converted once at start
+  (`convertAssisted`; backups too, `withNegativeAssist`); FitNotes "Deloaded / Assisted" exercises import negative.
+- **Edit exercise** (2026-11-19): no notes field (old notes kept); step for − / + and rest target are one line each with the value,
+  tap = a dialog (step: presets 0.5 / 1 / 1.25 / 2.5 / 5 or any number; rest: the presets + wheels time dialog).
 - **Sets during a workout** (2026-11-19, mockup G17f chosen over G17a–e): the log screen's sets are **blocks by load**
   ("45 kg · 40 mm" with boxes 5 · 5 · 4 = reps, or the time for time-only exercises). Per-side exercises: **two columns L | R**,
   the side selected at the top highlighted (purple border, "next"), the other dimmed; Both = both highlighted. Two-sided

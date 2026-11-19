@@ -188,7 +188,7 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     tiles.forEach { f ->
                         val (label, text, unit) = when (f) {
-                            GymField.WEIGHT -> Triple(if (ex.assist) "Assist" else "Weight", (if (ex.assist && v.weightKg != 0.0) "−" else "") + formatKg(v.weightKg), "kg")
+                            GymField.WEIGHT -> Triple("Weight", formatKg(v.weightKg), "kg")
                             GymField.REPS -> Triple("Reps", "${v.reps}", "")
                             GymField.TIME -> Triple("Time", formatTime(v.timeSec), "")
                             else -> Triple("Distance", formatKg(v.distance), "")
@@ -241,8 +241,8 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
             GymField.WEIGHT -> formatKg(v.weightKg); GymField.REPS -> "${v.reps}"; GymField.TIME -> "${v.timeSec}"; else -> formatKg(v.distance)
         }
         NumberDialog(
-            when (f) { GymField.WEIGHT -> "Weight (kg)"; GymField.REPS -> "Reps"; GymField.TIME -> "Time (seconds)"; else -> "Distance" },
-            current, decimal = f == GymField.WEIGHT || f == GymField.DISTANCE, onDismiss = { typing = null },
+            when (f) { GymField.WEIGHT -> "Weight (kg, negative = assisted)"; GymField.REPS -> "Reps"; GymField.TIME -> "Time (seconds)"; else -> "Distance" },
+            current, decimal = f == GymField.WEIGHT || f == GymField.DISTANCE, onDismiss = { typing = null }, negative = f == GymField.WEIGHT,
         ) { n ->
             change {
                 when (f) {
@@ -269,7 +269,8 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
 
 /** − / + by the exercise's step (weight), 1 (reps), 5 s (time); never below 0. */
 private fun Values.step(f: GymField, ex: Exercise, dir: Int): Values = when (f) {
-    GymField.WEIGHT -> copy(weightKg = (weightKg + dir * ex.weightStep).coerceAtLeast(0.0))
+    // the weight can go below 0: assisted (weight taken off)
+    GymField.WEIGHT -> copy(weightKg = weightKg + dir * ex.weightStep)
     GymField.REPS -> copy(reps = (reps + dir).coerceAtLeast(0))
     GymField.TIME -> copy(timeSec = (timeSec + dir * 5).coerceAtLeast(0))
     GymField.DISTANCE -> copy(distance = (distance + dir).coerceAtLeast(0.0))
@@ -437,15 +438,16 @@ private fun SetDialog(s: GymSet, ex: Exercise, onDismiss: () -> Unit, onSave: (G
 
 /** Asks a number; [decimal] allows 22.5. */
 @Composable
-private fun NumberDialog(title: String, initial: String, decimal: Boolean, onDismiss: () -> Unit, onDone: (Double) -> Unit) {
+private fun NumberDialog(title: String, initial: String, decimal: Boolean, onDismiss: () -> Unit, negative: Boolean = false, onDone: (Double) -> Unit) {
     var text by remember { mutableStateOf(initial) }
-    val n = text.replace(',', '.').toDoubleOrNull()?.takeIf { it >= 0 }
+    // a weight can be negative (assisted); "-" or the real minus sign both work
+    val n = text.replace(',', '.').replace('\u2212', '-').toDoubleOrNull()?.takeIf { it >= 0 || negative }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
             OutlinedTextField(text, { text = it }, singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = if (decimal) KeyboardType.Decimal else KeyboardType.Number))
+                keyboardOptions = KeyboardOptions(keyboardType = if (negative) KeyboardType.Text else if (decimal) KeyboardType.Decimal else KeyboardType.Number))
         },
         confirmButton = { TextButton(enabled = n != null, onClick = { n?.let(onDone) }) { Text("OK") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },

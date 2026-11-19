@@ -31,6 +31,7 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,9 +57,8 @@ import app.intervals.ui.LocalPalette
 import app.intervals.ui.editor.SectionTitle
 
 private val STEPS = listOf(0.5, 1.0, 1.25, 2.5, 5.0)
-private val RESTS = listOf(60, 90, 120, 150, 180, 240, 300)
 
-/** Edit exercise (mockup G16): name, notes, fields, steps, rest, per side, assist; merge another into it; delete. */
+/** Edit exercise (mockup G16): name, fields, step, rest, per side, specifications; merge another into it; delete. Assisted = negative weight. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun EditExerciseScreen(vm: AppViewModel, exerciseId: Long) {
@@ -70,6 +70,8 @@ fun EditExerciseScreen(vm: AppViewModel, exerciseId: Long) {
     var merging by remember { mutableStateOf(false) }
     var mergeFrom by remember { mutableStateOf<Exercise?>(null) }
     var deleting by remember { mutableStateOf(false) }
+    var askStep by remember { mutableStateOf(false) }
+    var askRest by remember { mutableStateOf(false) }
     // the spec being added (null name = new) or changed
     var specEdit by remember { mutableStateOf<Pair<Int?, app.intervals.core.Spec?>?>(null) }
     val (nSets, first) = counts[exerciseId] ?: (0 to null)
@@ -98,32 +100,18 @@ fun EditExerciseScreen(vm: AppViewModel, exerciseId: Long) {
                 )
                 Box(Modifier.fillMaxWidth().height(2.dp).background(p.accent))
             }
-            Column {
-                Text("Notes (how you do it)", color = p.muted, fontSize = 12.sp)
-                Box(Modifier.padding(top = 6.dp).fillMaxWidth().heightIn(min = 52.dp).clip(RoundedCornerShape(14.dp)).background(p.surface).padding(12.dp)) {
-                    if (e.notes.isEmpty()) Text("e.g. 20 mm edge, open hand", color = p.muted, fontSize = 15.sp)
-                    BasicTextField(e.notes, { e = e.copy(notes = it) }, textStyle = TextStyle(color = p.text, fontSize = 15.sp),
-                        cursorBrush = SolidColor(p.accent), modifier = Modifier.fillMaxWidth())
-                }
-            }
-
             SectionTitle("What you write down")
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 GymField.entries.forEach { f ->
                     val on = f in e.fields
                     Pill(f.name.lowercase().replaceFirstChar { it.uppercase() }, on) {
                         val fields = if (on) e.fields - f else (e.fields + f).sortedBy { it.ordinal }
-                        if (fields.isNotEmpty()) e = e.copy(fields = fields, assist = e.assist && GymField.WEIGHT in fields)
+                        if (fields.isNotEmpty()) e = e.copy(fields = fields)
                     }
                 }
             }
             if (GymField.WEIGHT in e.fields) {
-                Column {
-                    Text("Step for − / + on the weight", color = p.text, fontSize = 15.sp)
-                    Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        STEPS.forEach { st -> Pill(formatKg(st) + " kg", e.weightStep == st, Modifier.weight(1f)) { e = e.copy(weightStep = st) } }
-                    }
-                }
+                SlotLine("Step for − / + on the weight", null, formatKg(e.weightStep) + " kg") { askStep = true }
             }
             Column {
                 Text("Your specifications", color = p.text, fontSize = 15.sp)
@@ -144,16 +132,9 @@ fun EditExerciseScreen(vm: AppViewModel, exerciseId: Long) {
                 }
                 Pill("+ Add specification", false, Modifier.padding(top = 8.dp)) { specEdit = null to null }
             }
-            Column {
-                Text("Rest: buzz me after", color = p.text, fontSize = 15.sp)
-                Text("the clock counts up and keeps going", color = p.muted, fontSize = 12.sp)
-                FlowRow(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    RESTS.forEach { r -> Pill(formatTime(r), e.restSec == r) { e = e.copy(restSec = r) } }
-                }
-            }
+            SlotLine("Rest: buzz me after", "the clock counts up and keeps going", formatTime(e.restSec)) { askRest = true }
             Column(Modifier.clip(RoundedCornerShape(16.dp)).background(p.surface).padding(horizontal = 14.dp)) {
                 SwitchLine("Left and right apart", "each set is L or R; turning it off keeps old sets with their side", e.perSide) { e = e.copy(perSide = it) }
-                if (GymField.WEIGHT in e.fields) SwitchLine("Assisted (weight taken off)", "shown as −20 kg; less is better", e.assist) { e = e.copy(assist = it) }
             }
 
             Text(
@@ -203,6 +184,10 @@ fun EditExerciseScreen(vm: AppViewModel, exerciseId: Long) {
             e = e.copy(specs = if (index == null) e.specs + sp else e.specs.toMutableList().also { it[index] = sp })
             specEdit = null
         }
+    }
+    if (askStep) StepDialog(e.weightStep, onDismiss = { askStep = false }) { e = e.copy(weightStep = it); askStep = false }
+    if (askRest) app.intervals.ui.editor.DurationDialog("Rest: buzz me after", e.restSec, 0, { askRest = false }) {
+        e = e.copy(restSec = it); askRest = false
     }
     if (deleting) {
         AlertDialog(
@@ -300,6 +285,55 @@ private fun SpecDialog(current: app.intervals.core.Spec?, taken: Set<String>, on
                 )
             }) { Text(if (current == null) "Add" else "OK") }
         },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
+}
+
+/** A setting as one line: label (and a hint), the value on the right, tap to change it. */
+@Composable
+private fun SlotLine(label: String, sub: String?, value: String, onClick: () -> Unit) {
+    val p = LocalPalette.current
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(p.surface).clickable(onClickLabel = "Change $label", onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(label, color = p.text, fontSize = 15.sp)
+            if (sub != null) Text(sub, color = p.muted, fontSize = 12.sp)
+        }
+        Text(value, color = p.accentText, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+        Text("  \u203A", color = p.muted, fontSize = 20.sp)
+    }
+}
+
+/** The weight step: common ones in one tap, or any number typed (0.25, 1.25, 200…). */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun StepDialog(current: Double, onDismiss: () -> Unit, onDone: (Double) -> Unit) {
+    val p = LocalPalette.current
+    var text by remember { mutableStateOf(formatKg(current)) }
+    val n = text.replace(',', '.').toDoubleOrNull()?.takeIf { it > 0 }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Step for − / +") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    STEPS.forEach { st ->
+                        val on = n == st
+                        Box(
+                            Modifier.height(40.dp).widthIn(min = 64.dp).clip(RoundedCornerShape(12.dp)).background(if (on) p.accent else p.surface)
+                                .clickable { text = formatKg(st) }.padding(horizontal = 12.dp),
+                            contentAlignment = Alignment.Center,
+                        ) { Text(formatKg(st) + " kg", color = if (on) p.onAccent else p.soft, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1) }
+                    }
+                }
+                OutlinedTextField(text, { text = it }, label = { Text("Or any step, kg") }, singleLine = true,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal))
+            }
+        },
+        confirmButton = { TextButton(enabled = n != null, onClick = { n?.let(onDone) }) { Text("OK") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     )
 }

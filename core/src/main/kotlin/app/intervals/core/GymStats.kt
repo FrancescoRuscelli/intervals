@@ -3,7 +3,6 @@ package app.intervals.core
 /** A graph that can be drawn for an exercise (only those that fit its fields are offered). */
 enum class GymMetric(val title: String) {
     MAX_WEIGHT("Max weight"),
-    LEAST_ASSIST("Least assist"),
     VOLUME("Volume"),
     TOTAL_REPS("Total reps"),
     MAX_REPS("Max reps"),
@@ -15,8 +14,8 @@ enum class GymMetric(val title: String) {
 fun metricsFor(ex: Exercise): List<GymMetric> = buildList {
     val w = GymField.WEIGHT in ex.fields
     val r = GymField.REPS in ex.fields
-    if (w) add(if (ex.assist) GymMetric.LEAST_ASSIST else GymMetric.MAX_WEIGHT)
-    if (w && r && !ex.assist) add(GymMetric.VOLUME)
+    if (w) add(GymMetric.MAX_WEIGHT)
+    if (w && r) add(GymMetric.VOLUME)
     if (r) { add(GymMetric.MAX_REPS); add(GymMetric.TOTAL_REPS) }
     if (GymField.TIME in ex.fields) add(GymMetric.MAX_TIME)
     add(GymMetric.REST)
@@ -27,7 +26,6 @@ fun metricOf(metric: GymMetric, sets: List<GymSet>): Double? {
     if (sets.isEmpty()) return null
     return when (metric) {
         GymMetric.MAX_WEIGHT -> sets.mapNotNull { it.weightKg }.maxOrNull()
-        GymMetric.LEAST_ASSIST -> sets.mapNotNull { it.weightKg }.minOrNull()
         GymMetric.VOLUME -> sets.sumOf { (it.weightKg ?: 0.0) * (it.reps ?: 0) }.takeIf { it > 0 }
         GymMetric.TOTAL_REPS -> sets.sumOf { it.reps ?: 0 }.toDouble().takeIf { it > 0 }
         GymMetric.MAX_REPS -> sets.mapNotNull { it.reps }.maxOrNull()?.toDouble()
@@ -36,8 +34,8 @@ fun metricOf(metric: GymMetric, sets: List<GymSet>): Double? {
     }
 }
 
-/** For records: lower is better only for assist. */
-val GymMetric.lowerIsBetter: Boolean get() = this == GymMetric.LEAST_ASSIST || this == GymMetric.REST
+/** For records: lower is better only for rest (a negative assisted weight is just a smaller number, higher is better). */
+val GymMetric.lowerIsBetter: Boolean get() = this == GymMetric.REST
 
 data class MetricPoint(val day: String, val value: Double, val record: Boolean)
 
@@ -84,18 +82,18 @@ fun trend(values: List<Double>): Pair<Double, Double>? {
     return a to a + k * (n - 1)
 }
 
-/** Heaviest (or least assist) weight for each number of reps; [beaten] when more reps were done with as much. */
+/** Heaviest weight (for assisted, the least negative) for each number of reps; [beaten] when more reps were done with as much. */
 data class RepMax(val reps: Int, val weightKg: Double, val day: String, val beaten: Boolean)
 
-fun repMaxes(sets: List<GymSet>, assist: Boolean): List<RepMax> {
+fun repMaxes(sets: List<GymSet>): List<RepMax> {
     val best = sets.filter { it.reps != null && it.reps > 0 && it.weightKg != null }
         .groupBy { it.reps!! }
-        .mapValues { (_, s) -> if (assist) s.minWith(compareBy({ it.weightKg!! }, { it.day })) else s.maxWith(compareBy({ it.weightKg!! }, { -java.time.LocalDate.parse(it.day).toEpochDay() })) }
+        .mapValues { (_, s) -> s.maxWith(compareBy({ it.weightKg!! }, { -java.time.LocalDate.parse(it.day).toEpochDay() })) }
         .toSortedMap()
     val list = best.map { (r, s) -> r to s }
     return list.map { (r, s) ->
         val w = s.weightKg!!
-        val beaten = list.any { (r2, s2) -> r2 > r && if (assist) s2.weightKg!! <= w else s2.weightKg!! >= w }
+        val beaten = list.any { (r2, s2) -> r2 > r && s2.weightKg!! >= w }
         RepMax(r, w, s.day, beaten)
     }
 }

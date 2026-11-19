@@ -179,7 +179,6 @@ private fun NewExerciseDialog(initial: String, taken: Set<String>, onDismiss: ()
     var name by remember { mutableStateOf(initial) }
     var fields by remember { mutableStateOf(setOf(GymField.WEIGHT, GymField.REPS)) }
     var perSide by remember { mutableStateOf(false) }
-    var assist by remember { mutableStateOf(false) }
     val clash = name.trim().lowercase() in taken
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -199,7 +198,7 @@ private fun NewExerciseDialog(initial: String, taken: Set<String>, onDismiss: ()
                     }
                 }
                 Toggle("Left and right apart", "Each set is L or R (or both at once)", perSide) { perSide = it }
-                if (GymField.WEIGHT in fields) Toggle("Assist (−)", "The weight is taken off, e.g. a deloaded pull-up", assist) { assist = it }
+                if (GymField.WEIGHT in fields) Text("Assisted? Log a negative weight, e.g. −20 kg.", color = p.muted, fontSize = 12.sp)
             }
         },
         confirmButton = {
@@ -209,7 +208,6 @@ private fun NewExerciseDialog(initial: String, taken: Set<String>, onDismiss: ()
                         name = name.trim(),
                         fields = GymField.entries.filter { it in fields },
                         perSide = perSide,
-                        assist = assist && GymField.WEIGHT in fields,
                     )
                 )
             }) { Text("Create") }

@@ -183,6 +183,9 @@ interface GymDao {
     @Update
     suspend fun updateExercise(exercise: ExerciseEntity)
 
+    @Query("UPDATE gym_sets SET weightKg = -weightKg WHERE exerciseId = :exerciseId AND weightKg > 0")
+    suspend fun negateWeights(exerciseId: Long)
+
     @Query("SELECT * FROM gym_groups ORDER BY position, id")
     fun observeGroups(): Flow<List<GymGroupEntity>>
 

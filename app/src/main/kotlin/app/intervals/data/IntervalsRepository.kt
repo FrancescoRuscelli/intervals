@@ -170,6 +170,13 @@ class IntervalsRepository(
 
     suspend fun updateExercise(exercise: Exercise) = gymDao.updateExercise(exercise.toEntity())
 
+    /** Old "assisted" exercises: their weights become negative and the flag goes off; nothing to do the second time. */
+    suspend fun convertAssisted(): Int = db.withTransaction {
+        val old = gymDao.getExercises().map { it.toExercise() }.filter { it.assist }
+        old.forEach { gymDao.negateWeights(it.id); gymDao.updateExercise(it.copy(assist = false).toEntity()) }
+        old.size
+    }
+
     // ---- gym groups ----
 
     val groups: Flow<List<GymGroup>> = gymDao.observeGroups().map { list -> list.map { it.toGroup() } }

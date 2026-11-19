@@ -249,6 +249,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         // the activity came back while a workout runs (or waits to be saved): show it again
         if (ia.player != null && Overlay.Player !in overlays) overlays += Overlay.Player
         else if (ia.finished != null && Overlay.Finished !in overlays) overlays += Overlay.Finished
+        viewModelScope.launch { repo.convertAssisted() }
     }
 
     fun player(id: Long) {

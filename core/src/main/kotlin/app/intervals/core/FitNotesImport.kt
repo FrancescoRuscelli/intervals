@@ -134,12 +134,18 @@ object FitNotesImport {
                 name = name,
                 fields = fields,
                 perSide = bySide || fromThis.any { it.side != null },
-                // shortcut: assist guessed from the name, FitNotes has no such flag; editable later
-                assist = Regex("deloaded|assisted", RegexOption.IGNORE_CASE).containsMatchIn(name),
                 weightStep = parts.firstNotNullOfOrNull { it.ex.weightIncrement?.takeIf { s -> s > 0 } } ?: defaultStep,
                 restSec = parts.firstNotNullOfOrNull { it.ex.restSec?.takeIf { s -> s > 0 } } ?: defaultRest,
                 notes = parts.mapNotNull { it.ex.notes?.trim()?.takeIf(String::isNotEmpty) }.distinct().joinToString("\n"),
             )
+        }
+
+        // shortcut: assisted exercises guessed from the name ("Deloaded", "Assisted"), FitNotes has no such flag:
+        // their weight was taken off, so it becomes negative
+        val assisted = exercises.filter { Regex("deloaded|assisted", RegexOption.IGNORE_CASE).containsMatchIn(it.name) }.map { it.id }.toSet()
+        for (i in sets.indices) {
+            val (fn, g) = sets[i]
+            if (g.exerciseId in assisted && (g.weightKg ?: 0.0) > 0) sets[i] = fn to g.copy(weightKg = -g.weightKg!!)
         }
 
         // order inside each day = the order they were logged in FitNotes

@@ -158,7 +158,7 @@ private fun columns(ex: Exercise): List<GymField> =
     listOf(GymField.WEIGHT, GymField.BANDS, GymField.REPS, GymField.TIME, GymField.DISTANCE).filter { it in ex.fields }
 
 private fun header(f: GymField, ex: Exercise) = when (f) {
-    GymField.WEIGHT -> if (ex.assist) "assist kg" else "kg"
+    GymField.WEIGHT -> "kg"
     GymField.BANDS -> "bands"
     GymField.REPS -> "reps"
     GymField.TIME -> "time"
@@ -225,7 +225,7 @@ private fun SetRowView(row: SetRow, ex: Exercise, cols: List<GymField>) {
 }
 
 private fun cell(f: GymField, s: GymSet, ex: Exercise): String = when (f) {
-    GymField.WEIGHT -> s.weightKg?.let { (if (ex.assist && it != 0.0) "−" else "") + formatKg(it) } ?: "–"
+    GymField.WEIGHT -> s.weightKg?.let(::formatKg) ?: "–"
     GymField.REPS -> s.reps?.toString() ?: "–"
     GymField.TIME -> s.timeSec?.let(::formatTime) ?: "–"
     GymField.DISTANCE -> s.distance?.let(::formatKg) ?: "–"

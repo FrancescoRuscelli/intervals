@@ -124,7 +124,9 @@ private enum class Range(val label: String, val months: Long?) { M3("3 M", 3), M
 @Composable
 fun ExerciseGraph(ex: Exercise, all: List<GymSet>) {
     val p = LocalPalette.current
-    val metrics = metricsFor(ex).filter { m -> m != GymMetric.REST || all.any { it.restSec != null } }
+    val metrics = metricsFor(ex).filter { m ->
+        (m != GymMetric.REST || all.any { it.restSec != null }) && (m != GymMetric.VOLUME || all.any { (it.weightKg ?: 0.0) > 0 })
+    }
     var metricName by rememberSaveable(ex.id) { mutableStateOf(metrics.first().name) }
     val metric = GymMetric.valueOf(metricName).takeIf { it in metrics } ?: metrics.first()
     var rangeName by rememberSaveable { mutableStateOf(Range.M6.name) }
@@ -137,7 +139,6 @@ fun ExerciseGraph(ex: Exercise, all: List<GymSet>) {
     val fmt: (Double) -> String = when (metric) {
         GymMetric.MAX_TIME, GymMetric.REST -> { v -> formatTime(v.toInt()) }
         GymMetric.TOTAL_REPS, GymMetric.MAX_REPS -> { v -> v.toInt().toString() }
-        GymMetric.LEAST_ASSIST -> { v -> "−" + formatKg(round1(v)) + " kg" }
         else -> { v -> formatKg(round1(v)) + " kg" }
     }
     var tapped by rememberSaveable(metricName, rangeName) { mutableStateOf<String?>(null) }
@@ -181,7 +182,7 @@ fun ExerciseGraph(ex: Exercise, all: List<GymSet>) {
     }
 }
 
-private fun GymMetric.lowerIsBetterUi() = this == GymMetric.LEAST_ASSIST
+private fun GymMetric.lowerIsBetterUi() = false
 private fun round1(v: Double) = Math.round(v * 10) / 10.0
 
 @Composable
@@ -274,8 +275,8 @@ fun ExerciseRecords(ex: Exercise, all: List<GymSet>) {
             if (sets.isEmpty()) return@forEach
             val title = when (side) { Side.LEFT -> " · left"; Side.RIGHT -> " · right"; null -> "" }
             if (hasW && hasR) item {
-                Card("Real records$title", if (ex.assist) "least assist for each number of reps" else "heaviest for each number of reps") {
-                    val rms = repMaxes(sets, ex.assist)
+                Card("Real records$title", "heaviest for each number of reps") {
+                    val rms = repMaxes(sets)
                     rms.chunked(4).forEach { row ->
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 6.dp)) {
                             row.forEach { rm ->
@@ -286,14 +287,14 @@ fun ExerciseRecords(ex: Exercise, all: List<GymSet>) {
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                 ) {
                                     Text("${rm.reps} rep${if (rm.reps == 1) "" else "s"}", color = if (rm.beaten) p.muted else p.recordText, fontSize = 11.sp)
-                                    Text((if (ex.assist) "−" else "") + formatKg(rm.weightKg), color = if (rm.beaten) p.muted else p.recordText,
+                                    Text(formatKg(rm.weightKg), color = if (rm.beaten) p.muted else p.recordText,
                                         style = NumberStyle, fontSize = 17.sp)
                                 }
                             }
                             repeat(4 - row.size) { Spacer(Modifier.weight(1f)) }
                         }
                     }
-                    Text("Faded = beaten by more reps with as much (or less assist). Tap the Graph tab for the history.",
+                    Text("Faded = beaten by more reps with as much. Tap the Graph tab for the history.",
                         color = p.muted, fontSize = 11.sp, modifier = Modifier.padding(top = 8.dp))
                 }
             }
@@ -304,8 +305,7 @@ fun ExerciseRecords(ex: Exercise, all: List<GymSet>) {
                     bestTime?.let { RecordLine("Longest", formatTime(it.timeSec!!), shortDay(it.day)) }
                     bestReps?.let { RecordLine("Most reps", "${it.reps}" + (it.bands.takeIf { b -> b.isNotEmpty() }?.let { _ -> " · " + it.summary(ex) } ?: ""), shortDay(it.day)) }
                     if (hasW) sets.filter { it.weightKg != null }.let { ws ->
-                        val b = if (ex.assist) ws.minByOrNull { it.weightKg!! } else ws.maxByOrNull { it.weightKg!! }
-                        b?.let { RecordLine(if (ex.assist) "Least assist" else "Heaviest", it.summary(ex), shortDay(it.day)) }
+                        ws.maxByOrNull { it.weightKg!! }?.let { RecordLine("Heaviest", it.summary(ex), shortDay(it.day)) }
                     }
                 }
             }

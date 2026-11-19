@@ -115,7 +115,6 @@ fun GymStatsSection(vm: AppViewModel, start: LocalDate, today: LocalDate) {
                     when (r.metric) {
                         GymMetric.MAX_TIME -> formatTime(r.value.toInt())
                         GymMetric.MAX_REPS, GymMetric.TOTAL_REPS -> "${r.value.toInt()}"
-                        GymMetric.LEAST_ASSIST -> "−" + formatKg(Math.round(r.value * 10) / 10.0) + " kg"
                         else -> formatKg(Math.round(r.value * 10) / 10.0) + " kg"
                     },
                     color = p.text, style = NumberStyle, fontSize = 16.sp,

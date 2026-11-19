@@ -19,8 +19,8 @@ class GymStatsTest {
     @Test
     fun metricsFitTheExercise() {
         assertEquals(listOf(GymMetric.MAX_WEIGHT, GymMetric.VOLUME, GymMetric.MAX_REPS, GymMetric.TOTAL_REPS, GymMetric.REST), metricsFor(dl))
-        val assisted = Exercise(2, "Deloaded OAP", listOf(GymField.WEIGHT, GymField.REPS), perSide = true, assist = true)
-        assertEquals(listOf(GymMetric.LEAST_ASSIST, GymMetric.MAX_REPS, GymMetric.TOTAL_REPS, GymMetric.REST), metricsFor(assisted))
+        val hang = Exercise(2, "Hang", listOf(GymField.WEIGHT, GymField.TIME))
+        assertEquals(listOf(GymMetric.MAX_WEIGHT, GymMetric.MAX_TIME, GymMetric.REST), metricsFor(hang))
         val hold = Exercise(3, "Handstand", listOf(GymField.TIME))
         assertEquals(listOf(GymMetric.MAX_TIME, GymMetric.REST), metricsFor(hold))
     }
@@ -38,8 +38,9 @@ class GymStatsTest {
 
     @Test
     fun assistRecordsGoDown() {
-        val a = listOf(s("2026-01-01", 25.0, 3), s("2026-01-05", 20.0, 3), s("2026-01-09", 22.5, 3))
-        val pts = metricSeries(GymMetric.LEAST_ASSIST, a)
+        // assisted = negative weights: −20 beats −25 as the heaviest
+        val a = listOf(s("2026-01-01", -25.0, 3), s("2026-01-05", -20.0, 3), s("2026-01-09", -22.5, 3))
+        val pts = metricSeries(GymMetric.MAX_WEIGHT, a)
         assertEquals(listOf(false, true, false), pts.map { it.record })
     }
 
@@ -67,7 +68,7 @@ class GymStatsTest {
 
     @Test
     fun repMaxes() {
-        val rm = repMaxes(sets, assist = false)
+        val rm = repMaxes(sets)
         assertEquals(listOf(1, 5), rm.map { it.reps })
         assertTrue(rm.first { it.reps == 1 }.beaten) // 120 × 5 beats 120 × 1
         assertFalse(rm.first { it.reps == 5 }.beaten)

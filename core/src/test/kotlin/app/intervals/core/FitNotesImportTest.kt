@@ -82,7 +82,8 @@ class FitNotesImportTest {
         assertEquals(1.0, blocks.weightStep)
         assertEquals(180, blocks.restSec)
         assertEquals("Pull a weight from above, 20mm\nPulls weight from above, 20mm", blocks.notes)
-        assertTrue(ex.getValue("Deloaded One Arm Pull-Up").assist)
+        // assisted: the weight taken off becomes negative
+        assertEquals(listOf(-20.0), r.sets.filter { it.exerciseId == ex.getValue("Deloaded One Arm Pull-Up").id }.map { it.weightKg })
         assertFalse(ex.getValue("Barbell Squat").perSide)
         assertEquals(listOf(GymField.TIME), ex.getValue("Handstand").fields)
         assertEquals(listOf(GymField.REPS), ex.getValue("Parallettes Pike Push Up").fields)
