@@ -60,6 +60,7 @@ import app.intervals.core.historyDays
 import app.intervals.core.metricSeries
 import app.intervals.core.metricsFor
 import app.intervals.core.repMaxes
+import app.intervals.core.specsText
 import app.intervals.core.summary
 import app.intervals.core.topSet
 import app.intervals.core.trend
@@ -304,7 +305,7 @@ fun ExerciseRecords(ex: Exercise, all: List<GymSet>) {
                 val bestReps = sets.maxByOrNull { it.reps ?: -1 }?.takeIf { it.reps != null }
                 Card("Records$title", null) {
                     bestTime?.let { RecordLine("Longest", formatTime(it.timeSec!!), shortDay(it.day)) }
-                    bestReps?.let { RecordLine("Most reps", "${it.reps}" + (it.bands.takeIf { b -> b.isNotEmpty() }?.let { _ -> " · " + it.summary(ex) } ?: ""), shortDay(it.day)) }
+                    bestReps?.let { RecordLine("Most reps", "${it.reps}" + (it.specsText(ex).takeIf(String::isNotEmpty)?.let { t -> " · $t" } ?: ""), shortDay(it.day)) }
                     if (hasW) sets.filter { it.weightKg != null }.let { ws ->
                         ws.maxByOrNull { it.weightKg!! }?.let { RecordLine("Heaviest", it.summary(ex), shortDay(it.day)) }
                     }

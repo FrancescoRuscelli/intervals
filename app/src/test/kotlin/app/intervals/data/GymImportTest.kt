@@ -69,7 +69,7 @@ class GymImportTest {
         assertEquals(listOf(Side.RIGHT, Side.LEFT), day.map { it.side })
         assertEquals(20.5, day[0].weightKg)
         val pistol = repo.gymDay("2026-11-16").first().single()
-        assertEquals(listOf(Band.GREEN, Band.PURPLE, Band.PURPLE, Band.RED), pistol.bands)
+        assertEquals("green+purple+purple+red", pistol.specs["Bands"])
         assertEquals(pistol, repo.lastSets(pistol.exerciseId, "2026-11-17").single())
 
         // backup and restore carry the gym
@@ -84,6 +84,27 @@ class GymImportTest {
         assertEquals(r.exercises, repo.exercises.first().sortedBy { it.id })
         assertEquals("Good form", repo.gymDayNote("2026-11-17").first())
         assertEquals("", repo.gymDayNote("2026-11-18").first())
+    }
+
+    @Test
+    fun oldDataIsUpgradedOnce() = runTest {
+        // what the phone had before: an assisted exercise (positive weights) and one with built-in bands
+        val oap = repo.addExercise(app.intervals.core.Exercise(name = "Deloaded OAP", fields = listOf(app.intervals.core.GymField.WEIGHT, app.intervals.core.GymField.REPS), assist = true))
+        val pistol = repo.addExercise(app.intervals.core.Exercise(name = "Pistol", fields = listOf(app.intervals.core.GymField.REPS, app.intervals.core.GymField.BANDS)))
+        repo.addSets(listOf(
+            app.intervals.core.GymSet(exerciseId = oap, day = "2026-11-17", order = 0, weightKg = 20.0, reps = 3),
+            app.intervals.core.GymSet(exerciseId = pistol, day = "2026-11-17", order = 0, reps = 5, bands = listOf(Band.RED, Band.GREEN)),
+        ))
+        assertEquals(4, repo.upgradeGym())
+        assertEquals(-20.0, repo.exerciseDay(oap, "2026-11-17").first().single().weightKg)
+        val p = repo.exerciseDay(pistol, "2026-11-17").first().single()
+        assertEquals("green+red", p.specs["Bands"])
+        assertEquals(emptyList(), p.bands)
+        val ex = repo.exercises.first().associateBy { it.id }
+        assertEquals(listOf(app.intervals.core.GymField.REPS), ex.getValue(pistol).fields)
+        assertEquals(false, ex.getValue(oap).assist)
+        // the second time there is nothing to do
+        assertEquals(0, repo.upgradeGym())
     }
 
     @Test

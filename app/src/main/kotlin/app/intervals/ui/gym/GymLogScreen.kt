@@ -65,7 +65,6 @@ import app.intervals.core.letter
 import app.intervals.core.sides
 import app.intervals.core.startValues
 import app.intervals.core.summary
-import app.intervals.core.tap
 import app.intervals.core.toggleTag
 import app.intervals.ui.AppIcons
 import app.intervals.ui.AppViewModel
@@ -82,19 +81,17 @@ private data class Values(
     val reps: Int = 0,
     val timeSec: Int = 0,
     val distance: Double = 0.0,
-    val bands: List<Band> = emptyList(),
     /** Your specifications (spec name → value); a spec with no value yet is missing. */
     val specs: Map<String, String> = emptyMap(),
 )
 
-private fun GymSet.toValues() = Values(weightKg ?: 0.0, reps ?: 0, timeSec ?: 0, distance ?: 0.0, bands, specs)
+private fun GymSet.toValues() = Values(weightKg ?: 0.0, reps ?: 0, timeSec ?: 0, distance ?: 0.0, specs)
 
 private fun Values.into(s: GymSet, ex: Exercise) = s.copy(
     weightKg = weightKg.takeIf { GymField.WEIGHT in ex.fields },
     reps = reps.takeIf { GymField.REPS in ex.fields },
     timeSec = timeSec.takeIf { GymField.TIME in ex.fields },
     distance = distance.takeIf { GymField.DISTANCE in ex.fields },
-    bands = if (GymField.BANDS in ex.fields) bands else emptyList(),
     specs = specs.filterKeys { k -> ex.specs.any { it.name == k } },
 )
 
@@ -184,7 +181,6 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
                     change { it.copy(specs = if (value == null) it.specs - name else it.specs + (name to value)) }
                 }
             }
-            if (GymField.BANDS in ex.fields) item { BandsTile(v.bands) { b -> change { it.copy(bands = it.bands.tap(b)) } } }
             item {
                 val tiles = listOf(GymField.WEIGHT, GymField.REPS, GymField.TIME, GymField.DISTANCE).filter { it in ex.fields }
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -305,27 +301,6 @@ private fun StepTile(label: String, value: String, unit: String, modifier: Modif
                     Modifier.weight(1f).height(48.dp).clip(RoundedCornerShape(12.dp)).background(p.tint).clickable(onClickLabel = desc, onClick = action),
                     contentAlignment = Alignment.Center,
                 ) { Icon(icon, desc, tint = p.accentText, modifier = Modifier.size(22.dp)) }
-            }
-        }
-    }
-}
-
-@Composable
-private fun BandsTile(bands: List<Band>, onTap: (Band) -> Unit) {
-    val p = LocalPalette.current
-    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(p.surface).padding(12.dp)) {
-        Text("Bands · tap again for ×2", color = p.muted, fontSize = 13.sp)
-        Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-            Band.entries.forEach { b ->
-                val n = bands.count { it == b }
-                Box(
-                    Modifier.size(52.dp).clip(CircleShape).background(bandColor(b).copy(alpha = if (n > 0) 1f else 0.25f))
-                        .then(if (b == Band.BLACK) Modifier.border(1.5.dp, Color(0xFF5A5F68), CircleShape) else Modifier)
-                        .clickable(onClickLabel = "${b.name.lowercase()} band") { onTap(b) },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    if (n > 1) Text("×$n", color = if (b == Band.YELLOW) Color(0xFF1A1200) else Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                }
             }
         }
     }
@@ -502,13 +477,25 @@ private fun SpecTiles(
         }
         specs.filter { it.isChoice }.forEach { sp ->
             Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(p.surface).padding(12.dp)) {
-                Text(sp.name, color = p.muted, fontSize = 13.sp)
+                Text(sp.name + if (sp.multiple) " \u00B7 tap again for \u00D72" else "", color = p.muted, fontSize = 13.sp)
                 FlowRow(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     sp.choices.forEach { c ->
-                        val on = values[sp.name] == c
-                        Text(c, color = if (on) p.onAccent else p.soft, fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(if (on) p.accent else p.bg)
-                                .clickable { onChange(sp.name, if (on) null else c) }.padding(horizontal = 14.dp, vertical = 10.dp))
+                        // "several" (e.g. bands): tap = ×1, ×2, none; else one choice, tap again to clear
+                        val n = if (sp.multiple) sp.counts(values[sp.name]).firstOrNull { it.first == c }?.second ?: 0 else if (values[sp.name] == c) 1 else 0
+                        val on = n > 0
+                        val color = sp.colors[c]?.let { Color(it) }
+                        Row(
+                            Modifier.clip(RoundedCornerShape(12.dp)).background(if (on) p.accent else p.bg)
+                                .clickable { onChange(sp.name, if (sp.multiple) sp.tap(values[sp.name], c) else if (on) null else c) }
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            if (color != null) {
+                                Box(Modifier.size(16.dp).clip(CircleShape).background(color).border(1.dp, Color(0x55FFFFFF), CircleShape))
+                                Spacer(Modifier.width(6.dp))
+                            }
+                            Text(c + if (n > 1) " \u00D7$n" else "", color = if (on) p.onAccent else p.soft, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                        }
                     }
                 }
             }

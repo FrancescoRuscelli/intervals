@@ -170,11 +170,20 @@ class IntervalsRepository(
 
     suspend fun updateExercise(exercise: Exercise) = gymDao.updateExercise(exercise.toEntity())
 
-    /** Old "assisted" exercises: their weights become negative and the flag goes off; nothing to do the second time. */
-    suspend fun convertAssisted(): Int = db.withTransaction {
-        val old = gymDao.getExercises().map { it.toExercise() }.filter { it.assist }
-        old.forEach { gymDao.negateWeights(it.id); gymDao.updateExercise(it.copy(assist = false).toEntity()) }
-        old.size
+    /**
+     * Converts old gym data once (see `upgradeGym` in core): assisted exercises get negative weights, built-in bands become the
+     * "Bands" specification. Only what changed is written; nothing to do the second time. Returns the rows changed.
+     */
+    suspend fun upgradeGym(): Int = db.withTransaction {
+        val ex = gymDao.getExercises().map { it.toExercise() }
+        if (ex.none { it.assist || app.intervals.core.GymField.BANDS in it.fields }) return@withTransaction 0
+        val sets = gymDao.getSets().map { it.toSet() }
+        val (ex2, sets2) = app.intervals.core.upgradeGym(ex, sets)
+        val exChanged = ex2.zip(ex).filter { (a, b) -> a != b }.map { it.first }
+        val setsChanged = sets2.zip(sets).filter { (a, b) -> a != b }.map { it.first }
+        exChanged.forEach { gymDao.updateExercise(it.toEntity()) }
+        setsChanged.forEach { gymDao.updateSet(it.toEntity()) }
+        exChanged.size + setsChanged.size
     }
 
     // ---- gym groups ----

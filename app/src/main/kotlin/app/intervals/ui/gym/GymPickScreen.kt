@@ -189,7 +189,7 @@ private fun NewExerciseDialog(initial: String, taken: Set<String>, onDismiss: ()
                     supportingText = if (clash) ({ Text("You already have one with this name") }) else null)
                 Text("What do you write down?", color = p.muted, fontSize = 13.sp)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    GymField.entries.forEach { f ->
+                    GymField.entries.filter { it != GymField.BANDS }.forEach { f ->
                         val on = f in fields
                         Text(f.name.lowercase().replaceFirstChar { it.uppercase() }, color = if (on) p.accentText else p.soft, fontSize = 14.sp,
                             modifier = Modifier.background(if (on) p.tint else p.surface, RoundedCornerShape(16.dp))

@@ -156,7 +156,7 @@ private fun dayTitle(day: String): String {
 
 /** The columns of the table, in the order shown. */
 private fun columns(ex: Exercise): List<GymField> =
-    listOf(GymField.WEIGHT, GymField.BANDS, GymField.REPS, GymField.TIME, GymField.DISTANCE).filter { it in ex.fields }
+    listOf(GymField.WEIGHT, GymField.REPS, GymField.TIME, GymField.DISTANCE).filter { it in ex.fields }
 
 private fun header(f: GymField, ex: Exercise) = when (f) {
     GymField.WEIGHT -> "kg"
@@ -210,7 +210,6 @@ private fun SetRowView(row: SetRow, ex: Exercise, cols: List<GymField>) {
             cols.forEach { f ->
                 Box(Modifier.weight(1f)) {
                     when (f) {
-                        GymField.BANDS -> BandDots(s.bands)
                         else -> Text(cell(f, s, ex), color = p.text, fontSize = 17.sp, style = NumberStyle)
                     }
                 }
@@ -231,25 +230,4 @@ private fun cell(f: GymField, s: GymSet, ex: Exercise): String = when (f) {
     GymField.TIME -> s.timeSec?.let(::formatTime) ?: "–"
     GymField.DISTANCE -> s.distance?.let(::formatKg) ?: "–"
     GymField.BANDS -> ""
-}
-
-internal fun bandColor(b: Band) = when (b) {
-    Band.GREEN -> Color(0xFF43A047)
-    Band.PURPLE -> Color(0xFF8E44D8)
-    Band.BLACK -> Color(0xFF16181C)
-    Band.RED -> Color(0xFFE53935)
-    Band.YELLOW -> Color(0xFFFFC107)
-}
-
-/** Bands as colored dots, strongest first; black gets a grey edge so it shows on a dark card. */
-@Composable
-fun BandDots(bands: List<Band>) {
-    Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-        bands.sortedBy { it.ordinal }.forEach { b ->
-            Box(
-                Modifier.size(13.dp).clip(CircleShape).background(bandColor(b))
-                    .then(if (b == Band.BLACK) Modifier.border(1.5.dp, Color(0xFF5A5F68), CircleShape) else Modifier)
-            )
-        }
-    }
 }

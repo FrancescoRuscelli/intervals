@@ -34,10 +34,13 @@ class GymLogTest {
 
     @Test
     fun bandTapCyclesAndKeepsOrder() {
-        val g = Band.GREEN; val p = Band.PURPLE; val r = Band.RED
-        assertEquals(listOf(g, r), listOf(r).tap(g))
-        assertEquals(listOf(g, p, p, r), listOf(g, p, r).tap(p))
-        assertEquals(listOf(g, r), listOf(g, p, p, r).tap(p))
+        // a "several" choice: tap = ×1, ×2, none; kept in the choices' order
+        val b = BANDS_SPEC
+        assertEquals("green+red", b.tap("red", "green"))
+        assertEquals("green+purple+purple+red", b.tap("green+purple+red", "purple"))
+        assertEquals("green+red", b.tap("green+purple+purple+red", "purple"))
+        assertEquals(null, b.tap("green", "green")?.let { b.tap(it, "green") })
+        assertEquals("green+purple×2+red", b.text("green+purple+purple+red"))
     }
 
     @Test

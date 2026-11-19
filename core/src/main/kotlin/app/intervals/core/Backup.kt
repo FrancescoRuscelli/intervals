@@ -66,8 +66,8 @@ object BackupJson {
         val exIds = backup.exercises.map { it.id }.toSet()
         if (exIds.size != backup.exercises.size) throw BackupException("The backup file is damaged: two exercises have the same id.")
         if (backup.gymSets.any { it.exerciseId !in exIds }) throw BackupException("The backup file is damaged: a set has no exercise.")
-        // backups from before negative weights: assisted exercises get negative weights
-        val (exercises, gymSets) = withNegativeAssist(backup.exercises, backup.gymSets)
+        // backups from before: assisted exercises get negative weights, built-in bands become the "Bands" spec
+        val (exercises, gymSets) = upgradeGym(backup.exercises, backup.gymSets)
         if (exercises !== backup.exercises) return backup.copy(exercises = exercises, gymSets = gymSets)
         if (backup.groups.any { g -> g.items.any { it.exerciseId !in exIds } }) throw BackupException("The backup file is damaged: a group has an unknown exercise.")
         try {

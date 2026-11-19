@@ -32,6 +32,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -102,7 +105,8 @@ fun EditExerciseScreen(vm: AppViewModel, exerciseId: Long) {
             }
             SectionTitle("What you write down")
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                GymField.entries.forEach { f ->
+                // bands are a specification now ("+ Add specification")
+                GymField.entries.filter { it != GymField.BANDS }.forEach { f ->
                     val on = f in e.fields
                     Pill(f.name.lowercase().replaceFirstChar { it.uppercase() }, on) {
                         val fields = if (on) e.fields - f else (e.fields + f).sortedBy { it.ordinal }
@@ -124,7 +128,7 @@ fun EditExerciseScreen(vm: AppViewModel, exerciseId: Long) {
                     ) {
                         Column(Modifier.weight(1f)) {
                             Text(sp.name, color = p.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                            Text(if (sp.isChoice) sp.choices.joinToString(" · ") else "number" + (if (sp.unit.isNotBlank()) " in ${sp.unit}" else "") + " · step ${formatKg(sp.step)}",
+                            Text(if (sp.isChoice) sp.choices.joinToString(" · ") + if (sp.multiple) " · several" else "" else "number" + (if (sp.unit.isNotBlank()) " in ${sp.unit}" else "") + " · step ${formatKg(sp.step)}",
                                 color = p.muted, fontSize = 12.sp)
                         }
                         IconButton(onClick = { e = e.copy(specs = e.specs - sp) }) { Icon(AppIcons.Close, "Remove ${sp.name}", tint = p.muted) }
@@ -251,6 +255,8 @@ private fun SpecDialog(current: app.intervals.core.Spec?, taken: Set<String>, on
     var unit by remember { mutableStateOf(current?.unit ?: "") }
     var step by remember { mutableStateOf(current?.step?.let(::formatKg) ?: "1") }
     var options by remember { mutableStateOf(current?.choices?.joinToString(", ") ?: "") }
+    var multiple by remember { mutableStateOf(current?.multiple ?: false) }
+    var colors by remember { mutableStateOf(current?.colors ?: emptyMap()) }
     val choices = options.split(',').map(String::trim).filter(String::isNotEmpty).distinct()
     val stepN = step.replace(',', '.').toDoubleOrNull()?.takeIf { it > 0 }
     val clash = name.trim().lowercase() in taken
@@ -270,6 +276,26 @@ private fun SpecDialog(current: app.intervals.core.Spec?, taken: Set<String>, on
                     OutlinedTextField(options, { options = it }, label = { Text("Options, comma separated") },
                         placeholder = { Text("small, medium, large") })
                     Text("At least two.", color = p.muted, fontSize = 12.sp)
+                    SwitchLine("Can pick several", "e.g. bands: tap = \u00D71, again \u00D72, again none", multiple) { multiple = it }
+                    if (choices.isNotEmpty()) Text("Color (optional)", color = p.muted, fontSize = 12.sp)
+                    choices.forEach { c ->
+                        Column {
+                            Text(c, color = p.text, fontSize = 14.sp)
+                            Row(Modifier.horizontalScroll(rememberScrollState()).padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                (listOf<Long?>(null) + SPEC_COLORS).forEach { col ->
+                                    val on = colors[c] == col
+                                    Box(
+                                        Modifier.size(30.dp).clip(CircleShape).background(col?.let { Color(it) } ?: p.surface)
+                                            .border(if (on) 3.dp else 1.dp, if (on) p.text else p.line, CircleShape)
+                                            .clickable(onClickLabel = "$c " + (col?.let { "color" } ?: "no color")) {
+                                                colors = if (col == null) colors - c else colors + (c to col)
+                                            },
+                                        contentAlignment = Alignment.Center,
+                                    ) { if (col == null) Text("\u2013", color = p.muted, fontSize = 13.sp) }
+                                }
+                            }
+                        }
+                    }
                 } else Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(unit, { unit = it }, label = { Text("Unit") }, placeholder = { Text("mm") }, singleLine = true, modifier = Modifier.weight(1f))
                     OutlinedTextField(step, { step = it }, label = { Text("Step − / +") }, singleLine = true, modifier = Modifier.weight(1f),
@@ -280,7 +306,7 @@ private fun SpecDialog(current: app.intervals.core.Spec?, taken: Set<String>, on
         confirmButton = {
             TextButton(enabled = ok, onClick = {
                 onDone(
-                    if (choice) app.intervals.core.Spec(name.trim(), choices = choices)
+                    if (choice) app.intervals.core.Spec(name.trim(), choices = choices, multiple = multiple, colors = colors.filterKeys { it in choices })
                     else app.intervals.core.Spec(name.trim(), unit = unit.trim(), step = stepN ?: 1.0)
                 )
             }) { Text(if (current == null) "Add" else "OK") }
@@ -337,3 +363,9 @@ private fun StepDialog(current: Double, onDismiss: () -> Unit, onDone: (Double) 
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     )
 }
+
+/** Colors a choice can have: the old band colors first, then the app's Material set. */
+private val SPEC_COLORS = listOf(
+    0xFF43A047, 0xFF8E44D8, 0xFF16181C, 0xFFE53935, 0xFFFFC107,
+    0xFFE91E63, 0xFF3F51B5, 0xFF03A9F4, 0xFF00BCD4, 0xFFCDDC39, 0xFFFF9800, 0xFF795548, 0xFF9E9E9E, 0xFFFFFFFF,
+)

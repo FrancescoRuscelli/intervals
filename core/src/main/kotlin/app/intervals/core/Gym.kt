@@ -3,11 +3,11 @@ package app.intervals.core
 import kotlinx.serialization.Serializable
 import java.time.LocalDate
 
-/** Resistance bands, strongest first (the order they are shown in). */
+/** Old built-in resistance bands, strongest first. Now bands are a specification ("Bands", see [withBandsAsSpec]); kept to read old data. */
 @Serializable
 enum class Band { GREEN, PURPLE, BLACK, RED, YELLOW }
 
-/** What is written down for each set of an exercise. */
+/** What is written down for each set of an exercise. BANDS is old: converted to a "Bands" specification, never offered. */
 @Serializable
 enum class GymField { WEIGHT, REPS, TIME, DISTANCE, BANDS }
 
@@ -23,6 +23,10 @@ data class Spec(
     /** Step of the − / + buttons for a number. */
     val step: Double = 1.0,
     val choices: List<String> = emptyList(),
+    /** A choice where you can pick several, each up to ×2 (e.g. bands): the value is "green+purple+purple". */
+    val multiple: Boolean = false,
+    /** Optional color of each choice, 0xAARRGGBB (e.g. the band colors). */
+    val colors: Map<String, Long> = emptyMap(),
 ) {
     init {
         require(name.isNotBlank()) { "a specification needs a name" }
@@ -31,8 +35,27 @@ data class Spec(
 
     val isChoice: Boolean get() = choices.isNotEmpty()
 
-    /** "40 mm", "half crimp". */
-    fun text(value: String): String = if (isChoice || unit.isBlank()) value else "$value $unit"
+    /** For a "several" choice: each picked choice and how many times, in the choices' order. */
+    fun counts(value: String?): List<Pair<String, Int>> {
+        val parts = value.orEmpty().split('+').map(String::trim).filter(String::isNotEmpty)
+        return choices.mapNotNull { c -> parts.count { it == c }.takeIf { it > 0 }?.let { c to it } } +
+            parts.filter { it !in choices }.distinct().map { o -> o to parts.count { it == o } } // values no longer in the list are kept
+    }
+
+    /** Tapping a choice of a "several" spec: none → ×1 → ×2 → none; null when nothing is left. */
+    fun tap(value: String?, choice: String): String? {
+        val c = counts(value).toMap().toMutableMap()
+        val n = ((c[choice] ?: 0) + 1) % 3
+        if (n == 0) c.remove(choice) else c[choice] = n
+        return choices.plus(c.keys.filter { it !in choices }).flatMap { k -> List(c[k] ?: 0) { k } }.joinToString("+").ifEmpty { null }
+    }
+
+    /** "40 mm", "half crimp", "green+purple×2+red". */
+    fun text(value: String): String = when {
+        multiple -> counts(value).joinToString("+") { (c, n) -> if (n > 1) "$c×$n" else c }
+        isChoice || unit.isBlank() -> value
+        else -> "$value $unit"
+    }
 }
 
 /** A strength exercise you created (no preset list, no categories). */
@@ -81,6 +104,7 @@ data class GymSet(
     val timeSec: Int? = null,
     /** As FitNotes stored it; unit not used yet. */
     val distance: Double? = null,
+    /** Old built-in bands; now in [specs] under "Bands" (see [withBandsAsSpec]). */
     val bands: List<Band> = emptyList(),
     val note: String = "",
     /** Real rest before this set, seconds; null when unknown (e.g. imported). */
@@ -134,3 +158,37 @@ fun withNegativeAssist(exercises: List<Exercise>, sets: List<GymSet>): Pair<List
     return exercises.map { if (it.assist) it.copy(assist = false) else it } to
         sets.map { s -> if (s.exerciseId in assisted && (s.weightKg ?: 0.0) > 0) s.copy(weightKg = -s.weightKg!!) else s }
 }
+
+/** The "Bands" specification old band data becomes: the five old bands, strongest first, with their colors (all changeable). */
+val BANDS_SPEC = Spec(
+    "Bands", choices = listOf("green", "purple", "black", "red", "yellow"), multiple = true,
+    colors = mapOf("green" to 0xFF43A047, "purple" to 0xFF8E44D8, "black" to 0xFF16181C, "red" to 0xFFE53935, "yellow" to 0xFFFFC107),
+)
+
+/**
+ * Converts the old built-in bands: an exercise with the BANDS field gets the "Bands" specification instead, and its sets' bands
+ * become that spec's value ("green+purple+purple"). Running it twice changes nothing.
+ */
+fun withBandsAsSpec(exercises: List<Exercise>, sets: List<GymSet>): Pair<List<Exercise>, List<GymSet>> {
+    val old = exercises.filter { GymField.BANDS in it.fields }
+    if (old.isEmpty() && sets.none { it.bands.isNotEmpty() }) return exercises to sets
+    val ids = old.map { it.id }.toSet()
+    val ex = exercises.map { e ->
+        if (e.id !in ids) e
+        else e.copy(
+            fields = (e.fields - GymField.BANDS).ifEmpty { listOf(GymField.REPS) },
+            specs = if (e.specs.any { it.name.equals(BANDS_SPEC.name, ignoreCase = true) }) e.specs else e.specs + BANDS_SPEC,
+        )
+    }
+    val name = { id: Long -> ex.first { it.id == id }.specs.first { it.name.equals(BANDS_SPEC.name, ignoreCase = true) }.name }
+    val s = sets.map { set ->
+        if (set.bands.isEmpty()) set
+        else if (set.exerciseId !in ids) set.copy(bands = emptyList()) // bands on an exercise without the field: nowhere to show them
+        else set.copy(bands = emptyList(), specs = set.specs + (name(set.exerciseId) to set.bands.sortedBy { it.ordinal }.joinToString("+") { it.name.lowercase() }))
+    }
+    return ex to s
+}
+
+/** Every conversion of old gym data (assist flag, built-in bands), in order. */
+fun upgradeGym(exercises: List<Exercise>, sets: List<GymSet>): Pair<List<Exercise>, List<GymSet>> =
+    withNegativeAssist(exercises, sets).let { (e, s) -> withBandsAsSpec(e, s) }

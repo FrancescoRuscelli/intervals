@@ -87,8 +87,9 @@ class FitNotesImportTest {
         assertFalse(ex.getValue("Barbell Squat").perSide)
         assertEquals(listOf(GymField.TIME), ex.getValue("Handstand").fields)
         assertEquals(listOf(GymField.REPS), ex.getValue("Parallettes Pike Push Up").fields)
-        // bands with weight 0: the bands are the load
-        assertEquals(listOf(GymField.REPS, GymField.BANDS), ex.getValue("Pistol Squat").fields)
+        // bands with weight 0: the bands are the load; bands are the "Bands" specification
+        assertEquals(listOf(GymField.REPS), ex.getValue("Pistol Squat").fields)
+        assertEquals(listOf(BANDS_SPEC), ex.getValue("Pistol Squat").specs)
         assertTrue(ex.getValue("Pistol Squat").perSide)
 
         val day17 = r.sets.filter { it.day == "2026-11-17" }
@@ -98,7 +99,8 @@ class FitNotesImportTest {
         val pistol = r.sets.filter { it.exerciseId == blocks.id + 4 }
         assertEquals(listOf(Side.LEFT, Side.RIGHT), pistol.map { it.side })
         assertEquals(null, pistol[0].weightKg)
-        assertEquals(listOf(Band.GREEN, Band.PURPLE, Band.RED), pistol[0].bands)
+        assertEquals("green+purple+red", pistol[0].specs["Bands"])
+        assertEquals(emptyList(), pistol[0].bands)
         assertEquals(2, r.sideComments)
         assertEquals(2, r.bandComments)
         assertEquals(1, r.noteComments)

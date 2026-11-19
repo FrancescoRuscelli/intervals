@@ -79,4 +79,16 @@ class GymRowsTest {
         // twice = no change
         assertEquals(ex to s, withNegativeAssist(ex, s))
     }
+
+    @Test
+    fun oldBandsBecomeTheBandsSpec() {
+        val old = Exercise(9, "Pistol Squat", listOf(GymField.REPS, GymField.BANDS), perSide = true)
+        val sets = listOf(set(0.0, 5).copy(exerciseId = 9, weightKg = null, bands = listOf(Band.RED, Band.GREEN, Band.PURPLE, Band.PURPLE)))
+        val (ex, s) = upgradeGym(listOf(old), sets)
+        assertEquals(listOf(GymField.REPS), ex.single().fields)
+        assertEquals(listOf(BANDS_SPEC), ex.single().specs)
+        assertEquals("green+purple+purple+red", s.single().specs["Bands"])
+        assertEquals("green+purple×2+red · 5", s.single().summary(ex.single()))
+        assertEquals(ex to s, upgradeGym(ex, s))
+    }
 }

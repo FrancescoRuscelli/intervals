@@ -29,13 +29,6 @@ fun SideChoice?.sides(): List<Side?> = when (this) {
     SideChoice.BOTH -> listOf(Side.LEFT, Side.RIGHT)
 }
 
-/** Tapping a band dot: none → ×1 → ×2 → none. Kept strongest first. */
-fun List<Band>.tap(band: Band): List<Band> {
-    val n = count { it == band }
-    val others = filter { it != band }
-    return (others + List((n + 1) % 3) { band }).sortedBy { it.ordinal }
-}
-
 /** Adds or removes a quick tag in a note ("Max · ring finger hurt"). */
 fun toggleTag(note: String, tag: String): String {
     val parts = note.split(" · ").map(String::trim).filter(String::isNotEmpty)

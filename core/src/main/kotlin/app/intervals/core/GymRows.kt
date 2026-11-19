@@ -52,9 +52,9 @@ val Side.letter: String get() = if (this == Side.LEFT) "L" else "R"
 fun GymSet.sameValues(o: GymSet) =
     weightKg == o.weightKg && reps == o.reps && timeSec == o.timeSec && distance == o.distance && bands == o.bands && specs == o.specs
 
-/** The best set: heaviest (less assist = a higher negative), then most reps, longest, most bands. */
+/** The best set: heaviest (less assist = a higher negative), then most reps, longest. */
 fun topSet(sets: List<GymSet>, ex: Exercise): GymSet? = sets.maxWithOrNull(
-    compareBy<GymSet>({ it.weightKg ?: 0.0 }, { it.reps ?: 0 }, { it.timeSec ?: 0 }, { it.bands.size })
+    compareBy<GymSet>({ it.weightKg ?: 0.0 }, { it.reps ?: 0 }, { it.timeSec ?: 0 })
 )
 
 /** 80, 22.5, 1.25, −20 (a real minus sign) */
@@ -64,12 +64,7 @@ fun formatKg(kg: Double): String =
 /** 0:40, 2:05 */
 fun formatTime(sec: Int): String = "%d:%02d".format(sec / 60, sec % 60)
 
-private val bandEmoji = mapOf(
-    Band.GREEN to "🟢", Band.PURPLE to "🟣", Band.BLACK to "⚫",
-    Band.RED to "🔴", Band.YELLOW to "🟡",
-)
-
-/** One-line text of a set, e.g. "80 × 5", "−20 × 3", "🟢🟣 × 5", "+10 × 0:07", "0:40"; specs first: "40 mm · 20 × 5". */
+/** One-line text of a set, e.g. "80 × 5", "−20 × 3", "+10 × 0:07", "0:40"; specs first: "40 mm · 20 × 5", "green+purple · 5". */
 fun GymSet.summary(ex: Exercise): String = listOfNotNull(specsText(ex).ifEmpty { null }, valuesText(ex).ifEmpty { null }).joinToString(" · ")
 
 /** The set's specifications in the exercise's order, e.g. "40 mm · half crimp"; empty when none. */
@@ -78,7 +73,6 @@ fun GymSet.specsText(ex: Exercise): String =
 
 private fun GymSet.valuesText(ex: Exercise): String = buildList {
     if (GymField.WEIGHT in ex.fields) weightKg?.let { add(formatKg(it)) }
-    if (GymField.BANDS in ex.fields && bands.isNotEmpty()) add(bands.sortedBy { it.ordinal }.joinToString("") { bandEmoji.getValue(it) })
     if (GymField.REPS in ex.fields) reps?.let { add("$it") }
     if (GymField.TIME in ex.fields) timeSec?.let { add(formatTime(it)) }
     if (GymField.DISTANCE in ex.fields) distance?.let { add(formatKg(it)) }
@@ -97,13 +91,12 @@ fun GymSet.boxText(ex: Exercise): String = when (boxField(ex)) {
     else -> "✓"
 }
 
-/** The load of a set without the box value: "45 kg", "−20 kg", "40 mm · 🟢🟣", "+10 kg · 0:07"… empty when there is none. */
+/** The load of a set without the box value: "45 kg", "−20 kg", "40 mm · green+purple", "+10 kg · 0:07"… empty when there is none. */
 fun GymSet.loadText(ex: Exercise): String {
     val box = boxField(ex)
     return buildList {
         specsText(ex).takeIf(String::isNotEmpty)?.let(::add)
         if (GymField.WEIGHT in ex.fields) weightKg?.let { add(formatKg(it) + " kg") }
-        if (GymField.BANDS in ex.fields && bands.isNotEmpty()) add(bands.sortedBy { it.ordinal }.joinToString("") { bandEmoji.getValue(it) })
         if (GymField.TIME in ex.fields && box != GymField.TIME) timeSec?.let { add(formatTime(it)) }
         if (GymField.DISTANCE in ex.fields && box != GymField.DISTANCE) distance?.let { add(formatKg(it)) }
     }.joinToString(" · ")

@@ -153,10 +153,12 @@ object FitNotesImport {
             day.sortedBy { it.first.id }.mapIndexed { i, (_, g) -> g.copy(order = i) }
         }.sortedWith(compareBy({ it.day }, { it.order }))
 
+        // bands found in the comments become each exercise's "Bands" specification
+        val (upExercises, upSets) = withBandsAsSpec(exercises, ordered)
         return Result(
-            exercises = exercises,
-            sets = ordered,
-            days = ordered.map { it.day }.distinct().size,
+            exercises = upExercises,
+            sets = upSets,
+            days = upSets.map { it.day }.distinct().size,
             pairs = pairs,
             oneSided = oneSided,
             sideComments = sideComments,
