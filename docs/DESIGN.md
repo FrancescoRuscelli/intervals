@@ -163,6 +163,10 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
 - **Add exercise list** (reorganised 2026-11-19, chosen option "sections + L/R filter"): search + "+ New" (a side filter was tried and removed);
   Start a group on top; then folding sections, each exercise once: Done today (open), Recent = 14 days (open), one per group,
   Everything else A–Z (closed). Each row: name, L·R badge, "✓ N sets" if done that day or the last day. Logic: `pickSections` in core.
+- **L and R colors** (2026-11-19): pink = L, teal = R everywhere (as the graph lines): side switch, highlighted set column, row labels.
+- **Open: bands as a specification** (proposed 2026-11-19, not decided): a third spec kind "stack" (several options, each up to ×2,
+  in order, optional colors) so Bands becomes a ready-made spec and the BANDS field goes away (161 FitNotes band sets converted once).
+  Questions asked: fixed default colors / order? ×2 enough? mockup first?
 - **Assisted = negative weight** (2026-11-19): no "assisted" switch; − goes below 0 (−20 kg = 20 kg taken off). "Heaviest",
   records and PRs work the same for every exercise (−20 beats −25). Old data with the assist flag is converted once at start
   (`convertAssisted`; backups too, `withNegativeAssist`); FitNotes "Deloaded / Assisted" exercises import negative.
