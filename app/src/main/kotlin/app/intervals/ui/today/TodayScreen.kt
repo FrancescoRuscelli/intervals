@@ -109,17 +109,21 @@ fun TodayScreen(vm: AppViewModel) {
                     Column(
                         Modifier.weight(1f).height(62.dp).clip(RoundedCornerShape(14.dp))
                             .background(if (isToday) p.tint else p.surface).clickable { vm.openJournalDay(d.toString()) },
-                        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
+                        Spacer(Modifier.height(8.dp))
                         Text(if (isToday) "Today" else d.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.ENGLISH),
                             color = if (isToday) p.accentText else p.muted, fontSize = 10.sp, maxLines = 1)
                         Text("${d.dayOfMonth}", color = p.text, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                        if (strip.isNotEmpty()) Row(Modifier.padding(top = 2.dp).width(26.dp).height(4.dp).clip(RoundedCornerShape(2.dp)),
-                            horizontalArrangement = Arrangement.spacedBy(1.dp)) {
-                            strip.forEach { Box(Modifier.weight(it.sets.toFloat()).height(4.dp).background(Color(it.color))) }
-                        }
-                        if (ss.isNotEmpty()) Row(Modifier.padding(top = 2.dp), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                            ss.take(3).forEach { s -> Box(Modifier.size(4.dp).clip(CircleShape).background(if (s.completed) p.pink else p.yellow)) }
+                        // fixed slot for the marks, so every day's name and number sit at the same height
+                        Column(Modifier.height(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                            if (strip.isNotEmpty()) Row(Modifier.padding(top = 2.dp).width(26.dp).height(4.dp).clip(RoundedCornerShape(2.dp)),
+                                horizontalArrangement = Arrangement.spacedBy(1.dp)) {
+                                strip.forEach { Box(Modifier.weight(it.sets.toFloat()).height(4.dp).background(Color(it.color))) }
+                            }
+                            if (ss.isNotEmpty()) Row(Modifier.padding(top = 2.dp), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                                ss.take(3).forEach { s -> Box(Modifier.size(4.dp).clip(CircleShape).background(if (s.completed) p.pink else p.yellow)) }
+                            }
                         }
                     }
                 }
