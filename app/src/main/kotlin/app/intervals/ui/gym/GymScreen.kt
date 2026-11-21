@@ -24,22 +24,29 @@ import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.PagerSnapDistance
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -66,9 +73,10 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-/** The Gym tab: one page per training day, today first; older days to the left (swipe or arrows). */
+/** The daily training log and the exercise library. */
 @Composable
 fun GymScreen(vm: AppViewModel) {
+    val p = LocalPalette.current
     val days by vm.gymDays.collectAsStateWithLifecycle()
     val exercises by vm.exercises.collectAsStateWithLifecycle()
     val pick = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let(vm::previewFitNotes) }
@@ -77,18 +85,57 @@ fun GymScreen(vm: AppViewModel) {
     val pages = remember(list, today) { if (list.firstOrNull() == today) list else listOf(today) + list }
     val byId = remember(exercises) { exercises.associateBy { it.id } }
     val pager = rememberPagerState { pages.size }
+    var library by rememberSaveable { mutableStateOf(false) }
+    var query by rememberSaveable { mutableStateOf("") }
     LaunchedEffect(vm.gymFocusDay, pages) {
         val i = vm.gymFocusDay?.let(pages::indexOf) ?: return@LaunchedEffect
+        library = false
         if (i >= 0) pager.scrollToPage(i)
         vm.gymFocusDay = null
     }
-    HorizontalPager(
-        pager, reverseLayout = true, key = { pages[it] }, modifier = Modifier.fillMaxSize(),
-        // one day per swipe, even a fast one
-        flingBehavior = PagerDefaults.flingBehavior(pager, pagerSnapDistance = PagerSnapDistance.atMost(1)),
-    ) { i ->
-        DayPage(vm, pages[i], i, pages.size, pager, byId,
-            onImport = if (list.isEmpty()) ({ pick.launch(arrayOf("*/*")) }) else null)
+    Column(Modifier.fillMaxSize()) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)
+                .clip(RoundedCornerShape(16.dp)).background(p.surface).selectableGroup().padding(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            listOf("Log", "Library").forEachIndexed { index, label ->
+                val selected = library == (index == 1)
+                Box(
+                    Modifier.weight(1f).height(48.dp).clip(RoundedCornerShape(12.dp))
+                        .background(if (selected) p.tint else Color.Transparent)
+                        .selectable(selected, role = Role.Tab) { library = index == 1 },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(label, color = if (selected) p.accentText else p.muted, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                }
+            }
+        }
+        if (library) {
+            val lastUsed by vm.lastUsed.collectAsStateWithLifecycle()
+            val shown = remember(exercises, query) { exercises.filter { it.name.contains(query.trim(), ignoreCase = true) } }
+            OutlinedTextField(
+                query, { query = it }, label = { Text("Search exercises") }, singleLine = true,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+            )
+            LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)) {
+                if (shown.isEmpty()) item {
+                    Text(if (query.isBlank()) "No exercises yet." else "No matching exercises.", color = p.muted)
+                }
+                items(shown, key = { it.id }) { ex ->
+                    ExerciseRow(ex, null, lastUsed[ex.id]) { vm.openGymLog(ex.id, today) }
+                }
+            }
+        } else {
+            HorizontalPager(
+                pager, reverseLayout = true, key = { pages[it] }, modifier = Modifier.weight(1f),
+                // one day per swipe, even a fast one
+                flingBehavior = PagerDefaults.flingBehavior(pager, pagerSnapDistance = PagerSnapDistance.atMost(1)),
+            ) { i ->
+                DayPage(vm, pages[i], i, pages.size, pager, byId,
+                    onImport = if (list.isEmpty()) ({ pick.launch(arrayOf("*/*")) }) else null)
+            }
+        }
     }
 }
 

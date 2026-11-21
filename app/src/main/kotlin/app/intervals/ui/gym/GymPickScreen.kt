@@ -33,7 +33,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.widthIn
 import app.intervals.core.pickSections
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -169,17 +168,19 @@ fun GymPickScreen(vm: AppViewModel, day: String) {
 
 /** One line: name, an L·R badge for per-side ones, and on the right "done 5 sets" (today) or the last day. */
 @Composable
-private fun ExerciseRow(ex: Exercise, doneToday: Int?, lastDay: String?, onClick: () -> Unit) {
+internal fun ExerciseRow(ex: Exercise, doneToday: Int?, lastDay: String?, onClick: () -> Unit) {
     val p = LocalPalette.current
     Row(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(vertical = 12.dp, horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(ex.name, color = p.text, fontSize = 16.sp, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f, fill = false))
-        if (ex.perSide) Text("L\u00B7R", color = p.accentText, fontSize = 11.sp, fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(start = 8.dp).clip(RoundedCornerShape(6.dp)).background(p.tint).padding(horizontal = 6.dp, vertical = 2.dp))
-        Spacer(Modifier.weight(1f).widthIn(min = 8.dp))
+        Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+            Text(ex.name, color = p.text, fontSize = 16.sp, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false))
+            if (ex.perSide) Text("L\u00B7R", color = p.accentText, fontSize = 11.sp, fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 8.dp).clip(RoundedCornerShape(6.dp)).background(p.tint).padding(horizontal = 6.dp, vertical = 2.dp))
+        }
+        Spacer(Modifier.width(8.dp))
         Text(
             if (doneToday != null) "\u2713 $doneToday set${if (doneToday == 1) "" else "s"}" else lastDay?.let(::shortDay) ?: "never",
             color = if (doneToday != null) p.pink else p.muted, fontSize = 13.sp,
