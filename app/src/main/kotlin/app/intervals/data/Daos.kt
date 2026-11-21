@@ -211,19 +211,12 @@ interface GymDao {
     @Query("DELETE FROM exercises WHERE id = :id")
     suspend fun deleteExercise(id: Long)
 
-    /** Moves every set of [from] to [into] (merge). */
-    @Query("UPDATE gym_sets SET exerciseId = :into WHERE exerciseId = :from")
-    suspend fun moveSets(from: Long, into: Long)
-
     @Query("UPDATE gym_sets SET variant = :new WHERE exerciseId = :exerciseId AND variant = :old")
     suspend fun renameVariant(exerciseId: Long, old: String, new: String)
 
     /** Sets without a variant get [variant] (so reordering the variants never changes what they were). */
     @Query("UPDATE gym_sets SET variant = :variant WHERE exerciseId = :exerciseId AND variant IS NULL")
     suspend fun fillVariant(exerciseId: Long, variant: String)
-
-    @Query("UPDATE gym_sets SET variant = :variant WHERE exerciseId = :exerciseId")
-    suspend fun setVariant(exerciseId: Long, variant: String)
 
     @Query("SELECT variant, COUNT(*) AS sets FROM gym_sets WHERE exerciseId = :exerciseId GROUP BY variant")
     fun observeVariantCounts(exerciseId: Long): Flow<List<VariantCount>>

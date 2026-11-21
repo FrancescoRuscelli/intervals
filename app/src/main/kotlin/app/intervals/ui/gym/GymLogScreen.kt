@@ -3,6 +3,7 @@ package app.intervals.ui.gym
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -114,8 +115,9 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
 
     var values by remember(exerciseId) { mutableStateOf<Values?>(null) }
     var side by remember(exerciseId) { mutableStateOf<SideChoice?>(null) }
-    var editing by remember { mutableStateOf<GymSet?>(null) }
-    var noteFor by remember { mutableStateOf<GymSet?>(null) }
+    var editing by remember(exerciseId, day) { mutableStateOf<GymSet?>(null) }
+    var noteFor by remember(exerciseId, day) { mutableStateOf<GymSet?>(null) }
+    var deletingSet by remember(exerciseId, day) { mutableStateOf<GymSet?>(null) }
     var typing by remember { mutableStateOf<GymField?>(null) }
     // free timer for timed sets (mockup G18): started at (elapsedRealtime) while running; measured = stopped, time filled in
     var timerFrom by remember(exerciseId) { mutableStateOf<Long?>(null) }
@@ -263,6 +265,7 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
                             Modifier.weight(1f),
                         )
                     } else {
+                        TextButton(onClick = { deletingSet = e }) { Text("Delete", color = p.dangerText) }
                         BigButton("Cancel", p.tint, p.accentText, { editing = null; values = (sets?.lastOrNull() ?: e).toValues() }, Modifier.weight(1f))
                         BigButton("Update set", p.accent, p.onAccent, { vm.updateGymSet(v.into(e, ex)); editing = null }, Modifier.weight(1.4f))
                     }
@@ -274,12 +277,13 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
 
             val list = sets.orEmpty()
             if (list.isNotEmpty()) item {
-                Text("SETS · ${list.size}", color = p.muted, fontSize = 13.sp, letterSpacing = 0.6.sp, fontWeight = FontWeight.SemiBold,
+                Text("SETS · ${list.size} · TAP TO EDIT", color = p.muted, fontSize = 13.sp, letterSpacing = 0.6.sp, fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(top = 4.dp))
             }
             if (list.isNotEmpty()) item {
-                if (ex.variants.isEmpty()) SetBlocks(list, ex, if (editing == null) side else null, editing?.id) { noteFor = it }
-                else VariantBlocks(list, ex, v.variant?.takeIf { it in ex.variants } ?: ex.variants.first(), if (editing == null) side else null, editing?.id) { noteFor = it }
+                val edit: (GymSet) -> Unit = { editing = it; values = it.toValues() }
+                if (ex.variants.isEmpty()) SetBlocks(list, ex, if (editing == null) side else null, editing?.id, edit) { noteFor = it }
+                else VariantBlocks(list, ex, v.variant?.takeIf { it in ex.variants } ?: ex.variants.first(), if (editing == null) side else null, editing?.id, edit) { noteFor = it }
             }
         }
     }
@@ -314,6 +318,14 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
             onSave = { vm.updateGymSet(it); noteFor = null },
             onEditValues = { editing = s; values = s.toValues(); noteFor = null },
             onDelete = { vm.deleteGymSet(s.id); noteFor = null })
+    }
+    deletingSet?.let { s ->
+        AlertDialog(
+            onDismissRequest = { deletingSet = null },
+            title = { Text("Delete this set?") },
+            confirmButton = { TextButton(onClick = { vm.deleteGymSet(s.id); if (editing?.id == s.id) editing = null; deletingSet = null }) { Text("Delete", color = p.dangerText) } },
+            dismissButton = { TextButton(onClick = { deletingSet = null }) { Text("Cancel") } },
+        )
     }
 }
 
@@ -364,9 +376,9 @@ private fun StepTile(label: String, value: String, unit: String, modifier: Modif
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun SetBlocks(sets: List<GymSet>, ex: Exercise, active: SideChoice?, editingId: Long?, onOpen: (GymSet) -> Unit) {
+private fun SetBlocks(sets: List<GymSet>, ex: Exercise, active: SideChoice?, editingId: Long?, onEdit: (GymSet) -> Unit, onOpen: (GymSet) -> Unit) {
     if (!ex.perSide) {
-        SideColumn(null, sets, ex, highlighted = false, dimmed = false, editingId, onOpen, Modifier.fillMaxWidth())
+        SideColumn(null, sets, ex, highlighted = false, dimmed = false, editingId, onEdit, onOpen, Modifier.fillMaxWidth())
         return
     }
     val left = sets.filter { it.side == Side.LEFT }
@@ -376,11 +388,11 @@ private fun SetBlocks(sets: List<GymSet>, ex: Exercise, active: SideChoice?, edi
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             listOf(Side.LEFT to left, Side.RIGHT to right).forEach { (sd, list) ->
                 val on = active == SideChoice.BOTH || (active == SideChoice.LEFT && sd == Side.LEFT) || (active == SideChoice.RIGHT && sd == Side.RIGHT)
-                SideColumn(sd, list, ex, highlighted = on, dimmed = active != null && !on, editingId, onOpen, Modifier.weight(1f),
+                SideColumn(sd, list, ex, highlighted = on, dimmed = active != null && !on, editingId, onEdit, onOpen, Modifier.weight(1f),
                     next = on && active != SideChoice.BOTH)
             }
         }
-        if (none.isNotEmpty()) SideColumn(null, none, ex, highlighted = false, dimmed = false, editingId, onOpen, Modifier.fillMaxWidth())
+        if (none.isNotEmpty()) SideColumn(null, none, ex, highlighted = false, dimmed = false, editingId, onEdit, onOpen, Modifier.fillMaxWidth())
     }
 }
 
@@ -388,7 +400,7 @@ private fun SetBlocks(sets: List<GymSet>, ex: Exercise, active: SideChoice?, edi
 @Composable
 private fun SideColumn(
     side: Side?, sets: List<GymSet>, ex: Exercise, highlighted: Boolean, dimmed: Boolean, editingId: Long?,
-    onOpen: (GymSet) -> Unit, modifier: Modifier, next: Boolean = false,
+    onEdit: (GymSet) -> Unit, onOpen: (GymSet) -> Unit, modifier: Modifier, next: Boolean = false,
 ) {
     val p = LocalPalette.current
     Column(
@@ -416,7 +428,11 @@ private fun SideColumn(
                             Modifier.heightIn(min = 36.dp).widthIn(min = 36.dp).clip(RoundedCornerShape(10.dp))
                                 .background(if (editing) p.accent else p.bg)
                                 .border(1.dp, if (s.note.isNotEmpty()) p.pink else p.line, RoundedCornerShape(10.dp))
-                                .clickable(onClickLabel = "Set ${s.boxText(ex)}" + if (s.note.isNotEmpty()) ", note: ${s.note}" else "") { onOpen(s) }
+                                .combinedClickable(
+                                    onClickLabel = "Edit set ${s.boxText(ex)}",
+                                    onLongClickLabel = "Set note and actions",
+                                    onClick = { onEdit(s) }, onLongClick = { onOpen(s) },
+                                )
                                 .padding(horizontal = 8.dp),
                             contentAlignment = Alignment.Center,
                         ) {
@@ -617,19 +633,32 @@ private fun TimerCard(
                 Box(Modifier.weight(1.2f).height(46.dp).clip(RoundedCornerShape(12.dp)).background(p.bg).clickable(onClick = onStart),
                     contentAlignment = Alignment.Center) { Text("Time again", color = p.soft, fontSize = 14.sp, fontWeight = FontWeight.SemiBold) }
             }
+        } else if (running) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(
+                    Modifier.weight(1f).height(68.dp).clip(RoundedCornerShape(20.dp)).background(p.surface)
+                        .clickable(onClickLabel = "Restart the timer", onClick = onStart),
+                    contentAlignment = Alignment.Center,
+                ) { Text("RESTART", color = p.soft, fontSize = 15.sp, fontWeight = FontWeight.Bold) }
+                Box(
+                    Modifier.weight(2f).height(68.dp).clip(RoundedCornerShape(20.dp)).background(p.pink)
+                        .clickable(onClickLabel = "Stop the timer") { onStop(elapsed) },
+                    contentAlignment = Alignment.Center,
+                ) { Text("STOP", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp) }
+            }
         } else {
             Box(
-                Modifier.fillMaxWidth().height(68.dp).clip(RoundedCornerShape(20.dp)).background(if (running) p.pink else p.teal)
-                    .clickable(onClickLabel = if (running) "Stop the timer" else "Start the timer") { if (running) onStop(elapsed) else onStart() },
+                Modifier.fillMaxWidth().height(68.dp).clip(RoundedCornerShape(20.dp)).background(p.teal)
+                    .clickable(onClickLabel = "Start the timer", onClick = onStart),
                 contentAlignment = Alignment.Center,
-            ) { Text(if (running) "STOP" else "START", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp) }
+            ) { Text("START", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp) }
         }
     }
 }
 
 /** The day's sets split by variant (mockup G19a): one box per variant, the one you're on outlined with "now". */
 @Composable
-private fun VariantBlocks(sets: List<GymSet>, ex: Exercise, current: String, active: SideChoice?, editingId: Long?, onOpen: (GymSet) -> Unit) {
+private fun VariantBlocks(sets: List<GymSet>, ex: Exercise, current: String, active: SideChoice?, editingId: Long?, onEdit: (GymSet) -> Unit, onOpen: (GymSet) -> Unit) {
     val p = LocalPalette.current
     val byVariant = sets.groupBy { it.variantOf(ex) ?: "" }
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -647,7 +676,7 @@ private fun VariantBlocks(sets: List<GymSet>, ex: Exercise, current: String, act
                     Text("  ${list.size} set${if (list.size == 1) "" else "s"}", color = p.muted, fontSize = 12.sp, modifier = Modifier.weight(1f))
                     if (now) Text("now", color = p.accentText, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
-                SetBlocks(list, ex, if (now) active else null, editingId, onOpen)
+                SetBlocks(list, ex, if (now) active else null, editingId, onEdit, onOpen)
             }
         }
     }

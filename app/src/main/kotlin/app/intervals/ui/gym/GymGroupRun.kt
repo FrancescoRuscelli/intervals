@@ -85,6 +85,7 @@ internal fun GymGroupRun(
                 Text(group.name, color = p.text, fontSize = 28.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
             RunElapsed(run.startedAt)
+            IconButton(onClick = { vm.endGroup(day) }) { Icon(AppIcons.Close, "Discard group; logged sets stay", tint = p.muted) }
             IconButton(onClick = vm::openSettings) { Icon(AppIcons.Settings, "Settings", tint = p.text) }
         }
         LazyColumn(

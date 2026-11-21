@@ -124,6 +124,7 @@ private fun JournalCalendar(vm: AppViewModel) {
     val loadedSessions by flow.collectAsState(initial = null)
     // All / Gym / Intervals
     var show by rememberSaveable { mutableStateOf(0) }
+    var filter by rememberSaveable { mutableStateOf("") }
     val sessions = if (show == 1) emptyList() else loadedSessions.orEmpty()
     val byDay = sessions.groupBy { it.day(zone) }
     val gymFlow = remember(month) { vm.gymDaysBetween(month.atDay(1).toString(), month.plusMonths(1).atDay(1).toString()) }
@@ -195,6 +196,12 @@ private fun JournalCalendar(vm: AppViewModel) {
             }
         }
         item {
+            OutlinedTextField(
+                filter, { filter = it }, placeholder = { Text("Filter calendar by exercise or tag") }, singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        item {
             Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 // a gym day counts as one session
                 Tile("Sessions", "${sum.sessions + gymDays.size}", Modifier.weight(1f))
@@ -205,7 +212,7 @@ private fun JournalCalendar(vm: AppViewModel) {
         item {
             HorizontalPager(pager, key = { it }, verticalAlignment = Alignment.Top,
                 flingBehavior = PagerDefaults.flingBehavior(pager, pagerSnapDistance = PagerSnapDistance.atMost(1))) { page ->
-                MonthCalendar(vm, firstMonth.plusMonths(page.toLong()), today, selectedDay, zone, show) { dayText = it.toString() }
+                MonthCalendar(vm, firstMonth.plusMonths(page.toLong()), today, selectedDay, zone, show, filter) { dayText = it.toString() }
             }
         }
         item {
@@ -270,25 +277,37 @@ private fun Tile(label: String, value: String, modifier: Modifier) {
 
 /** A month's calendar with its own data, so the pages next to the current one show their dots while swiping. */
 @Composable
-private fun MonthCalendar(vm: AppViewModel, month: YearMonth, today: LocalDate, selected: LocalDate, zone: ZoneId, show: Int, onPick: (LocalDate) -> Unit) {
+private fun MonthCalendar(vm: AppViewModel, month: YearMonth, today: LocalDate, selected: LocalDate, zone: ZoneId, show: Int, filter: String, onPick: (LocalDate) -> Unit) {
     val from = month.atDay(1).atStartOfDay(zone).toInstant().toEpochMilli()
     val to = month.plusMonths(1).atDay(1).atStartOfDay(zone).toInstant().toEpochMilli()
     val sessions by remember(from, to) { vm.sessions(from, to) }.collectAsState(initial = emptyList())
     val gymSets by remember(month) { vm.gymSetsBetween(month.atDay(1).toString(), month.plusMonths(1).atDay(1).toString()) }
         .collectAsState(initial = emptyList())
     val groups by vm.groups.collectAsState()
+    val exercises by vm.exercises.collectAsState()
+    val query = filter.trim()
+    val matchingExercises = remember(exercises, groups, query) {
+        exercises.filter { it.name.contains(query, ignoreCase = true) }.map { it.id }.toSet() +
+            groups.filter { it.isTag && it.name.contains(query, ignoreCase = true) }.flatMap { it.items }.map { it.exerciseId }
+    }
+    val highlighted = remember(sessions, gymSets, matchingExercises, query, show) {
+        if (query.isEmpty()) emptySet() else buildSet {
+            if (show != 1) addAll(gymSets.filter { it.exerciseId in matchingExercises }.map { LocalDate.parse(it.day) })
+            if (show != 2) addAll(sessions.filter { it.workoutName.contains(query, ignoreCase = true) }.map { it.day(zone) })
+        }
+    }
     val strips = remember(gymSets, groups) {
         gymSets.groupBy { LocalDate.parse(it.day) }.mapValues { (_, s) -> app.intervals.core.dayStrip(s, groups) }
     }
     Calendar(
         month, today, selected,
         if (show == 1) emptyMap() else sessions.groupBy { it.day(zone) },
-        if (show == 2) emptyMap() else strips, onPick,
+        if (show == 2) emptyMap() else strips, highlighted, query.isNotEmpty(), onPick,
     )
 }
 
 @Composable
-private fun Calendar(month: YearMonth, today: LocalDate, selected: LocalDate, byDay: Map<LocalDate, List<Session>>, gym: Map<LocalDate, List<app.intervals.core.StripPiece>>, onPick: (LocalDate) -> Unit) {
+private fun Calendar(month: YearMonth, today: LocalDate, selected: LocalDate, byDay: Map<LocalDate, List<Session>>, gym: Map<LocalDate, List<app.intervals.core.StripPiece>>, highlighted: Set<LocalDate>, filtering: Boolean, onPick: (LocalDate) -> Unit) {
     val p = LocalPalette.current
     Column(
         Modifier.padding(top = 12.dp).fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(p.surface)
@@ -303,7 +322,7 @@ private fun Calendar(month: YearMonth, today: LocalDate, selected: LocalDate, by
         val cells = List(lead) { null } + (1..month.lengthOfMonth()).map { month.atDay(it) }
         cells.chunked(7).forEach { week ->
             Row(Modifier.fillMaxWidth()) {
-                week.forEach { d -> DayCell(d, today, selected, byDay[d].orEmpty(), gym[d].orEmpty(), onPick, Modifier.weight(1f)) }
+                week.forEach { d -> DayCell(d, today, selected, byDay[d].orEmpty(), gym[d].orEmpty(), d in highlighted, filtering, onPick, Modifier.weight(1f)) }
                 repeat(7 - week.size) { Spacer(Modifier.weight(1f)) }
             }
         }
@@ -311,7 +330,7 @@ private fun Calendar(month: YearMonth, today: LocalDate, selected: LocalDate, by
 }
 
 @Composable
-private fun DayCell(d: LocalDate?, today: LocalDate, selected: LocalDate, sessions: List<Session>, strip: List<app.intervals.core.StripPiece>, onPick: (LocalDate) -> Unit, modifier: Modifier) {
+private fun DayCell(d: LocalDate?, today: LocalDate, selected: LocalDate, sessions: List<Session>, strip: List<app.intervals.core.StripPiece>, highlighted: Boolean, filtering: Boolean, onPick: (LocalDate) -> Unit, modifier: Modifier) {
     val gym = strip.isNotEmpty()
     val p = LocalPalette.current
     Box(modifier.height(46.dp), contentAlignment = Alignment.Center) {
@@ -320,12 +339,12 @@ private fun DayCell(d: LocalDate?, today: LocalDate, selected: LocalDate, sessio
         val future = d > today
         Column(
             Modifier.size(42.dp).clip(CircleShape)
-                .background(if (sel) (if (p.dark) Color(0xFF3A2F5C) else p.tint) else Color.Transparent)
-                .border(2.dp, if (d == today && !sel) p.accent else Color.Transparent, CircleShape)
+                .background(if (sel || highlighted) (if (p.dark) Color(0xFF3A2F5C) else p.tint) else Color.Transparent)
+                .border(2.dp, if (highlighted || d == today && !sel) p.accent else Color.Transparent, CircleShape)
                 .clickable(enabled = !future) { onPick(d) },
             horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
         ) {
-            Text("${d.dayOfMonth}", color = if (future) p.faint else p.text, fontSize = 14.sp,
+            Text("${d.dayOfMonth}", color = if (future || filtering && !highlighted) p.faint else p.text, fontSize = 14.sp,
                 fontWeight = if (sessions.isNotEmpty() || gym || sel) FontWeight.Bold else FontWeight.Normal)
             // gym: the day strip (split by exercise, sized by sets, colored by group)
             if (gym) Row(Modifier.padding(top = 2.dp).width(30.dp).height(4.dp).clip(RoundedCornerShape(2.dp)), horizontalArrangement = Arrangement.spacedBy(1.dp)) {

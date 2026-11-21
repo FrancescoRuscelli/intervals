@@ -64,6 +64,12 @@ class BackupTest {
     }
 
     @Test
+    fun oldGroupsRemainCategoryTags() {
+        val text = """{"format":"intervals-backup","version":1,"exportedAt":0,"workouts":[],"sessions":[],"exercises":[{"id":1,"name":"Overhead Press","fields":["REPS"]}],"groups":[{"id":1,"name":"Push","items":[{"exerciseId":1}]}]}"""
+        assertTrue(BackupJson.decode(text).groups.single().isTag)
+    }
+
+    @Test
     fun unknownKeysAreIgnored() {
         val text = BackupJson.encode(backup).replaceFirst("{", "{\n  \"addedLater\": 42,")
         assertEquals(backup, BackupJson.decode(text))

@@ -48,12 +48,14 @@ class GymGroupsTest {
     fun stripColorsAndRecords() {
         val legs = GymGroup(1, "Legs", listOf(GroupItem(1), GroupItem(2)))
         val sh = GymGroup(2, "Shoulders", listOf(GroupItem(4)), color = 0xFF123456)
+        val workout = GymGroup(3, "Wednesday", listOf(GroupItem(1), GroupItem(4)), isTag = false)
         val sets = day("2026-11-17", 1, 4, 2) + GymSet(exerciseId = 9, day = "2026-11-17", order = 9, reps = 5)
-        val strip = dayStrip(sets, listOf(legs, sh))
+        val groups = listOf(workout, legs, sh)
+        val strip = dayStrip(sets, groups)
         assertEquals(listOf(1L, 4L, 2L, 9L), strip.map { it.exerciseId })
         assertEquals(listOf(2, 1, 1, 1), strip.map { it.sets })
         assertEquals(listOf(GROUP_COLORS[0], 0xFF123456, GROUP_COLORS[0], NO_GROUP_COLOR), strip.map { it.color })
-        assertEquals(listOf("Legs", "Shoulders"), dayGroups(sets, listOf(legs, sh)).map { it.name })
+        assertEquals(listOf("Legs", "Shoulders"), dayGroups(sets, groups).map { it.name })
         val history = day("2026-11-10", 1) + day("2026-11-17", 1).map { it.copy(weightKg = 20.0) }
         assertEquals(1, recordsOn("2026-11-17", history, listOf(sq)))
         assertEquals(0, recordsOn("2026-11-10", history, listOf(sq)))

@@ -190,9 +190,13 @@ class IntervalsRepository(
 
     val groups: Flow<List<GymGroup>> = gymDao.observeGroups().map { list -> list.map { it.toGroup() } }
 
-    suspend fun addGroup(group: GymGroup): Long = gymDao.insertGroup(group.copy(id = 0).toEntity(gymDao.nextGroupPosition()))
+    suspend fun addGroup(group: GymGroup): Long {
+        require(group.name.isNotBlank()) { "a group needs a name" }
+        return gymDao.insertGroup(group.copy(id = 0).toEntity(gymDao.nextGroupPosition()))
+    }
 
     suspend fun updateGroup(group: GymGroup) = db.withTransaction {
+        require(group.name.isNotBlank()) { "a group needs a name" }
         val pos = gymDao.getGroups().firstOrNull { it.id == group.id }?.position ?: gymDao.nextGroupPosition()
         gymDao.updateGroup(group.toEntity(pos))
     }
@@ -202,32 +206,15 @@ class IntervalsRepository(
     /** Deletes the exercise and all its sets. */
     suspend fun deleteExercise(id: Long) = db.withTransaction {
         gymDao.deleteExercise(id)
-        replaceInGroups(id, null)
+        removeFromGroups(id)
     }
 
-    /** An exercise that is gone leaves its groups; merged, it is replaced there by [with] (unless the group already has it). */
-    private suspend fun replaceInGroups(id: Long, with: Long?) {
+    private suspend fun removeFromGroups(id: Long) {
         for (e in gymDao.getGroups()) {
             val g = e.toGroup()
             if (g.items.none { it.exerciseId == id }) continue
-            val keep = with != null && g.items.none { it.exerciseId == with }
-            val items = g.items.mapNotNull { if (it.exerciseId != id) it else if (keep) it.copy(exerciseId = with!!) else null }
-            gymDao.updateGroup(g.copy(items = items).toEntity(e.position))
+            gymDao.updateGroup(g.copy(items = g.items.filterNot { it.exerciseId == id }).toEntity(e.position))
         }
-    }
-
-    /** Moves all sets of [from] to [into], then deletes [from]. */
-    /** Moves every set of [from] into [into] and deletes [from]; with [asVariant] its sets become that variant of [into]. */
-    suspend fun mergeExercises(from: Long, into: Long, asVariant: String? = null) = db.withTransaction {
-        require(from != into) { "cannot merge an exercise into itself" }
-        if (asVariant != null) {
-            // the target's own sets keep what they were (its first variant) before the new ones arrive
-            gymDao.getExercises().firstOrNull { it.id == into }?.toExercise()?.variants?.firstOrNull()?.let { gymDao.fillVariant(into, it) }
-            gymDao.setVariant(from, asVariant)
-        }
-        gymDao.moveSets(from, into)
-        gymDao.deleteExercise(from)
-        replaceInGroups(from, into)
     }
 
     /**
@@ -257,7 +244,7 @@ class IntervalsRepository(
         gymDao.deleteAllGroups()
         gymDao.insertExercises(result.exercises.map { it.toEntity() })
         gymDao.insertSets(result.sets.map { it.toEntity() })
-        // groups suggested from the days: exercises done together often (rename or delete them freely)
+        // category tags suggested from the days: exercises done together often (rename or delete them freely)
         gymDao.insertGroups(suggestGroups(result.sets, result.exercises).mapIndexed { i, g -> g.toEntity(i) })
         result.sets.size
     }

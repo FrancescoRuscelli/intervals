@@ -131,7 +131,7 @@ fun ExerciseGraph(ex: Exercise, all: List<GymSet>) {
     }
     var metricName by rememberSaveable(ex.id) { mutableStateOf(metrics.first().name) }
     val metric = GymMetric.valueOf(metricName).takeIf { it in metrics } ?: metrics.first()
-    var rangeName by rememberSaveable { mutableStateOf(Range.M6.name) }
+    var rangeName by rememberSaveable(ex.id) { mutableStateOf(Range.M6.name) }
     val range = Range.valueOf(rangeName)
     val from = range.months?.let { LocalDate.now().minusMonths(it).toString() }
     val sets = if (from == null) all else all.filter { it.day >= from }
@@ -143,7 +143,7 @@ fun ExerciseGraph(ex: Exercise, all: List<GymSet>) {
         GymMetric.TOTAL_REPS, GymMetric.MAX_REPS -> { v -> v.toInt().toString() }
         else -> { v -> formatKg(round1(v)) + " kg" }
     }
-    var tapped by rememberSaveable(metricName, rangeName) { mutableStateOf<String?>(null) }
+    var tapped by rememberSaveable(ex.id, metricName, rangeName) { mutableStateOf<String?>(null) }
 
     Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -198,45 +198,53 @@ private fun LineChart(series: List<List<MetricPoint>>, colors: List<Color>, fmt:
     val min = lo - pad
     val max = hi + pad
     val desc = series.joinToString(". ") { s -> s.joinToString { "${it.day} ${fmt(it.value)}" } }
-    Canvas(
-        Modifier.fillMaxWidth().height(180.dp).semantics { contentDescription = desc }
+    Row(Modifier.fillMaxWidth().height(180.dp)) {
+        Column(
+            Modifier.width(58.dp).height(180.dp).padding(end = 6.dp),
+            verticalArrangement = Arrangement.SpaceBetween, horizontalAlignment = Alignment.End,
+        ) {
+            Text(fmt(max), color = p.muted, fontSize = 10.sp, maxLines = 1)
+            Text(fmt((max + min) / 2), color = p.muted, fontSize = 10.sp, maxLines = 1)
+            Text(fmt(min), color = p.muted, fontSize = 10.sp, maxLines = 1)
+        }
+        Canvas(
+            Modifier.weight(1f).height(180.dp).semantics { contentDescription = desc }
             .pointerInput(days) {
                 detectTapGestures { o ->
                     val i = Math.round(o.x / size.width * (days.size - 1)).coerceIn(0, days.lastIndex)
                     onTap(days[i])
                 }
-            },
-    ) {
-        val left = 0f
-        val w = size.width
-        val h = size.height - 4.dp.toPx()
-        fun x(day: String) = left + w * days.indexOf(day) / (days.size - 1).coerceAtLeast(1)
-        fun y(v: Double) = (h - (h * (v - min) / (max - min))).toFloat() + 2.dp.toPx()
-        // grid: 3 lines
-        for (k in 0..2) {
-            val yy = 2.dp.toPx() + h * k / 2
-            drawLine(p.line, Offset(0f, yy), Offset(w, yy), 1.dp.toPx())
-        }
-        if (series.size == 1) {
-            trend(series[0].map { it.value })?.let { (a, b) ->
-                drawLine(p.muted, Offset(x(series[0].first().day), y(a)), Offset(x(series[0].last().day), y(b)), 1.5.dp.toPx(),
-                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 8f)))
+                },
+        ) {
+            val w = size.width
+            val h = size.height - 4.dp.toPx()
+            fun x(day: String) = w * days.indexOf(day) / (days.size - 1).coerceAtLeast(1)
+            fun y(v: Double) = (h - (h * (v - min) / (max - min))).toFloat() + 2.dp.toPx()
+            for (k in 0..2) {
+                val yy = 2.dp.toPx() + h * k / 2
+                drawLine(p.line, Offset(0f, yy), Offset(w, yy), 1.dp.toPx())
             }
-        }
-        series.forEachIndexed { si, pts ->
-            if (pts.isEmpty()) return@forEachIndexed
-            val path = Path()
-            pts.forEachIndexed { i, pt -> if (i == 0) path.moveTo(x(pt.day), y(pt.value)) else path.lineTo(x(pt.day), y(pt.value)) }
-            drawPath(path, colors[si], style = Stroke(2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
-            pts.forEach { pt ->
-                drawCircle(p.surface, (if (pt.record) 6f else 4.5f).dp.toPx(), Offset(x(pt.day), y(pt.value)))
-                drawCircle(if (pt.record) p.recordText else colors[si], (if (pt.record) 4.5f else 3f).dp.toPx(), Offset(x(pt.day), y(pt.value)))
+            if (series.size == 1) {
+                trend(series[0].map { it.value })?.let { (a, b) ->
+                    drawLine(p.muted, Offset(x(series[0].first().day), y(a)), Offset(x(series[0].last().day), y(b)), 1.5.dp.toPx(),
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 8f)))
+                }
+            }
+            series.forEachIndexed { si, pts ->
+                if (pts.isEmpty()) return@forEachIndexed
+                val path = Path()
+                pts.forEachIndexed { i, pt -> if (i == 0) path.moveTo(x(pt.day), y(pt.value)) else path.lineTo(x(pt.day), y(pt.value)) }
+                drawPath(path, colors[si], style = Stroke(2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
+                pts.forEach { pt ->
+                    drawCircle(p.surface, (if (pt.record) 6f else 4.5f).dp.toPx(), Offset(x(pt.day), y(pt.value)))
+                    drawCircle(if (pt.record) p.recordText else colors[si], (if (pt.record) 4.5f else 3f).dp.toPx(), Offset(x(pt.day), y(pt.value)))
+                }
             }
         }
     }
     Row(Modifier.fillMaxWidth().padding(top = 4.dp)) {
         Text(shortDay(days.first()), color = p.muted, fontSize = 10.sp, modifier = Modifier.weight(1f))
-        Text(fmt(lo) + " – " + fmt(hi), color = p.muted, fontSize = 10.sp, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
+        Spacer(Modifier.weight(1f))
         Text(shortDay(days.last()), color = p.muted, fontSize = 10.sp, textAlign = TextAlign.End, modifier = Modifier.weight(1f))
     }
 }
@@ -291,6 +299,7 @@ fun ExerciseRecords(ex: Exercise, all: List<GymSet>) {
                                     Text("${rm.reps} rep${if (rm.reps == 1) "" else "s"}", color = if (rm.beaten) p.muted else p.recordText, fontSize = 11.sp)
                                     Text(formatKg(rm.weightKg), color = if (rm.beaten) p.muted else p.recordText,
                                         style = NumberStyle, fontSize = 17.sp)
+                                    Text(shortDay(rm.day), color = if (rm.beaten) p.faint else p.muted, fontSize = 9.sp)
                                 }
                             }
                             repeat(4 - row.size) { Spacer(Modifier.weight(1f)) }

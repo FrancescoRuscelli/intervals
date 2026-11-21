@@ -11,7 +11,7 @@ fun nextGroupItem(items: List<GroupItem>, setsByExercise: Map<Long, List<GymSet>
     items.firstOrNull { setsByExercise[it.exerciseId].orEmpty().size < (it.planSets ?: 1) }
 
 /**
- * Groups suggested from the log: the same exercises done together on at least [minDays] days.
+ * Category tags suggested from the log: the same exercises done together on at least [minDays] days.
  * The most frequent combinations first; a combination is skipped when all its exercises are already in a chosen one.
  * Items are in the order they are usually done; the name comes from the exercise with the most sets ("Deadlift day").
  */
@@ -44,7 +44,7 @@ fun suggestGroups(sets: List<GymSet>, exercises: List<Exercise>, minDays: Int = 
     }
 }
 
-/** Soft group colors, kept apart from the app colors (purple, pink, yellow, teal). */
+/** Soft tag/workout colors, kept apart from the app colors (purple, pink, yellow, teal). */
 val GROUP_COLORS = listOf(0xFF8BC34AL, 0xFF5B8DEFL, 0xFFFF8A50L, 0xFFC8A97EL, 0xFF90A4AEL, 0xFFBA68C8L, 0xFF4DB6ACL, 0xFFE57373L)
 
 /** Exercises in no group. */
@@ -53,15 +53,15 @@ const val NO_GROUP_COLOR = 0xFF5A5F68L
 /** The color of a group: its own, else by its place in the list. */
 fun GymGroup.colorAt(index: Int): Long = color ?: GROUP_COLORS[index % GROUP_COLORS.size]
 
-/** The group an exercise belongs to (the first one containing it), or null. */
-fun groupOf(exerciseId: Long, groups: List<GymGroup>): GymGroup? = groups.firstOrNull { g -> g.items.any { it.exerciseId == exerciseId } }
+/** The first category tag containing an exercise, or null; workout groups are ignored. */
+fun groupOf(exerciseId: Long, groups: List<GymGroup>): GymGroup? = groups.firstOrNull { g -> g.isTag && g.items.any { it.exerciseId == exerciseId } }
 
 /** One piece of a day strip: an exercise, its sets that day, its group color. */
 data class StripPiece(val exerciseId: Long, val sets: Int, val color: Long)
 
 /** The day split by exercise (in the order done), sized by sets, colored by group. */
 fun dayStrip(sets: List<GymSet>, groups: List<GymGroup>): List<StripPiece> {
-    val colorOf = groups.withIndex().flatMap { (i, g) -> g.items.map { it.exerciseId to g.colorAt(i) } }
+    val colorOf = groups.filter { it.isTag }.withIndex().flatMap { (i, g) -> g.items.map { it.exerciseId to g.colorAt(i) } }
         .distinctBy { it.first }.toMap()
     return sets.sortedBy { it.order }.groupBy { it.exerciseId }
         .map { (id, s) -> StripPiece(id, s.size, colorOf[id] ?: NO_GROUP_COLOR) }

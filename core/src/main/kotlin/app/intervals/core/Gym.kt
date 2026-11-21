@@ -145,7 +145,7 @@ data class GroupItem(
     }
 }
 
-/** A group of exercises you start together, e.g. "Legs". */
+/** A category tag or an exact ordered workout group. Missing [isTag] in old data means a category tag. */
 @Serializable
 data class GymGroup(
     val id: Long = 0,
@@ -153,11 +153,9 @@ data class GymGroup(
     val items: List<GroupItem>,
     /** 0xAARRGGBB used in the Journal day strip; null = picked from [GROUP_COLORS] by position. */
     val color: Long? = null,
-) {
-    init {
-        require(name.isNotBlank()) { "a group needs a name" }
-    }
-}
+    /** Legacy groups are category tags; workout groups are exact ordered routines. */
+    val isTag: Boolean = true,
+)
 
 /**
  * Converts the old "assist" flag: the exercise's positive weights become negative and the flag goes off.

@@ -55,7 +55,7 @@ import app.intervals.ui.editor.SectionTitle
 
 /**
  * Add an exercise to a day (mockup G9, reorganised 2026-11-19): search + New, then folding sections
- * with each exercise once: done today, recent, one per group, everything else A–Z. Start a group stays on top.
+ * with each exercise once: done today, recent, one per tag, everything else A–Z. Start a group stays on top.
  */
 @Composable
 fun GymPickScreen(vm: AppViewModel, day: String) {
@@ -71,6 +71,7 @@ fun GymPickScreen(vm: AppViewModel, day: String) {
     val open = remember { mutableStateMapOf("today" to true, "recent" to true) }
     val q = query.trim()
     val names = exercises.associate { it.id to it.name }
+    val workoutGroups = groups.filterNot { it.isTag }
     val sections = remember(exercises, doneCount, lastUsed, groups, day) {
         pickSections(exercises, doneCount.keys, lastUsed, groups, day)
     }
@@ -89,7 +90,9 @@ fun GymPickScreen(vm: AppViewModel, day: String) {
         }
         LazyColumn(contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             if (q.isNotEmpty()) {
-                val found = sections.flatMap { it.exercises }.distinctBy { it.id }.filter { it.name.contains(q, ignoreCase = true) }
+                val tagged = groups.filter { it.isTag && it.name.contains(q, ignoreCase = true) }.flatMap { it.items }.map { it.exerciseId }.toSet()
+                val found = sections.flatMap { it.exercises }.distinctBy { it.id }
+                    .filter { it.name.contains(q, ignoreCase = true) || it.id in tagged }
                     .sortedBy { it.name.lowercase() }
                 items(found, key = { "f" + it.id }) { ExerciseRow(it, doneCount[it.id], lastUsed[it.id]) { pick(it) } }
                 if (exercises.none { it.name.equals(q, ignoreCase = true) }) item {
@@ -100,12 +103,12 @@ fun GymPickScreen(vm: AppViewModel, day: String) {
                 if (day !in vm.activeGroups) {
                     item {
                         Row(Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                            SectionTitle("Start a group", Modifier.weight(1f))
-                            Text("+ New group", color = p.accentText, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.clickable { vm.editGroup(null) }.padding(6.dp))
+                            SectionTitle("Start a workout", Modifier.weight(1f))
+                            Text("+ New workout", color = p.accentText, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.clickable { vm.editGroup(null, isTag = false) }.padding(6.dp))
                         }
                     }
-                    items(groups, key = { "g" + it.id }) { g ->
+                    items(workoutGroups, key = { "g" + it.id }) { g ->
                         Row(
                             Modifier.fillMaxWidth().padding(bottom = 6.dp).clip(RoundedCornerShape(16.dp)).background(p.group)
                                 .clickable(onClickLabel = "Start ${g.name}") { vm.startGroup(g.id, day) }.padding(start = 10.dp, top = 8.dp, bottom = 8.dp),
@@ -124,6 +127,13 @@ fun GymPickScreen(vm: AppViewModel, day: String) {
                         }
                     }
                 }
+                item {
+                    Row(Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                        SectionTitle("Exercises", Modifier.weight(1f))
+                        Text("+ New tag", color = p.accentText, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.clickable { vm.editGroup(null, isTag = true) }.padding(6.dp))
+                    }
+                }
                 if (sections.isEmpty()) item {
                     Text("No exercises here yet: + New makes one.", color = p.muted, fontSize = 14.sp, modifier = Modifier.padding(top = 8.dp))
                 }
@@ -135,7 +145,12 @@ fun GymPickScreen(vm: AppViewModel, day: String) {
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(if (isOpen) "\u25BE" else "\u25B8", color = p.muted, fontSize = 14.sp, modifier = Modifier.width(18.dp))
-                            SectionTitle("${sec.title} \u00B7 ${sec.exercises.size}")
+                            SectionTitle("${sec.title} \u00B7 ${sec.exercises.size}", Modifier.weight(1f))
+                            groups.firstOrNull { sec.key == "g${it.id}" && it.isTag }?.let { tag ->
+                                IconButton(onClick = { vm.editGroup(tag.id) }) {
+                                    Icon(AppIcons.Edit, "Edit ${tag.name} tag", tint = p.muted, modifier = Modifier.size(18.dp))
+                                }
+                            }
                         }
                     }
                     if (isOpen) items(sec.exercises, key = { sec.key + it.id }) { ExerciseRow(it, doneCount[it.id], lastUsed[it.id]) { pick(it) } }

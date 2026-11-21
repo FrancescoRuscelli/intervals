@@ -64,8 +64,8 @@ sealed interface Overlay {
     data class GymLog(val exerciseId: Long, val day: String) : Overlay
     data class GymPick(val day: String) : Overlay
     data class EditExercise(val exerciseId: Long) : Overlay
-    /** [groupId] null = a new group. */
-    data class EditGroup(val groupId: Long?) : Overlay
+    /** [groupId] null = a new tag or workout group. */
+    data class EditGroup(val groupId: Long?, val isTag: Boolean = false) : Overlay
     data class GymFinish(
         val day: String, val group: GymGroup, val start: LocalTime, val end: LocalTime, val elapsedSec: Int,
     ) : Overlay
@@ -367,12 +367,6 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun variantCounts(exerciseId: Long) = repo.variantCounts(exerciseId)
 
-    fun mergeExercise(from: Exercise, into: Exercise, asVariant: String? = null) = viewModelScope.launch {
-        repo.mergeExercises(from.id, into.id, asVariant)
-        overlays.removeAll { it is Overlay.GymLog && it.exerciseId == from.id }
-        message = "“${from.name}” merged into “${into.name}”"
-    }
-
     fun openGymPick(day: String) { overlays += Overlay.GymPick(day) }
 
     // ---- gym groups ----
@@ -383,6 +377,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     val activeGroups = androidx.compose.runtime.mutableStateMapOf<String, ActiveGymGroup>()
 
     fun startGroup(groupId: Long, day: String) {
+        if (groups.value.none { it.id == groupId && !it.isTag }) return
         if (activeGroups[day]?.id != groupId) {
             activeGroups[day] = ActiveGymGroup(groupId, SystemClock.elapsedRealtime(), LocalTime.now())
         }
@@ -430,7 +425,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun editGroup(groupId: Long?) { overlays += Overlay.EditGroup(groupId) }
+    fun editGroup(groupId: Long?, isTag: Boolean = false) { overlays += Overlay.EditGroup(groupId, isTag) }
 
     fun saveGroup(group: GymGroup) = viewModelScope.launch {
         if (group.id == 0L) repo.addGroup(group) else repo.updateGroup(group)

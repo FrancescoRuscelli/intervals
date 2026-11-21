@@ -77,13 +77,13 @@ fun TodayScreen(vm: AppViewModel) {
     data class Quick(val name: String, val sub: String, val lastDay: String, val color: Color, val gym: Boolean, val start: () -> Unit)
     val quick = buildList {
         workouts.orEmpty().mapNotNull { w -> lastRuns[w.id]?.let { w to it } }.forEach { (w, s) ->
-            add(Quick(w.workout.name, "intervals · ${formatDuration(w.workout.totalSec)} · last ${ago(s.day(zone), today)}",
+            add(Quick(w.workout.name, "${formatDuration(w.workout.totalSec)} · last ${ago(s.day(zone), today)}",
                 s.day(zone).toString(), p.pink, false) { vm.player(w.id) })
         }
-        groups.forEachIndexed { i, g ->
+        groups.filterNot { it.isTag }.forEachIndexed { i, g ->
             val last = g.items.mapNotNull { lastUsed[it.exerciseId] }.maxOrNull() ?: return@forEachIndexed
             val names = g.items.mapNotNull { item -> exercises.firstOrNull { it.id == item.exerciseId }?.name }.joinToString(", ")
-            add(Quick(g.name, "gym · last ${ago(LocalDate.parse(last), today)} · $names", last, Color(g.colorAt(i)), true) {
+            add(Quick(g.name, "last ${ago(LocalDate.parse(last), today)} · $names", last, Color(g.colorAt(i)), true) {
                 vm.startGroup(g.id, today.toString()); vm.tab = Tab.GYM
             })
         }

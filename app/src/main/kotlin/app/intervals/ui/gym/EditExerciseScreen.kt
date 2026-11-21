@@ -50,7 +50,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import app.intervals.core.Exercise
 import app.intervals.core.GymField
 import app.intervals.core.formatKg
 import app.intervals.core.formatTime
@@ -61,7 +60,7 @@ import app.intervals.ui.editor.SectionTitle
 
 private val STEPS = listOf(0.5, 1.0, 1.25, 2.5, 5.0)
 
-/** Edit exercise (mockup G16): name, fields, step, rest, per side, specifications; merge another into it; delete. Assisted = negative weight. */
+/** Edit exercise (mockup G16): name, fields, step, rest, per side, specifications, and delete. Assisted = negative weight. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun EditExerciseScreen(vm: AppViewModel, exerciseId: Long) {
@@ -70,8 +69,6 @@ fun EditExerciseScreen(vm: AppViewModel, exerciseId: Long) {
     val counts by vm.exerciseCounts.collectAsStateWithLifecycle()
     val original = exercises.firstOrNull { it.id == exerciseId } ?: return
     var e by remember(exerciseId) { mutableStateOf(original) }
-    var merging by remember { mutableStateOf(false) }
-    var mergeFrom by remember { mutableStateOf<Exercise?>(null) }
     var deleting by remember { mutableStateOf(false) }
     var askStep by remember { mutableStateOf(false) }
     var askRest by remember { mutableStateOf(false) }
@@ -81,7 +78,6 @@ fun EditExerciseScreen(vm: AppViewModel, exerciseId: Long) {
     var renames by remember(exerciseId) { mutableStateOf(emptyMap<String, String>()) }
     var variantEdit by remember { mutableStateOf<Pair<Int?, String>?>(null) }
     val variantCounts by remember(exerciseId) { vm.variantCounts(exerciseId) }.collectAsStateWithLifecycle(emptyMap())
-    var mergeAs by remember { mutableStateOf<String?>(null) }
     val (nSets, first) = counts[exerciseId] ?: (0 to null)
     BackHandler { vm.back() }
 
@@ -124,7 +120,6 @@ fun EditExerciseScreen(vm: AppViewModel, exerciseId: Long) {
             }
             Column {
                 Text("Your specifications", color = p.text, fontSize = 15.sp)
-                Text("e.g. pinch width (mm) or grip (open, half crimp); each set keeps its own, starting from the last", color = p.muted, fontSize = 12.sp)
                 e.specs.forEachIndexed { i, sp ->
                     Row(
                         Modifier.padding(top = 8.dp).fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(p.surface)
@@ -174,58 +169,11 @@ fun EditExerciseScreen(vm: AppViewModel, exerciseId: Long) {
                 if (nSets == 0) "Not logged yet." else "In your log: $nSets sets since ${first?.let(::shortDay)}",
                 color = p.muted, fontSize = 12.sp,
             )
-            ActionLine("Merge another exercise into this", "its sets move here, then it's gone", p.accentText) { merging = true }
             ActionLine("Delete exercise" + if (nSets > 0) " and its $nSets sets…" else "…", null, p.dangerText) { deleting = true }
             Spacer(Modifier.height(24.dp))
         }
     }
 
-    if (merging) {
-        val others = exercises.filter { it.id != exerciseId }.sortedByDescending { similarity(it.name, original.name) }
-        AlertDialog(
-            onDismissRequest = { merging = false },
-            title = { Text("Merge into “${original.name}”") },
-            text = {
-                Column(Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState())) {
-                    Text("Only if it is really the same exercise. Similar names first.", color = p.muted, fontSize = 13.sp)
-                    others.forEach { o ->
-                        val n = counts[o.id]?.first ?: 0
-                        Row(Modifier.fillMaxWidth().clickable { mergeFrom = o; merging = false }.padding(vertical = 10.dp)) {
-                            Text(o.name, fontSize = 15.sp, modifier = Modifier.weight(1f))
-                            Text("$n sets", color = p.muted, fontSize = 13.sp)
-                        }
-                    }
-                }
-            },
-            confirmButton = {},
-            dismissButton = { TextButton(onClick = { merging = false }) { Text("Cancel") } },
-        )
-    }
-    mergeFrom?.let { from ->
-        val n = counts[from.id]?.first ?: 0
-        AlertDialog(
-            onDismissRequest = { mergeFrom = null },
-            title = { Text("Merge “${from.name}”?") },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("Its $n sets move to “${original.name}”, with their sides and notes, and “${from.name}” is deleted. This can't be undone (a backup from Settings can).")
-                    // e.g. Barbell Squat merged into Squat as its "normal" variant
-                    if (original.variants.isNotEmpty()) {
-                        Text("Its sets become the variant:", color = p.muted, fontSize = 13.sp)
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            original.variants.forEach { v -> Pill(v, mergeAs == v) { mergeAs = v } }
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(enabled = original.variants.isEmpty() || mergeAs != null, onClick = {
-                    vm.mergeExercise(from, original, mergeAs); mergeFrom = null; mergeAs = null
-                }) { Text("Merge $n sets") }
-            },
-            dismissButton = { TextButton(onClick = { mergeFrom = null }) { Text("Cancel") } },
-        )
-    }
     specEdit?.let { (index, current) ->
         SpecDialog(current, taken = e.specs.filterIndexed { i, _ -> i != index }.map { it.name.lowercase() }.toSet(),
             onDismiss = { specEdit = null }) { sp ->
@@ -258,13 +206,6 @@ fun EditExerciseScreen(vm: AppViewModel, exerciseId: Long) {
             dismissButton = { TextButton(onClick = { deleting = false }) { Text("Cancel") } },
         )
     }
-}
-
-/** Words in common, to put "Block Pulls Squeezed" near "Block Pulls". */
-private fun similarity(a: String, b: String): Int {
-    val wa = a.lowercase().split(' ', '(', ')').filter { it.length > 1 }.toSet()
-    val wb = b.lowercase().split(' ', '(', ')').filter { it.length > 1 }.toSet()
-    return (wa intersect wb).size
 }
 
 @Composable

@@ -103,6 +103,14 @@ fun GymSet.loadText(ex: Exercise): String {
     }.joinToString(" · ")
 }
 
-/** One side's sets (or all of a two-sided exercise) as blocks by load, in the order each load first appears. */
-fun loadBlocks(sets: List<GymSet>, ex: Exercise): List<LoadBlock> =
-    sets.groupBy { it.loadText(ex) }.map { (label, s) -> LoadBlock(label.ifEmpty { "Sets" }, s) }
+/** One side's sets (or all of a two-sided exercise) as consecutive blocks by load. */
+fun loadBlocks(sets: List<GymSet>, ex: Exercise): List<LoadBlock> {
+    val out = mutableListOf<LoadBlock>()
+    sets.forEach { set ->
+        val label = set.loadText(ex).ifEmpty { "Sets" }
+        val last = out.lastOrNull()
+        if (last?.label == label) out[out.lastIndex] = last.copy(sets = last.sets + set)
+        else out += LoadBlock(label, listOf(set))
+    }
+    return out
+}

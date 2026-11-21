@@ -56,16 +56,16 @@ import app.intervals.ui.AppViewModel
 import app.intervals.ui.LocalPalette
 import app.intervals.ui.editor.StepButton
 
-/** A group of exercises (mockup G4): name, exercises in order with an optional plan each, Save, Delete. */
+/** A category tag or an exact workout group: name, exercises, optional workout plans, Save, Delete. */
 @Composable
-fun EditGroupScreen(vm: AppViewModel, groupId: Long?) {
+fun EditGroupScreen(vm: AppViewModel, groupId: Long?, newIsTag: Boolean = false) {
     val p = LocalPalette.current
     val groups by vm.groups.collectAsStateWithLifecycle()
     val exercises by vm.exercises.collectAsStateWithLifecycle()
     val byId = exercises.associateBy { it.id }
     val original = groupId?.let { id -> groups.firstOrNull { it.id == id } }
     if (groupId != null && original == null) return
-    var g by remember(groupId) { mutableStateOf(original ?: GymGroup(name = "New group", items = emptyList())) }
+    var g by remember(groupId, newIsTag) { mutableStateOf(original ?: GymGroup(name = if (newIsTag) "New tag" else "New workout", items = emptyList(), isTag = newIsTag)) }
     var adding by remember { mutableStateOf(false) }
     var planFor by remember { mutableStateOf<Int?>(null) }
     var deleting by remember { mutableStateOf(false) }
@@ -74,7 +74,7 @@ fun EditGroupScreen(vm: AppViewModel, groupId: Long?) {
     Column(Modifier.fillMaxSize().background(p.bg).statusBarsPadding().navigationBarsPadding()) {
         Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = { vm.back() }) { Icon(AppIcons.Close, "Close without saving", tint = p.text) }
-            Text(if (groupId == null) "New group" else "Group", color = p.text, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+            Text(if (g.isTag) "Exercise tag" else "Workout group", color = p.text, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
             val ok = g.name.isNotBlank() && g.items.isNotEmpty()
             Box(
                 Modifier.height(40.dp).clip(RoundedCornerShape(20.dp)).background(if (ok) p.accent else p.tint)
@@ -85,15 +85,27 @@ fun EditGroupScreen(vm: AppViewModel, groupId: Long?) {
         LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             item {
                 Column(Modifier.padding(horizontal = 4.dp, vertical = 4.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 12.dp)) {
+                        listOf(true to "Tag", false to "Workout").forEach { (tag, label) ->
+                            val on = g.isTag == tag
+                            Box(
+                                Modifier.height(38.dp).clip(RoundedCornerShape(14.dp)).background(if (on) p.tint else p.surface)
+                                    .border(1.dp, if (on) p.accent else p.line, RoundedCornerShape(14.dp))
+                                    .clickable { g = g.copy(isTag = tag) }.padding(horizontal = 16.dp),
+                                contentAlignment = Alignment.Center,
+                            ) { Text(label, color = if (on) p.accentText else p.soft, fontSize = 14.sp, fontWeight = FontWeight.SemiBold) }
+                        }
+                    }
                     Text("Name", color = p.muted, fontSize = 12.sp)
                     BasicTextField(g.name, { g = g.copy(name = it) }, singleLine = true,
                         textStyle = TextStyle(color = p.text, fontSize = 26.sp, fontWeight = FontWeight.Bold),
                         cursorBrush = SolidColor(p.accent), modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp))
                     Box(Modifier.fillMaxWidth().height(2.dp).background(p.accent))
-                    Text("${g.items.size} exercise${if (g.items.size == 1) "" else "s"} · a plan is optional: going over or stopping early is fine",
+                    Text("${g.items.size} exercise${if (g.items.size == 1) "" else "s"}" + if (g.isTag) " · category only" else " · a plan is optional",
                         color = p.muted, fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
-                    Text("Color in the Journal", color = p.muted, fontSize = 12.sp, modifier = Modifier.padding(top = 14.dp, bottom = 6.dp))
-                    val index = groups.indexOfFirst { it.id == g.id }.let { if (it < 0) groups.size else it }
+                    Text(if (g.isTag) "Color in the Journal" else "Color in Quick Start", color = p.muted, fontSize = 12.sp, modifier = Modifier.padding(top = 14.dp, bottom = 6.dp))
+                    val sameKind = groups.filter { it.isTag == g.isTag }
+                    val index = sameKind.indexOfFirst { it.id == g.id }.let { if (it < 0) sameKind.size else it }
                     val current = g.colorAt(index)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         GROUP_COLORS.forEach { c ->
@@ -108,7 +120,7 @@ fun EditGroupScreen(vm: AppViewModel, groupId: Long?) {
             }
             itemsIndexed(g.items) { i, item ->
                 Row(
-                    Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(p.surface).clickable { planFor = i }
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(p.surface).clickable(enabled = !g.isTag) { planFor = i }
                         .padding(start = 12.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -118,7 +130,7 @@ fun EditGroupScreen(vm: AppViewModel, groupId: Long?) {
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
                         Text(byId[item.exerciseId]?.name ?: "(deleted exercise)", color = p.text, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                        Text(item.planLabel() + " · tap to change", color = p.muted, fontSize = 12.sp)
+                        Text(if (g.isTag) "Tagged" else item.planLabel() + " · tap to change", color = p.muted, fontSize = 12.sp)
                     }
                     StepButton(AppIcons.Up, "Move up", androidx.compose.ui.graphics.Color.Transparent, p.muted, 36) {
                         if (i > 0) g = g.copy(items = g.items.toMutableList().apply { add(i - 1, removeAt(i)) })
@@ -138,7 +150,7 @@ fun EditGroupScreen(vm: AppViewModel, groupId: Long?) {
                 ) { Text("+ Add exercise", color = p.accentText, fontSize = 15.sp, fontWeight = FontWeight.SemiBold) }
             }
             if (original != null) item {
-                Text("Delete group", color = p.dangerText, fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
+                Text("Delete " + if (g.isTag) "tag" else "workout group", color = p.dangerText, fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(top = 16.dp).clickable { deleting = true }.padding(8.dp))
             }
         }
@@ -197,7 +209,7 @@ fun EditGroupScreen(vm: AppViewModel, groupId: Long?) {
         AlertDialog(
             onDismissRequest = { deleting = false },
             title = { Text("Delete “${original.name}”?") },
-            text = { Text("Only the group: the exercises and their sets stay.") },
+            text = { Text("Only the ${if (original.isTag) "tag" else "workout group"}: the exercises and their sets stay.") },
             confirmButton = { TextButton(onClick = { deleting = false; vm.deleteGroup(original) }) { Text("Delete", color = p.dangerText) } },
             dismissButton = { TextButton(onClick = { deleting = false }) { Text("Cancel") } },
         )

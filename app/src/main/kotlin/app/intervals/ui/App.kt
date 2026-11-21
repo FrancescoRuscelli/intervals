@@ -88,7 +88,7 @@ fun App(vm: AppViewModel) {
                 }
                 is Overlay.GymPick -> app.intervals.ui.gym.GymPickScreen(vm, top.day)
                 is Overlay.EditExercise -> app.intervals.ui.gym.EditExerciseScreen(vm, top.exerciseId)
-                is Overlay.EditGroup -> app.intervals.ui.gym.EditGroupScreen(vm, top.groupId)
+                is Overlay.EditGroup -> app.intervals.ui.gym.EditGroupScreen(vm, top.groupId, top.isTag)
                 is Overlay.GymFinish -> app.intervals.ui.gym.GymFinishScreen(vm, top)
                 Overlay.GymImport -> vm.gymImport?.let { app.intervals.ui.gym.GymImportScreen(it, { vm.cancelGymImport() }, { vm.confirmGymImport() }) }
                 Overlay.Finished -> vm.finished?.let { app.intervals.player.FinishedScreen(it, onDiscard = { vm.discardSession() }) { note, values, repeat -> vm.saveSession(note, values, repeat) } }

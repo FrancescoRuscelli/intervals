@@ -39,7 +39,7 @@ fun toggleTag(note: String, tag: String): String {
 data class PickSection(val key: String, val title: String, val exercises: List<Exercise>)
 
 /**
- * The add-exercise list, each exercise once, in this order: done on [day], recent (the 14 days before), one section per group,
+ * The add-exercise list, each exercise once, in this order: done on [day], recent (the 14 days before), one section per tag,
  * then everything else A–Z. Empty sections are left out.
  */
 fun pickSections(
@@ -50,7 +50,6 @@ fun pickSections(
     day: String,
 ): List<PickSection> {
     val shown = exercises
-    val byId = shown.associateBy { it.id }
     val taken = mutableSetOf<Long>()
     fun take(list: List<Exercise>) = list.filter { taken.add(it.id) }
     val since = java.time.LocalDate.parse(day).minusDays(14).toString()
@@ -59,7 +58,10 @@ fun pickSections(
     out += PickSection("recent", "Recent", take(
         shown.filter { (lastUsed[it.id] ?: "") in since..day }.sortedByDescending { lastUsed[it.id] }
     ))
-    groups.forEach { g -> out += PickSection("g${g.id}", g.name, take(g.items.mapNotNull { byId[it.exerciseId] })) }
+    val byId = shown.associateBy { it.id }
+    groups.filter { it.isTag }.forEach { g ->
+        out += PickSection("g${g.id}", g.name, take(g.items.mapNotNull { byId[it.exerciseId] }))
+    }
     out += PickSection("rest", "Everything else A–Z", take(shown.sortedBy { it.name.lowercase() }))
     return out.filter { it.exercises.isNotEmpty() }
 }

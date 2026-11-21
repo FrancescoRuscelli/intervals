@@ -52,6 +52,12 @@ class GymRowsTest {
     }
 
     @Test
+    fun loadBlocksKeepTimeOrder() {
+        val sets = listOf(set(60.0, 5), set(70.0, 5), set(60.0, 5))
+        assertEquals(listOf("60 kg", "70 kg", "60 kg"), loadBlocks(sets, squat).map { it.label })
+    }
+
+    @Test
     fun blocksByLoadPerSide() {
         val bp = Exercise(4, "Block Pulls", listOf(GymField.WEIGHT, GymField.REPS), perSide = true)
         val r = { kg: Double, n: Int -> set(kg, n, Side.RIGHT) }

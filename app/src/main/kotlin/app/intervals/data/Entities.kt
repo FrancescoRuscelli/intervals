@@ -106,10 +106,12 @@ data class GymSetEntity(
     /** Your specifications as JSON, e.g. {"Width":"40"}; empty = none (added in v5). */
     @androidx.room.ColumnInfo(defaultValue = "") val specs: String = "",
     /** The exercise variant, e.g. "deep"; null = the exercise's first (added in v6). */
-    val variant: String? = null,
+    @androidx.room.ColumnInfo(defaultValue = "NULL") val variant: String? = null,
+    /** Kept for compatibility with the v7 database already installed on the phone. */
+    @androidx.room.ColumnInfo(defaultValue = "NULL") val sessionName: String? = null,
 )
 
-/** A group of exercises (name + ordered exercises with optional plans, as JSON). */
+/** A category tag or workout group (name + ordered exercises with optional plans, as JSON). */
 @Entity(tableName = "gym_groups")
 data class GymGroupEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

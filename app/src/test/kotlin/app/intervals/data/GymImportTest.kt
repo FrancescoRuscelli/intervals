@@ -87,19 +87,16 @@ class GymImportTest {
     }
 
     @Test
-    fun variantsRenameMergeAndReorder() = runTest {
+    fun variantsRenameAndReorder() = runTest {
         val F = listOf(app.intervals.core.GymField.WEIGHT, app.intervals.core.GymField.REPS)
         val deep = repo.addExercise(app.intervals.core.Exercise(name = "Barbell Deep Squat", fields = F))
-        val normal = repo.addExercise(app.intervals.core.Exercise(name = "Barbell Squat", fields = F))
         repo.addSets(listOf(
             app.intervals.core.GymSet(exerciseId = deep, day = "2026-11-17", order = 0, weightKg = 70.0, reps = 5),
-            app.intervals.core.GymSet(exerciseId = normal, day = "2026-11-17", order = 0, weightKg = 90.0, reps = 5),
+            app.intervals.core.GymSet(exerciseId = deep, day = "2026-11-17", order = 1, weightKg = 90.0, reps = 5, variant = "normal"),
         ))
         // the deep one becomes "Squat" with variants; its old sets have none = the first, "deep"
         val squat = repo.exercises.first().first { it.id == deep }.copy(name = "Squat", variants = listOf("deep", "normal"))
         repo.saveExercise(squat, emptyMap(), null)
-        // merge the normal squats in, as "normal"
-        repo.mergeExercises(normal, deep, asVariant = "normal")
         suspend fun day() = repo.exerciseDay(deep, "2026-11-17").first().map { it.weightKg to it.variant }
         assertEquals(listOf(70.0 to "deep", 90.0 to "normal"), day())
         assertEquals(mapOf<String?, Int>("deep" to 1, "normal" to 1), repo.variantCounts(deep).first())
@@ -110,17 +107,16 @@ class GymImportTest {
     }
 
     @Test
-    fun groupsFollowMergesAndDeletes() = runTest {
+    fun groupsFollowDeletes() = runTest {
         val F = listOf(app.intervals.core.GymField.WEIGHT, app.intervals.core.GymField.REPS)
         val a = repo.addExercise(app.intervals.core.Exercise(name = "A", fields = F))
         val b = repo.addExercise(app.intervals.core.Exercise(name = "B", fields = F))
         val c = repo.addExercise(app.intervals.core.Exercise(name = "C", fields = F))
         repo.addGroup(app.intervals.core.GymGroup(name = "Legs", items = listOf(a, b, c).map { app.intervals.core.GroupItem(it) }))
         repo.addGroup(app.intervals.core.GymGroup(name = "Only B", items = listOf(app.intervals.core.GroupItem(b))))
-        repo.mergeExercises(b, a)   // B into A: Legs already has A, so B just goes; "Only B" gets A
         repo.deleteExercise(c)
         val g = repo.groups.first().associate { it.name to it.items.map { i -> i.exerciseId } }
-        assertEquals(mapOf("Legs" to listOf(a), "Only B" to listOf(a)), g)
+        assertEquals(mapOf("Legs" to listOf(a, b), "Only B" to listOf(b)), g)
     }
 
     @Test
@@ -167,6 +163,7 @@ class GymImportTest {
         val f = listOf(app.intervals.core.GymField.WEIGHT, app.intervals.core.GymField.REPS)
         val a = repo.addExercise(app.intervals.core.Exercise(name = "Deep Squat", fields = f))
         val b = repo.addExercise(app.intervals.core.Exercise(name = "Deadlift", fields = f))
+        assertFailsWith<IllegalArgumentException> { repo.addGroup(app.intervals.core.GymGroup(name = "", items = listOf(app.intervals.core.GroupItem(a)))) }
         val gid = repo.addGroup(app.intervals.core.GymGroup(name = "Legs", items = listOf(app.intervals.core.GroupItem(a), app.intervals.core.GroupItem(b, 4))))
         repo.updateGroup(repo.groups.first().single().copy(name = "Legs A"))
         assertEquals(listOf("Legs A"), repo.groups.first().map { it.name })
@@ -179,14 +176,12 @@ class GymImportTest {
     }
 
     @Test
-    fun mergeAndDeleteExercises() = runTest {
+    fun updateAndDeleteExercise() = runTest {
         val f = listOf(app.intervals.core.GymField.WEIGHT, app.intervals.core.GymField.REPS)
         val a = repo.addExercise(app.intervals.core.Exercise(name = "Block Pulls", fields = f))
-        val b = repo.addExercise(app.intervals.core.Exercise(name = "Block Pull (5sec)", fields = f))
-        val s = app.intervals.core.GymSet(exerciseId = b, day = "2026-03-02", order = 0, weightKg = 40.0, reps = 7, note = "5 s")
+        val s = app.intervals.core.GymSet(exerciseId = a, day = "2026-03-02", order = 0, weightKg = 40.0, reps = 7, note = "5 s")
         repo.addSets(listOf(s, s.copy(weightKg = 42.0)))
-        repo.addSets(listOf(s.copy(exerciseId = a, day = "2026-03-03")))
-        repo.mergeExercises(from = b, into = a)
+        repo.addSets(listOf(s.copy(day = "2026-03-03")))
         assertEquals(3, repo.exerciseAll(a).first().size)
         assertEquals(listOf("Block Pulls"), repo.exercises.first().map { it.name })
         assertEquals(3 to "2026-03-02", repo.exerciseCounts.first()[a])

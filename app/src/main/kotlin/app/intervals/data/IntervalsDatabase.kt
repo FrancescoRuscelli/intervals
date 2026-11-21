@@ -15,8 +15,8 @@ import androidx.room.RoomDatabase
         WorkoutEntity::class, SessionEntity::class, LoggedValueEntity::class, SettingsEntity::class,
         ExerciseEntity::class, GymSetEntity::class, GymGroupEntity::class, GymDayNoteEntity::class,
     ],
-    version = 6,
-    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4), AutoMigration(from = 4, to = 5), AutoMigration(from = 5, to = 6)],
+    version = 8,
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4), AutoMigration(from = 4, to = 5), AutoMigration(from = 5, to = 6), AutoMigration(from = 6, to = 7), AutoMigration(from = 7, to = 8)],
     exportSchema = true,
 )
 abstract class IntervalsDatabase : RoomDatabase() {
