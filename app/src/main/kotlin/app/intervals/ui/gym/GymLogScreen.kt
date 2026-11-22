@@ -577,16 +577,20 @@ private fun SpecTiles(
         }
         specs.filter { it.isChoice }.forEach { sp ->
             Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(p.surface).padding(12.dp)) {
-                Text(sp.name + if (sp.multiple) " \u00B7 tap again for \u00D72" else "", color = p.muted, fontSize = 13.sp)
+                Text(sp.name + if (sp.multiple) " \u00B7 hold for one more" else "", color = p.muted, fontSize = 13.sp)
                 FlowRow(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     sp.choices.forEach { c ->
-                        // "several" (e.g. bands): tap = ×1, ×2, none; else one choice, tap again to clear
+                        // "several" (e.g. bands): tap = on / off, long press = one more; else one choice, tap again to clear
                         val n = if (sp.multiple) sp.counts(values[sp.name]).firstOrNull { it.first == c }?.second ?: 0 else if (values[sp.name] == c) 1 else 0
                         val on = n > 0
                         val color = sp.colors[c]?.let { Color(it) }
                         Row(
                             Modifier.clip(RoundedCornerShape(12.dp)).background(if (on) p.accent else p.bg)
-                                .clickable { onChange(sp.name, if (sp.multiple) sp.tap(values[sp.name], c) else if (on) null else c) }
+                                .combinedClickable(
+                                    onClick = { onChange(sp.name, if (sp.multiple) sp.tap(values[sp.name], c) else if (on) null else c) },
+                                    onLongClick = if (sp.multiple) ({ onChange(sp.name, sp.tap(values[sp.name], c, more = true)) }) else null,
+                                    onLongClickLabel = if (sp.multiple) "Add one more $c" else null,
+                                )
                                 .padding(horizontal = 12.dp, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {

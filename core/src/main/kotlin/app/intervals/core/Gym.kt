@@ -42,10 +42,11 @@ data class Spec(
             parts.filter { it !in choices }.distinct().map { o -> o to parts.count { it == o } } // values no longer in the list are kept
     }
 
-    /** Tapping a choice of a "several" spec: none → ×1 → ×2 → none; null when nothing is left. */
-    fun tap(value: String?, choice: String): String? {
+    /** A choice of a "several" spec: a tap puts it on (×1) or takes it off, [more] (a long press) adds one more; null when nothing is left. */
+    fun tap(value: String?, choice: String, more: Boolean = false): String? {
         val c = counts(value).toMap().toMutableMap()
-        val n = ((c[choice] ?: 0) + 1) % 3
+        val had = c[choice] ?: 0
+        val n = if (more) had + 1 else if (had > 0) 0 else 1
         if (n == 0) c.remove(choice) else c[choice] = n
         return choices.plus(c.keys.filter { it !in choices }).flatMap { k -> List(c[k] ?: 0) { k } }.joinToString("+").ifEmpty { null }
     }

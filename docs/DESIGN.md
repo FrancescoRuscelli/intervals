@@ -124,7 +124,7 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
   - Weight can be **+ added** or **− assist** (e.g. Deloaded One Arm Pull-Up: weight taken off).
   - **Left and right apart**: one exercise, each set is L or R; "Both" logs one set per side with the same values;
     after a set it switches side. Never separate "(Left)" / "(Right)" exercises.
-  - **Bands** (kept simple, not used often): one row of color dots on the log screen, tap to add, tap again for ×2;
+  - **Bands** (kept simple, not used often): one row of color dots on the log screen, tap to add or remove, long press for one more (×2);
     shown strongest → lightest (green, purple, black, red, yellow). No band picker screen, no bands graph or records.
   - **Rest clock counts up** (not a countdown), starts when a set is logged. Each exercise has its own rest target:
     at the target it buzzes / notifies, then keeps counting so you see how long you really rested.
@@ -294,7 +294,7 @@ Safety copies made while changing the phone's gym data by hand (groups, Deep →
   - [x] Gym tab: one page per day (today first, older to the left: swipe or arrows); a card per exercise with
         Set · kg · reps table, identical sets ×N, L R labels, band dots, notes, "last time N sets · top set"
   - [x] Log screen (G2): last time in the header; L / R / Both (after a set it switches side; Both writes L and R);
-        tiles with − / + (weight by the exercise's step, reps 1, time 5 s; tap the number to type), band dots (tap = ×1, ×2, none);
+        tiles with − / + (weight by the exercise's step, reps 1, time 5 s; tap the number to type), band dots (tap = on / off, long press = one more);
         Log set; rest clock counting up from the last set today, buzz once at the rest target (VIBRATE), real rest saved on the set;
         the day's sets ("rested 2:10", note); tap a set: quick tags (Max, Bad form, Assisted, Failed, +½ rep), note, edit values, delete (asks)
         - shortcut: the rest clock is in memory, a rest across an app restart is not saved
