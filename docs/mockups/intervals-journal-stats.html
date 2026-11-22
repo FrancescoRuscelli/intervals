@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Intervals · Opening Stats</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --board: light-dark(#eeedf4,#121216);
+    --bg: light-dark(#f6f5fa,#09090c);
+    --surface: light-dark(#fff,#1a1c21);
+    --line: light-dark(#e2e0ea,#30323a);
+    --ink: light-dark(#17151f,#f2f3f5);
+    --muted: light-dark(#5e5a6b,#a4a9b3);
+    --accent: light-dark(#6d28d9,#7c3aed);
+    --accent-ink: light-dark(#5b21b6,#c4b1ff);
+    --tint: light-dark(#ede7fb,#2a2340);
+    --pink: light-dark(#b41d60,#ff77af);
+    --yellow: light-dark(#8c5800,#ffd264);
+    --legs: light-dark(#b9acf5,#a597eb);
+    --shoulders: light-dark(#8adaca,#81d2c3);
+    --back: light-dark(#a7c9f2,#9abcdf);
+    --grip: light-dark(#f4bacf,#eaa9c1);
+    color: var(--ink); background: var(--board);
+    font: 14px/1.35 Roboto,system-ui,sans-serif;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body,h1,h2,h3,h4,p { margin: 0; }
+  button,input { color: inherit; font: inherit; }
+  button { border: 0; background: none; cursor: pointer; }
+  button:disabled { opacity: .4; cursor: default; }
+  :is(button,input,summary):focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  small { font-size: 12px; color: var(--muted); }
+  .board { width: min(100%,900px); padding: 23px 16px; margin: auto; }
+  h1 { font-size: clamp(23px,3vw,32px); letter-spacing: -.035em; margin: 0 0 17px; }
+  .options { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+  .option > header { min-height: 62px; margin: 0 2px; }
+  .option > header h2 { font-size: 16px; }
+  .option > header p { margin: 4px 0 10px; color: var(--muted); font-size: 13px; }
+  .phone { display: flex; flex-direction: column; height: clamp(520px,calc(100vh - 145px),720px); overflow: clip; background: var(--bg); border: 1px solid var(--line); border-radius: 21px; box-shadow: 0 9px 22px light-dark(#32255618,#0005); }
+  .app { display: grid; grid-template-columns: minmax(0,1fr); align-content: start; flex: 1; min-height: 0; overflow: hidden auto; scrollbar-width: thin; gap: 5px; padding: 10px 12px 12px; }
+  .header,.month,.date-head,.card-head,.stat-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+  .header { min-height: 40px; }
+  .header h3 { flex: 1; font-size: 24px; letter-spacing: -.035em; }
+  .header .sub { display: grid; flex: 1; }
+  .action { min-height: 34px; border-radius: 8px; padding: 4px 8px; color: var(--accent-ink); font-weight: 650; font-size: 13px; }
+  .action.fill { background: var(--tint); }
+  .icon { display: grid; place-items: center; align-content: center; position: relative; min-width: 35px; min-height: 33px; border-radius: 8px; color: var(--muted); font-size: 18px; }
+  .icon.active,.icon[aria-expanded=true] { background: var(--tint); color: var(--accent-ink); }
+  .icon.active::after { content: ""; position: absolute; top: 3px; inset-inline-end: 3px; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+  .glass { position: relative; width: 12px; height: 12px; margin: 0 2px 2px 0; border: 2px solid currentColor; border-radius: 50%; }
+  .glass::after { content: ""; position: absolute; width: 6px; height: 2px; top: 8px; left: 7px; border-radius: 1px; background: currentColor; transform: rotate(45deg); }
+  .month .search-trigger { margin-inline-end: auto; }
+  .month strong { min-width: 106px; text-align: center; font-size: 13px; }
+  .search-row { display: flex; gap: 4px; align-items: center; }
+  .search,.fields input { width: 100%; min-width: 0; min-height: 36px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 5px 8px; font-size: 16px; }
+  .summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 7px; padding: 2px 3px; text-align: start; color: var(--muted); font-size: 11px; }
+  .summary strong { color: var(--ink); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .summary span + span { border-inline-start: 1px solid var(--line); padding-inline-start: 7px; }
+  button.summary { min-height: 34px; justify-content: flex-start; align-items: center; padding: 4px 7px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+  .summary b { margin-inline-start: auto; color: var(--accent-ink); font-size: 12px; white-space: nowrap; }
+  .calendar { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); justify-items: center; align-items: center; padding: 4px 3px; background: var(--surface); border: 1px solid var(--line); border-radius: 11px; font-variant-numeric: tabular-nums; }
+  .calendar > small { font-size: 11px; padding-bottom: 2px; }
+  .date { display: grid; justify-items: center; align-content: center; gap: 2px; width: min(100%,37px); min-height: 30px; padding: 0; border-radius: 50%; font-size: 13px; }
+  .date.has,.date[aria-pressed=true] { font-weight: 700; }
+  .date[aria-pressed=true],.date.hit { background: var(--tint); color: var(--accent-ink); }
+  .date.hit { box-shadow: inset 0 0 0 1px var(--accent); }
+  .date.dim { color: var(--muted); }
+  .mini-strip,.strip { display: flex; gap: 1px; border-radius: 4px; overflow: clip; }
+  .mini-strip { width: 26px; height: 4px; }
+  .strip { min-height: 16px; }
+  .strip span { padding: 0 4px; color: #241d34; font-size: 10px; font-weight: 750; }
+  .legs { background: var(--legs); } .shoulders { background: var(--shoulders); }
+  .back-lift { background: var(--back); } .grip { background: var(--grip); }
+  .interval-dots { display: flex; gap: 2px; }
+  .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--pink); }
+  .dot.stopped,.rail.stopped { background: var(--yellow); }
+  .stack { display: grid; gap: 5px; }
+  .date-head { min-height: 34px; }
+  .date-head h4,.card-head strong { font-size: 13px; }
+  .card { display: grid; grid-template-columns: 4px minmax(0,1fr); gap: 7px; width: 100%; padding: 6px 7px; text-align: start; background: var(--surface); border-radius: 11px; }
+  .card-body { display: grid; gap: 3px; }
+  .card-head { flex-wrap: wrap; }
+  .rail { display: flex; flex-direction: column; height: 42px; border-radius: 3px; overflow: clip; background: var(--pink); }
+  .lift-line { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+  .lift-line strong { color: var(--ink); }
+  .note { font-style: italic; }
+  details { position: relative; }
+  summary { display: grid; place-items: center; min-width: 35px; min-height: 32px; cursor: pointer; border-radius: 8px; list-style: none; color: var(--accent-ink); font-size: 20px; }
+  summary::-webkit-details-marker { display: none; }
+  .day-menu { position: absolute; z-index: 2; inset-inline-end: 0; inset-block-end: 100%; width: max-content; padding: 3px; background: var(--surface); border: 1px solid var(--line); border-radius: 9px; }
+  details:not([open]) .day-menu { display: none; }
+  .row-button,.stat-card { display: grid; gap: 4px; width: 100%; text-align: start; padding: 9px; border-radius: 10px; background: var(--surface); }
+  .row-button { min-height: 44px; }
+  .stat-card { gap: 9px; }
+  .selectors { display: flex; gap: 4px; padding: 3px; background: var(--surface); border-radius: 9px; }
+  .selectors button { flex: 1; min-height: 35px; border-radius: 6px; font-size: 12px; font-weight: 650; }
+  .selectors [aria-pressed=true] { color: var(--accent-ink); background: var(--tint); }
+  .stat-tiles { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 5px; }
+  .stat-tiles > div { display: grid; gap: 2px; padding: 7px; background: var(--surface); border-radius: 9px; }
+  .stat-tiles strong { font-size: 17px; }
+  .ranking { display: grid; gap: 4px; }
+  .bar-track { min-height: 5px; background: var(--tint); border-radius: 4px; overflow: clip; }
+  .bar-mark { height: 5px; background: var(--accent); border-radius: 4px; }
+  .fields { display: flex; gap: 6px; margin-bottom: 6px; }
+  .fields label { min-width: 0; flex: 1; color: var(--muted); font-size: 12px; }
+  .fields input { margin-top: 3px; }
+  .save { width: 100%; min-height: 44px; border-radius: 9px; background: var(--accent); color: white; font-weight: 700; }
+  .nav { display: grid; flex: none; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 2px; border-top: 1px solid var(--line); padding: 4px; background: var(--surface); }
+  .nav button { display: grid; justify-items: center; align-content: center; gap: 2px; min-height: 45px; color: var(--muted); border-radius: 8px; font-size: 11px; font-weight: 650; }
+  .nav span { font-size: 15px; line-height: 1.1; }
+  .nav [aria-current=page] { background: var(--tint); color: var(--accent-ink); }
+  @media(max-width:600px) { .board { padding: 16px 7px; } .options { grid-template-columns: minmax(0,410px); justify-content: center; } .option > header { min-height: auto; } }
+  @media(pointer:coarse) { .date,.icon,.action,summary,.search,button.summary,.selectors button { min-height: 44px; } .date { width: 100%; } .icon { min-width: 44px; } }
+</style>
+</head>
+<body>
+<main class="board">
+  <h1>Intervals · Opening Stats</h1>
+  <div id="options" class="options"></div>
+</main>
+<script>
+  const exercises = [
+    { name: "Bulgarian Squat", abbr: "BS", tag: "Legs", color: "legs", kg: 60, reps: 5 },
+    { name: "Overhead Press", abbr: "OP", tag: "Shoulders", color: "shoulders", kg: 30, reps: 8 },
+    { name: "Deadlift", abbr: "DL", tag: "Back", color: "back-lift", kg: 100, reps: 4 },
+    { name: "Finger Pinch", abbr: "FP", tag: "Grip", color: "grip", kg: 18, reps: 6 },
+  ];
+  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const nav = { Journal: "▦", Intervals: "◷", Gym: "↔" };
+  const seedSets = (id, count, values = {}) => Array.from({ length: count }, () => ({ id, kg: exercises[id].kg, reps: exercises[id].reps, ...values }));
+  const sample = {
+    "10-09": { gym: seedSets(0, 4) },
+    "10-23": { gym: seedSets(1, 4), timers: [{ name: "Hangboard", minutes: 12, time: "18:30", rounds: 4 }] },
+    "11-03": { gym: seedSets(3, 3) }, "11-07": { gym: seedSets(1, 4) },
+    "11-16": { gym: seedSets(0, 3) },
+    "11-17": { timers: [{ name: "Bike intervals", minutes: 18, time: "19:00", rounds: 6 }] },
+    "11-19": { gym: seedSets(1, 3) },
+    "11-20": { gym: seedSets(3, 4), timers: [{ name: "Hangboard", minutes: 10, time: "17:45", rounds: 3, stopped: true }] },
+    "11-21": { gym: seedSets(2, 4) },
+    "11-22": {
+      gym: [
+        ...seedSets(0, 1, { variant: "Deep", side: "L" }),
+        ...seedSets(0, 1, { variant: "Deep", side: "L", reps: 4 }),
+        ...seedSets(0, 1, { variant: "Normal", side: "R", kg: 70 }),
+        ...seedSets(0, 1, { variant: "Deep", side: "L" }),
+        ...seedSets(1, 2),
+      ],
+      timers: [{ name: "Hangboard", minutes: 12, time: "10:40", rounds: 4, note: "Controlled last round" }],
+      prs: 1,
+    },
+  };
+  const keyOf = (month, day) => String(month).padStart(2,"0") + "-" + String(day).padStart(2,"0");
+  const dateOf = (month, day) => new Date(2026, month - 1, day, 12);
+  const monthName = (month, abbreviated = false) => dateOf(month, 1).toLocaleDateString("en-GB", { month: abbreviated ? "short" : "long" });
+  const dateLabel = (month, day) => days[dateOf(month, day).getDay()] + " " + day + " " + monthName(month);
+  const action = (name, attr, filled = false) => '<button type="button" class="action' + (filled ? " fill" : "") + '" ' + attr + ">" + name + "</button>";
+  const totalText = (count, word) => count + " " + word + (count === 1 ? "" : "s");
+  const joinNames = list => [...new Set(list)].join(" · ");
+  const gymSections = sets => [...new Set(sets.map(set => set.id))].map(id => ({ id, ex: exercises[id], sets: sets.filter(set => set.id === id) }));
+
+  function workoutStrip(sections, mini = false) {
+    return '<span class="' + (mini ? "mini-strip" : "strip") + '" aria-hidden="' + mini + '">' +
+      sections.map(({ ex, sets }) => '<span class="' + ex.color + '" style="flex:' + sets.length + '">' + (mini ? "" : ex.abbr + " " + sets.length) + "</span>").join("") + "</span>";
+  }
+
+  const today = "11-22";
+  const choices = [
+    { key: "header", title: "A · Stats in the header", desc: "Tap Stats next to Settings. It opens the general Stats screen." },
+    { key: "summary", title: "B · Stats on the monthly summary", desc: "Tap Stats on the totals row to open the month shown in Journal." },
+  ];
+
+  function mount(choice) {
+    const panel = document.createElement("section");
+    panel.className = "option";
+    panel.dataset.layout = choice.key;
+    panel.innerHTML = "<header><h2>" + choice.title + "</h2><p>" + choice.desc + '</p></header><div class="phone"><div class="app"></div>' +
+      '<nav class="nav" aria-label="' + choice.title + ' navigation">' + Object.entries(nav).map(([label, glyph]) =>
+        '<button type="button" data-tab="' + label + '"><span aria-hidden="true">' + glyph + "</span>" + label + "</button>").join("") + "</nav></div>";
+    document.getElementById("options").append(panel);
+    const app = panel.querySelector(".app");
+    const navigation = panel.querySelector(".nav");
+    const data = structuredClone(sample);
+    let tab = "Journal";
+    let month = 11;
+    let day = 22;
+    let query = "";
+    let searchOpen = false;
+    let screen = null;
+    let statsStart = today;
+    let period = "Week";
+    let kind = "Intervals";
+    let metric = "Sets";
+
+    const selected = () => keyOf(month, day);
+    const gym = key => data[key]?.gym || [];
+    const timers = key => data[key]?.timers || [];
+    const daysInMonth = () => Object.keys(data).filter(key => Number(key.slice(0,2)) === month);
+    const allowed = day => keyOf(month, day) <= today;
+    const icon = (label, attr, glyph) => '<button type="button" class="icon" aria-label="' + label + '" ' + attr + ">" + glyph + "</button>";
+
+    function monthSummary() {
+      const days = daysInMonth();
+      const sets = days.flatMap(gym);
+      const count = days.filter(key => gym(key).length).length + days.flatMap(timers).length;
+      const labels = [totalText(count, "session"), days.length + (days.length === 1 ? " day trained" : " days trained"), totalText(sets.length, "gym set")];
+      const inner = labels.map(label => {
+        const split = label.indexOf(" ");
+        return "<span><strong>" + label.slice(0,split) + "</strong>" + label.slice(split) + "</span>";
+      }).join("");
+      return choice.key === "summary" ? '<button type="button" class="summary" data-open-stats aria-label="Stats for ' + monthName(month) +
+        " 2026 · " + labels.join(" · ") + '">' + inner + '<b aria-hidden="true">Stats ›</b></button>' : '<div class="summary">' + inner + "</div>";
+    }
+
+    function calendar() {
+      const needle = query.trim().toLowerCase();
+      const cells = Array.from({ length: new Date(2026,month,0).getDate() }, (_, i) => {
+        const n = i + 1;
+        const key = keyOf(month,n);
+        const entries = gymSections(gym(key));
+        const intervals = timers(key);
+        const hit = needle && (entries.some(({ ex }) => (ex.name + " " + ex.tag).toLowerCase().includes(needle)) ||
+          intervals.some(timer => timer.name.toLowerCase().includes(needle)));
+        const classes = (entries.length || intervals.length ? " has" : "") + (hit ? " hit" : needle ? " dim" : "");
+        return '<button type="button" class="date' + classes + '" data-day="' + n + '" aria-pressed="' + (n === day) +
+          '" aria-label="' + dateLabel(month,n) + (hit ? ", matches filter" : "") + '"' + (allowed(n) ? "" : " disabled") + ">" + n +
+          (entries.length ? workoutStrip(entries,true) : "") +
+          (intervals.length ? '<span class="interval-dots" aria-hidden="true">' + intervals.map(timer => '<span class="dot' +
+            (timer.stopped ? " stopped" : "") + '"></span>').join("") + "</span>" : "") + "</button>";
+      }).join("");
+      return '<div class="calendar" role="group" aria-label="' + monthName(month) + ' 2026">' +
+        ["Mo","Tu","We","Th","Fr","Sa","Su"].map(label => "<small>" + label + "</small>").join("") +
+        '<span aria-hidden="true"></span>'.repeat((dateOf(month,1).getDay() + 6) % 7) + cells + "</div>";
+    }
+
+    function gymCard(key) {
+      const sets = gym(key);
+      if (!sets.length) return "";
+      const sections = gymSections(sets);
+      const groups = joinNames(sections.map(({ ex }) => ex.tag));
+      const prs = data[key].prs || 0;
+      return '<button type="button" class="card" data-gym-day="' + key + '"><span class="rail" aria-hidden="true">' +
+        sections.map(({ ex, sets }) => '<span class="' + ex.color + '" style="flex:' + sets.length + '"></span>').join("") +
+        '</span><span class="card-body"><span class="card-head"><strong>Gym · ' + groups + "</strong><small>" +
+        totalText(sets.length, "set") + (prs ? " · " + prs + " PR" : "") + "</small></span>" + workoutStrip(sections) +
+        sections.map(({ ex, sets }) => {
+          const runs = [];
+          for (const set of sets) {
+            const label = [set.side, set.variant, set.kg + " × " + set.reps].filter(Boolean).join(" · ");
+            if (runs.at(-1)?.label === label) runs.at(-1).count++;
+            else runs.push({ label, count: 1 });
+          }
+          return '<span class="lift-line"><strong>' + ex.name + "</strong> " + runs.map(({ label, count }) =>
+            label + (count > 1 ? " × " + count : "")).join(", ") + "</span>";
+        }).join("") + "</span></button>";
+    }
+
+    function timerCards(key) {
+      return timers(key).map(timer => '<div class="card"><span class="rail' + (timer.stopped ? " stopped" : "") +
+        '" aria-hidden="true"></span><div class="card-body"><div class="card-head"><strong>' + timer.name + "</strong><small>" + timer.time + " · " + timer.minutes +
+        ' min</small></div><span class="lift-line">' + (timer.stopped ? "Stopped" : "Completed") + " · " + totalText(timer.rounds, "round") +
+        "</span>" + (timer.note ? '<small class="note">“' + timer.note + '”</small>' : "") + "</div></div>").join("");
+    }
+
+    function journal() {
+      const headerStats = choice.key === "header" ? action("Stats","data-open-stats") : "";
+      const searchId = choice.key + "-filter";
+      const search = '<button type="button" class="icon search-trigger' + (query.trim() ? " active" : "") +
+        '" data-filter aria-label="Filter calendar' + (query.trim() ? ', active filter' : '') +
+        '" aria-expanded="' + searchOpen + '" aria-controls="' + searchId + '"><span class="glass" aria-hidden="true"></span></button>';
+      const filters = '<div class="search-row" id="' + searchId + '"' + (searchOpen ? "" : " hidden") +
+        '><input class="search" type="search" data-query placeholder="Exercise or tag" aria-label="Filter by exercise or tag">' +
+        (query.trim() ? action("Clear","data-clear") : "") + "</div>";
+      const monthRow = '<div class="month">' + search + icon("Previous month",'data-month="10"' + (month === 10 ? " disabled" : ""),"‹") +
+        "<strong>" + monthName(month) + " 2026</strong>" + icon("Next month",'data-month="11"' + (month === 11 ? " disabled" : ""),"›") + "</div>";
+      const key = selected();
+      const cards = gymCard(key) + timerCards(key);
+      const label = dateLabel(month,day);
+      return '<div class="header"><h3>Journal</h3>' + headerStats + icon("Settings","data-settings","⚙") + "</div>" +
+        monthRow + filters + monthSummary() + calendar() + '<div class="date-head"><h4>' + label +
+        '</h4><details><summary aria-label="Actions for ' + label + '">⋯</summary><div class="day-menu">' +
+        action("Add exercise","data-add") + '</div></details></div><div class="stack">' +
+        (cards || "<small>No sessions this day.</small>") + "</div>";
+    }
+
+    function selectors(labels,value,attribute,label) {
+      return '<div class="selectors" role="group" aria-label="' + label + '">' + labels.map(name =>
+        '<button type="button" data-' + attribute + '="' + name + '" aria-pressed="' + (value === name) + '">' + name + "</button>").join("") + "</div>";
+    }
+
+    function stats() {
+      const mo = Number(statsStart.slice(0,2));
+      const date = Number(statsStart.slice(3));
+      const first = dateOf(mo,date - (dateOf(mo,date).getDay() + 6) % 7);
+      const end = dateOf(mo,date);
+      const keys = Object.keys(data).filter(key => {
+        if (period === "Year") return true;
+        if (period === "Month") return Number(key.slice(0,2)) === mo;
+        const logged = dateOf(Number(key.slice(0,2)),Number(key.slice(3)));
+        return logged >= first && logged <= end;
+      });
+      const label = period === "Year" ? "2026" : period === "Month" ? monthName(mo) + " 2026" :
+        first.toLocaleDateString("en-GB",{day:"numeric",month:"short"}) + " – " + end.toLocaleDateString("en-GB",{day:"numeric",month:"short"});
+      const sessions = keys.flatMap(timers);
+      const sets = keys.flatMap(gym);
+      const tiles = pairs => '<div class="stat-tiles">' + pairs.map(([label,value]) => "<div><small>" + label + "</small><strong>" + value + "</strong></div>").join("") + "</div>";
+      const rank = rows => rows.length ? rows.map(([name,value]) => '<div class="ranking"><div class="stat-row"><strong>' + name +
+        "</strong><small>" + value + '</small></div><div class="bar-track" aria-hidden="true"><div class="bar-mark" style="width:' +
+        100 * value / Math.max(1,rows[0][1]) + '%"></div></div></div>').join("") : "<small>No workouts this period.</small>";
+      const interval = kind === "Gym" ? "" : tiles([
+        ["Time",sessions.reduce((n,s) => n + s.minutes,0) + " min"],
+        ["Sessions",sessions.length],
+        ["Completed",sessions.length ? Math.round(100 * sessions.filter(s => !s.stopped).length / sessions.length) + "%" : "—"],
+      ]) + '<section class="stat-card"><h4>Most done</h4>' + rank([...new Set(sessions.map(s => s.name))].map(name =>
+        [name,sessions.filter(s => s.name === name).length]).sort((a,b) => b[1] - a[1])) + "</section>";
+      const workout = kind === "Intervals" ? "" : tiles([
+        ["Gym days",keys.filter(key => gym(key).length).length],
+        ["Sets",sets.length],
+        ["Exercises",gymSections(sets).length],
+      ]) + '<section class="stat-card"><h4>Most trained</h4>' + selectors(["Sets","Days","Reps"],metric,"metric","Ranking") +
+        rank(gymSections(sets).map(({ id,ex,sets }) => [ex.name,metric === "Sets" ? sets.length : metric === "Days" ?
+          keys.filter(key => gym(key).some(set => set.id === id)).length : sets.reduce((n,set) => n + set.reps,0)]).sort((a,b) => b[1] - a[1])) + "</section>";
+      return '<div class="header">' + icon("Back to Journal","data-back","‹") + '<div class="sub"><h3>Stats</h3><small>' + label + "</small></div></div>" +
+        selectors(["Intervals","Gym","Both"],kind,"kind","Workout type") + selectors(["Week","Month","Year"],period,"period","Period") + interval + workout;
+    }
+
+    function library() {
+      return exercises.map((ex,index) => '<button type="button" class="row-button" data-exercise="' + index + '"><strong>' +
+        ex.name + "</strong><small>" + ex.tag + "</small></button>").join("");
+    }
+
+    function render() {
+      let html;
+      if (screen?.type === "stats") html = stats();
+      else if (screen) {
+        const back = '<div class="header">' + icon("Back","data-back","‹");
+        if (screen.type === "settings") html = back + '<h3>Settings</h3></div><div class="stat-card"><strong>Appearance</strong><small>System</small></div>';
+        else if (screen.type === "picker") html = back + '<h3>Add exercise</h3></div><small>' + dateLabel(month,day) + "</small>" + library();
+        else if (screen.type === "day") html = back + '<h3>Gym</h3></div><small>' + dateLabel(month,day) + "</small>" + library();
+        else {
+          const ex = exercises[screen.id];
+          html = back + "<h3>" + ex.name + '</h3></div><form data-log><div class="fields"><label>Weight (kg)<input name="kg" required type="number" step="any" value="' + ex.kg +
+            '"></label><label>Reps<input name="reps" required type="number" min="0" value="' + ex.reps + '"></label></div><button class="save" type="submit">Log set</button></form>';
+        }
+      } else if (tab === "Gym") html = '<div class="header"><h3>Gym</h3></div>' + library();
+      else if (tab === "Intervals") html = '<div class="header"><h3>Intervals</h3></div><div class="row-button">Hangboard · 12 min</div><div class="row-button">Bike intervals · 18 min</div>';
+      else html = journal();
+      app.innerHTML = html;
+      const input = app.querySelector("[data-query]");
+      if (input) input.value = query;
+      navigation.hidden = Boolean(screen);
+      for (const button of navigation.querySelectorAll("button")) {
+        if (button.dataset.tab === tab) button.setAttribute("aria-current","page");
+        else button.removeAttribute("aria-current");
+      }
+    }
+
+    function update(focus) {
+      render();
+      if (focus) app.querySelector(focus)?.focus({preventScroll:true});
+    }
+
+    panel.addEventListener("click",event => {
+      const button = event.target.closest("button");
+      if (!button || button.disabled || button.type === "submit") return;
+      const d = button.dataset;
+      let focus;
+      if (d.tab) tab = d.tab;
+      else if ("openStats" in d) {
+        statsStart = choice.key === "summary" ? selected() : today;
+        period = choice.key === "summary" ? "Month" : "Week";
+        screen = { type:"stats" };
+        focus = "[data-back]";
+      } else if ("back" in d) {
+        focus = screen?.type === "stats" ? "[data-open-stats]" : null;
+        screen = null;
+      } else if (d.kind || d.period || d.metric) {
+        if (d.kind) kind = d.kind;
+        if (d.period) period = d.period;
+        if (d.metric) metric = d.metric;
+        const field = d.kind ? "kind" : d.period ? "period" : "metric";
+        focus = '[data-' + field + '="' + d[field] + '"]';
+      } else if ("settings" in d) { screen = { type:"settings" }; focus = "[data-back]"; }
+      else if ("filter" in d) { searchOpen = !searchOpen; focus = searchOpen ? "[data-query]" : "[data-filter]"; }
+      else if ("clear" in d) { query = ""; focus = "[data-query]"; }
+      else if (d.month) { month = Number(d.month); day = month === 11 ? 22 : 23; }
+      else if (d.day) { day = Number(d.day); focus = '[data-day="' + day + '"]'; }
+      else if ("add" in d) { screen = { type:"picker" }; focus = "[data-back]"; }
+      else if (d.gymDay) { screen = { type:"day" }; focus = "[data-back]"; }
+      else if (d.exercise) {
+        screen = { type:"log",id:Number(d.exercise),key:tab === "Gym" ? today : selected() };
+        focus = '[name="kg"]';
+      } else return;
+      if (screen?.type === "stats" || (focus === "[data-open-stats]")) app.scrollTop = 0;
+      update(focus);
+    });
+
+    app.addEventListener("input",event => {
+      if (!event.target.hasAttribute("data-query")) return;
+      query = event.target.value;
+      const caret = event.target.selectionStart;
+      update("[data-query]");
+      app.querySelector("[data-query]").setSelectionRange(caret,caret);
+    });
+    app.addEventListener("keydown",event => {
+      if (event.key !== "Escape") return;
+      if (screen) {
+        const wasStats = screen.type === "stats";
+        screen = null;
+        update(wasStats ? "[data-open-stats]" : null);
+      } else if (searchOpen && event.target.hasAttribute("data-query")) {
+        event.preventDefault();
+        searchOpen = false;
+        update("[data-filter]");
+      }
+    });
+    app.addEventListener("submit",event => {
+      if (!event.target.hasAttribute("data-log")) return;
+      event.preventDefault();
+      const fields = new FormData(event.target);
+      const entry = data[screen.key] ??= {};
+      (entry.gym ??= []).push({ id:screen.id,kg:Number(fields.get("kg")),reps:Number(fields.get("reps")) });
+      screen = null;
+      render();
+    });
+    render();
+  }
+
+  choices.forEach(mount);
+</script>
+</body>
+</html>

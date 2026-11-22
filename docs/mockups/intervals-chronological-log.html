@@ -1,0 +1,293 @@
+<style>
+  #intervals-ordered-log {
+    --log-bg: light-dark(#f6f5fa, #000);
+    --log-surface: light-dark(#fff, #1a1c21);
+    --log-line: light-dark(#e2e0ea, #2b2d34);
+    --log-text: light-dark(#17151f, #f2f3f5);
+    --log-muted: light-dark(#5e5a6b, #9aa0aa);
+    --log-accent: light-dark(#6d28d9, #7c3aed);
+    --log-accent-ink: light-dark(#5b21b6, #c4b1ff);
+    --log-tint: light-dark(#ede7fb, #2a2340);
+    --log-left: light-dark(#a61b50, #ff8ab3);
+    --log-left-bg: light-dark(#ffe7f0, #3a1428);
+    --log-right: light-dark(#00594d, #a4f5e8);
+    --log-right-bg: light-dark(#e0f5ef, #0e3b35);
+    display: grid;
+    justify-items: center;
+    padding: 14px 10px;
+    font: 14px/1.35 Roboto, system-ui, sans-serif;
+    color: var(--log-text);
+  }
+  #intervals-ordered-log * { box-sizing: border-box; }
+  #intervals-ordered-log .log-phone {
+    width: min(100%, 390px);
+    border-radius: 24px;
+    border: 1px solid var(--log-line);
+    background: var(--log-bg);
+    overflow: clip;
+    box-shadow: 0 10px 30px light-dark(#17151f12, #0005);
+  }
+  #intervals-ordered-log button {
+    border: 0;
+    font: inherit;
+    color: inherit;
+  }
+  #intervals-ordered-log button:focus-visible { outline: 2px solid var(--log-accent); outline-offset: 2px; }
+  #intervals-ordered-log .log-header { padding: 18px 16px 12px; }
+  #intervals-ordered-log .log-header h2 { margin: 0; font-size: 20px; font-weight: 680; letter-spacing: -.02em; }
+  #intervals-ordered-log .log-tabs {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-bottom: 1px solid var(--log-line);
+    text-align: center;
+    color: var(--log-muted);
+  }
+  #intervals-ordered-log .log-tabs span { padding: 9px 2px 10px; border-bottom: 2px solid transparent; }
+  #intervals-ordered-log .log-tabs [aria-current] { border-color: var(--log-accent); color: var(--log-text); font-weight: 650; }
+  #intervals-ordered-log .log-content { padding: 14px 14px 16px; }
+  #intervals-ordered-log .log-next { display: grid; gap: 10px; }
+  #intervals-ordered-log .log-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  #intervals-ordered-log .log-choice { display: grid; gap: 4px; min-width: 0; }
+  #intervals-ordered-log .log-label { color: var(--log-muted); font-size: 12px; font-weight: 550; }
+  #intervals-ordered-log .log-segment {
+    display: flex;
+    padding: 3px;
+    border-radius: 11px;
+    background: var(--log-surface);
+  }
+  #intervals-ordered-log .log-segment button {
+    flex: 1;
+    padding: 7px 2px;
+    min-width: 0;
+    min-height: 34px;
+    border-radius: 8px;
+    background: transparent;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  #intervals-ordered-log .log-segment [aria-pressed="true"] { background: var(--log-tint); color: var(--log-accent-ink); font-weight: 650; }
+  #intervals-ordered-log .log-value {
+    display: grid;
+    justify-items: center;
+    gap: 3px;
+    padding: 9px 8px 8px;
+    border-radius: 13px;
+    border: 1px solid var(--log-line);
+    background: var(--log-surface);
+  }
+  #intervals-ordered-log .log-value output { font-size: 25px; font-weight: 680; font-variant-numeric: tabular-nums; letter-spacing: -.025em; }
+  #intervals-ordered-log .log-step { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; width: 100%; }
+  #intervals-ordered-log .log-step button {
+    border-radius: 8px;
+    background: var(--log-tint);
+    color: var(--log-accent-ink);
+    min-height: 32px;
+    font-size: 19px;
+  }
+  #intervals-ordered-log .log-actions { display: flex; gap: 8px; }
+  #intervals-ordered-log .log-main, #intervals-ordered-log .log-cancel { min-height: 44px; border-radius: 11px; padding: 8px 16px; font-weight: 650; }
+  #intervals-ordered-log .log-main { flex: 1; background: var(--log-accent); color: #fff; }
+  #intervals-ordered-log .log-cancel { background: var(--log-tint); color: var(--log-accent-ink); }
+  #intervals-ordered-log .log-section { margin-top: 17px; }
+  #intervals-ordered-log .log-section header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 7px; }
+  #intervals-ordered-log .log-section h3 { margin: 0; font-size: 14px; font-weight: 650; }
+  #intervals-ordered-log .log-set-list { list-style: none; display: grid; gap: 5px; padding: 0; margin: 0; }
+  #intervals-ordered-log .log-load {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 12px;
+    min-height: 46px;
+    padding: 6px 9px;
+    border-radius: 10px;
+    border: 1px solid var(--log-line);
+    background: var(--log-surface);
+  }
+  #intervals-ordered-log .log-load-details { display: flex; align-items: center; gap: 7px; min-width: 126px; }
+  #intervals-ordered-log .log-rep-chips { display: flex; flex: 1 1 94px; flex-wrap: wrap; gap: 5px; }
+  #intervals-ordered-log .log-rep-chips button {
+    min-width: 34px;
+    min-height: 32px;
+    padding: 3px 8px;
+    border-radius: 8px;
+    border: 1px solid var(--log-line);
+    background: var(--log-bg);
+    font-variant-numeric: tabular-nums;
+    font-weight: 650;
+  }
+  #intervals-ordered-log .log-rep-chips [aria-pressed="true"] { border-color: var(--log-accent); background: var(--log-tint); color: var(--log-accent-ink); }
+  #intervals-ordered-log .log-result { font-variant-numeric: tabular-nums; font-weight: 650; }
+  #intervals-ordered-log .log-variant { color: var(--log-muted); font-size: 13px; }
+  #intervals-ordered-log .log-side { display: grid; place-items: center; min-width: 23px; min-height: 23px; border-radius: 6px; font-weight: 650; font-size: 12px; }
+  #intervals-ordered-log .log-side[data-side="Left"] { color: var(--log-left); background: var(--log-left-bg); }
+  #intervals-ordered-log .log-side[data-side="Right"] { color: var(--log-right); background: var(--log-right-bg); }
+  @media (pointer: coarse) {
+    #intervals-ordered-log .log-step button, #intervals-ordered-log .log-segment button { min-height: 44px; }
+    #intervals-ordered-log .log-rep-chips button { min-width: 44px; min-height: 44px; }
+  }
+</style>
+
+<div id="intervals-ordered-log" class="viz-dotted-background">
+  <section class="log-phone" aria-label="Intervals Gym Log">
+    <header class="log-header"><h2>Bulgarian Squat</h2></header>
+    <div class="log-tabs" aria-label="Exercise views">
+      <span aria-current="page">Log</span><span>History</span><span>Graph</span><span>Records</span>
+    </div>
+    <div class="log-content">
+      <div class="log-next">
+        <div class="log-controls">
+          <div class="log-choice">
+            <span class="log-label">Side</span>
+            <div class="log-segment" role="group" aria-label="Side">
+              <button type="button" data-side="Left" aria-label="Left" aria-pressed="true">L</button>
+              <button type="button" data-side="Right" aria-label="Right" aria-pressed="false">R</button>
+              <button type="button" data-side="Both" aria-pressed="false">Both</button>
+            </div>
+          </div>
+          <div class="log-choice">
+            <span class="log-label">Variant</span>
+            <div class="log-segment" role="group" aria-label="Variant">
+              <button type="button" data-variant="Deep" aria-pressed="true">Deep</button>
+              <button type="button" data-variant="Normal" aria-pressed="false">Normal</button>
+            </div>
+          </div>
+        </div>
+        <div class="log-controls">
+          <div class="log-value">
+            <span class="log-label">Weight</span>
+            <output data-weight aria-label="Weight">60 kg</output>
+            <div class="log-step">
+              <button type="button" data-step="weight" data-delta="-5" aria-label="Decrease weight">−</button>
+              <button type="button" data-step="weight" data-delta="5" aria-label="Increase weight">+</button>
+            </div>
+          </div>
+          <div class="log-value">
+            <span class="log-label">Reps</span>
+            <output data-reps aria-label="Reps">5</output>
+            <div class="log-step">
+              <button type="button" data-step="reps" data-delta="-1" aria-label="Decrease reps">−</button>
+              <button type="button" data-step="reps" data-delta="1" aria-label="Increase reps">+</button>
+            </div>
+          </div>
+        </div>
+        <div class="log-actions">
+          <button type="button" class="log-cancel" data-cancel hidden>Cancel</button>
+          <button type="button" class="log-main" data-log>Log set</button>
+        </div>
+      </div>
+      <section class="log-section" aria-labelledby="intervals-logged-heading">
+        <header>
+          <h3 id="intervals-logged-heading">Logged sets</h3>
+          <span class="log-label" data-count aria-live="polite">4 sets</span>
+        </header>
+        <ol class="log-set-list" data-sets></ol>
+      </section>
+    </div>
+  </section>
+</div>
+
+<script>
+  (() => {
+    const root = document.getElementById("intervals-ordered-log");
+    const list = root.querySelector("[data-sets]");
+    const log = root.querySelector("[data-log]");
+    const cancel = root.querySelector("[data-cancel]");
+    const sets = [
+      { weight: 60, reps: 5, side: "Left", variant: "Deep" },
+      { weight: 60, reps: 4, side: "Left", variant: "Deep" },
+      { weight: 70, reps: 5, side: "Right", variant: "Normal" },
+      { weight: 60, reps: 5, side: "Left", variant: "Deep" }
+    ];
+    let draft = { ...sets.at(-1) };
+    let nextDraft = null;
+    let editing = null;
+
+    function renderControls() {
+      for (const field of ["side", "variant"]) {
+        root.querySelectorAll("button[data-" + field + "]").forEach(button => {
+          const choice = button.dataset[field];
+          button.setAttribute("aria-pressed", choice === draft[field]);
+          if (field === "side") button.disabled = editing !== null && choice === "Both";
+        });
+      }
+      root.querySelector("[data-weight]").textContent = draft.weight + " kg";
+      root.querySelector("[data-reps]").textContent = draft.reps;
+      log.textContent = editing === null ? "Log set" : "Save set";
+      cancel.hidden = editing === null;
+    }
+
+    function renderSets(focusIndex = null) {
+      const groups = document.createDocumentFragment();
+      let chips;
+      const buttons = sets.map((set, index) => {
+        const previous = sets[index - 1];
+        if (!previous || previous.weight !== set.weight || previous.side !== set.side || previous.variant !== set.variant) {
+          const group = document.createElement("li");
+          group.className = "log-load";
+          group.innerHTML = '<div class="log-load-details"><span class="log-result"></span><span class="log-variant"></span><span class="log-side"></span></div><div class="log-rep-chips"></div>';
+          const [weight, variant, side] = group.firstElementChild.children;
+          weight.textContent = set.weight + " kg";
+          variant.textContent = set.variant;
+          side.textContent = set.side[0];
+          side.dataset.side = set.side;
+          chips = group.lastElementChild;
+          groups.append(group);
+        }
+        const button = document.createElement("button");
+        button.type = "button";
+        button.dataset.edit = index;
+        button.textContent = set.reps;
+        button.setAttribute("aria-label", "Edit set " + (index + 1) + ", " + set.weight + " kilograms, " + set.reps + " reps, " + set.variant + ", " + set.side);
+        button.setAttribute("aria-pressed", index === editing);
+        chips.append(button);
+        return button;
+      });
+      list.replaceChildren(groups);
+      root.querySelector("[data-count]").textContent = sets.length + " sets";
+      if (focusIndex !== null) buttons[focusIndex].focus();
+    }
+
+    function exitEdit() {
+      const index = editing;
+      draft = nextDraft;
+      nextDraft = null;
+      editing = null;
+      renderControls();
+      renderSets(index);
+    }
+
+    root.addEventListener("click", event => {
+      const action = event.target.closest("button");
+      if (!action || action.disabled) return;
+      if (action === log) {
+        if (editing !== null) {
+          sets[editing] = { ...draft };
+          exitEdit();
+        } else {
+          const sides = draft.side === "Both" ? ["Left", "Right"] : [draft.side];
+          sides.forEach(side => sets.push({ ...draft, side }));
+          renderSets();
+        }
+      } else if (action === cancel) {
+        exitEdit();
+      } else if (action.hasAttribute("data-edit")) {
+        if (editing === null) nextDraft = { ...draft };
+        editing = Number(action.dataset.edit);
+        draft = { ...sets[editing] };
+        renderControls();
+        renderSets(editing);
+      } else if (action.dataset.step) {
+        const field = action.dataset.step;
+        draft[field] = Math.max(0, draft[field] + Number(action.dataset.delta));
+        renderControls();
+      } else {
+        for (const field of ["side", "variant"]) {
+          if (action.dataset[field]) draft[field] = action.dataset[field];
+        }
+        renderControls();
+      }
+    });
+    renderControls();
+    renderSets();
+  })();
+</script>

@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Intervals · Journal concepts</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --board: light-dark(#eeedf4,#111115);
+    --bg: light-dark(#f6f5fa,#000);
+    --surface: light-dark(#fff,#1a1c21);
+    --line: light-dark(#e2e0ea,#2d3038);
+    --ink: light-dark(#17151f,#f2f3f5);
+    --muted: light-dark(#5e5a6b,#a4a9b3);
+    --accent: light-dark(#6d28d9,#7c3aed);
+    --accent-ink: light-dark(#5b21b6,#c4b1ff);
+    --tint: light-dark(#ede7fb,#2a2340);
+    --pink: light-dark(#b41d60,#ff77af);
+    --yellow: light-dark(#8c5800,#ffd264);
+    --legs: light-dark(#b9acf5,#a597eb);
+    --shoulders: light-dark(#8adaca,#81d2c3);
+    --back: light-dark(#a7c9f2,#9abcdf);
+    --grip: light-dark(#f4bacf,#eaa9c1);
+    font: 14px/1.35 Roboto,system-ui,sans-serif;
+    background: var(--board);
+    color: var(--ink);
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body, h1, h2, h3, h4, p { margin: 0; }
+  button, input { font: inherit; color: inherit; }
+  button { border: 0; background: none; cursor: pointer; }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button:disabled { cursor: default; opacity: .46; }
+  small { font-size: 12px; color: var(--muted); }
+  .board { width: min(100%,1540px); padding: 24px 18px; margin: auto; }
+  h1 { font-size: clamp(23px,3vw,34px); letter-spacing: -.035em; margin-bottom: 18px; }
+  .grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 18px 13px; }
+  .option { display: flex; flex-direction: column; }
+  .option > header { margin: 0 2px; min-height: 88px; }
+  .option h2 { font-size: 16px; letter-spacing: -.02em; }
+  .option > header p { margin: 6px 0 12px; color: var(--muted); font-size: 13px; }
+  .phone { display: flex; flex-direction: column; overflow: clip; height: clamp(520px,calc(100vh - 195px),730px); background: var(--bg); border: 1px solid var(--line); border-radius: 20px; box-shadow: 0 9px 22px light-dark(#32255618,#0005); }
+  .app { display: grid; align-content: start; gap: 7px; flex: 1; min-height: 0; overflow: auto; scrollbar-width: thin; padding: 13px 12px 10px; }
+  .title { font-size: 25px; line-height: 1.1; letter-spacing: -.035em; font-weight: 750; }
+  .stack { display: grid; gap: 6px; }
+  .row, .card-head, .date-head { display: flex; gap: 7px; align-items: center; justify-content: space-between; }
+  .card-head { flex-wrap: wrap; }
+  .date-head h4, .card-head strong { font-size: 13px; }
+  .segments { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; background: var(--surface); border-radius: 11px; padding: 3px; }
+  .segments button { min-height: 32px; border-radius: 8px; color: var(--muted); font-weight: 650; }
+  .segments [aria-pressed="true"] { background: var(--accent); color: white; }
+  .month-head { display: flex; justify-content: flex-end; align-items: center; gap: 3px; }
+  .month-head button { min-height: 32px; min-width: 33px; border-radius: 8px; font-size: 19px; }
+  .month-head h4 { font-size: 13px; min-width: 112px; text-align: center; }
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .chips button { display: flex; align-items: center; gap: 4px; min-height: 30px; border: 1px solid var(--line); border-radius: 16px; padding: 2px 10px; font-size: 12px; font-weight: 600; }
+  .chips [aria-pressed="true"] { background: var(--tint); color: var(--accent-ink); border-color: var(--accent); }
+  .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--pink); }
+  .dot.gym { background: var(--accent); }
+  .dot.stopped { background: var(--yellow); }
+  .search, .fields input { width: 100%; min-height: 39px; background: var(--surface); border: 1px solid var(--line); border-radius: 9px; padding: 6px 8px; font-size: 14px; }
+  .search::placeholder { color: var(--muted); }
+  .totals { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 5px; }
+  .tile { display: grid; gap: 1px; min-height: 42px; padding: 5px 7px; background: var(--surface); border-radius: 9px; }
+  .tile strong { font-size: 16px; font-variant-numeric: tabular-nums; }
+  .tile small { font-size: 10px; }
+  .calendar { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); align-items: center; justify-items: center; padding: 6px 3px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; font-variant-numeric: tabular-nums; }
+  .calendar > small { padding-bottom: 3px; font-size: 11px; }
+  .date { display: grid; justify-items: center; align-content: center; min-height: 35px; width: min(100%,38px); border-radius: 50%; gap: 2px; padding: 0; font-size: 13px; }
+  .date.has, .date[aria-pressed="true"] { font-weight: 700; }
+  .date.today { outline: 1px solid var(--accent); }
+  .date[aria-pressed="true"], .date.hit { background: var(--tint); color: var(--accent-ink); }
+  .date.hit { box-shadow: inset 0 0 0 1px var(--accent); }
+  .date.dim { color: var(--muted); font-weight: 400; }
+  .mini-strip, .strip { display: flex; overflow: clip; border-radius: 5px; gap: 1px; }
+  .mini-strip { width: 26px; height: 4px; }
+  .strip { min-height: 18px; }
+  .strip span { display: grid; align-items: center; padding: 0 4px; color: #241d34; font-size: 10px; font-weight: 750; white-space: nowrap; }
+  .legs { background: var(--legs); } .shoulders { background: var(--shoulders); }
+  .back-lift { background: var(--back); } .grip { background: var(--grip); }
+  .interval-dots { display: flex; gap: 2px; }
+  .interval-dots .dot { width: 4px; height: 4px; }
+  .action { min-height: 37px; color: var(--accent-ink); font-size: 12px; font-weight: 700; padding: 4px 7px; border-radius: 9px; }
+  .action.fill { background: var(--tint); }
+  .card, .entry { display: grid; gap: 5px; width: 100%; padding: 8px; text-align: start; background: var(--surface); border-radius: 12px; }
+  .card { grid-template-columns: 4px minmax(0,1fr); gap: 8px; }
+  .card-body { display: grid; gap: 4px; }
+  .rail { display: flex; flex-direction: column; align-self: start; height: 45px; border-radius: 4px; overflow: clip; background: var(--pink); }
+  .rail.stopped { background: var(--yellow); }
+  .lift-line { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+  .lift-line strong { color: var(--ink); }
+  .note { font-style: italic; }
+  .entry { border: 1px solid var(--line); }
+  .entry[aria-pressed="true"] { border-color: var(--accent); background: var(--tint); }
+  .entry strong { font-size: 13px; }
+  .agenda { display: grid; gap: 6px; }
+  .agenda h4 { font-size: 13px; }
+  .edit-block { display: flex; flex-wrap: wrap; gap: 4px 7px; align-items: center; margin: 2px 0; }
+  .edit-block small { min-width: 114px; }
+  .rep { min-width: 37px; min-height: 36px; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); font-variant-numeric: tabular-nums; font-weight: 700; }
+  .fields { display: flex; gap: 6px; }
+  .fields label { min-width: 0; flex: 1; color: var(--muted); font-size: 12px; }
+  .fields input { margin-top: 3px; }
+  .save { width: 100%; min-height: 44px; background: var(--accent); color: white; border-radius: 10px; font-weight: 700; }
+  .primary-nav { display: grid; flex: none; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 2px; border-top: 1px solid var(--line); padding: 4px; background: var(--surface); }
+  .primary-nav button { display: grid; justify-items: center; align-content: center; gap: 2px; min-height: 45px; color: var(--muted); border-radius: 9px; font-size: 11px; font-weight: 650; }
+  .primary-nav span { font-size: 15px; line-height: 1.1; }
+  .primary-nav [aria-current="page"] { background: var(--tint); color: var(--accent-ink); }
+  .compact .app { gap: 5px; padding: 10px; }
+  .compact .title { font-size: 23px; }
+  .compact .segments button, .compact .month-head button { min-height: 29px; }
+  .search-toggle { position: relative; display: grid; place-items: center; margin-inline-end: auto; color: var(--muted); }
+  .search-toggle.active, .search-toggle[aria-expanded="true"] { background: var(--tint); color: var(--accent-ink); }
+  .search-toggle.active::after { content: ""; position: absolute; top: 3px; inset-inline-end: 3px; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+  .glass { position: relative; width: 12px; height: 12px; margin: 0 2px 2px 0; border: 2px solid currentColor; border-radius: 50%; }
+  .glass::after { content: ""; position: absolute; width: 6px; height: 2px; top: 8px; left: 7px; background: currentColor; transform: rotate(45deg); border-radius: 1px; }
+  .search-row { display: flex; align-items: center; gap: 4px; }
+  .search-row input { flex: 1; min-width: 0; }
+  .compact .search { min-height: 34px; padding-block: 4px; }
+  .compact .totals { display: flex; align-items: baseline; flex-wrap: wrap; column-gap: 8px; padding: 1px 2px; }
+  .compact .tile { display: flex; align-items: baseline; gap: 3px; min-height: 0; padding: 0; background: transparent; border-radius: 0; }
+  .compact .tile + .tile { padding-inline-start: 8px; border-inline-start: 1px solid var(--line); }
+  .compact .tile small { font-size: 11px; }
+  .compact .tile strong { font-size: 13px; }
+  .day-actions { position: relative; flex: none; }
+  .day-actions summary { display: grid; place-items: center; min-width: 34px; min-height: 32px; color: var(--accent-ink); border-radius: 8px; cursor: pointer; list-style: none; font-size: 20px; line-height: 1; }
+  .day-actions summary::-webkit-details-marker { display: none; }
+  .day-actions summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .day-actions[open] summary { background: var(--tint); }
+  .day-menu { position: absolute; z-index: 2; inset-inline-end: 0; inset-block-end: 100%; padding: 3px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); box-shadow: 0 3px 12px light-dark(#211a2b22,#0008); white-space: nowrap; }
+  .day-actions:not([open]) .day-menu { display: none; }
+  .compact .calendar { padding: 4px 3px; border-radius: 11px; }
+  .compact .date { min-height: 30px; }
+  .compact .action { min-height: 32px; }
+  .compact .stack { gap: 4px; }
+  .compact .card { padding: 6px 7px; gap: 7px; }
+  .compact .card-body { gap: 3px; }
+  .compact .strip { min-height: 16px; }
+  @media(max-width:1239px) { .grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+  @media(max-width:590px) {
+    .board { padding: 15px 6px; }
+    .board h1 { margin-inline: 6px; }
+    .grid { grid-template-columns: minmax(0,410px); justify-content: center; }
+    .option > header { min-height: auto; }
+  }
+  @media(pointer:coarse) { .date,.action,.month-head button,.chips button,.segments button,.rep { min-height: 44px; } }
+  @media(pointer:coarse) {
+    .compact .date,.compact .action,.compact .month-head button,.compact .segments button,.compact .search { min-height: 44px; }
+    .compact .month-head .search-toggle { min-width: 44px; }
+    .day-actions summary { min-width: 44px; min-height: 44px; }
+    .compact .date { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<main class="board">
+  <h1>Intervals · Journal concepts</h1>
+  <div class="grid" id="concepts"></div>
+</main>
+<script>
+  const concepts = [
+    { key: "current", title: "A · Compact Journal", desc: "Calendar and Stats with a tighter month view and the selected day’s log." },
+    { key: "agenda", title: "B · Week agenda", desc: "See the week’s sessions together. Open the month when you need to jump further back." },
+    { key: "find", title: "C · Find a training day", desc: "Pick Shoulders or search an exercise to see matching days and what you logged." },
+    { key: "edit", title: "D · Edit sets in Journal", desc: "Tap a rep count on the selected day to edit that set from Journal." },
+  ];
+  const exercises = [
+    { name: "Bulgarian Squat", abbr: "BS", tag: "Legs", color: "legs", kg: 60, reps: 5 },
+    { name: "Overhead Press", abbr: "OP", tag: "Shoulders", color: "shoulders", kg: 30, reps: 8 },
+    { name: "Deadlift", abbr: "DL", tag: "Back", color: "back-lift", kg: 100, reps: 4 },
+    { name: "Finger Pinch", abbr: "FP", tag: "Grip", color: "grip", kg: 18, reps: 6 },
+  ];
+  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const nav = { Journal: "▦", Intervals: "◷", Gym: "↔" };
+  const seedSets = (id, count, values = {}) => Array.from({ length: count }, () => ({ id, kg: exercises[id].kg, reps: exercises[id].reps, ...values }));
+  const sample = {
+    "10-09": { gym: seedSets(0, 4) },
+    "10-23": { gym: seedSets(1, 4), timers: [{ name: "Hangboard", minutes: 12, time: "18:30", rounds: 4 }] },
+    "11-03": { gym: seedSets(3, 3) }, "11-07": { gym: seedSets(1, 4) },
+    "11-16": { gym: seedSets(0, 3) },
+    "11-17": { timers: [{ name: "Bike intervals", minutes: 18, time: "19:00", rounds: 6 }] },
+    "11-19": { gym: seedSets(1, 3) },
+    "11-20": { gym: seedSets(3, 4), timers: [{ name: "Hangboard", minutes: 10, time: "17:45", rounds: 3, stopped: true }] },
+    "11-21": { gym: seedSets(2, 4) },
+    "11-22": {
+      gym: [
+        ...seedSets(0, 1, { variant: "Deep", side: "L" }),
+        ...seedSets(0, 1, { variant: "Deep", side: "L", reps: 4 }),
+        ...seedSets(0, 1, { variant: "Normal", side: "R", kg: 70 }),
+        ...seedSets(0, 1, { variant: "Deep", side: "L" }),
+        ...seedSets(1, 2),
+      ],
+      timers: [{ name: "Hangboard", minutes: 12, time: "10:40", rounds: 4, note: "Controlled last round" }],
+      prs: 1,
+    },
+  };
+  const keyOf = (month, day) => String(month).padStart(2,"0") + "-" + String(day).padStart(2,"0");
+  const dateOf = (month, day) => new Date(2026, month - 1, day, 12);
+  const monthName = (month, abbreviated = false) => dateOf(month, 1).toLocaleDateString("en-GB", { month: abbreviated ? "short" : "long" });
+  const dateLabel = (month, day) => days[dateOf(month, day).getDay()] + " " + day + " " + monthName(month);
+  const action = (name, attr, filled = false) => '<button type="button" class="action' + (filled ? " fill" : "") + '" ' + attr + ">" + name + "</button>";
+  const totalText = (count, word) => count + " " + word + (count === 1 ? "" : "s");
+  const joinNames = list => [...new Set(list)].join(" · ");
+  const gymSections = sets => [...new Set(sets.map(set => set.id))].map(id => ({ id, ex: exercises[id], sets: sets.filter(set => set.id === id) }));
+
+  function workoutStrip(sections, mini = false) {
+    return '<span class="' + (mini ? "mini-strip" : "strip") + '" aria-hidden="' + mini + '">' +
+      sections.map(({ ex, sets }) => '<span class="' + ex.color + '" style="flex:' + sets.length + '">' + (mini ? "" : ex.abbr + " " + sets.length) + "</span>").join("") + "</span>";
+  }
+
+  function mount(concept) {
+    const compact = concept.key === "current";
+    const panel = document.createElement("section");
+    panel.className = compact ? "option compact" : "option";
+    panel.dataset.concept = concept.key;
+    panel.innerHTML = "<header><h2>" + concept.title + "</h2><p>" + concept.desc + '</p></header><div class="phone"><div class="app"></div><nav class="primary-nav" aria-label="' +
+      concept.title + ' navigation">' + Object.entries(nav).map(([label, glyph]) => '<button type="button" data-tab="' + label + '"><span aria-hidden="true">' + glyph +
+        "</span>" + label + "</button>").join("") + "</nav></div>";
+    document.getElementById("concepts").append(panel);
+    const app = panel.querySelector(".app");
+    const data = structuredClone(sample);
+    let month = 11;
+    let day = 22;
+    let tab = "Journal";
+    let journalMode = "Calendar";
+    let show = "All";
+    let query = concept.key === "find" ? "Shoulders" : "";
+    let searchOpen = false;
+    let fullMonth = false;
+    let screen = null;
+    const selectedKey = () => keyOf(month, day);
+    const allowedDay = day => month < 11 || day <= 22;
+    const gym = key => show === "Intervals" ? [] : data[key]?.gym || [];
+    const timers = key => show === "Gym" ? [] : data[key]?.timers || [];
+    const dates = () => Object.keys(data).filter(key => Number(key.slice(0, 2)) === month && (gym(key).length || timers(key).length)).sort();
+    const dayNumber = key => Number(key.slice(3));
+
+    function matches(key) {
+      const term = query.trim().toLowerCase();
+      return term && (gym(key).some(set => {
+        const ex = exercises[set.id];
+        return (ex.name + " " + ex.tag).toLowerCase().includes(term);
+      }) || timers(key).some(timer => timer.name.toLowerCase().includes(term)));
+    }
+
+    function filters() {
+      return '<div class="chips" role="group" aria-label="Workout type">' + ["All","Gym","Intervals"].map(name =>
+        '<button type="button" data-filter="' + name + '" aria-pressed="' + (show === name) + '">' +
+        (name === "All" ? "" : '<span class="dot' + (name === "Gym" ? " gym" : "") + '" aria-hidden="true"></span>') + name + "</button>").join("") + "</div>";
+    }
+
+    function totals() {
+      const active = dates();
+      const intervalSessions = active.flatMap(timers);
+      const values = [
+        ["Sessions", active.filter(key => gym(key).length).length + intervalSessions.length],
+        ["Days trained", active.length],
+      ];
+      if (compact) values.push(["Gym sets", active.flatMap(gym).length]);
+      else values.push(["Time", intervalSessions.reduce((sum, session) => sum + session.minutes, 0) + " min"]);
+      return '<div class="totals">' + values.map(([label, value]) => {
+        const number = "<strong>" + value + "</strong>";
+        const text = "<small>" + (compact ? label.toLowerCase() : label) + "</small>";
+        return '<div class="tile">' + (compact ? number + text : text + number) + "</div>";
+      }).join("") + "</div>";
+    }
+
+    function calendar(weekOnly = false) {
+      const monthLength = new Date(2026, month, 0).getDate();
+      const monday = day - (dateOf(month, day).getDay() + 6) % 7;
+      const from = weekOnly ? Math.max(1, monday) : 1;
+      const to = weekOnly ? Math.min(monthLength, monday + 6) : monthLength;
+      const lead = (dateOf(month, from).getDay() + 6) % 7;
+      const cells = Array.from({ length: to - from + 1 }, (_, i) => {
+        const candidate = from + i;
+        const key = keyOf(month, candidate);
+        const sections = gymSections(gym(key));
+        const intervals = timers(key);
+        const hits = matches(key);
+        const classes = (sections.length || intervals.length ? " has" : "") + (key === "11-22" && day !== candidate ? " today" : "") +
+          (hits ? " hit" : query.trim() ? " dim" : "");
+        const description = dateLabel(month, candidate) + (sections.length ? ", gym" : "") + (intervals.length ? ", intervals" : "") + (hits ? ", matches filter" : "");
+        return '<button type="button" class="date' + classes + '" data-date="' + candidate + '" aria-pressed="' + (candidate === day) +
+          '" aria-label="' + description + '"' + (allowedDay(candidate) ? "" : " disabled") + ">" + candidate +
+          (sections.length ? workoutStrip(sections, true) : "") +
+          (intervals.length ? '<span class="interval-dots" aria-hidden="true">' + intervals.map(i => '<span class="dot' + (i.stopped ? " stopped" : "") + '"></span>').join("") + "</span>" : "") + "</button>";
+      }).join("");
+      return '<div class="calendar" role="group" aria-label="' + (weekOnly ? "Selected week" : monthName(month) + " 2026") + '">' +
+        ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map(name => "<small>" + name + "</small>").join("") +
+        '<span aria-hidden="true"></span>'.repeat(lead) + cells + "</div>";
+    }
+
+    function daySummary(key) {
+      const names = joinNames([...gym(key).map(set => exercises[set.id].name), ...timers(key).map(item => item.name)]);
+      return names || "No sessions";
+    }
+
+    function entry(key) {
+      const n = dayNumber(key);
+      return '<button type="button" class="entry" data-date="' + n + '" aria-pressed="' + (n === day) + '"><strong>' +
+        dateLabel(month, n) + "</strong><small>" + daySummary(key) + "</small></button>";
+    }
+
+    function gymCard(key) {
+      const sets = gym(key);
+      if (!sets.length) return "";
+      const sections = gymSections(sets);
+      const groups = joinNames(sections.map(({ ex }) => ex.tag));
+      const prs = data[key].prs || 0;
+      return '<button type="button" class="card" data-gym-day="' + key + '"><span class="rail" aria-hidden="true">' +
+        sections.map(({ ex, sets }) => '<span class="' + ex.color + '" style="flex:' + sets.length + '"></span>').join("") +
+        '</span><span class="card-body"><span class="card-head"><strong>Gym · ' + groups + "</strong><small>" +
+        totalText(sets.length, "set") + (prs ? " · " + prs + " PR" : "") + "</small></span>" + workoutStrip(sections) +
+        sections.map(({ ex, sets }) => {
+          const runs = [];
+          for (const set of sets) {
+            const label = [set.side, set.variant, set.kg + " × " + set.reps].filter(Boolean).join(" · ");
+            if (runs.at(-1)?.label === label) runs.at(-1).count++;
+            else runs.push({ label, count: 1 });
+          }
+          return '<span class="lift-line"><strong>' + ex.name + "</strong> " + runs.map(({ label, count }) =>
+            label + (count > 1 ? " × " + count : "")).join(", ") + "</span>";
+        }).join("") + "</span></button>";
+    }
+
+    function timerCards(key) {
+      return timers(key).map(timer => '<div class="card"><span class="rail' + (timer.stopped ? " stopped" : "") +
+        '" aria-hidden="true"></span><div class="card-body"><div class="card-head"><strong>' + timer.name + "</strong><small>" + timer.time + " · " + timer.minutes +
+        ' min</small></div><span class="lift-line">' + (timer.stopped ? "Stopped" : "Completed") + " · " + totalText(timer.rounds, "round") +
+        "</span>" + (timer.note ? '<small class="note">“' + timer.note + '”</small>' : "") + "</div></div>").join("");
+    }
+
+    function editCards(key) {
+      return gymSections(gym(key)).map(({ id, ex }) => {
+        const blocks = [];
+        data[key].gym.forEach((set, index) => {
+          if (set.id !== id) return;
+          const label = set.kg + " kg" + (set.variant ? " · " + set.variant : "") + (set.side ? " · " + set.side : "");
+          if (blocks.at(-1)?.label === label) blocks.at(-1).items.push({ set, index });
+          else blocks.push({ label, items: [{ set, index }] });
+        });
+        return '<section class="entry"><strong>' + ex.name + "</strong>" + blocks.map(block =>
+          '<div class="edit-block"><small>' + block.label + "</small>" + block.items.map(({ set, index }) =>
+            '<button type="button" class="rep" data-edit="' + index + '" aria-label="Edit ' + ex.name + ', ' + block.label + ', ' +
+            set.reps + ' reps">' + set.reps + "</button>").join("") + "</div>").join("") + "</section>";
+      }).join("");
+    }
+
+    function dayDetail(edit) {
+      const key = selectedKey();
+      const cards = (edit ? editCards(key) : gymCard(key)) + timerCards(key);
+      const label = dateLabel(month, day);
+      const add = compact && !screen
+        ? '<details class="day-actions"><summary aria-label="Actions for ' + label + '">⋯</summary><div class="day-menu">' + action("Add exercise", "data-add") + "</div></details>"
+        : action("+ Add exercise", "data-add", edit);
+      return '<section class="stack" aria-label="Selected day"><div class="date-head"><h4>' + label + "</h4>" +
+        (show !== "Intervals" ? add : "") + "</div>" + (cards || "<small>No sessions this day.</small>") + "</section>";
+    }
+
+    function agenda() {
+      const monday = day - (dateOf(month, day).getDay() + 6) % 7;
+      const week = dates().filter(key => dayNumber(key) >= monday && dayNumber(key) < monday + 7);
+      if (!week.includes(selectedKey())) week.push(selectedKey());
+      return '<section class="agenda" aria-label="Week agenda"><h4>Week of ' + dateOf(month, monday).getDate() + " " +
+        dateOf(month, monday).toLocaleDateString("en-GB", { month: "short" }) + "</h4>" +
+        week.sort().map(key => key === selectedKey() ? dayDetail(false) : entry(key)).join("") + "</section>";
+    }
+
+    function findings() {
+      const filtered = query.trim() ? dates().filter(matches) : [];
+      return query.trim() ? '<section class="stack" aria-label="Matching dates"><strong>' + totalText(filtered.length, "matching day") +
+        "</strong>" + filtered.slice().reverse().map(entry).join("") + (filtered.length ? "" : "<small>No matching dates this month.</small>") + "</section>" : "";
+    }
+
+    function searchBox() {
+      const input = '<input class="search" type="search" data-query aria-label="Filter calendar by exercise or tag" placeholder="Filter calendar by exercise or tag">';
+      return compact ? '<div class="search-row" id="compact-calendar-filter"' + (searchOpen ? "" : " hidden") + ">" + input +
+        (query.trim() ? action("Clear", "data-clear-filter") : "") + "</div>" : input;
+    }
+
+    function journal() {
+      const top = '<h3 class="title">Journal</h3><div class="segments" role="group" aria-label="Journal view">' +
+        ["Calendar", "Stats"].map(label => '<button type="button" data-view="' + label + '" aria-pressed="' + (journalMode === label) + '">' + label + "</button>").join("") + "</div>";
+      if (journalMode === "Stats") {
+        const sets = dates().flatMap(gym);
+        return top + totals() + "<h4>Most trained</h4>" + gymSections(sets).sort((a, b) => b.sets.length - a.sets.length).map(({ ex, sets }) =>
+          '<div class="row entry"><strong>' + ex.name + "</strong><small>" + totalText(sets.length, "set") + "</small></div>").join("");
+      }
+      const searchToggle = compact ? '<button type="button" class="search-toggle' + (query.trim() ? " active" : "") +
+        '" data-toggle-filter aria-controls="compact-calendar-filter" aria-expanded="' + searchOpen + '" aria-label="Filter calendar' +
+        (query.trim() ? ', active filter' : '') + '"><span class="glass" aria-hidden="true"></span></button>' : "";
+      const monthHead = '<div class="month-head">' + searchToggle + '<button type="button" aria-label="Previous month" data-month="10"' + (month === 10 ? " disabled" : "") +
+        '>‹</button><h4>' + monthName(month) + ' 2026</h4><button type="button" aria-label="Next month" data-month="11"' + (month === 11 ? " disabled" : "") + ">›</button></div>";
+      if (concept.key === "agenda") {
+        return top + monthHead + '<div class="row">' + filters() +
+          action(fullMonth ? "Show week" : "Show month", 'data-range aria-expanded="' + fullMonth + '"', true) +
+          "</div>" + calendar(!fullMonth) + agenda();
+      }
+      const tags = concept.key === "find" ? '<div class="chips" role="group" aria-label="Common tags">' +
+        ["Shoulders", "Legs", "Grip"].map(tag => '<button type="button" data-tag="' + tag + '" aria-pressed="' + (query === tag) + '">' + tag + "</button>").join("") + "</div>" : "";
+      const tools = concept.key === "edit" ? "" : searchBox() + tags + (concept.key === "find" ? findings() : totals());
+      return top + monthHead + (compact ? "" : filters()) + tools + calendar() + dayDetail(concept.key === "edit");
+    }
+
+    function library(attr) {
+      return exercises.map((ex, index) => '<button type="button" class="entry" ' + attr + '="' + index + '"><strong>' + ex.name + "</strong><small>" + ex.tag + "</small></button>").join("");
+    }
+
+    function detail() {
+      const back = action("‹ Back", "data-back");
+      if (screen.type === "pick") return back + '<h3 class="title">Add exercise</h3><small>' + dateLabel(month, day) + "</small>" + library("data-pick");
+      if (screen.type === "gym") return back + '<h3 class="title">Gym</h3>' + dayDetail(true);
+      const editing = screen.type === "edit";
+      const set = editing ? data[screen.key].gym[screen.index] : exercises[screen.id];
+      const ex = exercises[editing ? set.id : screen.id];
+      return back + '<h3 class="title">' + (editing ? "Edit set" : ex.name) + "</h3>" +
+        "<small>" + (editing ? ex.name + " · " : "") + dateLabel(Number(screen.key.slice(0, 2)), dayNumber(screen.key)) + "</small>" +
+        '<form class="stack" data-values><div class="fields"><label>Weight (kg)<input name="kg" type="number" step="any" required value="' + set.kg +
+        '"></label><label>Reps<input name="reps" type="number" min="0" required value="' + set.reps + '"></label></div>' +
+        '<button type="submit" class="save">' + (editing ? "Save set" : "Log set") + "</button></form>";
+    }
+
+    function render() {
+      app.innerHTML = screen ? detail() : tab === "Gym" ? '<h3 class="title">Gym</h3>' + library("data-pick") :
+        tab === "Intervals" ? '<h3 class="title">Intervals</h3><div class="entry">Hangboard · 12 min</div><div class="entry">Bike intervals · 18 min</div>' : journal();
+      if (app.querySelector("[data-query]")) app.querySelector("[data-query]").value = query;
+      for (const button of panel.querySelectorAll("[data-tab]")) {
+        if (button.dataset.tab === tab) button.setAttribute("aria-current", "page");
+        else button.removeAttribute("aria-current");
+      }
+    }
+
+    panel.addEventListener("click", event => {
+      const button = event.target.closest("button");
+      if (!button || button.disabled || button.type === "submit") return;
+      const value = button.dataset;
+      let focus;
+      if (value.tab) { tab = value.tab; screen = null; }
+      else if (value.view) { journalMode = value.view; focus = '[data-view="' + value.view + '"]'; }
+      else if (value.month) {
+        month = Number(value.month);
+        day = month === 11 ? 22 : 23;
+        focus = '[data-date="' + day + '"]';
+      } else if (value.date) {
+        day = Number(value.date);
+        focus = button.classList.contains("entry") ? '[aria-label="Selected day"] [data-add]' : '.date[data-date="' + day + '"]';
+      } else if (button.hasAttribute("data-range")) {
+        fullMonth = !fullMonth;
+        focus = "[data-range]";
+      } else if (button.hasAttribute("data-toggle-filter")) {
+        searchOpen = !searchOpen;
+        focus = searchOpen ? "[data-query]" : "[data-toggle-filter]";
+      } else if (button.hasAttribute("data-clear-filter")) {
+        query = "";
+        focus = "[data-query]";
+      } else if (value.filter) { show = value.filter; focus = '[data-filter="' + show + '"]'; }
+      else if (value.tag) { query = query === value.tag ? "" : value.tag; focus = '[data-tag="' + value.tag + '"]'; }
+      else if (button.hasAttribute("data-add")) { screen = { type: "pick" }; focus = "[data-back]"; }
+      else if (value.gymDay) { screen = { type: "gym" }; focus = "[data-back]"; }
+      else if (value.pick) {
+        screen = { type: "log", id: Number(value.pick), key: tab === "Gym" ? "11-22" : selectedKey() };
+        focus = '[name="kg"]';
+      }
+      else if (value.edit) {
+        screen = { type: "edit", index: Number(value.edit), key: selectedKey(), fromGym: screen?.type === "gym" };
+        focus = '[name="reps"]';
+      } else if (button.hasAttribute("data-back")) {
+        screen = screen?.fromGym ? { type: "gym" } : null;
+        focus = screen ? "[data-back]" : '[data-date][aria-pressed="true"]';
+      } else return;
+      render();
+      if (focus) app.querySelector(focus)?.focus();
+    });
+
+    app.addEventListener("input", event => {
+      if (!event.target.hasAttribute("data-query")) return;
+      query = event.target.value;
+      const cursor = event.target.selectionStart;
+      render();
+      const input = app.querySelector("[data-query]");
+      input.focus();
+      input.setSelectionRange(cursor, cursor);
+    });
+
+    app.addEventListener("keydown", event => {
+      if (!compact || !searchOpen || event.key !== "Escape" || !event.target.hasAttribute("data-query")) return;
+      event.preventDefault();
+      searchOpen = false;
+      render();
+      app.querySelector("[data-toggle-filter]").focus();
+    });
+
+    app.addEventListener("submit", event => {
+      if (!event.target.hasAttribute("data-values")) return;
+      event.preventDefault();
+      const fields = new FormData(event.target);
+      const values = { kg: Number(fields.get("kg")), reps: Number(fields.get("reps")) };
+      const { key, type } = screen;
+      if (type === "edit") Object.assign(data[key].gym[screen.index], values);
+      else {
+        const workout = data[key] ??= {};
+        (workout.gym ??= []).push({ id: screen.id, ...values });
+      }
+      const edited = type === "edit" ? screen.index : null;
+      screen = screen.fromGym ? { type: "gym" } : null;
+      render();
+      app.querySelector(edited === null ? '[data-date][aria-pressed="true"]' : '[data-edit="' + edited + '"]')?.focus();
+    });
+    render();
+  }
+  concepts.forEach(mount);
+</script>
+</body>
+</html>

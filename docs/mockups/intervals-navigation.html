@@ -1,0 +1,346 @@
+<style>
+  #intervals-navigation-preview {
+    color-scheme: light dark;
+    --app-bg: light-dark(#f6f5fa, #09090c);
+    --app-card: light-dark(#fff, #191a20);
+    --app-ink: light-dark(#211b2c, #f3eff9);
+    --app-muted: light-dark(#625a70, #ada5ba);
+    --app-line: light-dark(#e3deed, #302c3b);
+    --app-purple: light-dark(#6d28d9, #7c3aed);
+    --app-purple-ink: light-dark(#591fb0, #d1bbff);
+    --app-tint: light-dark(#eee6fc, #302245);
+    --app-pink: light-dark(#b5256a, #fc82b9);
+    --app-pink-tint: light-dark(#fbe5f0, #412136);
+    display: grid;
+    justify-items: center;
+    padding: 12px 8px;
+    color: var(--app-ink);
+    font: 14px/1.35 Roboto, system-ui, sans-serif;
+  }
+  #intervals-navigation-preview * { box-sizing: border-box; }
+  #intervals-navigation-preview [hidden] { display: none !important; }
+  #intervals-navigation-preview .app-phone {
+    display: flex;
+    flex-direction: column;
+    width: min(100%, 410px);
+    min-height: 598px;
+    overflow: clip;
+    border: 1px solid var(--app-line);
+    border-radius: 24px;
+    background: var(--app-bg);
+    box-shadow: 0 12px 32px light-dark(#211b2c16, #0005);
+  }
+  #intervals-navigation-preview .app-content { flex: 1; padding: 20px 16px 16px; }
+  #intervals-navigation-preview h2, #intervals-navigation-preview h3, #intervals-navigation-preview p { margin: 0; }
+  #intervals-navigation-preview h2 { font-size: 28px; line-height: 1.1; letter-spacing: -.035em; font-weight: 740; }
+  #intervals-navigation-preview h3 { font-size: 15px; font-weight: 700; }
+  #intervals-navigation-preview small { color: var(--app-muted); font-size: 12px; }
+  #intervals-navigation-preview button, #intervals-navigation-preview input { font: inherit; color: inherit; }
+  #intervals-navigation-preview button { background: none; border: 0; margin: 0; }
+  #intervals-navigation-preview button:focus-visible, #intervals-navigation-preview input:focus-visible {
+    outline: 2px solid var(--app-purple); outline-offset: 1px;
+  }
+  #intervals-navigation-preview .app-header { display: grid; gap: 4px; margin-bottom: 15px; }
+  #intervals-navigation-preview .app-week, #intervals-navigation-preview .app-month {
+    display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
+    text-align: center; align-items: center;
+    font-variant-numeric: tabular-nums;
+  }
+  #intervals-navigation-preview .app-week { margin-bottom: 12px; }
+  #intervals-navigation-preview .app-month { margin: 7px 0 13px; }
+  #intervals-navigation-preview .app-month > small { padding: 5px 0; }
+  #intervals-navigation-preview .app-date {
+    display: grid; justify-items: center; align-content: center; gap: 3px;
+    padding: 3px 0; min-height: 40px; border-radius: 12px;
+  }
+  #intervals-navigation-preview .app-date[aria-pressed="true"] { background: var(--app-tint); color: var(--app-purple-ink); font-weight: 700; }
+  #intervals-navigation-preview .app-date[aria-pressed="true"] small { color: var(--app-purple-ink); }
+  #intervals-navigation-preview .app-marks { display: flex; gap: 3px; min-height: 4px; }
+  #intervals-navigation-preview .app-mark { width: 5px; height: 5px; border-radius: 50%; background: var(--app-purple); }
+  #intervals-navigation-preview .app-mark.timer { background: var(--app-pink); }
+  #intervals-navigation-preview .app-primary, #intervals-navigation-preview .app-subtle {
+    min-height: 44px; border-radius: 12px; padding: 8px 12px; font-weight: 650;
+  }
+  #intervals-navigation-preview .app-primary { width: 100%; background: var(--app-purple); color: #fff; }
+  #intervals-navigation-preview .app-subtle { background: var(--app-tint); color: var(--app-purple-ink); }
+  #intervals-navigation-preview .app-back { min-height: 44px; width: fit-content; margin: -8px 0 3px; padding: 0 4px; color: var(--app-purple-ink); }
+  #intervals-navigation-preview .app-stack { display: grid; gap: 7px; }
+  #intervals-navigation-preview .app-section { display: grid; gap: 8px; margin-top: 16px; }
+  #intervals-navigation-preview .app-section:first-child { margin-top: 0; }
+  #intervals-navigation-preview .app-row {
+    padding: 9px 11px; min-height: 51px; width: 100%;
+    background: var(--app-card); border: 1px solid var(--app-line); border-radius: 12px;
+    display: flex; align-items: center; gap: 10px; text-align: left;
+  }
+  #intervals-navigation-preview .app-row strong { font-size: 14px; font-weight: 670; }
+  #intervals-navigation-preview .app-row .app-info { flex: 1; min-width: 0; display: grid; gap: 2px; }
+  #intervals-navigation-preview .app-row > small { text-align: end; }
+  #intervals-navigation-preview .app-chevron { color: var(--app-muted); font-size: 19px; }
+  #intervals-navigation-preview .app-play {
+    flex: 0 0 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
+    padding-left: 2px; background: var(--app-tint); color: var(--app-purple-ink); font-size: 11px;
+  }
+  #intervals-navigation-preview .app-play.timer { background: var(--app-pink-tint); color: var(--app-pink); }
+  #intervals-navigation-preview .app-switcher {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px;
+    border-radius: 13px; background: var(--app-card); margin-bottom: 12px;
+  }
+  #intervals-navigation-preview .app-switcher button { min-height: 37px; border-radius: 9px; color: var(--app-muted); font-weight: 650; }
+  #intervals-navigation-preview .app-switcher button[aria-pressed="true"] { background: var(--app-tint); color: var(--app-purple-ink); }
+  #intervals-navigation-preview .app-day-heading { display: flex; align-items: center; flex-wrap: wrap; justify-content: space-between; gap: 5px; }
+  #intervals-navigation-preview .app-input {
+    display: block; width: 100%; min-height: 44px; padding: 8px 11px; margin-bottom: 9px;
+    border-radius: 12px; background: var(--app-card); border: 1px solid var(--app-line); font-size: 16px;
+  }
+  #intervals-navigation-preview .app-fields { display: flex; gap: 8px; }
+  #intervals-navigation-preview .app-fields label { flex: 1; min-width: 0; color: var(--app-muted); font-size: 12px; }
+  #intervals-navigation-preview .app-fields input { margin-top: 4px; }
+  #intervals-navigation-preview .app-choices label {
+    display: flex; gap: 9px; align-items: center; min-height: 44px; padding: 0 10px;
+    background: var(--app-card); border-radius: 10px;
+  }
+  #intervals-navigation-preview .app-choices input { accent-color: var(--app-purple); width: 18px; height: 18px; }
+  #intervals-navigation-preview .app-nav {
+    display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px;
+    padding: 5px 7px 7px; border-top: 1px solid var(--app-line); background: var(--app-card);
+  }
+  #intervals-navigation-preview .app-nav button {
+    min-height: 54px; border-radius: 12px; display: grid; justify-items: center; align-content: center; gap: 3px;
+    padding: 3px; color: var(--app-muted); font-size: 12px; font-weight: 600;
+  }
+  #intervals-navigation-preview .app-nav [aria-current="page"] { background: var(--app-tint); color: var(--app-purple-ink); }
+  #intervals-navigation-preview .app-nav .app-icon { display: grid; place-items: center; width: 20px; height: 20px; }
+  #intervals-navigation-preview .app-icon svg { width: 19px; height: 19px; }
+  #intervals-navigation-preview .app-icon .app-icon-fallback { font-size: 17px; line-height: 1; }
+  #intervals-navigation-preview .app-icon:has(svg) .app-icon-fallback { display: none; }
+  @media (max-width: 352px) {
+    #intervals-navigation-preview { padding-inline: 0; }
+    #intervals-navigation-preview .app-content { padding-inline: 12px; }
+    #intervals-navigation-preview .app-week, #intervals-navigation-preview .app-month { margin-inline: -12px; }
+  }
+  @media (pointer: coarse) {
+    #intervals-navigation-preview .app-date, #intervals-navigation-preview .app-switcher button { min-height: 44px; }
+  }
+</style>
+
+<div id="intervals-navigation-preview" class="viz-dotted-background">
+  <section class="app-phone" aria-label="Intervals navigation preview">
+    <main class="app-content" data-content></main>
+    <nav class="app-nav" aria-label="Main navigation">
+      <button type="button" class="cursor-interaction" data-tab="Today" aria-current="page"><span class="app-icon" aria-hidden="true"><i data-lucide="house"></i><span class="app-icon-fallback">⌂</span></span>Today</button>
+      <button type="button" class="cursor-interaction" data-tab="Intervals"><span class="app-icon" aria-hidden="true"><i data-lucide="timer"></i><span class="app-icon-fallback">◷</span></span>Intervals</button>
+      <button type="button" class="cursor-interaction" data-tab="Gym"><span class="app-icon" aria-hidden="true"><i data-lucide="dumbbell"></i><span class="app-icon-fallback">↔</span></span>Gym</button>
+      <button type="button" class="cursor-interaction" data-tab="Journal"><span class="app-icon" aria-hidden="true"><i data-lucide="calendar-days"></i><span class="app-icon-fallback">▦</span></span>Journal</button>
+    </nav>
+  </section>
+</div>
+
+<script>
+  (() => {
+    const root = document.getElementById("intervals-navigation-preview");
+    const content = root.querySelector("[data-content]");
+    const today = 22;
+    const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    const exercises = [
+      { name: "Bulgarian Squat", tags: ["Legs"], kg: 60, reps: 5 },
+      { name: "Overhead Press", tags: ["Shoulders"], kg: 30, reps: 8 },
+      { name: "Deadlift", tags: ["Legs", "Back"], kg: 100, reps: 4 },
+      { name: "Finger Pinch", tags: ["Grip"], kg: 18, reps: 6 },
+    ];
+    const gymWorkouts = [
+      { name: "Lower body", exercises: [0, 2] },
+      { name: "Shoulders & grip", exercises: [1, 3] },
+    ];
+    const timers = [{ name: "Hangboard", duration: "12 min" }, { name: "Bike intervals", duration: "18 min" }];
+    const sets = (count, exercise) => Array.from({ length: count }, () => ({ kg: exercise.kg, reps: exercise.reps }));
+    const gymDays = { 16: { 0: sets(3, exercises[0]) }, 19: { 1: sets(3, exercises[1]) }, 20: { 3: sets(4, exercises[3]) }, 21: { 2: sets(4, exercises[2]) }, 22: { 0: sets(3, exercises[0]), 1: sets(2, exercises[1]) } };
+    const intervalDays = { 17: [1], 20: [0] };
+    let tab = "Today";
+    let date = today;
+    let gymMode = "Exercises";
+    let journalMode = "Calendar";
+    let detail = null;
+    let backTo = null;
+    let activeWorkout = null;
+
+    const dateLabel = day => weekdays[(day + 5) % 7] + " " + day + " November";
+    const header = (title, sub = "") => '<header class="app-header"><h2>' + title + "</h2>" + (sub ? "<small>" + sub + "</small>" : "") + "</header>";
+    const action = (label, attr, tone = "subtle") => '<button type="button" class="app-' + tone + ' cursor-interaction" ' + attr + ">" + label + "</button>";
+    const row = ({ name, sub = "", right = "", attr, play = "" }) => {
+      const info = '<span class="app-info"><strong>' + name + "</strong>" + (sub ? "<small>" + sub + "</small>" : "") + "</span>";
+      const inner = (play ? '<span class="app-play ' + play + '" aria-hidden="true">▶</span>' : "") + info + (right ? "<small>" + right + "</small>" : "");
+      return attr
+        ? '<button type="button" class="app-row cursor-interaction" ' + attr + ">" + inner + '<span class="app-chevron" aria-hidden="true">›</span></button>'
+        : '<div class="app-row">' + inner + "</div>";
+    };
+    const section = (label, html) => '<section class="app-section"><h3>' + label + "</h3>" + html + "</section>";
+    const switcher = (items, selected, kind) => '<div class="app-switcher" role="group" aria-label="' + kind + '">' +
+      items.map(label => '<button type="button" class="cursor-interaction" data-' + kind + '="' + label + '" aria-pressed="' + (label === selected) + '">' + label + "</button>").join("") + "</div>";
+    const picker = day => action("+ Add exercise", 'data-picker="' + day + '"', "primary");
+    const count = n => n + (n === 1 ? " set" : " sets");
+
+    function dayButton(day, week = false) {
+      const hasGym = Object.keys(gymDays[day] || {}).length > 0;
+      const hasTimer = day in intervalDays;
+      const fullLabel = dateLabel(day) + (hasGym ? ", gym" : "") + (hasTimer ? ", intervals" : "");
+      return '<button type="button" class="app-date cursor-interaction" data-date="' + day + '" aria-label="' + fullLabel + '" aria-pressed="' +
+        (week ? day === today : day === date) + '">' + (week ? "<small>" + weekdays[(day + 5) % 7] + "</small>" : "") + day +
+        '<span class="app-marks" aria-hidden="true">' + (hasGym ? '<span class="app-mark"></span>' : "") +
+        (hasTimer ? '<span class="app-mark timer"></span>' : "") + "</span></button>";
+    }
+
+    function dayRows(day) {
+      const lifts = Object.entries(gymDays[day] || {}).map(([index, list]) => {
+        const last = list.at(-1);
+        return row({ name: exercises[index].name, sub: last.kg + " kg × " + last.reps, right: count(list.length), attr: 'data-log="' + index + '" data-day="' + day + '"' });
+      });
+      const runs = (intervalDays[day] || []).map(index => row({ name: timers[index].name, sub: "Intervals · " + timers[index].duration }));
+      return [...lifts, ...runs].join("") || "<small>No workouts logged.</small>";
+    }
+
+    function workoutRow(workout, index, play) {
+      const name = play && index === activeWorkout ? "Resume " + workout.name.toLowerCase() : workout.name;
+      return row({ name, sub: workout.exercises.map(i => exercises[i].name).join(" · "), attr: 'data-' + (play ? "run" : "workout") + '="' + index + '"', play });
+    }
+
+    function timerRow(timer, index, play) {
+      return row({ name: timer.name, sub: timer.duration, attr: 'data-timer="' + index + '"', play });
+    }
+
+    function renderMain() {
+      if (tab === "Today") {
+        const week = Array.from({ length: 7 }, (_, i) => dayButton(today - 6 + i, true)).join("");
+        return header("Today", dateLabel(today)) + '<div class="app-week" role="group" aria-label="This week">' + week + "</div>" + picker(today) +
+          section("Quick start", workoutRow(gymWorkouts[0], 0, "gym") + timerRow(timers[0], 0, "timer")) +
+          section("Done today", dayRows(today));
+      }
+      if (tab === "Intervals") {
+        return header("Intervals") + '<div class="app-stack">' + timers.map((timer, i) => timerRow(timer, i, "timer")).join("") + "</div>";
+      }
+      if (tab === "Gym") {
+        const rows = gymMode === "Exercises"
+          ? exercises.map((item, i) => row({ name: item.name, sub: item.tags.join(" · "), attr: 'data-exercise="' + i + '"' })).join("")
+          : gymWorkouts.map((workout, i) => workoutRow(workout, i, "")).join("");
+        return header("Gym") + switcher(["Exercises", "Workouts"], gymMode, "gym-mode") + '<div class="app-stack">' + rows + "</div>";
+      }
+      const journalHeader = header("Journal") + switcher(["Calendar", "Stats"], journalMode, "journal-mode");
+      if (journalMode === "Stats") {
+        const total = Object.values(gymDays).flatMap(day => Object.values(day)).reduce((n, list) => n + list.length, 0);
+        return journalHeader + section("November 2026", row({ name: "Gym days", right: Object.keys(gymDays).length }) + row({ name: "Sets", right: total }));
+      }
+      const labels = weekdays.map(day => "<small>" + day + "</small>").join("");
+      const blanks = '<span aria-hidden="true"></span>'.repeat(6);
+      const days = Array.from({ length: 30 }, (_, i) => dayButton(i + 1)).join("");
+      return journalHeader + "<h3>November 2026</h3>" + '<div class="app-month" role="group" aria-label="November 2026">' + labels + blanks + days + "</div>" +
+        '<div class="app-day-heading"><h3>' + dateLabel(date) + "</h3>" + (date <= today ? action("+ Add exercise", 'data-picker="' + date + '"') : "") +
+        '</div><div class="app-section">' + dayRows(date) + "</div>";
+    }
+
+    function renderDetail() {
+      const back = '<button type="button" data-back class="app-back cursor-interaction">‹ Back</button>';
+      const { type, index, day } = detail;
+      if (type === "picker") {
+        return back + header("Add exercise", dateLabel(day)) +
+          '<input class="app-input" data-search type="search" placeholder="Search exercises" aria-label="Search exercises"><div class="app-stack" data-exercise-list>' +
+          exercises.map((exercise, i) => row({ name: exercise.name, sub: exercise.tags.join(" · "), attr: 'data-log="' + i + '" data-day="' + day + '"' })).join("") + "</div>";
+      }
+      if (type === "workout" || type === "run") {
+        const workout = gymWorkouts[index];
+        const running = type === "run";
+        return back + header(workout.name, running ? dateLabel(today) : "") + '<div class="app-stack">' +
+          workout.exercises.map(i => row({ name: exercises[i].name, attr: running ? 'data-log="' + i + '" data-day="' + today + '"' : 'data-exercise="' + i + '"' })).join("") +
+          (running ? action("Finish workout", "data-finish", "primary") : "") + "</div>";
+      }
+      if (type === "timer") {
+        const timer = timers[index];
+        return back + header(timer.name, timer.duration) + row({ name: "Work", sub: "7 seconds" }) + row({ name: "Rest", sub: "3 seconds" });
+      }
+      const exercise = exercises[index];
+      if (type === "exercise") {
+        return back + header(exercise.name) + '<div class="app-section"><h3>Tags</h3><div class="app-stack app-choices">' +
+          ["Legs", "Shoulders", "Back", "Grip"].map(tag => '<label><input type="checkbox" data-tag="' + tag + '"' +
+            (exercise.tags.includes(tag) ? " checked" : "") + ">" + tag + "</label>").join("") + "</div></div>";
+      }
+      const list = gymDays[day]?.[index] || [];
+      const last = list.at(-1) || exercise;
+      return back + header(exercise.name, dateLabel(day)) +
+        '<form data-log-form><div class="app-fields"><label>Weight (kg)<input class="app-input" name="kg" type="number" step="any" required value="' + last.kg +
+        '"></label><label>Reps<input class="app-input" name="reps" type="number" min="0" required value="' + last.reps +
+        '"></label></div><button type="submit" class="app-primary cursor-interaction">Log set</button></form>' +
+        section("Logged sets", list.map(set => row({ name: set.kg + " kg × " + set.reps })).join("") || "<small>No sets logged.</small>");
+    }
+
+    function render() {
+      content.innerHTML = detail ? renderDetail() : renderMain();
+      for (const button of root.querySelectorAll("[data-tab]")) {
+        if (button.dataset.tab === tab) button.setAttribute("aria-current", "page");
+        else button.removeAttribute("aria-current");
+      }
+    }
+
+    root.addEventListener("click", event => {
+      const button = event.target.closest("button");
+      if (!button) return;
+      const { tab: destination, date: day, gymMode: gym, journalMode: journal, picker: pick, log, exercise, workout, timer, run } = button.dataset;
+      if (destination) {
+        tab = destination;
+        detail = backTo = null;
+      } else if (day) {
+        date = Number(day);
+        tab = "Journal";
+        journalMode = "Calendar";
+      } else if (gym) {
+        gymMode = gym;
+      } else if (journal) {
+        journalMode = journal;
+      } else if (button.hasAttribute("data-back")) {
+        detail = backTo;
+        backTo = null;
+      } else if (button.hasAttribute("data-finish")) {
+        activeWorkout = detail = backTo = null;
+        tab = "Journal";
+        date = today;
+        journalMode = "Calendar";
+      } else if (run) {
+        activeWorkout = Number(run);
+        detail = { type: "run", index: activeWorkout };
+      } else if (pick) {
+        detail = { type: "picker", day: Number(pick) };
+      } else if (log) {
+        backTo = detail?.type === "run" ? detail : null;
+        detail = { type: "log", index: Number(log), day: Number(button.dataset.day) };
+      } else if (exercise || workout || timer) {
+        backTo = detail;
+        detail = { type: exercise ? "exercise" : workout ? "workout" : "timer", index: Number(exercise || workout || timer) };
+      } else {
+        return;
+      }
+      render();
+      if (day) content.querySelector('[data-date="' + day + '"]')?.focus();
+      else if (!destination) content.querySelector("[data-back], button[aria-pressed=true]")?.focus();
+    });
+
+    content.addEventListener("input", event => {
+      if (!event.target.matches("[data-search]")) return;
+      const term = event.target.value.trim().toLowerCase();
+      for (const button of content.querySelectorAll("[data-exercise-list] button")) button.hidden = !button.textContent.toLowerCase().includes(term);
+    });
+    content.addEventListener("change", event => {
+      const tag = event.target.dataset.tag;
+      if (!tag) return;
+      const exercise = exercises[detail.index];
+      exercise.tags = event.target.checked ? [...exercise.tags, tag] : exercise.tags.filter(item => item !== tag);
+    });
+    content.addEventListener("submit", event => {
+      if (!event.target.matches("[data-log-form]")) return;
+      event.preventDefault();
+      const values = new FormData(event.target);
+      const { day, index } = detail;
+      const dayLog = gymDays[day] ??= {};
+      (dayLog[index] ??= []).push({ kg: Number(values.get("kg")), reps: Number(values.get("reps")) });
+      render();
+      content.querySelector("[data-log-form] button").focus();
+    });
+    render();
+  })();
+</script>

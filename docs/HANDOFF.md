@@ -1,9 +1,40 @@
-# Handoff for Claude
+# Intervals handoff
 
-Updated 2026-11-18 (evening). Read [CLAUDE.md](../CLAUDE.md) and [DESIGN.md](DESIGN.md) first; DESIGN.md is the source of truth.
-Everything below is committed and installed on the Pixel 8a.
+Updated 2026-11-22. Read [CLAUDE.md](../CLAUDE.md) for repo conventions and [DESIGN.md](DESIGN.md) for design history. The current navigation decision is recorded here.
 
-## Done today (player and app)
+## Current Android build
+
+The Android source is committed at `0792a43`. The debug APK from that source was installed in place on the Pixel 8a with `adb install -r`, and its hash was checked against the installed package.
+
+- **Navigation.** Journal opens first. The bottom bar is Journal, Intervals, and Gym. The separate Today screen and its Quick Picks are gone. Gym opens on the exercise library. A day opened from a Journal card returns to that date when you go back.
+- **Compact Journal.** The month shows sessions, days trained, and gym sets in one line. A gym day counts as one session alongside the interval sessions on that date. The workout-type pills and Time tile were removed from the calendar.
+- **Calendar and logging.** The magnifying glass reveals exercise and tag search. An active filter still highlights matching dates when the field is closed. The selected day's **⋯** menu gives access to **Add exercise** or **Resume workout**. The selected date and filter survive tab changes.
+- **Gym access.** Tap a library exercise to log it today. The Gym action opens the existing picker for adding exercises and starting saved workouts. Gym also offers **Resume workout** while today's workout is active.
+- **Set order and editing.** The live log keeps sets in order. Consecutive sets with the same load, side, and variant share a row with individually editable rep counts. For example, 60 → 70 → 60 stays in three rows. Tap a set to edit it, or long-press and select sets for **Notes** and **Delete**.
+- **Exercise tags.** Long-press exercises in Gym and tap **Tag…**. Tags can be created, added, or removed in bulk. Saved workout groups keep their exact exercise membership and plans.
+
+The earlier workout and Stats changes are in the same history. Ring counters and simplified Gym Stats landed in `6cc234d`, and Most Trained's Sets, Days, and Reps landed in `8dac65c`. The Gym improvements, restored exercise library, and set multi-selection landed in `5aeffb2`, `0ee09eb`, and `4401f14`.
+
+## Journal and Stats decision
+
+The installed app still uses the **Calendar / Stats** switch inside Journal. The user prefers option **B** in the [Stats mockups](mockups/intervals-journal-stats.html). The revised mockup gives the monthly summary a visible **Stats ›** action so its destination is clear.
+
+The proposed Android change opens a separate Stats screen starting on the Journal month the user selected. **Back** returns to the same date and filter. The browser mockup implements and tests that flow with sample data. The native Stats route and historical-month scope are pending.
+
+The approved Journal design is option **A** in the [Journal concepts](mockups/intervals-journal-concepts.html). The [set-order mockup](mockups/intervals-chronological-log.html) shows the live set grouping. For earlier designs, see the [four-tab preview](mockups/intervals-navigation.html), [navigation comparison](mockups/intervals-navigation-options.html), and [Journal layout comparison](mockups/intervals-journal-options.html).
+
+## Verification
+
+- The core and Android unit suites passed all **89 tests**, including regression tests for consecutive set grouping, tag membership, and returning to the selected Journal day. The debug APK built successfully.
+- The Pixel check confirmed Journal as home, the new bottom tabs, and the Gym library. The filter and day-menu walkthrough ended when the phone switched to Gym during the check.
+- The updated Stats mockup was checked in Edge. Both entries open Stats, option B opens the month being viewed, and Back restores the Journal date and filter. Both layouts fit a 320 px preview.
+- See the [build and install commands](../README.md#command-line). Keep machine-generated `gradle/gradle-daemon-jvm.properties` local.
+
+## Earlier work from 2026-11-18
+
+The notes below describe that day's build and design questions. The current decisions are above.
+
+### Player and app
 
 - **Opening**: no "Get ready" 3-2-1 any more (the setting was removed; the warm-up is the get-ready). The player opens with
   a 1 s animation (disc grows with a small overshoot, rings come out from behind it); the workout clock starts after it
@@ -19,7 +50,7 @@ Everything below is committed and installed on the Pixel 8a.
 - **Today**: the big Intervals ▶ / Gym ▶ buttons were removed (they only switched tab).
 - Gym work from earlier sessions (finish screen, group run, DB v4) is in the same commit.
 
-## Open decisions (mockups waiting for the user)
+### Design questions at that point
 
 - Text color of the name/time on the disc: https://claude.ai/artifact/TiN6U7ZHbLVJa5iVWKSmpM (first section, A-F;
   suggested D: white text, light discs darkened ~30%).
@@ -27,7 +58,7 @@ Everything below is committed and installed on the Pixel 8a.
   the rounds ring).
 - Today looks empty when nothing was done recently (Quick start lists only recent workouts); maybe a fallback.
 
-## Build and install
+### Build and install on Linux
 
 ```bash
 cd ~/intervals

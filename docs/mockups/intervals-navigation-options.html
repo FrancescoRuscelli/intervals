@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Intervals navigation options</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --page: light-dark(#eeedf4, #121116);
+    --bg: light-dark(#f7f6fa, #101015);
+    --surface: light-dark(#fff, #1c1b23);
+    --ink: light-dark(#211a2b, #f4eff8);
+    --muted: light-dark(#655d71, #ada5b9);
+    --line: light-dark(#e2deeb, #34313e);
+    --purple: light-dark(#6d28d9, #7540d9);
+    --accent-ink: light-dark(#5b24aa, #d5bfff);
+    --tint: light-dark(#eee6fc, #35264f);
+    --pink: light-dark(#ac225f, #f788bd);
+    --pink-tint: light-dark(#fbe6f0, #412236);
+    font: 14px/1.35 Roboto, system-ui, sans-serif;
+    background: var(--page);
+    color: var(--ink);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  h1, h2, h3, h4, p { margin: 0; }
+  button, input { font: inherit; color: inherit; }
+  button { border: 0; background: none; cursor: pointer; }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--purple); outline-offset: 1px; }
+  small { color: var(--muted); font-size: 12px; }
+  .comparison { width: min(100%, 1560px); margin: auto; padding: 28px 22px; }
+  .comparison > h1 { font-size: clamp(24px, 3vw, 36px); letter-spacing: -.035em; }
+  .comparison > p { color: var(--muted); margin: 6px 0 22px; }
+  .options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+  .option { display: flex; flex-direction: column; }
+  .option > header { min-height: 77px; margin: 0 2px; }
+  .option > header h2 { display: flex; align-items: center; gap: 8px; font-size: 17px; letter-spacing: -.018em; }
+  .option > header h2 span {
+    display: grid; place-items: center; width: 26px; height: 26px;
+    border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-size: 13px;
+  }
+  .option > header p { margin: 5px 0 12px; color: var(--muted); font-size: 13px; }
+  .phone {
+    display: flex; flex-direction: column; flex: 1; min-height: 450px; overflow: clip;
+    background: var(--bg); border: 1px solid var(--line); border-radius: 21px;
+    box-shadow: 0 10px 25px light-dark(#35275214, #0005);
+  }
+  .app { flex: 1; padding: 15px 12px 12px; }
+  .app-header { display: grid; gap: 3px; margin-bottom: 11px; }
+  .app-header h3 { font-size: 25px; line-height: 1.15; letter-spacing: -.035em; overflow-wrap: anywhere; }
+  .stack, .section { display: grid; gap: 6px; }
+  .section { margin-top: 12px; }
+  .section h4 { font-size: 14px; }
+  .row {
+    display: flex; align-items: center; gap: 8px; width: 100%; min-height: 48px; text-align: left;
+    border: 1px solid var(--line); background: var(--surface); border-radius: 11px; padding: 8px 9px;
+  }
+  .row .info { display: grid; gap: 2px; min-width: 0; flex: 1; }
+  .row[hidden], .section[hidden], .bar[hidden] { display: none; }
+  .row strong { font-size: 13px; overflow-wrap: anywhere; }
+  .row > small { white-space: nowrap; }
+  .chevron { color: var(--muted); font-size: 18px; }
+  .play { display: grid; place-items: center; width: 27px; height: 27px; flex: none; border-radius: 50%; color: var(--accent-ink); background: var(--tint); font-size: 10px; }
+  .play.timer { color: var(--pink); background: var(--pink-tint); }
+  .week, .month { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); text-align: center; font-variant-numeric: tabular-nums; }
+  .week { margin: 0 -3px 10px; }
+  .month { margin: 5px -3px 10px; }
+  .month > small { padding: 3px 0; font-size: 11px; }
+  .day {
+    min-height: 35px; display: grid; align-content: center; justify-items: center; gap: 3px;
+    border-radius: 9px; padding: 3px 0; font-size: 13px;
+  }
+  .week .day { min-height: 43px; }
+  .day[aria-pressed="true"] { font-weight: 700; color: var(--accent-ink); background: var(--tint); }
+  .day[aria-pressed="true"] small { color: var(--accent-ink); }
+  .marks { display: flex; gap: 3px; min-height: 4px; }
+  .mark { width: 4px; height: 4px; border-radius: 50%; background: var(--purple); }
+  .mark.timer { background: var(--pink); }
+  .primary, .subtle {
+    min-height: 44px; padding: 7px 10px; border-radius: 11px; font-size: 13px; font-weight: 700;
+  }
+  .primary { width: 100%; color: white; background: var(--purple); }
+  .subtle { color: var(--accent-ink); background: var(--tint); }
+  .shortcuts { display: flex; gap: 6px; margin-top: 7px; }
+  .shortcuts button { flex: 1; }
+  .day-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 5px; margin-bottom: 7px; }
+  .day-heading h4 { font-size: 13px; }
+  .back { min-height: 44px; margin: -6px 0 3px; padding: 0 4px; color: var(--accent-ink); }
+  .search, .fields input {
+    width: 100%; min-height: 44px; padding: 7px 9px; border: 1px solid var(--line);
+    border-radius: 10px; background: var(--surface); font-size: 16px;
+  }
+  .search { margin-bottom: 7px; }
+  .fields { display: flex; gap: 6px; margin-bottom: 8px; }
+  .fields label { flex: 1; min-width: 0; color: var(--muted); font-size: 12px; }
+  .fields input { margin-top: 4px; }
+  .bar {
+    display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 2px;
+    margin-top: auto; border-top: 1px solid var(--line); padding: 4px; background: var(--surface);
+  }
+  .bar button { display: grid; justify-items: center; align-content: center; gap: 2px; min-height: 49px; border-radius: 10px; font-size: 11px; font-weight: 650; color: var(--muted); padding: 2px; }
+  .bar button span { font-size: 15px; line-height: 1.1; }
+  .bar [aria-current="page"] { color: var(--accent-ink); background: var(--tint); }
+  .bar [data-bar-add] { color: white; background: var(--purple); }
+  .bar [data-bar-add]:disabled { opacity: .5; cursor: default; }
+  .bar.top { margin-top: 0; border-top: 0; border-bottom: 1px solid var(--line); }
+  .menu-row {
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--line); padding: 4px 10px; background: var(--surface);
+  }
+  .menu-row button { min-height: 44px; color: var(--accent-ink); font-weight: 650; }
+  @media (min-width: 1340px) { .options { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+  @media (max-width: 1119px) { .options { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 14px; } }
+  @media (max-width: 620px) {
+    .comparison { padding: 17px 6px; }
+    .comparison > h1, .comparison > p { margin-inline: 6px; }
+    .options { grid-template-columns: minmax(0, 410px); justify-content: center; }
+    .option > header { min-height: auto; }
+    .week, .month { margin-inline: -12px; }
+  }
+  @media (pointer: coarse) { .day { min-height: 44px; } }
+</style>
+</head>
+<body>
+<main class="comparison">
+  <h1>Intervals navigation</h1>
+  <p>Try ten layouts with the same workouts and dates.</p>
+  <div id="options" class="options"></div>
+</main>
+<script>
+  const options = [
+    { id: "A", title: "Separate tabs", description: "Today handles logging. Gym and Intervals each have a tab.", tabs: ["Today", "Intervals", "Gym", "Journal"] },
+    { id: "B", title: "Train hub", description: "Open Gym and Intervals from a shared Train tab.", tabs: ["Today", "Train", "Journal"] },
+    { id: "C", title: "Journal home", description: "Journal opens on today. Open its calendar to change dates.", tabs: ["Journal", "Intervals", "Gym"], journal: "day" },
+    { id: "D", title: "Today and Journal", description: "Two bottom tabs. Open Gym and Intervals from Today.", tabs: ["Today", "Journal"], shortcuts: true },
+    { id: "E", title: "Calendar home", description: "Open directly to the month and select a day below it.", tabs: ["Journal", "Intervals", "Gym"] },
+    { id: "F", title: "Log and Library", description: "Log today, or search everything in one Library.", tabs: ["Log", "Library", "Journal"] },
+    { id: "G", title: "Header menu", description: "Open Journal, Gym, or Intervals from one top menu.", tabs: ["Today", "Journal", "Gym", "Intervals"], placement: "menu" },
+    { id: "H", title: "Journal and Library", description: "Two tabs. One day view and one searchable library.", tabs: ["Journal", "Library"], journal: "day" },
+    { id: "I", title: "Add in the bar", description: "The middle button adds an exercise to the date you’re viewing.", tabs: ["Journal", "Add", "Library"], journal: "day" },
+    { id: "J", title: "Top tabs", description: "Today, Gym, Intervals, and Journal stay visible at the top.", tabs: ["Today", "Gym", "Intervals", "Journal"], placement: "top" },
+  ];
+  const today = 22;
+  const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const lifts = [
+    { name: "Bulgarian Squat", tags: "Legs", kg: 60, reps: 5 },
+    { name: "Overhead Press", tags: "Shoulders", kg: 30, reps: 8 },
+    { name: "Deadlift", tags: "Back · Legs", kg: 100, reps: 4 },
+    { name: "Finger Pinch", tags: "Grip", kg: 18, reps: 6 },
+  ];
+  const timers = [{ name: "Hangboard", duration: "12 min" }, { name: "Bike intervals", duration: "18 min" }];
+  const glyphs = { Today: "⌂", Log: "☷", Intervals: "◷", Gym: "↔", Train: "▶", Journal: "▦", Library: "▤" };
+  const weekday = day => weekdays[(day + 5) % 7];
+  const dateLabel = day => weekday(day) + " " + day + " November";
+  const header = (title, sub = "") => '<header class="app-header"><h3>' + title + "</h3>" + (sub && "<small>" + sub + "</small>") + "</header>";
+  const button = (text, attr, tone = "subtle") => '<button type="button" class="' + tone + '" ' + attr + ">" + text + "</button>";
+  const section = (title, contents) => '<section class="section"><h4>' + title + "</h4>" + contents + "</section>";
+  function row(name, subtitle, attr = "", right = "", play = "") {
+    const contents = (play && '<span class="play ' + play + '" aria-hidden="true">▶</span>') +
+      '<span class="info"><strong>' + name + "</strong>" + (subtitle && "<small>" + subtitle + "</small>") + "</span>" +
+      (right && "<small>" + right + "</small>");
+    return attr ? '<button type="button" class="row" ' + attr + ">" + contents + '<span class="chevron" aria-hidden="true">›</span></button>'
+      : '<div class="row">' + contents + "</div>";
+  }
+
+  function mount(option) {
+    const container = document.createElement("section");
+    container.className = "option";
+    container.dataset.option = option.id;
+    container.setAttribute("aria-label", option.title);
+    const headerMenu = option.placement === "menu";
+    const nav = '<nav class="bar' + (option.placement ? " top" : "") + '" aria-label="' + option.title + ' navigation"' +
+      (headerMenu ? " hidden" : "") + ">" + option.tabs.map(name => name === "Add"
+        ? '<button type="button" data-bar-add aria-label="Add exercise"><span aria-hidden="true">+</span>Add</button>'
+        : '<button type="button" data-tab="' + name + '"><span aria-hidden="true">' + glyphs[name] + "</span>" + name + "</button>").join("") + "</nav>";
+    const menuRow = headerMenu ? '<div class="menu-row"><strong>Intervals</strong><button type="button" data-menu aria-expanded="false">Menu ☰</button></div>' : "";
+    container.innerHTML = '<header><h2><span>' + option.id + "</span>" + option.title + "</h2><p>" + option.description +
+      '</p></header><div class="phone">' + menuRow + (option.placement ? nav : "") +
+      '<div class="app"></div>' + (option.placement ? "" : nav) + "</div>";
+    document.getElementById("options").append(container);
+    const app = container.querySelector(".app");
+    const tabButtons = container.querySelectorAll("[data-tab]");
+    const menu = container.querySelector("[data-menu]");
+    const bar = container.querySelector(".bar");
+    const barAdd = container.querySelector("[data-bar-add]");
+    const dayFirst = option.journal === "day";
+    const dayLogs = { 16: { 0: 3 }, 19: { 1: 3 }, 20: { 3: 4 }, 21: { 2: 4 }, 22: { 0: 3, 1: 2 } };
+    const intervalDays = { 17: 1, 20: 0 };
+    let tab = option.tabs[0];
+    let date = today;
+    let calendarOpen = !dayFirst;
+    const screens = [];
+
+    function dayButton(day, week) {
+      const gym = day in dayLogs;
+      const intervals = day in intervalDays;
+      return '<button type="button" class="day" data-date="' + day + '" aria-label="' + dateLabel(day) +
+        (gym ? ", gym" : "") + (intervals ? ", intervals" : "") + '" aria-pressed="' + (day === (week ? today : date)) + '">' +
+        (week ? "<small>" + weekday(day) + "</small>" : "") + day + '<span class="marks" aria-hidden="true">' +
+        (gym ? '<span class="mark"></span>' : "") + (intervals ? '<span class="mark timer"></span>' : "") + "</span></button>";
+    }
+
+    function exerciseRows(day) {
+      const logged = Object.entries(dayLogs[day] || {}).map(([index, count]) => {
+        const exercise = lifts[index];
+        return row(exercise.name, exercise.kg + " kg × " + exercise.reps, 'data-log="' + index + '" data-for="' + day + '"',
+          count + (count === 1 ? " set" : " sets"));
+      });
+      if (day in intervalDays) {
+        const timer = timers[intervalDays[day]];
+        logged.push(row(timer.name, timer.duration + " · Intervals"));
+      }
+      return logged.join("") || "<small>No workouts logged.</small>";
+    }
+
+    const workout = () => row("Lower body", "Bulgarian Squat · Deadlift", "data-run", "", "gym");
+    const timerRows = () => timers.map((timer, index) => row(timer.name, timer.duration, 'data-timer="' + index + '"', "", "timer")).join("");
+    const add = (day, tone) => button("+ Add exercise", 'data-add="' + day + '"', tone);
+
+    function library(pickerDay, includeTimers = false) {
+      const rows = lifts.map((lift, index) => row(lift.name, lift.tags, pickerDay
+        ? 'data-log="' + index + '" data-for="' + pickerDay + '"'
+        : 'data-lift="' + index + '"')).join("");
+      const label = includeTimers ? "Search library" : "Search exercises";
+      const contents = includeTimers ? section("Gym", rows) + section("Saved routines", workout()) + section("Intervals", timerRows()) : rows;
+      return '<input type="search" class="search" data-search placeholder="' + label + '" aria-label="' + label +
+        '"><div class="stack" data-library>' + contents + "</div>";
+    }
+
+    function todayScreen() {
+      const week = Array.from({ length: 7 }, (_, i) => dayButton(today - 6 + i, true)).join("");
+      const shortcuts = option.shortcuts
+        ? '<div class="shortcuts">' + button("Gym library", 'data-open="Gym"') + button("Interval routines", 'data-open="Intervals"') + "</div>"
+        : "";
+      return header(tab, dateLabel(today)) + '<div class="week" role="group" aria-label="This week">' + week +
+        "</div>" + add(today, "primary") + shortcuts + section("Logged today", exerciseRows(today));
+    }
+
+    function journalScreen() {
+      const calendar = calendarOpen
+        ? "<h4>November 2026</h4>" + '<div class="month" role="group" aria-label="November 2026">' +
+          weekdays.map(name => "<small>" + name + "</small>").join("") + '<span aria-hidden="true"></span>'.repeat(6) +
+          Array.from({ length: 30 }, (_, i) => dayButton(i + 1, false)).join("") + "</div>"
+        : "";
+      if (dayFirst) {
+        return header("Journal") + '<div class="day-heading"><h4>' + (date === today ? "Today · " : "") + dateLabel(date) + "</h4>" +
+          button(calendarOpen ? "Close calendar" : "Calendar", 'data-calendar aria-expanded="' + calendarOpen + '"') + "</div>" + calendar +
+          (date <= today && !barAdd ? add(date, "primary") : "") +
+          section(date === today ? "Logged today" : "Logged that day", exerciseRows(date));
+      }
+      return header("Journal") + calendar + '<div class="day-heading"><h4>' + dateLabel(date) + "</h4>" +
+        (date <= today ? add(date, "subtle") : "") + '</div><div class="stack">' + exerciseRows(date) + "</div>";
+    }
+
+    function page(name) {
+      switch (name) {
+        case "Today":
+        case "Log": return todayScreen();
+        case "Journal": return journalScreen();
+        case "Gym": return header("Gym") + library() + section("Saved routines", workout());
+        case "Library": return header("Library") + library(null, true);
+        case "Intervals": return header("Intervals") + '<div class="stack">' + timerRows() + "</div>";
+        case "Train": return header("Train") + '<div class="stack">' +
+          row("Gym library", "Find exercises and saved routines", 'data-open="Gym"') +
+          row("Interval routines", "Open your saved timers", 'data-open="Intervals"') + "</div>";
+      }
+    }
+
+    function detail(screen) {
+      if (screen.kind === "page") return page(screen.name);
+      if (screen.kind === "picker") return header("Add exercise", dateLabel(screen.day)) + library(screen.day);
+      if (screen.kind === "run") {
+        return header("Lower body", dateLabel(today)) + '<div class="stack">' +
+          [0, 2].map(i => row(lifts[i].name, lifts[i].tags, 'data-log="' + i + '" data-for="' + today + '"')).join("") + "</div>";
+      }
+      if (screen.kind === "timer") {
+        const timer = timers[screen.index];
+        return header(timer.name, timer.duration) + '<div class="stack">' + row("Work", "7 seconds") + row("Rest", "3 seconds") + "</div>";
+      }
+      const lift = lifts[screen.index];
+      if (screen.kind === "lift") {
+        return header(lift.name, lift.tags) + button("Log for today", 'data-log="' + screen.index + '" data-for="' + today + '"', "primary");
+      }
+      const count = dayLogs[screen.day]?.[screen.index] || 0;
+      return header(lift.name, dateLabel(screen.day)) + '<div class="fields"><label>Weight (kg)<input type="number" value="' + lift.kg +
+        '" readonly></label><label>Reps<input type="number" value="' + lift.reps + '" readonly></label></div>' +
+        button("Log set", "data-save", "primary") +
+        '<div class="section" aria-live="polite"><h4>' + count + (count === 1 ? " set logged" : " sets logged") + "</h4></div>";
+    }
+
+    function render() {
+      const screen = screens.at(-1);
+      app.innerHTML = screen ? '<button type="button" class="back" data-back>‹ Back</button>' + detail(screen) : page(tab);
+      for (const navButton of tabButtons) {
+        if (navButton.dataset.tab === tab) navButton.setAttribute("aria-current", "page");
+        else navButton.removeAttribute("aria-current");
+      }
+      if (barAdd) barAdd.disabled = tab === "Journal" && date > today;
+    }
+
+    function toggleMenu(open) {
+      bar.hidden = !open;
+      menu.setAttribute("aria-expanded", String(open));
+    }
+
+    container.addEventListener("click", event => {
+      const target = event.target.closest("button");
+      if (!target) return;
+      const data = target.dataset;
+      if (target === menu) {
+        toggleMenu(bar.hidden);
+        return;
+      } else if (data.tab) {
+        tab = data.tab;
+        screens.length = 0;
+        if (menu) {
+          toggleMenu(false);
+          menu.focus();
+        }
+      } else if (data.date) {
+        date = Number(data.date);
+        tab = "Journal";
+        screens.length = 0;
+        calendarOpen = !dayFirst;
+      } else if (target.hasAttribute("data-calendar")) {
+        calendarOpen = !calendarOpen;
+      } else if (target.hasAttribute("data-back")) {
+        screens.pop();
+      } else if (data.open) {
+        screens.push({ kind: "page", name: data.open });
+      } else if (data.add) {
+        screens.push({ kind: "picker", day: Number(data.add) });
+      } else if (target === barAdd) {
+        screens.splice(0, screens.length, { kind: "picker", day: tab === "Journal" ? date : today });
+      } else if (data.log) {
+        if (screens.at(-1)?.kind === "picker") screens.pop();
+        screens.push({ kind: "log", index: Number(data.log), day: Number(data.for) });
+      } else if (data.lift) {
+        screens.push({ kind: "lift", index: Number(data.lift) });
+      } else if (target.hasAttribute("data-run")) {
+        screens.push({ kind: "run" });
+      } else if (data.timer) {
+        screens.push({ kind: "timer", index: Number(data.timer) });
+      } else if (target.hasAttribute("data-save")) {
+        const { day, index } = screens.at(-1);
+        const log = dayLogs[day] ??= {};
+        log[index] = (log[index] || 0) + 1;
+      } else {
+        return;
+      }
+      render();
+      if (!data.tab) {
+        const focus = data.date ? app.querySelector('[data-date="' + data.date + '"]') :
+          target.hasAttribute("data-save") ? app.querySelector("[data-save]") : null;
+        (focus || app.querySelector("[data-save], [data-back], [data-calendar]"))?.focus();
+      }
+    });
+    app.addEventListener("input", event => {
+      if (!event.target.hasAttribute("data-search")) return;
+      const term = event.target.value.trim().toLowerCase();
+      for (const lift of app.querySelectorAll("[data-library] button")) lift.hidden = !lift.textContent.toLowerCase().includes(term);
+      for (const group of app.querySelectorAll("[data-library] section")) group.hidden = !group.querySelector("button:not([hidden])");
+    });
+    render();
+  }
+
+  options.forEach(mount);
+</script>
+</body>
+</html>

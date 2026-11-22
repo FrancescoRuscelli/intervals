@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Intervals · Journal layouts</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --page: light-dark(#eeedf4, #121116);
+    --bg: light-dark(#f7f6fa, #101015);
+    --surface: light-dark(#fff, #1c1b23);
+    --ink: light-dark(#211a2b, #f4eff8);
+    --muted: light-dark(#655d71, #ada5b9);
+    --line: light-dark(#e2deeb, #34313e);
+    --purple: light-dark(#6d28d9, #7540d9);
+    --accent-ink: light-dark(#5b24aa, #d5bfff);
+    --tint: light-dark(#eee6fc, #35264f);
+    --pink: light-dark(#ac225f, #f788bd);
+    font: 14px/1.35 Roboto, system-ui, sans-serif;
+    background: var(--page);
+    color: var(--ink);
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body, h1, h2, h3, h4, p { margin: 0; }
+  button, input { font: inherit; color: inherit; }
+  button { border: 0; background: none; cursor: pointer; }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--purple); outline-offset: 1px; }
+  small { color: var(--muted); font-size: 12px; }
+  .board { width: min(100%, 1280px); margin: auto; padding: 26px 20px; }
+  .board > h1 { font-size: clamp(24px, 3vw, 35px); letter-spacing: -.035em; }
+  .board > p { margin: 5px 0 22px; color: var(--muted); }
+  .options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 14px; }
+  .option { display: flex; flex-direction: column; }
+  .option > header { min-height: 68px; margin: 0 2px; }
+  .option > header h2 { display: flex; align-items: center; gap: 7px; font-size: 17px; letter-spacing: -.015em; }
+  .option > header h2 span {
+    display: grid; place-items: center; width: 25px; height: 25px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 8px; font-size: 12px;
+  }
+  .option > header p { margin-top: 5px; padding-bottom: 9px; color: var(--muted); font-size: 13px; }
+  .phone {
+    display: flex; flex-direction: column; flex: 1; min-height: 521px;
+    overflow: clip; background: var(--bg); border: 1px solid var(--line); border-radius: 22px;
+    box-shadow: 0 10px 25px light-dark(#35275214, #0005);
+  }
+  .app { display: flex; flex-direction: column; gap: 11px; flex: 1; padding: 14px 13px 13px; }
+  .heading { display: grid; gap: 3px; }
+  .heading h3 { font-size: 25px; letter-spacing: -.035em; line-height: 1.08; }
+  .calendar { display: grid; gap: 4px; }
+  .calendar-head, .date-head { display: flex; flex-wrap: wrap; gap: 5px 8px; align-items: center; justify-content: space-between; }
+  .calendar-head h4, .date-head h4 { font-size: 13px; }
+  .week-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); text-align: center; font-variant-numeric: tabular-nums; }
+  .week-grid > small { padding: 2px 0; font-size: 11px; }
+  .day { display: grid; justify-items: center; align-content: center; min-height: 34px; gap: 3px; padding: 2px 0; border-radius: 9px; font-size: 13px; }
+  .day[aria-pressed="true"] { background: var(--tint); color: var(--accent-ink); font-weight: 700; }
+  .marks { display: flex; gap: 3px; min-height: 4px; }
+  .mark { width: 4px; height: 4px; border-radius: 50%; background: var(--purple); }
+  .mark.interval { background: var(--pink); }
+  .log { display: grid; gap: 6px; }
+  .row {
+    display: flex; align-items: center; gap: 8px; width: 100%; min-height: 48px; text-align: start;
+    padding: 7px 9px; background: var(--surface); border: 1px solid var(--line); border-radius: 11px;
+  }
+  .row .info { display: grid; gap: 2px; min-width: 0; flex: 1; }
+  .row strong { overflow-wrap: anywhere; font-size: 13px; }
+  .row > small { white-space: nowrap; }
+  .arrow { color: var(--muted); font-size: 18px; }
+  .action { min-height: 44px; border-radius: 11px; padding: 6px 10px; color: var(--accent-ink); background: var(--tint); font-size: 13px; font-weight: 700; }
+  .action.primary { color: white; background: var(--purple); }
+  .action.wide { width: 100%; }
+  .range { display: flex; gap: 2px; padding: 3px; background: var(--surface); border: 1px solid var(--line); border-radius: 11px; }
+  .range button { min-height: 30px; padding: 4px 7px; border-radius: 8px; color: var(--muted); font-size: 12px; }
+  .range button[aria-pressed="true"] { background: var(--tint); color: var(--accent-ink); font-weight: 650; }
+  .inside-day { grid-column: 1 / -1; margin: 4px 0; padding: 7px; text-align: start; border: 1px solid var(--line); border-radius: 12px; background: var(--tint); }
+  .inside-day > .date-head { margin-bottom: 5px; }
+  .sheet {
+    display: grid; gap: 7px; margin: auto -13px -13px; padding: 8px 13px 12px;
+    border-radius: 18px 18px 0 0; border-top: 1px solid var(--line); background: var(--surface);
+    box-shadow: 0 -6px 18px light-dark(#33234b14, #0005);
+  }
+  .sheet .row { background: var(--bg); }
+  .sheet .action.quiet { min-height: 44px; background: transparent; }
+  .dock { padding: 6px 13px; background: var(--surface); border-top: 1px solid var(--line); }
+  .bar { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; border-top: 1px solid var(--line); padding: 4px; background: var(--surface); }
+  .bar button { display: grid; align-content: center; justify-items: center; gap: 2px; padding: 2px; min-height: 47px; border-radius: 10px; color: var(--muted); font-size: 11px; font-weight: 650; }
+  .bar button span { font-size: 15px; line-height: 1.1; }
+  .bar [aria-current="page"] { background: var(--tint); color: var(--accent-ink); }
+  .back { margin: -4px 0; min-height: 44px; width: fit-content; color: var(--accent-ink); }
+  .search, .fields input { width: 100%; min-height: 44px; padding: 7px 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font-size: 16px; }
+  .fields { display: flex; gap: 7px; margin-bottom: 8px; }
+  .fields label { flex: 1; min-width: 0; color: var(--muted); font-size: 12px; }
+  .fields input { margin-top: 3px; }
+  @media (max-width: 960px) { .options { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 620px) {
+    .board { padding: 16px 6px; }
+    .board > h1, .board > p { margin-inline: 6px; }
+    .options { grid-template-columns: minmax(0, 410px); justify-content: center; }
+    .option > header { min-height: auto; }
+    .week-grid { margin-inline: -13px; }
+    .inside-day { margin-inline: 7px; }
+  }
+  @media (pointer: coarse) { .day, .range button { min-height: 44px; } }
+</style>
+</head>
+<body>
+<main class="board">
+  <h1>Intervals · Journal layouts</h1>
+  <p>Pick a date and try adding an exercise in each layout.</p>
+  <div class="options" id="options"></div>
+</main>
+<script>
+  const layouts = [
+    { id: "top", title: "Add at top", description: "Selected date and Add exercise sit above the month." },
+    { id: "log", title: "Log above calendar", description: "See the day’s sets first, with the full month below." },
+    { id: "dock", title: "Add at bottom", description: "Browse the month and sets, with Add just above the tabs." },
+    { id: "inline", title: "Day inside calendar", description: "The selected day’s log opens directly under its week." },
+    { id: "sheet", title: "Day sheet", description: "Tap a date to open a dismissible day panel below the month." },
+    { id: "range", title: "Week or month", description: "Switch the same calendar between a full month and one week." },
+  ];
+  const today = 22;
+  const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const exercises = [
+    { name: "Bulgarian Squat", tag: "Legs", kg: 60, reps: 5 },
+    { name: "Overhead Press", tag: "Shoulders", kg: 30, reps: 8 },
+    { name: "Deadlift", tag: "Back · Legs", kg: 100, reps: 4 },
+    { name: "Finger Pinch", tag: "Grip", kg: 18, reps: 6 },
+  ];
+  const timers = { 17: "Bike intervals · 18 min", 20: "Hangboard · 12 min" };
+  const tabs = { Journal: "▦", Intervals: "◷", Gym: "↔" };
+  const dayOfWeek = day => (day + 5) % 7;
+  const dateLabel = day => weekdays[dayOfWeek(day)] + " " + day + " November";
+  const heading = (label, sub) => '<header class="heading"><h3>' + label + "</h3>" + (sub ? "<small>" + sub + "</small>" : "") + "</header>";
+  const action = (label, attr, tone = "") => '<button type="button" class="action ' + tone + '" ' + attr + ">" + label + "</button>";
+  const list = rows => '<div class="log">' + rows + "</div>";
+  function row(name, sub = "", attr = "", right = "") {
+    const contents = '<span class="info"><strong>' + name + "</strong>" + (sub ? "<small>" + sub + "</small>" : "") + "</span>" +
+      (right ? "<small>" + right + "</small>" : "");
+    return attr ? '<button type="button" class="row" ' + attr + ">" + contents + '<span class="arrow" aria-hidden="true">›</span></button>'
+      : '<div class="row">' + contents + "</div>";
+  }
+
+  function mount(layout, index) {
+    const panel = document.createElement("section");
+    panel.className = "option";
+    panel.dataset.layout = layout.id;
+    panel.setAttribute("aria-label", layout.title);
+    panel.innerHTML = '<header><h2><span>' + (index + 1) + "</span>" + layout.title + "</h2><p>" + layout.description + '</p></header>' +
+      '<div class="phone"><div class="app"></div><div class="dock" hidden></div><nav class="bar" aria-label="' + layout.title + ' navigation">' +
+      Object.entries(tabs).map(([label, glyph]) => '<button type="button" data-tab="' + label + '"><span aria-hidden="true">' + glyph + "</span>" + label + "</button>").join("") +
+      "</nav></div>";
+    document.getElementById("options").append(panel);
+    const app = panel.querySelector(".app");
+    const dock = panel.querySelector(".dock");
+    const navigation = panel.querySelectorAll("[data-tab]");
+    const logs = {
+      16: { 0: { count: 3 } },
+      19: { 1: { count: 3 } },
+      20: { 3: { count: 4 } },
+      21: { 2: { count: 4 } },
+      22: { 0: { count: 3 }, 1: { count: 2 } },
+    };
+    let tab = "Journal";
+    let date = today;
+    let range = "Month";
+    let sheetOpen = true;
+    let screen = null;
+
+    function dayButton(day) {
+      if (day < 1 || day > 30) return '<span aria-hidden="true"></span>';
+      const gym = day in logs;
+      const timer = day in timers;
+      return '<button type="button" class="day" data-date="' + day + '" aria-label="' + dateLabel(day) +
+        (gym ? ", gym" : "") + (timer ? ", intervals" : "") + '" aria-pressed="' + (day === date) + '">' + day +
+        '<span class="marks" aria-hidden="true">' + (gym ? '<span class="mark"></span>' : "") +
+        (timer ? '<span class="mark interval"></span>' : "") + "</span></button>";
+    }
+
+    const addExercise = (tone = "") => date <= today ? action("+ Add exercise", 'data-add="' + date + '"', tone) : "";
+    const dateHead = (extra = "") => '<div class="date-head"><h4>' + dateLabel(date) + "</h4>" + extra + "</div>";
+
+    function dayLog() {
+      const rows = Object.entries(logs[date] || {}).map(([index, logged]) => {
+        const exercise = exercises[index];
+        const count = logged.count + (logged.count === 1 ? " set" : " sets");
+        const values = logged.kg ?? exercise.kg;
+        return row(exercise.name, values + " kg × " + (logged.reps ?? exercise.reps), 'data-log="' + index + '" data-day="' + date + '"', count);
+      });
+      if (date in timers) rows.push(row(timers[date]));
+      return list(rows.join("") || "<small>No workouts logged.</small>");
+    }
+
+    function calendar(inside = "") {
+      const rangePicker = layout.id === "range"
+        ? '<div class="range" role="group" aria-label="Calendar range">' + ["Week", "Month"].map(mode =>
+          '<button type="button" data-range="' + mode + '" aria-pressed="' + (range === mode) + '">' + mode + "</button>").join("") + "</div>"
+        : "";
+      const start = range === "Week" ? date - dayOfWeek(date) : -5;
+      const weeks = Array.from({ length: range === "Week" ? 1 : 6 }, (_, i) => {
+        const monday = start + i * 7;
+        const days = Array.from({ length: 7 }, (_, offset) => dayButton(monday + offset)).join("");
+        return days + (date >= monday && date < monday + 7 ? inside : "");
+      }).join("");
+      return '<section class="calendar" aria-label="November 2026"><div class="calendar-head"><h4>November 2026</h4>' +
+        rangePicker + '</div><div class="week-grid">' + weekdays.map(label => "<small>" + label + "</small>").join("") + weeks + "</div></section>";
+    }
+
+    function journal() {
+      const title = heading("Journal");
+      switch (layout.id) {
+        case "top":
+          return title + dateHead(addExercise("primary")) + calendar() + dayLog();
+        case "log":
+          return title + dateHead(addExercise("primary")) + dayLog() + calendar();
+        case "dock":
+          return title + calendar() + dateHead() + dayLog();
+        case "inline":
+          return title + calendar('<div class="inside-day">' + dateHead(addExercise()) + dayLog() + "</div>");
+        case "sheet": {
+          const toggle = action(sheetOpen ? "Hide day" : "View day", 'data-sheet aria-expanded="' + sheetOpen + '"', "quiet");
+          return title + calendar() + '<section class="sheet" aria-label="Selected day">' + dateHead(toggle) +
+            (sheetOpen ? addExercise("primary wide") + dayLog() : "") + "</section>";
+        }
+        case "range":
+          return title + calendar() + dateHead(addExercise("primary")) + dayLog();
+      }
+    }
+
+    function exerciseList(day) {
+      return '<input class="search" type="search" data-search placeholder="Search exercises" aria-label="Search exercises">' +
+        list(exercises.map((ex, index) => row(ex.name, ex.tag, 'data-log="' + index + '" data-day="' + day + '"')).join(""));
+    }
+
+    function content() {
+      if (screen) {
+        const back = '<button type="button" class="back" data-back>‹ Back</button>';
+        if (screen.picker) return back + heading("Add exercise", dateLabel(screen.day)) + exerciseList(screen.day);
+        const exercise = exercises[screen.index];
+        const logged = logs[screen.day]?.[screen.index];
+        const count = logged?.count || 0;
+        return back + heading(exercise.name, dateLabel(screen.day)) +
+          '<form data-log-form><div class="fields"><label>Weight (kg)<input name="kg" type="number" step="any" required value="' + (logged?.kg ?? exercise.kg) +
+          '"></label><label>Reps<input name="reps" type="number" min="0" required value="' + (logged?.reps ?? exercise.reps) +
+          '"></label></div><button class="action primary wide" type="submit">Log set</button></form><small aria-live="polite">' +
+          count + (count === 1 ? " set logged" : " sets logged") + "</small>";
+      }
+      if (tab === "Gym") return heading("Gym") + exerciseList(today);
+      if (tab === "Intervals") return heading("Intervals") + list(row("Hangboard", "12 min") + row("Bike intervals", "18 min"));
+      return journal();
+    }
+
+    function render() {
+      app.innerHTML = content();
+      dock.hidden = layout.id !== "dock" || tab !== "Journal" || Boolean(screen) || date > today;
+      dock.innerHTML = dock.hidden ? "" : addExercise("primary wide");
+      for (const button of navigation) {
+        if (button.dataset.tab === tab) button.setAttribute("aria-current", "page");
+        else button.removeAttribute("aria-current");
+      }
+    }
+
+    panel.addEventListener("click", event => {
+      const button = event.target.closest("button");
+      if (!button || button.type === "submit") return;
+      const data = button.dataset;
+      let focus;
+      if (data.tab) {
+        tab = data.tab;
+        screen = null;
+      } else if (data.date) {
+        date = Number(data.date);
+        sheetOpen = true;
+        focus = '[data-date="' + date + '"]';
+      } else if (data.range) {
+        range = data.range;
+        focus = '[data-range="' + range + '"]';
+      } else if (button.hasAttribute("data-sheet")) {
+        sheetOpen = !sheetOpen;
+        focus = "[data-sheet]";
+      } else if (data.add) {
+        screen = { picker: true, day: Number(data.add) };
+        focus = "[data-back]";
+      } else if (data.log) {
+        screen = { index: Number(data.log), day: Number(data.day) };
+        focus = "[data-back]";
+      } else if (button.hasAttribute("data-back")) {
+        screen = null;
+        focus = '[data-date][aria-pressed="true"]';
+      } else {
+        return;
+      }
+      render();
+      if (focus) app.querySelector(focus)?.focus();
+    });
+
+    panel.addEventListener("input", event => {
+      if (!event.target.hasAttribute("data-search")) return;
+      const term = event.target.value.trim().toLowerCase();
+      for (const row of app.querySelectorAll("[data-log]")) row.hidden = !row.textContent.toLowerCase().includes(term);
+    });
+
+    panel.addEventListener("submit", event => {
+      if (!event.target.hasAttribute("data-log-form")) return;
+      event.preventDefault();
+      const { day, index } = screen;
+      const fields = new FormData(event.target);
+      const dayLog = logs[day] ??= {};
+      dayLog[index] = { count: (dayLog[index]?.count ?? 0) + 1, kg: Number(fields.get("kg")), reps: Number(fields.get("reps")) };
+      render();
+      app.querySelector('[type="submit"]').focus();
+    });
+    render();
+  }
+
+  layouts.forEach(mount);
+</script>
+</body>
+</html>
