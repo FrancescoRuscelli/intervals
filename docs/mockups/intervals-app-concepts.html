@@ -1,0 +1,372 @@
+<title>Intervals Layout Concepts</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: a concept switcher, then three phone screens of that concept side by side (scrolling sideways on a phone), then its pros / cons. */
+:root {
+  --bg: #f4f2fa; --surface: #ffffff; --ink: #18151f; --muted: #5b5668; --line: #dfdbe9; --accent: #6d28d9; --accent-soft: #ece4fd;
+  --good: #0f7a5c; --warn: #9a4a00;
+  /* the phones always use the app's own dark look */
+  --ph-bg: #000000; --ph-card: #1a1c21; --ph-card2: #111216; --ph-line: #23262c; --ph-ink: #f2f3f5; --ph-muted: #9aa0aa; --ph-faint: #6e747e;
+  --ph-accent: #7c3aed; --ph-accent-ink: #c4b1ff; --ph-tint: #2a2340; --ph-pink: #e91e63; --ph-teal: #00bfa5; --ph-yellow: #ffc107;
+  --display: "Space Grotesk", Inter, system-ui, sans-serif; --text: Inter, system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0b10; --surface: #17151d; --ink: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --accent-soft: #241d38;
+  --good: #4fd1a5; --warn: #ffb35c; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0c0b10; --surface: #17151d; --ink: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --accent-soft: #241d38;
+  --good: #4fd1a5; --warn: #ffb35c; color-scheme: dark }
+
+body { background: var(--bg); color: var(--ink); font-family: var(--text); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 48px; }
+.wrap { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+h1 { font-family: var(--display); font-size: clamp(28px, 5vw, 40px); line-height: 1.1; margin: 0; text-wrap: balance; letter-spacing: -0.5px; }
+.lead { margin: 6px 0 0; color: var(--muted); max-width: 68ch; }
+.switch { display: flex; flex-wrap: wrap; gap: 8px; }
+.switch button { font: 600 14px var(--text); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
+  padding: 9px 14px; cursor: pointer; display: flex; gap: 8px; align-items: center; }
+.switch button .k { font-family: var(--display); color: var(--accent); }
+.switch button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.switch button[aria-pressed="true"] .k { color: #fff; }
+.switch button:focus-visible, .phone button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.concept h2 { font-family: var(--display); font-size: 26px; margin: 0; letter-spacing: -0.3px; }
+.concept .idea { margin: 4px 0 0; color: var(--muted); max-width: 70ch; }
+.phones { display: flex; gap: 22px; overflow-x: auto; padding: 6px 2px 14px; scroll-snap-type: x mandatory; }
+figure { margin: 0; display: flex; flex-direction: column; gap: 8px; scroll-snap-align: start; }
+figcaption { font-size: 13px; color: var(--muted); max-width: 300px; }
+figcaption b { color: var(--ink); }
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.note { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; min-width: 0; }
+.note h3 { margin: 0 0 6px; font-size: 13px; letter-spacing: 0.6px; text-transform: uppercase; }
+.note.pro h3 { color: var(--good); } .note.con h3 { color: var(--warn); }
+.note ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.compare { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 14px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+thead th { font-size: 12px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted); }
+td.n { font-family: var(--display); font-variant-numeric: tabular-nums; font-weight: 600; }
+tr.pick td { background: var(--accent-soft); }
+.reco { background: var(--accent-soft); border-radius: 14px; padding: 16px 18px; }
+.reco h2 { font-family: var(--display); margin: 0 0 6px; font-size: 22px; }
+.reco p { margin: 0; max-width: 75ch; }
+
+/* ---- phone ---- */
+.phone { width: 300px; height: 620px; flex: none; background: var(--ph-bg); color: var(--ph-ink); border-radius: 34px; border: 8px solid #1e1d24;
+  box-sizing: border-box; position: relative; overflow: hidden; display: flex; flex-direction: column; font-size: 13px; line-height: 1.35;
+  box-shadow: 0 10px 30px rgba(20, 10, 40, 0.18); }
+.phone .body { flex: 1; overflow: hidden; padding: 14px 12px 10px; display: flex; flex-direction: column; gap: 9px; }
+.phone .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.phone .h { font-family: var(--display); font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+.phone .sub { color: var(--ph-muted); font-size: 11.5px; }
+.phone .card { background: var(--ph-card); border-radius: 14px; padding: 10px 11px; display: flex; flex-direction: column; gap: 5px; }
+.phone .card.dim { background: var(--ph-card2); }
+.phone .card.hi { background: #1c1828; border: 2px solid var(--ph-accent); }
+.phone .row { display: flex; align-items: center; gap: 8px; }
+.phone .grow { flex: 1; min-width: 0; }
+.phone .t { font-weight: 700; font-size: 13.5px; }
+.phone .m { color: var(--ph-muted); font-size: 11.5px; }
+.phone .num { font-family: var(--display); font-variant-numeric: tabular-nums; font-weight: 700; }
+.phone .big { font-family: var(--display); font-weight: 700; font-size: 44px; line-height: 1; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+.phone button { font: 700 13px var(--text); border: 0; border-radius: 12px; cursor: pointer; }
+.phone .btn { background: var(--ph-accent); color: #fff; height: 42px; width: 100%; }
+.phone .btn.soft { background: var(--ph-tint); color: var(--ph-accent-ink); }
+.phone .btn.teal { background: var(--ph-teal); color: #04241f; }
+.phone .btn.pink { background: var(--ph-pink); }
+.phone .pill { padding: 3px 9px; border-radius: 999px; background: var(--ph-tint); color: var(--ph-accent-ink); font-size: 11px; font-weight: 700; white-space: nowrap; }
+.phone .pill.pink { background: rgba(233, 30, 99, 0.18); color: #ff8ab3; }
+.phone .pill.teal { background: rgba(0, 191, 165, 0.16); color: #5eead4; }
+.phone .pill.yellow { background: rgba(255, 193, 7, 0.16); color: #ffd666; }
+.phone .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.phone .chev { color: var(--ph-faint); font-size: 18px; }
+.phone .tabs { display: flex; border-top: 1px solid var(--ph-line); background: #0b0c0f; padding: 6px 4px 10px; }
+.phone .tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--ph-faint); font-size: 10.5px; font-weight: 600; }
+.phone .tab i { width: 30px; height: 22px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-style: normal; font-size: 13px; }
+.phone .tab.on { color: var(--ph-accent-ink); } .phone .tab.on i { background: var(--ph-tint); }
+.phone .tab.fab i { width: 48px; height: 48px; border-radius: 24px; margin-top: -22px; background: var(--ph-accent); color: #fff; font-size: 24px; box-shadow: 0 4px 14px rgba(124, 58, 237, 0.5); }
+.phone .mini { margin: 0 8px 6px; background: #1c1828; border: 1px solid #3b2f63; border-radius: 16px; padding: 8px 10px; display: flex; align-items: center; gap: 9px; }
+.phone .ring { width: 34px; height: 34px; border-radius: 50%; flex: none; background: conic-gradient(var(--ph-teal) 0 62%, #2a2d34 0); display: flex; align-items: center; justify-content: center; }
+.phone .ring span { width: 26px; height: 26px; border-radius: 50%; background: #1c1828; display: flex; align-items: center; justify-content: center; font: 700 9px var(--display); color: #5eead4; }
+.phone .sheet { position: absolute; inset: auto 0 0 0; background: #15161b; border-radius: 22px 22px 0 0; padding: 10px 12px 14px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 -10px 30px rgba(0,0,0,0.6); }
+.phone .grab { width: 38px; height: 4px; border-radius: 2px; background: #3a3d45; align-self: center; }
+.phone .scrim { position: absolute; inset: 0; background: rgba(0,0,0,0.55); }
+.phone .seg { display: flex; background: var(--ph-card); border-radius: 12px; padding: 3px; }
+.phone .seg span { flex: 1; text-align: center; padding: 7px 0; border-radius: 9px; font-weight: 700; color: var(--ph-muted); font-size: 12px; }
+.phone .seg span.on { background: var(--ph-accent); color: #fff; }
+.phone .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.phone .week div { background: var(--ph-card2); border-radius: 10px; padding: 5px 0; text-align: center; font-size: 10px; color: var(--ph-muted); display: flex; flex-direction: column; gap: 3px; align-items: center; }
+.phone .week div b { font-family: var(--display); color: var(--ph-ink); font-size: 13px; }
+.phone .week div.today { outline: 2px solid var(--ph-accent); }
+.phone .bar { height: 5px; border-radius: 3px; width: 70%; }
+.phone .boxes { display: flex; flex-wrap: wrap; gap: 4px; }
+.phone .boxes span { min-width: 22px; height: 22px; padding: 0 5px; box-sizing: border-box; border-radius: 6px; border: 1px solid #2a2d34; display: inline-flex; align-items: center; justify-content: center; font: 600 11.5px var(--display); }
+.phone .search { background: var(--ph-card); border-radius: 12px; padding: 9px 11px; color: var(--ph-faint); }
+.phone .tile { flex: 1; background: var(--ph-card); border-radius: 16px; padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.phone .tile .big { font-size: 34px; }
+.phone .pm { display: flex; gap: 6px; width: 100%; } .phone .pm button { flex: 1; height: 34px; background: var(--ph-tint); color: var(--ph-accent-ink); font-size: 18px; }
+@media (prefers-reduced-motion: no-preference) { .concept { animation: in 220ms ease-out; } @keyframes in { from { opacity: 0.4; transform: translateY(6px); } } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Intervals: sei modi di organizzare l'app</h1>
+    <p class="lead">Idee diverse dalle dieci navigazioni già provate (tab separate, Train hub, Journal home, Log e Library, menu in alto, + nella barra…).
+      Ogni idea è mostrata su tre schermate con i tuoi esercizi veri. In palestra conta fare tutto con pochi tocchi grandi; a casa conta ritrovare e confrontare.</p>
+  </header>
+
+  <nav class="switch" aria-label="Concetti" id="switch"></nav>
+  <section class="concept" id="concept" aria-live="polite"></section>
+
+  <section class="reco">
+    <h2>Cosa farei</h2>
+    <p><b>C + B insieme</b>: tre tab <b>Journal · ▶ Start · Library</b>, e quando un allenamento è in corso la <b>barra della sessione</b> resta sopra le tab in ogni schermata.
+      Start dà un unico punto di partenza per tutto (riprendi, suggeriti, gruppi, intervalli, un esercizio, timer libero); la barra ti riporta sempre dove eri
+      senza cercare. Journal resta la casa per rivedere, Library per gestire esercizi, gruppi e workout. È anche il cambiamento più piccolo rispetto all'app di oggi.</p>
+  </section>
+
+  <section>
+    <h2 style="font-family: var(--display); margin: 0 0 10px;">Confronto</h2>
+    <div class="compare">
+      <table>
+        <thead><tr><th>Idea</th><th>Tab</th><th>Iniziare in palestra</th><th>Tornare alla serie in corso</th><th>Rivedere / confrontare</th><th>Quanto cambia</th></tr></thead>
+        <tbody id="cmp"></tbody>
+      </table>
+    </div>
+    <p class="lead" style="font-size: 13px;">I tocchi contano dalla schermata che l'app apre, fino al pulsante per registrare la serie. Sono stime sui mockup, non misure.</p>
+  </section>
+</div>
+
+<script>
+const tabs = (items, on, fab) => `<div class="tabs">${items.map(([ic, l], i) =>
+  `<div class="tab${i === on ? ' on' : ''}${i === fab ? ' fab' : ''}"><i>${ic}</i>${l}</div>`).join('')}</div>`;
+const phone = (inner, after = '') => `<div class="phone" role="img">${inner}${after}</div>`;
+const body = (html) => `<div class="body">${html}</div>`;
+const mini = (title, sub, ring = '1:12') => `<div class="mini"><div class="ring"><span>${ring}</span></div><div class="grow"><div class="t">${title}</div><div class="m">${sub}</div></div><span class="pill teal">Open</span></div>`;
+const setLog = `
+  <div class="seg"><span>deep</span><span>half</span><span class="on">normal</span></div>
+  <div class="row" style="gap:8px">
+    <div class="tile"><span class="m">WEIGHT</span><span class="big num">90</span><div class="pm"><button aria-label="less">−</button><button aria-label="more">+</button></div></div>
+    <div class="tile"><span class="m">REPS</span><span class="big num">5</span><div class="pm"><button aria-label="less">−</button><button aria-label="more">+</button></div></div>
+  </div>
+  <button class="btn">Log set · normal</button>`;
+
+const C = [
+  { k: 'A', name: 'Adesso', short: 'Adesso',
+    idea: 'Una sola schermata che cambia con il momento: prima ti propone cosa fare, durante diventa la sessione, dopo il riepilogo. Le altre due tab sono per rivedere e gestire.',
+    shots: [
+      ['<b>Prima:</b> la prossima cosa sensata in grande, scelta da quanto tempo non fai ogni gruppo.',
+        phone(body(`
+          <div class="top"><div><div class="h">Adesso</div><div class="sub">Sat 22 Nov · last trained Mon</div></div></div>
+          <div class="card hi"><span class="m">SUGGESTED · 5 days since Legs</span><div class="t" style="font-size:17px">Legs</div>
+            <div class="m">Squat · Deadlift · Bulgarian Bar Squat · +7</div><button class="btn" style="margin-top:4px">▶ Start Legs</button></div>
+          <div class="card"><div class="row"><span class="dot" style="background:var(--ph-pink)"></span><div class="grow"><div class="t">hangboard 70%</div><div class="m">intervals · 5:25 · 3 days ago</div></div><button class="btn soft" style="width:auto;padding:0 12px;height:32px">▶</button></div></div>
+          <div class="card"><div class="row"><span class="dot" style="background:var(--ph-teal)"></span><div class="grow"><div class="t">Fingers</div><div class="m">gym group · 19 days ago</div></div><button class="btn soft" style="width:auto;padding:0 12px;height:32px">▶</button></div></div>
+          <button class="btn soft">Something else…</button>`)
+          + tabs([['●', 'Adesso'], ['☰', 'History'], ['▦', 'Library']], 0))],
+      ['<b>Durante:</b> la stessa tab è la sessione. Esercizio, serie, riposo e il prossimo sono tutti qui.',
+        phone(body(`
+          <div class="top"><div><div class="h">Legs</div><div class="sub">23 min · 9 sets · Squat 2 of 3</div></div><span class="pill teal">rest 1:12</span></div>
+          <div class="card"><div class="t">Squat</div>${setLog}</div>
+          <div class="card dim"><div class="row"><span class="m grow">Next</span><span class="t">Deadlift</span><span class="chev">›</span></div></div>`)
+          + tabs([['●', 'Adesso'], ['☰', 'History'], ['▦', 'Library']], 0))],
+      ['<b>Dopo:</b> riepilogo con i record; poi la tab torna a proporre.',
+        phone(body(`
+          <div class="h">Done · Legs</div><div class="sub">52 min · 24 sets · 3 exercises</div>
+          <div class="card"><div class="row"><span class="t grow">Squat</span><span class="pill yellow">PR normal 100×5</span></div><div class="m">deep 40–80 · normal 90×5 ×5 · deep 70–60</div></div>
+          <div class="card"><div class="t">Deadlift</div><div class="m">70 · 90 · 110 ×3</div></div>
+          <div class="card"><div class="t">Bulgarian Bar Squat</div><div class="m">50×5 ×3</div></div>
+          <button class="btn">Save to journal</button><button class="btn soft">Discard</button>`)
+          + tabs([['●', 'Adesso'], ['☰', 'History'], ['▦', 'Library']], 0))],
+    ],
+    pro: ['Una cosa sola da guardare: l\'azione giusta è sempre in alto.', 'Niente da cercare durante l\'allenamento.', 'Il suggerimento usa i tuoi dati (giorni dall\'ultima volta per gruppo).'],
+    con: ['Se il suggerimento sbaglia devi andare in "Something else".', 'Una schermata che cambia forma può confondere all\'inizio.', 'Il calendario finisce in History, un passo più lontano.'],
+    row: ['Adesso · History · Library', '1 (Start Legs) + 1', 'è già lì', 'History', 'molto'] },
+
+  { k: 'B', name: 'Barra della sessione', short: 'Barra sessione',
+    idea: 'Le tab di oggi restano (Journal · Intervals · Gym). Quando un allenamento è in corso, una barra fissa sopra le tab mostra esercizio, riposo e timer: la tocchi e torni alla serie, da qualunque schermata. Come il mini-player della musica.',
+    shots: [
+      ['<b>Journal</b> durante la sessione: guardi i giorni passati, la barra resta in basso.',
+        phone(body(`
+          <div class="top"><div class="h">Journal</div><span class="sub">November</span></div>
+          <div class="week"><div>Mo<b>17</b><span class="bar" style="background:var(--ph-accent)"></span></div><div>Tu<b>18</b></div><div>We<b>19</b><span class="bar" style="background:var(--ph-accent)"></span></div><div>Th<b>20</b></div><div>Fr<b>21</b><span class="bar" style="background:var(--ph-pink)"></span></div><div class="today">Sa<b>22</b><span class="bar" style="background:var(--ph-teal)"></span></div><div>Su<b>23</b></div></div>
+          <div class="card"><div class="t">Mon 17 Nov · Gym</div><div class="m">Squat deep 40–80 · normal 90×5 ×5 · deep 70–60</div><div class="m">Deadlift 70 · 90 · 110 · 120×2</div></div>
+          <div class="card"><div class="t">Wed 19 Nov · Gym</div><div class="m">Block Pulls R 50×5 ×3 · L 45×5 ×3</div></div>`)
+          + mini('Squat · normal 90×5', 'set 7 · resting · buzz at 3:00') + tabs([['☰', 'Journal'], ['◔', 'Intervals'], ['▦', 'Gym']], 0))],
+      ['<b>Gym</b> durante la sessione: cerchi un esercizio da aggiungere senza perdere il filo.',
+        phone(body(`
+          <div class="top"><div class="h">Gym</div><span class="pill">Tag…</span></div>
+          <div class="search">Search exercises</div>
+          <div class="card"><div class="row"><div class="grow"><div class="t">Squat</div><div class="m">deep · half · normal · today 7 sets</div></div><span class="chev">›</span></div></div>
+          <div class="card"><div class="row"><div class="grow"><div class="t">Deadlift</div><div class="m">last Mon · 120×2</div></div><span class="chev">›</span></div></div>
+          <div class="card"><div class="row"><div class="grow"><div class="t">Bulgarian Bar Squat</div><div class="m">last 11 Nov · 50×5</div></div><span class="chev">›</span></div></div>`)
+          + mini('Squat · normal 90×5', 'set 7 · resting 1:12') + tabs([['☰', 'Journal'], ['◔', 'Intervals'], ['▦', 'Gym']], 2))],
+      ['<b>Tocchi la barra:</b> la sessione si apre a tutto schermo; giù per richiuderla.',
+        phone(body(`
+          <div class="grab" style="width:38px;height:4px;border-radius:2px;background:#3a3d45;align-self:center"></div>
+          <div class="top"><div><div class="h">Squat</div><div class="sub">Legs · 23 min · 2 of 3</div></div><span class="pill teal">rest 1:12</span></div>
+          ${setLog}
+          <div class="card dim"><span class="m">TODAY · 7 sets</span><div class="m">deep 40 · 60 · 70 · 80 &nbsp;|&nbsp; normal 90×5 ×3</div></div>`))],
+    ],
+    pro: ['Cambia pochissimo: tutto quello che conosci resta dov\'è.', 'Non perdi mai la sessione in corso, da qualunque tab.', 'Il riposo si vede sempre, anche guardando altro.'],
+    con: ['Da solo non semplifica come si inizia un allenamento.', 'La barra occupa un po\' di spazio in basso durante la sessione.'],
+    row: ['Journal · Intervals · Gym', '2–3 (Gym, esercizio)', '1 (la barra)', 'Journal', 'poco'] },
+
+  { k: 'C', name: 'Start al centro', short: 'Start al centro',
+    idea: 'Tre tab: Journal · ▶ Start · Library. Start è un solo grande pulsante che apre un pannello con tutti i modi di iniziare: riprendi, suggeriti, gruppi, workout a intervalli, un esercizio, timer libero.',
+    shots: [
+      ['<b>Journal</b> è la casa: il calendario e i giorni, per rivedere.',
+        phone(body(`
+          <div class="top"><div class="h">Journal</div><span class="sub">November · 9 sessions</span></div>
+          <div class="week"><div>Mo<b>17</b><span class="bar" style="background:var(--ph-accent)"></span></div><div>Tu<b>18</b></div><div>We<b>19</b><span class="bar" style="background:var(--ph-accent)"></span></div><div>Th<b>20</b></div><div>Fr<b>21</b><span class="bar" style="background:var(--ph-pink)"></span></div><div class="today">Sa<b>22</b></div><div>Su<b>23</b></div></div>
+          <div class="card"><div class="row"><span class="t grow">Fri 21 Nov</span><span class="pill pink">hangboard 70%</span></div><div class="m">6 of 6 rounds · 20 mm +10 kg</div></div>
+          <div class="card"><div class="row"><span class="t grow">Wed 19 Nov</span><span class="pill">Fingers</span></div><div class="m">Block Pulls · Pinch · Rolling Handle</div></div>`)
+          + tabs([['☰', 'Journal'], ['▶', 'Start'], ['▦', 'Library']], 0, 1))],
+      ['<b>▶ Start</b> apre un pannello: tutto quello con cui puoi iniziare, in un posto.',
+        phone(body(`
+          <div class="top"><div class="h">Journal</div></div>
+          <div class="card"><div class="t">Fri 21 Nov</div></div>`)
+          + '<div class="scrim"></div>' +
+          `<div class="sheet"><div class="grab"></div>
+            <div class="t" style="font-size:16px">Start</div>
+            <div class="card hi"><div class="row"><div class="grow"><div class="t">Legs</div><div class="m">suggested · 5 days since last time</div></div><span class="pill">▶</span></div></div>
+            <span class="m">INTERVALS</span>
+            <div class="row" style="gap:6px"><span class="pill pink">hangboard 70%</span><span class="pill pink">block pulls 60%</span><span class="pill pink">hiit</span></div>
+            <span class="m">GYM GROUPS</span>
+            <div class="row" style="gap:6px"><span class="pill">Legs</span><span class="pill">Pull</span><span class="pill">Push</span><span class="pill">Fingers</span></div>
+            <div class="row" style="gap:6px"><button class="btn soft">+ One exercise</button><button class="btn soft">⏱ Free timer</button></div>
+          </div>`)],
+      ['<b>Library</b>: esercizi, gruppi e workout a intervalli insieme, con una ricerca sola.',
+        phone(body(`
+          <div class="top"><div class="h">Library</div></div>
+          <div class="search">Search exercises, groups, workouts</div>
+          <div class="seg"><span class="on">Exercises</span><span>Groups</span><span>Intervals</span></div>
+          <div class="card"><div class="row"><div class="grow"><div class="t">Squat</div><div class="m">Legs · deep · half · normal</div></div><span class="chev">›</span></div></div>
+          <div class="card"><div class="row"><div class="grow"><div class="t">Block Pulls</div><div class="m">Fingers · L · R · 62 days</div></div><span class="chev">›</span></div></div>
+          <div class="card"><div class="row"><div class="grow"><div class="t">Pull Up</div><div class="m">Pull · 35 days</div></div><span class="chev">›</span></div></div>`)
+          + tabs([['☰', 'Journal'], ['▶', 'Start'], ['▦', 'Library']], 2, 1))],
+    ],
+    pro: ['Un solo punto per iniziare qualunque cosa: palestra, intervalli, timer.', 'Gym e Intervals smettono di essere due app in una.', 'Il pulsante grande in mezzo si trova anche senza guardare.'],
+    con: ['Library diventa più piena (tre elenchi).', 'Senza la barra della sessione, tornare a una serie in corso è meno ovvio.'],
+    row: ['Journal · Start · Library', '2 (Start, Legs)', 'Start → Resume', 'Journal', 'medio'] },
+
+  { k: 'D', name: 'La mia settimana', short: 'Settimana',
+    idea: 'La casa è la settimana, lunedì-domenica: quello che hai fatto e quello che pensavi di fare. Tocchi oggi per iniziare. Per chi si allena con una rotazione (Legs, Pull, Fingers…).',
+    shots: [
+      ['<b>Settimana:</b> fatti, saltati e previsti in un colpo d\'occhio.',
+        phone(body(`
+          <div class="top"><div><div class="h">This week</div><div class="sub">17–23 Nov · 3 of 5 done</div></div></div>
+          <div class="card"><div class="row"><span class="dot" style="background:var(--ph-accent)"></span><span class="t grow">Mon · Legs</span><span class="pill">done</span></div></div>
+          <div class="card"><div class="row"><span class="dot" style="background:var(--ph-accent)"></span><span class="t grow">Wed · Fingers</span><span class="pill">done</span></div></div>
+          <div class="card"><div class="row"><span class="dot" style="background:var(--ph-pink)"></span><span class="t grow">Fri · hangboard 70%</span><span class="pill pink">done</span></div></div>
+          <div class="card hi"><div class="row"><span class="dot" style="background:var(--ph-teal)"></span><div class="grow"><div class="t">Sat · Pull</div><div class="m">planned today</div></div></div><button class="btn">▶ Start Pull</button></div>
+          <div class="card dim"><div class="row"><span class="t grow" style="color:var(--ph-muted)">Sun · rest</span></div></div>`)
+          + tabs([['▤', 'Week'], ['↗', 'Progress'], ['▦', 'Library']], 0))],
+      ['<b>Pianificare</b> è un tocco su un giorno: scegli un gruppo o un workout.',
+        phone(body(`<div class="h">This week</div><div class="card"><div class="t">Sun 23 Nov</div></div>`)
+          + '<div class="scrim"></div>' +
+          `<div class="sheet"><div class="grab"></div><div class="t" style="font-size:16px">Sun 23 Nov</div>
+            <div class="row" style="gap:6px;flex-wrap:wrap"><span class="pill">Legs</span><span class="pill">Push</span><span class="pill">Arms</span><span class="pill pink">hiit</span><span class="pill pink">block pulls 85%</span></div>
+            <button class="btn soft">Rest day</button><button class="btn">Plan Legs</button></div>`)],
+      ['<b>Progress:</b> esercizi e workout con grafici e record, senza calendario.',
+        phone(body(`
+          <div class="h">Progress</div>
+          <div class="card"><div class="row"><span class="t grow">Squat · normal</span><span class="pill yellow">PR 100×5</span></div><div class="m">90 → 100 kg in 6 months</div>
+            <svg viewBox="0 0 250 60" width="100%" height="56" aria-hidden="true"><path d="M4 52 L50 44 L96 40 L142 30 L188 12 L246 18" fill="none" stroke="#7c3aed" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="card"><div class="row"><span class="t grow">Block Pulls</span><span class="m">R 52 · L 47</span></div><div class="m">left 5 kg behind</div></div>
+          <div class="card"><div class="row"><span class="t grow">hangboard 70%</span><span class="m">+10 kg</span></div><div class="m">6 of 6 rounds, 4 weeks in a row</div></div>`)
+          + tabs([['▤', 'Week'], ['↗', 'Progress'], ['▦', 'Library']], 1))],
+    ],
+    pro: ['Ti dice cosa fare oggi senza pensarci.', 'Vedi subito se stai saltando qualcosa.', 'Progress separato e chiaro.'],
+    con: ['Serve pianificare (o una rotazione automatica).', 'Se ti alleni a caso, la settimana resta vuota.', 'Mesi indietro solo da Progress o da un calendario nascosto.'],
+    row: ['Week · Progress · Library', '1 (Start Pull)', 'Week → oggi', 'Progress', 'molto'] },
+
+  { k: 'E', name: 'Allenamento / Revisione', short: 'Due modalità',
+    idea: 'Un interruttore grande in alto: Train per la palestra (pulsanti enormi, solo oggi, niente distrazioni), Review per casa (calendario, grafici, record). La stessa app in due umori.',
+    shots: [
+      ['<b>Train:</b> solo quello che serve adesso, a dita grandi.',
+        phone(body(`
+          <div class="seg"><span class="on">Train</span><span>Review</span></div>
+          <button class="btn" style="height:64px;font-size:17px">▶ Resume Legs · Squat</button>
+          <div class="row" style="gap:8px"><button class="btn soft" style="height:76px">Legs</button><button class="btn soft" style="height:76px">Pull</button></div>
+          <div class="row" style="gap:8px"><button class="btn soft" style="height:76px">Push</button><button class="btn soft" style="height:76px">Fingers</button></div>
+          <div class="row" style="gap:8px"><button class="btn soft" style="height:76px;color:#ff8ab3">hangboard 70%</button><button class="btn soft" style="height:76px">⏱ Timer</button></div>`))],
+      ['<b>Train, durante:</b> una serie alla volta, il riposo grande in alto.',
+        phone(body(`
+          <div class="seg"><span class="on">Train</span><span>Review</span></div>
+          <div class="card" style="align-items:center"><span class="m">RESTING · buzz at 3:00</span><span class="big" style="color:#5eead4">1:12</span></div>
+          <div class="t" style="font-size:16px">Squat</div>${setLog}`))],
+      ['<b>Review:</b> calendario, record e grafici, con calma.',
+        phone(body(`
+          <div class="seg"><span>Train</span><span class="on">Review</span></div>
+          <div class="week"><div>Mo<b>17</b><span class="bar" style="background:var(--ph-accent)"></span></div><div>Tu<b>18</b></div><div>We<b>19</b><span class="bar" style="background:var(--ph-accent)"></span></div><div>Th<b>20</b></div><div>Fr<b>21</b><span class="bar" style="background:var(--ph-pink)"></span></div><div class="today">Sa<b>22</b></div><div>Su<b>23</b></div></div>
+          <div class="card"><div class="row"><span class="t grow">This month</span><span class="m">9 sessions · 212 sets</span></div></div>
+          <div class="card"><div class="row"><span class="t grow">Records</span><span class="pill yellow">3 new</span></div><div class="m">Squat normal 100×5 · Pull Up +30×5</div></div>
+          <div class="card"><div class="row"><span class="t grow">Most trained</span><span class="m">Squat · Block Pulls</span></div></div>`))],
+    ],
+    pro: ['In palestra non vedi nulla che non serve.', 'Bersagli enormi, comodi con le mani sudate o il gesso.', 'Casa e palestra non si pestano i piedi.'],
+    con: ['Due mondi da imparare.', 'Gestire esercizi e gruppi va in uno dei due (o in un menu).', 'Niente tab in basso: meno "app classica".'],
+    row: ['nessuna (Train / Review)', '1 (Legs)', 'Resume, in alto', 'Review', 'molto'] },
+
+  { k: 'F', name: 'Diario a scorrimento', short: 'Diario',
+    idea: 'La casa è un diario: le sessioni dalla più recente, come un feed, con i record evidenziati. Un pulsante + fluttuante per iniziare. Il calendario è un filtro, non una schermata.',
+    shots: [
+      ['<b>Diario:</b> scorri le sessioni, i record saltano all\'occhio.',
+        phone(body(`
+          <div class="top"><div class="h">Diary</div><span class="pill">All ▾</span></div>
+          <div class="card"><div class="row"><span class="dot" style="background:var(--ph-pink)"></span><span class="t grow">Fri · hangboard 70%</span><span class="m">22 min</span></div><div class="m">6 of 6 rounds · 20 mm +10 kg</div></div>
+          <div class="card"><div class="row"><span class="dot" style="background:var(--ph-accent)"></span><span class="t grow">Wed · Fingers</span><span class="m">41 min</span></div><div class="m">Block Pulls · Pinch · Rolling Handle</div></div>
+          <div class="card"><div class="row"><span class="dot" style="background:var(--ph-accent)"></span><span class="t grow">Mon · Legs</span><span class="pill yellow">PR</span></div><div class="m">Squat normal 90×5 ×5 · Deadlift 120×2</div></div>
+          <div class="card dim"><div class="m">Last week · 4 sessions · 168 sets</div></div>`)
+          + '<button class="btn" style="position:absolute;right:16px;bottom:76px;width:56px;height:56px;border-radius:28px;font-size:26px" aria-label="Start">+</button>'
+          + tabs([['☰', 'Diary'], ['↗', 'Progress'], ['▦', 'Library']], 0))],
+      ['<b>Una sessione</b> si apre al suo dettaglio: tutte le serie, modificabili.',
+        phone(body(`
+          <div class="top"><div><div class="h">Mon · Legs</div><div class="sub">17 Nov · 52 min · 24 sets</div></div></div>
+          <div class="card"><div class="row"><span class="t grow">Squat</span><span class="pill yellow">PR</span></div>
+            <span class="m">deep</span><div class="boxes"><span>40·5</span><span>60·5</span><span>70·5</span><span>80·3</span></div>
+            <span class="m">normal</span><div class="boxes"><span>90·5</span><span>90·5</span><span>90·5</span><span>90·5</span><span>90·5</span></div></div>
+          <div class="card"><div class="t">Deadlift</div><div class="boxes"><span>70·5</span><span>90·5</span><span>100·5</span><span>110·5</span><span>120·2</span></div></div>
+          <button class="btn soft">Repeat this workout</button>`))],
+      ['<b>Il calendario è un filtro:</b> apri il mese per saltare a una data o cercare un esercizio.',
+        phone(body(`
+          <div class="top"><div class="h">Diary</div><span class="pill">Squat ✕</span></div>
+          <div class="card"><div class="m">NOVEMBER</div><div class="week"><div>Mo<b>3</b></div><div>Tu<b>4</b><span class="bar" style="background:var(--ph-accent)"></span></div><div>We<b>5</b></div><div>Th<b>6</b></div><div>Fr<b>7</b></div><div>Sa<b>8</b></div><div>Su<b>9</b></div></div>
+            <div class="week"><div>Mo<b>10</b></div><div>Tu<b>11</b><span class="bar" style="background:var(--ph-accent)"></span></div><div>We<b>12</b></div><div>Th<b>13</b></div><div>Fr<b>14</b></div><div>Sa<b>15</b></div><div>Su<b>16</b></div></div>
+            <div class="week"><div class="today">Mo<b>17</b><span class="bar" style="background:var(--ph-accent)"></span></div><div>Tu<b>18</b></div><div>We<b>19</b></div><div>Th<b>20</b></div><div>Fr<b>21</b></div><div>Sa<b>22</b></div><div>Su<b>23</b></div></div></div>
+          <div class="card"><div class="t">Mon 17 · Squat</div><div class="m">normal 90×5 ×5</div></div>
+          <div class="card"><div class="t">Tue 11 · Squat</div><div class="m">normal 90×5 ×5</div></div>`)
+          + tabs([['☰', 'Diary'], ['↗', 'Progress'], ['▦', 'Library']], 0))],
+    ],
+    pro: ['Familiare: si legge come un feed.', 'I record e le note si vedono senza aprire niente.', 'Bello per rivedere la storia.'],
+    con: ['In palestra iniziare è sempre un tocco sul +.', 'Settimane piene diventano un lungo scorrimento.', 'Il calendario è meno immediato.'],
+    row: ['Diary · Progress · Library', '2 (+, Legs)', 'Diario → sessione', 'Diary', 'medio'] },
+];
+
+const sw = document.getElementById('switch');
+const box = document.getElementById('concept');
+let current = 0;
+try { const saved = localStorage.getItem('intervals-concept'); if (saved !== null && C[+saved]) current = +saved; } catch (e) {}
+
+function render() {
+  const c = C[current];
+  sw.innerHTML = C.map((x, i) => `<button type="button" aria-pressed="${i === current}" data-i="${i}"><span class="k">${x.k}</span>${x.short}</button>`).join('');
+  box.innerHTML = `
+    <h2>${c.k} · ${c.name}</h2>
+    <p class="idea">${c.idea}</p>
+    <div class="phones">${c.shots.map(([cap, ph]) => `<figure>${ph}<figcaption>${cap}</figcaption></figure>`).join('')}</div>
+    <div class="notes">
+      <div class="note pro"><h3>A favore</h3><ul>${c.pro.map((x) => `<li>${x}</li>`).join('')}</ul></div>
+      <div class="note con"><h3>Attenzione</h3><ul>${c.con.map((x) => `<li>${x}</li>`).join('')}</ul></div>
+    </div>`;
+  box.querySelectorAll('.phone').forEach((p, i) => p.setAttribute('aria-label', `${c.name}, screen ${i + 1}`));
+  try { localStorage.setItem('intervals-concept', String(current)); } catch (e) {}
+}
+sw.addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-i]');
+  if (!b) return;
+  current = +b.dataset.i;
+  render();
+});
+document.getElementById('cmp').innerHTML = C.map((c) => `<tr class="${c.k === 'C' || c.k === 'B' ? 'pick' : ''}"><td><b>${c.k} · ${c.name}</b></td><td>${c.row[0]}</td><td class="n">${c.row[1]}</td><td>${c.row[2]}</td><td>${c.row[3]}</td><td>${c.row[4]}</td></tr>`).join('');
+render();
+</script>
