@@ -103,14 +103,18 @@ fun GymSet.loadText(ex: Exercise): String {
     }.joinToString(" · ")
 }
 
-/** One side's sets (or all of a two-sided exercise) as consecutive blocks by load. */
+/** Consecutive sets with the same load, side, and variant form a block. */
 fun loadBlocks(sets: List<GymSet>, ex: Exercise): List<LoadBlock> {
     val out = mutableListOf<LoadBlock>()
     sets.forEach { set ->
         val label = set.loadText(ex).ifEmpty { "Sets" }
         val last = out.lastOrNull()
-        if (last?.label == label) out[out.lastIndex] = last.copy(sets = last.sets + set)
-        else out += LoadBlock(label, listOf(set))
+        val firstInBlock = last?.sets?.first()
+        if (last != null && firstInBlock != null && last.label == label &&
+            firstInBlock.side == set.side && firstInBlock.variantOf(ex) == set.variantOf(ex)
+        ) {
+            out[out.lastIndex] = last.copy(sets = last.sets + set)
+        } else out += LoadBlock(label, listOf(set))
     }
     return out
 }

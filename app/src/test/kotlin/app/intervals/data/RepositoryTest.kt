@@ -7,6 +7,10 @@ import app.intervals.core.AppSettings
 import app.intervals.core.BackupException
 import app.intervals.core.Block
 import app.intervals.core.DiscAnimation
+import app.intervals.core.Exercise
+import app.intervals.core.GroupItem
+import app.intervals.core.GymField
+import app.intervals.core.GymGroup
 import app.intervals.core.LogField
 import app.intervals.core.LoggedValue
 import app.intervals.core.PerSide
@@ -50,6 +54,28 @@ class RepositoryTest {
 
     @After
     fun close() = db.close()
+
+    @Test
+    fun retaggingExercisesPreservesWorkoutGroupsAndOtherMembers() = runTest {
+        val fields = listOf(GymField.REPS)
+        val squat = repo.addExercise(Exercise(name = "Squat", fields = fields))
+        val press = repo.addExercise(Exercise(name = "Press", fields = fields))
+        val dip = repo.addExercise(Exercise(name = "Dip", fields = fields))
+        val planned = GroupItem(squat, planSets = 3)
+        val tag = GymGroup(name = "Legs", items = listOf(planned, GroupItem(dip)), color = 0xFF8844CC)
+        val workout = tag.copy(items = listOf(planned), isTag = false)
+        val tagId = repo.addGroup(tag)
+        val workoutId = repo.addGroup(workout)
+
+        repeat(2) { repo.retagExercises(setOf(squat, press, Long.MAX_VALUE), setOf(" LEGS ", "Strength"), emptySet()) }
+        repo.retagExercises(setOf(squat), emptySet(), setOf("Strength"))
+
+        val groups = repo.groups.first()
+        assertEquals(tag.copy(id = tagId, items = tag.items + GroupItem(press)), groups.first { it.id == tagId })
+        assertEquals(workout.copy(id = workoutId), groups.first { it.id == workoutId })
+        assertEquals(listOf(GroupItem(press)), groups.single { it.name == "Strength" }.items)
+        assertEquals(3, groups.size)
+    }
 
     private fun session(workoutId: Long?, startedAt: Long, values: List<LoggedValue> = emptyList()) = Session(
         workoutId = workoutId, workoutName = "hangboard", startedAt = startedAt, durationSec = 300,

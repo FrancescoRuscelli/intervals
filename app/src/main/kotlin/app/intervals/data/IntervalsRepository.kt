@@ -9,6 +9,7 @@ import app.intervals.core.BackupJson
 import app.intervals.core.Band
 import app.intervals.core.Exercise
 import app.intervals.core.FitNotesImport
+import app.intervals.core.GroupItem
 import app.intervals.core.GymSet
 import app.intervals.core.LoggedValue
 import app.intervals.core.SavedWorkout
@@ -126,8 +127,6 @@ class IntervalsRepository(
     /** Days with sets, newest first (yyyy-MM-dd). */
     val gymDays: Flow<List<String>> = gymDao.observeDays()
 
-    fun gymDaysBetween(from: String, to: String): Flow<List<String>> = gymDao.observeDaysBetween(from, to)
-
     fun gymDay(day: String): Flow<List<GymSet>> = gymDao.observeDay(day).map { list -> list.map { it.toSet() } }
 
     fun gymDayNote(day: String): Flow<String> = gymDao.observeDayNote(day).map { it.orEmpty() }
@@ -204,6 +203,29 @@ class IntervalsRepository(
     }
 
     suspend fun deleteGroup(id: Long) = gymDao.deleteGroup(id)
+
+    suspend fun retagExercises(exerciseIds: Set<Long>, add: Set<String>, remove: Set<String>) = db.withTransaction {
+        val ids = gymDao.getExercises().map { it.id }.filter { it in exerciseIds }.toSet()
+        if (ids.isEmpty()) return@withTransaction
+        val additions = add.map(String::trim).filter(String::isNotEmpty).associateBy { it.lowercase() }
+        val removals = remove.map { it.trim().lowercase() }.toSet()
+        val existingNames = mutableSetOf<String>()
+        for (entity in gymDao.getGroups()) {
+            val tag = entity.toGroup()
+            if (!tag.isTag) continue
+            val name = tag.name.lowercase()
+            existingNames += name
+            val items = when (name) {
+                in additions -> tag.items + (ids - tag.items.map { it.exerciseId }.toSet()).map { GroupItem(it) }
+                in removals -> tag.items.filterNot { it.exerciseId in ids }
+                else -> continue
+            }
+            if (items != tag.items) gymDao.updateGroup(tag.copy(items = items).toEntity(entity.position))
+        }
+        for ((key, name) in additions) {
+            if (key !in existingNames) addGroup(GymGroup(name = name, items = ids.map { GroupItem(it) }))
+        }
+    }
 
     /** Deletes the exercise and all its sets. */
     suspend fun deleteExercise(id: Long) = db.withTransaction {

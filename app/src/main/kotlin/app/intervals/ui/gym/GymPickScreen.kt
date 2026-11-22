@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -41,6 +42,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -168,10 +172,15 @@ fun GymPickScreen(vm: AppViewModel, day: String) {
 
 /** One line: name, an L·R badge for per-side ones, and on the right "done 5 sets" (today) or the last day. */
 @Composable
-internal fun ExerciseRow(ex: Exercise, doneToday: Int?, lastDay: String?, onClick: () -> Unit) {
+internal fun ExerciseRow(
+    ex: Exercise, doneToday: Int?, lastDay: String?, selected: Boolean = false, onLongClick: (() -> Unit)? = null, onClick: () -> Unit,
+) {
     val p = LocalPalette.current
     Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(vertical = 12.dp, horizontal = 8.dp),
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(if (selected) p.tint else Color.Transparent)
+            .semantics { if (onLongClick != null) this.selected = selected }
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick, onLongClickLabel = "Select exercise")
+            .padding(vertical = 12.dp, horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {

@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -42,6 +43,7 @@ fun App(vm: AppViewModel) {
     IntervalsTheme(settings.theme) {
         val p = LocalPalette.current
         val snack = remember { SnackbarHostState() }
+        val tabState = rememberSaveableStateHolder()
         LaunchedEffect(vm.message) {
             vm.message?.let { snack.showSnackbar(it); vm.message = null }
         }
@@ -61,14 +63,16 @@ fun App(vm: AppViewModel) {
             Scaffold(
                 containerColor = p.bg,
                 snackbarHost = { SnackbarHost(snack) },
-                bottomBar = { if (vm.overlays.isEmpty()) BottomBar(vm.tab) { vm.tab = it } },
+                bottomBar = { if (vm.overlays.isEmpty()) BottomBar(vm.tab, vm::selectTab) },
             ) { inner ->
                 Box(Modifier.padding(inner)) {
-                    when (vm.tab) {
-                        Tab.TODAY -> app.intervals.ui.today.TodayScreen(vm)
-                        Tab.INTERVALS -> IntervalsListScreen(vm)
-                        Tab.GYM -> app.intervals.ui.gym.GymScreen(vm)
-                        Tab.JOURNAL -> app.intervals.ui.journal.JournalScreen(vm)
+                    val selected = vm.tab
+                    tabState.SaveableStateProvider(selected.name) {
+                        when (selected) {
+                            Tab.JOURNAL -> app.intervals.ui.journal.JournalScreen(vm)
+                            Tab.INTERVALS -> IntervalsListScreen(vm)
+                            Tab.GYM -> app.intervals.ui.gym.GymScreen(vm)
+                        }
                     }
                 }
             }
@@ -103,10 +107,9 @@ private fun BottomBar(current: Tab, onSelect: (Tab) -> Unit) {
     val p = LocalPalette.current
     NavigationBar(containerColor = p.sheet, tonalElevation = 0.dp) {
         val items: List<Triple<Tab, String, ImageVector>> = listOf(
-            Triple(Tab.TODAY, "Today", AppIcons.Today),
+            Triple(Tab.JOURNAL, "Journal", AppIcons.Journal),
             Triple(Tab.INTERVALS, "Intervals", AppIcons.Intervals),
             Triple(Tab.GYM, "Gym", AppIcons.Gym),
-            Triple(Tab.JOURNAL, "Journal", AppIcons.Journal),
         )
         items.forEach { (tab, label, icon) ->
             NavigationBarItem(

@@ -2,6 +2,7 @@
 
 package app.intervals.ui.journal
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -20,9 +21,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -35,18 +40,27 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.intervals.core.Exercise
+import app.intervals.core.GymGroup
+import app.intervals.core.GymSet
 import app.intervals.core.Session
 import app.intervals.core.day
 import app.intervals.core.formatDuration
@@ -55,7 +69,6 @@ import app.intervals.core.valuesLine
 import app.intervals.ui.AppIcons
 import app.intervals.ui.AppViewModel
 import app.intervals.ui.LocalPalette
-import app.intervals.ui.NumberStyle
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
@@ -83,25 +96,29 @@ import java.util.Locale
 fun JournalScreen(vm: AppViewModel) {
     val p = LocalPalette.current
     var stats by rememberSaveable { mutableStateOf(false) }
+    val calendarState = rememberSaveableStateHolder()
     LaunchedEffect(vm.journalFocusDay) {
         if (vm.journalFocusDay != null) stats = false
     }
     Column(Modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("Journal", color = p.text, fontSize = 30.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+        Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("Journal", color = p.text, fontSize = 26.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
             IconButton(onClick = { vm.openSettings() }) { Icon(AppIcons.Settings, "Settings", tint = p.text) }
         }
-        Row(Modifier.padding(horizontal = 16.dp, vertical = 6.dp).fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(p.surface).padding(4.dp),
+        Row(Modifier.padding(horizontal = 12.dp, vertical = 2.dp).fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp)).background(p.surface).selectableGroup().padding(3.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             listOf("Calendar", "Stats").forEachIndexed { i, label ->
                 val on = (i == 1) == stats
                 Box(
-                    Modifier.weight(1f).height(36.dp).clip(RoundedCornerShape(9.dp)).background(if (on) p.accent else Color.Transparent).clickable { stats = i == 1 },
+                    Modifier.weight(1f).height(36.dp).clip(RoundedCornerShape(9.dp)).background(if (on) p.accent else Color.Transparent)
+                        .selectable(on, role = Role.Tab) { stats = i == 1 },
                     contentAlignment = Alignment.Center,
                 ) { Text(label, color = if (on) p.onAccent else p.muted, fontSize = 14.sp, fontWeight = FontWeight.SemiBold) }
             }
         }
-        if (stats) app.intervals.ui.stats.StatsScreen(vm, showTitle = false) else JournalCalendar(vm)
+        if (stats) app.intervals.ui.stats.StatsScreen(vm, showTitle = false)
+        else calendarState.SaveableStateProvider("calendar") { JournalCalendar(vm) }
     }
 }
 
@@ -118,25 +135,26 @@ private fun JournalCalendar(vm: AppViewModel) {
     val month = firstMonth.plusMonths(pager.currentPage.toLong())
     var dayText by rememberSaveable { mutableStateOf(today.toString()) }
     val selectedDay = LocalDate.parse(dayText)
-    val from = month.atDay(1).atStartOfDay(zone).toInstant().toEpochMilli()
-    val to = month.plusMonths(1).atDay(1).atStartOfDay(zone).toInstant().toEpochMilli()
-    val flow = remember(from, to) { vm.sessions(from, to) }
-    val loadedSessions by flow.collectAsState(initial = null)
-    // All / Gym / Intervals
-    var show by rememberSaveable { mutableStateOf(0) }
+    val (loadedSessions, loadedGymSets) = monthEntries(vm, month, zone)
+    val byDay = remember(loadedSessions, zone) { loadedSessions.orEmpty().groupBy { it.day(zone) } }
+    val gymDates = remember(loadedGymSets) { loadedGymSets.orEmpty().map { LocalDate.parse(it.day) }.toSet() }
+    val trainedDays = byDay.keys + gymDates
     var filter by rememberSaveable { mutableStateOf("") }
-    val sessions = if (show == 1) emptyList() else loadedSessions.orEmpty()
-    val byDay = sessions.groupBy { it.day(zone) }
-    val gymFlow = remember(month) { vm.gymDaysBetween(month.atDay(1).toString(), month.plusMonths(1).atDay(1).toString()) }
-    val loadedGymDays by gymFlow.collectAsState(initial = null)
-    val gymDays = if (show == 2) emptyList() else loadedGymDays.orEmpty()
-    val gymDates = remember(gymDays) { gymDays.map(LocalDate::parse).toSet() }
-    val gymDayFlow = remember(dayText) { vm.gymDay(dayText) }
-    val gymOfDay by gymDayFlow.collectAsState(initial = emptyList())
+    var filterOpen by rememberSaveable { mutableStateOf(false) }
+    val keyboard = LocalSoftwareKeyboardController.current
+    val searchFocus = remember { FocusRequester() }
+    val closeFilter: () -> Unit = {
+        keyboard?.hide()
+        filterOpen = false
+    }
+    BackHandler(enabled = filterOpen && vm.overlays.isEmpty(), onBack = closeFilter)
+    val gymOfDay = key(dayText) {
+        remember { vm.gymDay(dayText) }.collectAsState(initial = emptyList()).value
+    }
     val gymNote = key(dayText) {
         remember { vm.gymDayNote(dayText) }.collectAsState(initial = "").value
     }
-    val showGymCard = show != 2 && (gymOfDay.isNotEmpty() || gymNote.isNotBlank())
+    val showGymCard = gymOfDay.isNotEmpty() || gymNote.isNotBlank()
     val exercises by vm.exercises.collectAsState()
     val allGroups by vm.groups.collectAsState()
     // records of the selected day need each exercise's history up to that day
@@ -147,95 +165,116 @@ private fun JournalCalendar(vm: AppViewModel) {
     val records = remember(history, dayText, exercises, dayIds) {
         app.intervals.core.recordsOn(dayText, history.filter { it.exerciseId in dayIds }, exercises.filter { it.id in dayIds })
     }
-    val sum = summary(sessions, zone)
     // swiped to another month: select its last trained day (or today / its last day), once its data is loaded
-    LaunchedEffect(month, loadedSessions, loadedGymDays) {
-        if (vm.journalFocusDay != null || YearMonth.from(selectedDay) == month || loadedSessions == null || loadedGymDays == null) {
+    LaunchedEffect(month, loadedSessions, loadedGymSets) {
+        if (vm.journalFocusDay != null || YearMonth.from(selectedDay) == month || loadedSessions == null || loadedGymSets == null) {
             return@LaunchedEffect
         }
-        dayText = ((byDay.keys + gymDates).maxOrNull() ?: if (month == YearMonth.from(today)) today else month.atEndOfMonth()).toString()
+        dayText = (trainedDays.maxOrNull() ?: if (month == YearMonth.from(today)) today else month.atEndOfMonth()).toString()
     }
-    // Opened from Today or a finished gym group.
+    // Opened for a specific date.
     LaunchedEffect(vm.journalFocusDay) {
         val d = vm.journalFocusDay?.let(LocalDate::parse) ?: return@LaunchedEffect
-        show = 0
         pager.scrollToPage(ChronoUnit.MONTHS.between(firstMonth, YearMonth.from(d)).toInt().coerceIn(0, monthCount - 1))
         dayText = d.toString()
         vm.journalFocusDay = null
     }
     var editing by remember { mutableStateOf<Session?>(null) }
     var deleting by remember { mutableStateOf<Session?>(null) }
+    var dayMenu by remember(dayText) { mutableStateOf(false) }
 
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp)) {
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = 16.dp)) {
         item {
-            Row(Modifier.fillMaxWidth().padding(start = 4.dp, top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                val active = filter.isNotBlank()
+                IconButton(onClick = { if (filterOpen) closeFilter() else filterOpen = true }) {
+                    Box {
+                        Icon(
+                            AppIcons.Search,
+                            if (active) "Filter calendar, active filter" else "Filter calendar",
+                            tint = if (active || filterOpen) p.accentText else p.muted,
+                        )
+                        if (active) Box(Modifier.align(Alignment.TopEnd).size(5.dp).clip(CircleShape).background(p.accent))
+                    }
+                }
                 Spacer(Modifier.weight(1f))
                 IconButton(onClick = { scope.launch { pager.animateScrollToPage(pager.currentPage - 1) } }, enabled = pager.currentPage > 0) { Icon(AppIcons.Back, "Previous month", tint = p.text) }
-                Text(month.month.getDisplayName(TextStyle.FULL, Locale.ENGLISH) + " " + month.year, color = p.text, fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, modifier = Modifier.width(118.dp))
+                Text(month.month.getDisplayName(TextStyle.FULL, Locale.ENGLISH) + " " + month.year, color = p.text, fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, modifier = Modifier.width(108.dp))
                 IconButton(onClick = { scope.launch { pager.animateScrollToPage(pager.currentPage + 1) } }, enabled = month < YearMonth.from(today)) {
                     Icon(AppIcons.Back, "Next month", tint = if (month < YearMonth.from(today)) p.text else p.faint,
                         modifier = Modifier.size(24.dp).scale(scaleX = -1f, scaleY = 1f))
                 }
             }
         }
-        item {
-            Row(Modifier.padding(top = 4.dp, bottom = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                listOf("All", "Gym", "Intervals").forEachIndexed { i, label ->
-                    val on = i == show
-                    val dot = when (i) { 1 -> p.accent; 2 -> p.pink; else -> null }
-                    Row(
-                        Modifier.height(34.dp).clip(RoundedCornerShape(17.dp)).background(if (on) p.tint else Color.Transparent)
-                            .border(1.dp, if (on) p.accent else p.line, RoundedCornerShape(17.dp)).clickable { show = i }.padding(horizontal = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        if (dot != null) { Box(Modifier.size(8.dp).clip(CircleShape).background(dot)); Spacer(Modifier.width(6.dp)) }
-                        Text(label, color = if (on) p.accentText else p.soft, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                    }
+        if (filterOpen) item {
+            LaunchedEffect(Unit) {
+                if (vm.overlays.isEmpty()) {
+                    searchFocus.requestFocus()
+                    keyboard?.show()
                 }
             }
-        }
-        item {
             OutlinedTextField(
                 filter, { filter = it }, placeholder = { Text("Filter calendar by exercise or tag") }, singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
+                trailingIcon = if (filter.isNotEmpty()) ({
+                    IconButton(onClick = { filter = "" }) { Icon(AppIcons.Close, "Clear calendar filter") }
+                }) else null,
+                modifier = Modifier.fillMaxWidth().focusRequester(searchFocus),
             )
         }
         item {
-            Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                // a gym day counts as one session
-                Tile("Sessions", "${sum.sessions + gymDays.size}", Modifier.weight(1f))
-                Tile("Days trained", "${(byDay.keys + gymDates).size}", Modifier.weight(1f))
-                Tile("Time", hm(sum.totalSec), Modifier.weight(1f))
-            }
+            MonthTotals(loadedSessions.orEmpty().size + gymDates.size, trainedDays.size, loadedGymSets.orEmpty().size)
         }
         item {
             HorizontalPager(pager, key = { it }, verticalAlignment = Alignment.Top,
                 flingBehavior = PagerDefaults.flingBehavior(pager, pagerSnapDistance = PagerSnapDistance.atMost(1))) { page ->
-                MonthCalendar(vm, firstMonth.plusMonths(page.toLong()), today, selectedDay, zone, show, filter) { dayText = it.toString() }
+                val pageMonth = firstMonth.plusMonths(page.toLong())
+                val entries = if (pageMonth == month) loadedSessions to loadedGymSets else monthEntries(vm, pageMonth, zone)
+                MonthCalendar(pageMonth, today, selectedDay, zone, entries.first.orEmpty(), entries.second.orEmpty(), exercises, allGroups, filter) {
+                    dayText = it.toString()
+                }
             }
         }
         item {
-            Text(
-                selectedDay.format(DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.ENGLISH)),
-                color = p.muted, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = 4.dp, top = 16.dp, bottom = 8.dp),
-            )
+            Row(Modifier.fillMaxWidth().padding(start = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    selectedDay.format(DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.ENGLISH)),
+                    color = p.muted, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f),
+                )
+                if (selectedDay <= today) {
+                    val running = dayText in vm.activeGroups
+                    Box {
+                        IconButton(onClick = { dayMenu = true }) {
+                            Icon(AppIcons.More, "Day actions", tint = p.accentText, modifier = Modifier.rotate(90f))
+                        }
+                        DropdownMenu(expanded = dayMenu, onDismissRequest = { dayMenu = false }) {
+                            DropdownMenuItem(
+                                text = { Text(if (running) "Resume workout" else "Add exercise") },
+                                onClick = {
+                                    dayMenu = false
+                                    closeFilter()
+                                    if (running) vm.openGymDay(dayText) else vm.openGymPick(dayText)
+                                },
+                            )
+                        }
+                    }
+                }
+            }
         }
         val ofDay = byDay[selectedDay].orEmpty().sortedBy { it.startedAt }
         if (showGymCard) item(key = "gym") {
             GymDayCard(gymOfDay, exercises.associateBy { it.id }, allGroups, records, note = gymNote) { vm.openGymDay(dayText) }
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(6.dp))
         }
         if (ofDay.isEmpty() && !showGymCard) item {
             Text(
-                if (selectedDay == today) "Nothing yet today. Sessions appear here when you finish or stop a workout."
-                else "No sessions this day.",
+                if (selectedDay == today) "No sessions today." else "No sessions this day.",
                 color = p.faint, fontSize = 14.sp, modifier = Modifier.padding(start = 4.dp),
             )
         }
         items(ofDay, key = { it.id }) { s ->
             SessionCard(s, zone, onNote = { editing = s }, onLongPress = { deleting = s })
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(6.dp))
         }
     }
 
@@ -260,60 +299,68 @@ private fun JournalCalendar(vm: AppViewModel) {
     }
 }
 
-private fun hm(sec: Int): String {
-    val h = sec / 3600
-    val m = (sec % 3600) / 60
-    return if (h > 0) "${h}h ${m}m" else "${m}m"
-}
-
 @Composable
-private fun Tile(label: String, value: String, modifier: Modifier) {
+private fun MonthTotals(sessions: Int, days: Int, sets: Int) {
     val p = LocalPalette.current
-    Column(modifier.clip(RoundedCornerShape(14.dp)).background(p.surface).border(1.dp, p.line, RoundedCornerShape(14.dp)).padding(horizontal = 12.dp, vertical = 10.dp)) {
-        Text(label, color = p.muted, fontSize = 12.sp)
-        Text(value, color = p.text, style = NumberStyle, fontSize = 22.sp)
-    }
+    Text(
+        buildAnnotatedString {
+            val totals = listOf(
+                sessions to if (sessions == 1) "session" else "sessions",
+                days to if (days == 1) "day trained" else "days trained",
+                sets to if (sets == 1) "gym set" else "gym sets",
+            )
+            totals.forEachIndexed { index, (count, label) ->
+                if (index > 0) append("  ·  ")
+                withStyle(SpanStyle(color = p.text, fontWeight = FontWeight.Bold)) { append(count.toString()) }
+                append(" $label")
+            }
+        },
+        color = p.muted, fontSize = 12.sp, modifier = Modifier.padding(start = 4.dp, bottom = 2.dp),
+    )
 }
 
-/** A month's calendar with its own data, so the pages next to the current one show their dots while swiping. */
 @Composable
-private fun MonthCalendar(vm: AppViewModel, month: YearMonth, today: LocalDate, selected: LocalDate, zone: ZoneId, show: Int, filter: String, onPick: (LocalDate) -> Unit) {
-    val from = month.atDay(1).atStartOfDay(zone).toInstant().toEpochMilli()
-    val to = month.plusMonths(1).atDay(1).atStartOfDay(zone).toInstant().toEpochMilli()
-    val sessions by remember(from, to) { vm.sessions(from, to) }.collectAsState(initial = emptyList())
-    val gymSets by remember(month) { vm.gymSetsBetween(month.atDay(1).toString(), month.plusMonths(1).atDay(1).toString()) }
-        .collectAsState(initial = emptyList())
-    val groups by vm.groups.collectAsState()
-    val exercises by vm.exercises.collectAsState()
+private fun monthEntries(vm: AppViewModel, month: YearMonth, zone: ZoneId): Pair<List<Session>?, List<GymSet>?> = key(month, zone) {
+    val start = month.atDay(1)
+    val end = month.plusMonths(1).atDay(1)
+    val sessions by remember {
+        vm.sessions(start.atStartOfDay(zone).toInstant().toEpochMilli(), end.atStartOfDay(zone).toInstant().toEpochMilli())
+    }.collectAsState(initial = null)
+    val gymSets by remember { vm.gymSetsBetween(start.toString(), end.toString()) }.collectAsState(initial = null)
+    sessions to gymSets
+}
+
+@Composable
+private fun MonthCalendar(
+    month: YearMonth, today: LocalDate, selected: LocalDate, zone: ZoneId,
+    sessions: List<Session>, gymSets: List<GymSet>, exercises: List<Exercise>, groups: List<GymGroup>,
+    filter: String, onPick: (LocalDate) -> Unit,
+) {
     val query = filter.trim()
     val matchingExercises = remember(exercises, groups, query) {
-        exercises.filter { it.name.contains(query, ignoreCase = true) }.map { it.id }.toSet() +
+        if (query.isEmpty()) emptySet() else exercises.filter { it.name.contains(query, ignoreCase = true) }.map { it.id }.toSet() +
             groups.filter { it.isTag && it.name.contains(query, ignoreCase = true) }.flatMap { it.items }.map { it.exerciseId }
     }
-    val highlighted = remember(sessions, gymSets, matchingExercises, query, show) {
+    val highlighted = remember(sessions, gymSets, matchingExercises, query, zone) {
         if (query.isEmpty()) emptySet() else buildSet {
-            if (show != 1) addAll(gymSets.filter { it.exerciseId in matchingExercises }.map { LocalDate.parse(it.day) })
-            if (show != 2) addAll(sessions.filter { it.workoutName.contains(query, ignoreCase = true) }.map { it.day(zone) })
+            addAll(gymSets.filter { it.exerciseId in matchingExercises }.map { LocalDate.parse(it.day) })
+            addAll(sessions.filter { it.workoutName.contains(query, ignoreCase = true) }.map { it.day(zone) })
         }
     }
     val strips = remember(gymSets, groups) {
         gymSets.groupBy { LocalDate.parse(it.day) }.mapValues { (_, s) -> app.intervals.core.dayStrip(s, groups) }
     }
-    Calendar(
-        month, today, selected,
-        if (show == 1) emptyMap() else sessions.groupBy { it.day(zone) },
-        if (show == 2) emptyMap() else strips, highlighted, query.isNotEmpty(), onPick,
-    )
+    Calendar(month, today, selected, sessions.groupBy { it.day(zone) }, strips, highlighted, query.isNotEmpty(), onPick)
 }
 
 @Composable
 private fun Calendar(month: YearMonth, today: LocalDate, selected: LocalDate, byDay: Map<LocalDate, List<Session>>, gym: Map<LocalDate, List<app.intervals.core.StripPiece>>, highlighted: Set<LocalDate>, filtering: Boolean, onPick: (LocalDate) -> Unit) {
     val p = LocalPalette.current
     Column(
-        Modifier.padding(top = 12.dp).fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(p.surface)
-            .border(1.dp, p.line, RoundedCornerShape(18.dp)).padding(horizontal = 6.dp, vertical = 10.dp),
+        Modifier.padding(top = 4.dp).fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(p.surface)
+            .border(1.dp, p.line, RoundedCornerShape(14.dp)).padding(horizontal = 4.dp, vertical = 5.dp),
     ) {
-        Row(Modifier.fillMaxWidth().padding(bottom = 6.dp)) {
+        Row(Modifier.fillMaxWidth().padding(bottom = 2.dp)) {
             listOf("Mo", "Tu", "We", "Th", "Fr", "Sa", "Su").forEach {
                 Text(it, color = p.muted, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
             }
@@ -333,7 +380,7 @@ private fun Calendar(month: YearMonth, today: LocalDate, selected: LocalDate, by
 private fun DayCell(d: LocalDate?, today: LocalDate, selected: LocalDate, sessions: List<Session>, strip: List<app.intervals.core.StripPiece>, highlighted: Boolean, filtering: Boolean, onPick: (LocalDate) -> Unit, modifier: Modifier) {
     val gym = strip.isNotEmpty()
     val p = LocalPalette.current
-    Box(modifier.height(46.dp), contentAlignment = Alignment.Center) {
+    Box(modifier.height(44.dp), contentAlignment = Alignment.Center) {
         if (d == null) return@Box
         val sel = d == selected
         val future = d > today
@@ -361,12 +408,12 @@ private fun DayCell(d: LocalDate?, today: LocalDate, selected: LocalDate, sessio
 }
 
 @Composable
-internal fun SessionCard(s: Session, zone: ZoneId, onNote: () -> Unit, onLongPress: () -> Unit) {
+private fun SessionCard(s: Session, zone: ZoneId, onNote: () -> Unit, onLongPress: () -> Unit) {
     val p = LocalPalette.current
     val time = Instant.ofEpochMilli(s.startedAt).atZone(zone).toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm"))
     Row(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(p.surface)
-            .combinedClickable(onClick = onNote, onLongClick = onLongPress).padding(14.dp),
+            .combinedClickable(onClick = onNote, onLongClick = onLongPress).padding(10.dp),
     ) {
         Box(Modifier.width(5.dp).height(56.dp).clip(RoundedCornerShape(3.dp)).background(if (s.completed) p.pink else p.yellow))
         Spacer(Modifier.width(12.dp))
@@ -391,7 +438,7 @@ internal fun SessionCard(s: Session, zone: ZoneId, onNote: () -> Unit, onLongPre
 
 /** The gym sets of a day as one card: each exercise with its rows ("80 × 5 ×3, 85 × 3"), then the notes. Tap = open in Gym. */
 @Composable
-internal fun GymDayCard(
+private fun GymDayCard(
     sets: List<app.intervals.core.GymSet>, exercises: Map<Long, app.intervals.core.Exercise>,
     groups: List<app.intervals.core.GymGroup>, records: Int, note: String = "", onOpen: () -> Unit,
 ) {
@@ -401,7 +448,7 @@ internal fun GymDayCard(
     val dayGroups = app.intervals.core.dayGroups(sets, groups)
     val bar = strip.map { Color(it.color) }.distinct().ifEmpty { listOf(p.accent) }
     Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(p.surface).clickable(onClick = onOpen).padding(14.dp),
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(p.surface).clickable(onClick = onOpen).padding(10.dp),
     ) {
         // left bar in the colors of the groups trained
         Column(Modifier.width(5.dp).height(64.dp).clip(RoundedCornerShape(3.dp))) {

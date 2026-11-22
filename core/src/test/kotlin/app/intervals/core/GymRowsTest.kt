@@ -53,8 +53,14 @@ class GymRowsTest {
 
     @Test
     fun loadBlocksKeepTimeOrder() {
-        val sets = listOf(set(60.0, 5), set(70.0, 5), set(60.0, 5))
-        assertEquals(listOf("60 kg", "70 kg", "60 kg"), loadBlocks(sets, squat).map { it.label })
+        val ex = squat.copy(perSide = true, variants = listOf("Deep", "Normal"))
+        val first = set(60.0, 5, Side.LEFT)
+        val sets = listOf(first, first.copy(reps = 4, variant = "Deep"),
+            first.copy(weightKg = 70.0), first, first.copy(side = Side.RIGHT), first.copy(side = Side.RIGHT, variant = "Normal"))
+        val blocks = loadBlocks(sets, ex)
+        assertEquals(listOf("60 kg", "70 kg", "60 kg", "60 kg", "60 kg"), blocks.map { it.label })
+        assertEquals(listOf(2, 1, 1, 1, 1), blocks.map { it.sets.size })
+        assertEquals(sets, blocks.flatMap { it.sets })
     }
 
     @Test
@@ -106,7 +112,7 @@ class GymRowsTest {
         // no variant = the first one
         assertEquals("deep · 70 × 5", deep.summary(squat))
         assertEquals("normal · 90 × 5", normal.summary(squat))
-        assertEquals("70 kg", deep.loadText(squat)) // blocks are already split by variant
+        assertEquals("70 kg", deep.loadText(squat))
         // same weight and reps, other variant: not one row
         assertEquals(listOf(1, 1), dayRows(listOf(normal, normal.copy(variant = "half"))).map { it.count })
         val plain = Exercise(11, "Deadlift", listOf(GymField.WEIGHT, GymField.REPS))

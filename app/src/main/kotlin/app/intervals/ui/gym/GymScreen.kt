@@ -1,9 +1,9 @@
 package app.intervals.ui.gym
 
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,44 +15,31 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PagerDefaults
-import androidx.compose.foundation.pager.PagerSnapDistance
-import androidx.compose.foundation.pager.PagerState
-import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import app.intervals.core.Band
 import app.intervals.core.Exercise
 import app.intervals.core.GymField
 import app.intervals.core.GymSet
@@ -68,84 +55,100 @@ import app.intervals.ui.LocalPalette
 import app.intervals.ui.labelColor
 import app.intervals.ui.NumberStyle
 import app.intervals.ui.list.BigButton
-import kotlinx.coroutines.launch
+import app.intervals.ui.list.TagsDialog
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-/** The daily training log and the exercise library. */
+/** Exercise library and the day opened from Journal or an active workout. */
 @Composable
 fun GymScreen(vm: AppViewModel) {
     val p = LocalPalette.current
-    val days by vm.gymDays.collectAsStateWithLifecycle()
     val exercises by vm.exercises.collectAsStateWithLifecycle()
-    val pick = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let(vm::previewFitNotes) }
-    val list = days ?: return
-    val today = LocalDate.now().toString()
-    val pages = remember(list, today) { if (list.firstOrNull() == today) list else listOf(today) + list }
-    val byId = remember(exercises) { exercises.associateBy { it.id } }
-    val pager = rememberPagerState { pages.size }
-    var library by rememberSaveable { mutableStateOf(false) }
     var query by rememberSaveable { mutableStateOf("") }
-    LaunchedEffect(vm.gymFocusDay, pages) {
-        val i = vm.gymFocusDay?.let(pages::indexOf) ?: return@LaunchedEffect
-        library = false
-        if (i >= 0) pager.scrollToPage(i)
-        vm.gymFocusDay = null
+    val route = vm.gymDayRoute
+    if (route != null) {
+        val byId = remember(exercises) { exercises.associateBy { it.id } }
+        BackHandler(enabled = vm.overlays.isEmpty(), onBack = vm::closeGymDay)
+        key(route.day) { DayPage(vm, route.day, byId) }
+        return
     }
+
+    val days by vm.gymDays.collectAsStateWithLifecycle()
+    val lastUsed by vm.lastUsed.collectAsStateWithLifecycle()
+    val groups by vm.groups.collectAsStateWithLifecycle()
+    val today = LocalDate.now().toString()
+    val pick = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let(vm::previewFitNotes) }
+    val shown = remember(exercises, query) { exercises.filter { it.name.contains(query.trim(), ignoreCase = true) } }
+    var selection by remember { mutableStateOf(emptySet<Long>()) }
+    var askTags by remember { mutableStateOf(false) }
+    val selecting = selection.isNotEmpty()
+    BackHandler(enabled = selecting && vm.overlays.isEmpty()) { selection = emptySet() }
+
     Column(Modifier.fillMaxSize()) {
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)
-                .clip(RoundedCornerShape(16.dp)).background(p.surface).selectableGroup().padding(4.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            listOf("Log", "Library").forEachIndexed { index, label ->
-                val selected = library == (index == 1)
-                Box(
-                    Modifier.weight(1f).height(48.dp).clip(RoundedCornerShape(12.dp))
-                        .background(if (selected) p.tint else Color.Transparent)
-                        .selectable(selected, role = Role.Tab) { library = index == 1 },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(label, color = if (selected) p.accentText else p.muted, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                }
-            }
-        }
-        if (library) {
-            val lastUsed by vm.lastUsed.collectAsStateWithLifecycle()
-            val shown = remember(exercises, query) { exercises.filter { it.name.contains(query.trim(), ignoreCase = true) } }
-            OutlinedTextField(
-                query, { query = it }, label = { Text("Search exercises") }, singleLine = true,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-            )
-            LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)) {
-                if (shown.isEmpty()) item {
-                    Text(if (query.isBlank()) "No exercises yet." else "No matching exercises.", color = p.muted)
-                }
-                items(shown, key = { it.id }) { ex ->
-                    ExerciseRow(ex, null, lastUsed[ex.id]) { vm.openGymLog(ex.id, today) }
-                }
+        if (selecting) {
+            Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = { selection = emptySet() }) { Icon(AppIcons.Close, "Cancel selection", tint = p.text) }
+                Text("${selection.size} selected", color = p.text, fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                TextButton(onClick = { askTags = true }) { Text("Tag…", color = p.accentText) }
             }
         } else {
-            HorizontalPager(
-                pager, reverseLayout = true, key = { pages[it] }, modifier = Modifier.weight(1f),
-                // one day per swipe, even a fast one
-                flingBehavior = PagerDefaults.flingBehavior(pager, pagerSnapDistance = PagerSnapDistance.atMost(1)),
-            ) { i ->
-                DayPage(vm, pages[i], i, pages.size, pager, byId,
-                    onImport = if (list.isEmpty()) ({ pick.launch(arrayOf("*/*")) }) else null)
+            Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("Gym", color = p.text, fontSize = 26.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                IconButton(onClick = vm::openSettings) { Icon(AppIcons.Settings, "Settings", tint = p.text) }
+            }
+            val running = today in vm.activeGroups
+            BigButton(
+                if (running) "Resume workout" else "+ Add exercise", p.tint, p.accentText,
+                { if (running) vm.openGymDay(today) else vm.openGymPick(today) },
+                Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+            )
+        }
+        OutlinedTextField(
+            query, { query = it }, label = { Text("Search exercises") }, singleLine = true,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+        )
+        LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)) {
+            if (shown.isEmpty()) item {
+                Text(if (query.isBlank()) "No exercises yet." else "No matching exercises.", color = p.muted)
+            }
+            items(shown, key = { it.id }) { ex ->
+                ExerciseRow(ex, null, lastUsed[ex.id], selected = ex.id in selection, onLongClick = { selection += ex.id }) {
+                    if (selecting) selection = if (ex.id in selection) selection - ex.id else selection + ex.id
+                    else vm.openGymLog(ex.id, today)
+                }
+            }
+            if (days?.isEmpty() == true && !selecting) item {
+                BigButton("Import from FitNotes", p.surface, p.text, { pick.launch(arrayOf("*/*")) })
             }
         }
+    }
+
+    if (askTags) {
+        val tags = groups.filter { it.isTag }.groupBy { it.name.lowercase() }.values
+        TagsDialog(
+            title = if (selection.size == 1) "Tags for 1 exercise" else "Tags for ${selection.size} exercises",
+            allTags = tags.map { it.first().name },
+            selected = selection.map { id ->
+                tags.filter { sameName -> sameName.any { tag -> tag.items.any { it.exerciseId == id } } }
+                    .map { it.first().name }.toSet()
+            },
+            onDismiss = { askTags = false },
+            onDone = { add, remove ->
+                vm.retagExercises(selection, add, remove)
+                askTags = false
+                selection = emptySet()
+            },
+        )
     }
 }
 
 @Composable
 private fun DayPage(
-    vm: AppViewModel, day: String, index: Int, count: Int, pager: PagerState,
-    byId: Map<Long, Exercise>, onImport: (() -> Unit)?,
+    vm: AppViewModel, day: String, byId: Map<Long, Exercise>,
 ) {
     val p = LocalPalette.current
-    val scope = rememberCoroutineScope()
     val sets by remember(day) { vm.gymDay(day) }.collectAsStateWithLifecycle(null)
     val loggedById = remember(sets) { sets.orEmpty().groupBy { it.exerciseId } }
     val allGroups by vm.groups.collectAsStateWithLifecycle()
@@ -156,17 +159,12 @@ private fun DayPage(
         return
     }
     Column(Modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 4.dp, top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().padding(end = 4.dp, top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = vm::closeGymDay) { Icon(AppIcons.Back, "Back", tint = p.text) }
             Column(Modifier.weight(1f)) {
                 Text(dayTitle(day), color = p.text, fontSize = 30.sp, fontWeight = FontWeight.Bold)
                 val n = sets?.size ?: 0
                 Text(if (n == 0) "No sets" else "$n set${if (n == 1) "" else "s"} · ${loggedById.size} exercise${if (loggedById.size == 1) "" else "s"}", color = p.muted, fontSize = 13.sp)
-            }
-            IconButton(enabled = index < count - 1, onClick = { scope.launch { pager.animateScrollToPage(index + 1) } }) {
-                Icon(AppIcons.Back, "Day before", tint = if (index < count - 1) p.text else p.faint)
-            }
-            IconButton(enabled = index > 0, onClick = { scope.launch { pager.animateScrollToPage(index - 1) } }) {
-                Icon(AppIcons.Back, "Day after", tint = if (index > 0) p.text else p.faint, modifier = Modifier.rotate(180f))
             }
             IconButton(onClick = { vm.openSettings() }) { Icon(AppIcons.Settings, "Settings", tint = p.text) }
         }
@@ -179,9 +177,6 @@ private fun DayPage(
             }
             if (sets != null) item {
                 BigButton("+ Add exercise", p.tint, p.accentText, { vm.openGymPick(day) })
-            }
-            if (onImport != null) item {
-                BigButton("Import from FitNotes", p.surface, p.text, onImport)
             }
         }
     }

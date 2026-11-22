@@ -52,7 +52,7 @@ import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.LocalTime
 
-enum class Tab { TODAY, INTERVALS, GYM, JOURNAL }
+enum class Tab { JOURNAL, INTERVALS, GYM }
 
 /** Screens shown on top of the tabs, newest last. */
 sealed interface Overlay {
@@ -78,6 +78,8 @@ data class GymImportPreview(val result: FitNotesImport.Result, val fileName: Str
 
 data class ActiveGymGroup(val id: Long, val startedAt: Long, val startTime: LocalTime)
 
+data class GymDayRoute(val day: String, val returnToJournal: Boolean)
+
 data class GymRest(val day: String, val startedAt: Long, val targetSec: Int, val visible: Boolean = true)
 
 /** The workout being edited: [id] null for a new one. */
@@ -96,12 +98,21 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     val settings: StateFlow<AppSettings> =
         repo.settings.stateIn(viewModelScope, SharingStarted.Eagerly, AppSettings())
 
-    var tab by mutableStateOf(Tab.TODAY)
+    var tab by mutableStateOf(Tab.JOURNAL)
+        private set
 
-    /** A day requested by Today's week or a finished gym group. The Journal consumes it. */
+    fun selectTab(destination: Tab) {
+        gymDayRoute = null
+        tab = destination
+    }
+
+    /** A day requested by another screen. The Journal consumes it. */
     var journalFocusDay by mutableStateOf<String?>(null)
 
-    fun openJournalDay(day: String) { journalFocusDay = day; tab = Tab.JOURNAL }
+    fun openJournalDay(day: String) {
+        journalFocusDay = day
+        selectTab(Tab.JOURNAL)
+    }
 
     fun openSettings() { overlays += Overlay.Settings }
     val overlays = mutableStateListOf<Overlay>()
@@ -334,8 +345,6 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun gymDayNote(day: String) = repo.gymDayNote(day)
 
-    fun gymDaysBetween(from: String, to: String): Flow<List<String>> = repo.gymDaysBetween(from, to)
-
     /** Exercise id → last day done, for "recent" in the picker. */
     val lastUsed: StateFlow<Map<Long, String>> = repo.lastUsed.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
@@ -382,7 +391,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             activeGroups[day] = ActiveGymGroup(groupId, SystemClock.elapsedRealtime(), LocalTime.now())
         }
         overlays.removeAll { it is Overlay.GymPick }
-        gymFocusDay = day
+        openGymDay(day)
     }
 
     fun endGroup(day: String) {
@@ -426,6 +435,14 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun editGroup(groupId: Long?, isTag: Boolean = false) { overlays += Overlay.EditGroup(groupId, isTag) }
+
+    fun retagExercises(ids: Set<Long>, add: Set<String>, remove: Set<String>) = viewModelScope.launch {
+        try {
+            repo.retagExercises(ids, add, remove)
+        } catch (_: SQLException) {
+            message = "Could not update exercise tags"
+        }
+    }
 
     fun saveGroup(group: GymGroup) = viewModelScope.launch {
         if (group.id == 0L) repo.addGroup(group) else repo.updateGroup(group)
@@ -501,12 +518,18 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         openGymLog(exerciseId, day)
     }
 
-    /** A day the Gym tab should show when it opens (e.g. tapped in the Journal); cleared once shown. */
-    var gymFocusDay by mutableStateOf<String?>(null)
+    var gymDayRoute by mutableStateOf<GymDayRoute?>(null)
+        private set
 
     fun openGymDay(day: String) {
-        gymFocusDay = day
+        gymDayRoute = GymDayRoute(day, tab == Tab.JOURNAL || gymDayRoute?.returnToJournal == true)
         tab = Tab.GYM
+    }
+
+    fun closeGymDay() {
+        val route = gymDayRoute ?: return
+        gymDayRoute = null
+        if (route.returnToJournal) openJournalDay(route.day)
     }
 
     suspend fun lastSets(exerciseId: Long, day: String): List<GymSet> = repo.lastSets(exerciseId, day)
@@ -551,7 +574,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         val preview = gymImport ?: return@launch
         val n = repo.replaceGym(preview.result)
         cancelGymImport()
-        tab = Tab.GYM
+        selectTab(Tab.GYM)
         message = "Imported ${preview.result.days} days, $n sets, ${preview.result.exercises.size} exercises"
     }
 

@@ -214,6 +214,7 @@ fun IntervalsListScreen(vm: AppViewModel) {
     if (askTags) {
         val chosen = list.filter { it.id in selected }
         TagsDialog(
+            title = "Tags for ${chosen.size} workouts",
             allTags = tags.map { it.first },
             selected = chosen.map { it.workout.tags },
             onDismiss = { askTags = false },
@@ -232,11 +233,11 @@ fun IntervalsListScreen(vm: AppViewModel) {
 }
 
 /**
- * Tags for several workouts at once. A tag is ticked when all of them have it, half-ticked (–) when only some do.
+ * A tag is ticked when all selected items have it, half-ticked (–) when only some do.
  * Ticking gives it to all; unticking takes it from all; a half one left alone stays as it is.
  */
 @Composable
-private fun TagsDialog(allTags: List<String>, selected: List<Set<String>>, onDismiss: () -> Unit, onDone: (Set<String>, Set<String>) -> Unit) {
+internal fun TagsDialog(title: String, allTags: List<String>, selected: List<Set<String>>, onDismiss: () -> Unit, onDone: (Set<String>, Set<String>) -> Unit) {
     val p = LocalPalette.current
     // null = leave as it is (some have it), true = all, false = none
     val state = remember {
@@ -251,7 +252,7 @@ private fun TagsDialog(allTags: List<String>, selected: List<Set<String>>, onDis
     var newTag by remember { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Tags for ${selected.size} workouts") },
+        title = { Text(title) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
                 order.forEach { t ->
