@@ -15,6 +15,16 @@ The Android source is committed at `0792a43`. The debug APK from that source was
 
 The earlier workout and Stats changes are in the same history. Ring counters and simplified Gym Stats landed in `6cc234d`, and Most Trained's Sets, Days, and Reps landed in `8dac65c`. The Gym improvements, restored exercise library, and set multi-selection landed in `5aeffb2`, `0ee09eb`, and `4401f14`.
 
+## Journal: month and diary (not yet on the phone)
+
+Chosen from the [layout concepts](mockups/intervals-app-concepts.html): **B**, a session bar above the tabs, which is not built yet. Also chosen: option **2** in the [month and diary mockup](mockups/intervals-journal-month-diary.html), which is built in `JournalScreen.kt` but not installed, because the phone was not connected.
+
+- **Month and diary.** The whole month sits on top. Below it is a diary of every day trained, newest first, with a heading and totals before each older month.
+- **Collapsing month.** Scrolling the diary down shrinks the month to the week being read. Pulling down at the top, or tapping the month name, opens it again.
+- **Picking days and months.** Tapping a day scrolls the diary to it and gives it an accent edge; an empty past day is shown so that **⋯ Add exercise** still works. Swiping the month moves the diary to that month's newest day, and an empty month leaves the diary where it is.
+- **Filter.** The filter now keeps only the matching days in the diary.
+- **Check on the phone:** that the shrink and open feel right, that reading back into October moves the month, and the speed with the whole history loaded.
+
 ## Journal and Stats decision
 
 The installed app still uses the **Calendar / Stats** switch inside Journal. The user prefers option **B** in the [Stats mockups](mockups/intervals-journal-stats.html). The revised mockup gives the monthly summary a visible **Stats ›** action so its destination is clear.

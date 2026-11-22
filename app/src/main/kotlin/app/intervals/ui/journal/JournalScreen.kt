@@ -21,6 +21,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.animation.animateContentSize
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
@@ -89,8 +97,8 @@ import java.time.format.TextStyle
 import java.util.Locale
 
 /**
- * Month calendar (Monday first) with a dot per session (pink = completed, yellow = stopped),
- * month totals, and the sessions of the selected day with their logged values and note.
+ * Month calendar (Monday first) with a dot per session (pink = completed, yellow = stopped) and the gym strip,
+ * month totals, and below it the diary of every day trained, newest first.
  */
 @Composable
 fun JournalScreen(vm: AppViewModel) {
@@ -122,6 +130,10 @@ fun JournalScreen(vm: AppViewModel) {
     }
 }
 
+/**
+ * The month on top and the diary below (mockup intervals-journal-month-diary.html, option 2): scrolling the diary shrinks the
+ * month to the week being read; pulling down at the top, or tapping the month name, opens it again. Swiping the month moves the diary.
+ */
 @Composable
 private fun JournalCalendar(vm: AppViewModel) {
     val p = LocalPalette.current
@@ -130,17 +142,51 @@ private fun JournalCalendar(vm: AppViewModel) {
     // one calendar page per month, swipe or arrows; the last page is this month
     val firstMonth = remember { YearMonth.of(2000, 1) }
     val monthCount = remember(today) { ChronoUnit.MONTHS.between(firstMonth, YearMonth.from(today)).toInt() + 1 }
+    val pageOf = { d: LocalDate -> ChronoUnit.MONTHS.between(firstMonth, YearMonth.from(d)).toInt().coerceIn(0, monthCount - 1) }
     val pager = rememberPagerState(initialPage = monthCount - 1) { monthCount }
+    val feed = rememberLazyListState()
     val scope = rememberCoroutineScope()
     val month = firstMonth.plusMonths(pager.currentPage.toLong())
     var dayText by rememberSaveable { mutableStateOf(today.toString()) }
     val selectedDay = LocalDate.parse(dayText)
-    val (loadedSessions, loadedGymSets) = monthEntries(vm, month, zone)
-    val byDay = remember(loadedSessions, zone) { loadedSessions.orEmpty().groupBy { it.day(zone) } }
-    val gymDates = remember(loadedGymSets) { loadedGymSets.orEmpty().map { LocalDate.parse(it.day) }.toSet() }
-    val trainedDays = byDay.keys + gymDates
+    var collapsed by rememberSaveable { mutableStateOf(false) }
+    var jumpTo by remember { mutableStateOf<LocalDate?>(null) }
+
+    // the whole history, like the records already read it
+    val allSessions by remember { vm.sessions(0, Long.MAX_VALUE) }.collectAsState(initial = null)
+    val allSets by remember { vm.gymSetsBetween("0000-01-01", "9999-12-31") }.collectAsState(initial = null)
+    val notes by remember { vm.gymDayNotes() }.collectAsState(initial = emptyMap())
+    val exercises by vm.exercises.collectAsState()
+    val allGroups by vm.groups.collectAsState()
+    val byDay = remember(allSessions, zone) { allSessions.orEmpty().groupBy { it.day(zone) } }
+    val setsByDay = remember(allSets) { allSets.orEmpty().groupBy { LocalDate.parse(it.day) } }
+    val strips = remember(setsByDay, allGroups) { setsByDay.mapValues { (_, s) -> app.intervals.core.dayStrip(s, allGroups) } }
+    val noteOf = { d: LocalDate -> notes[d.toString()].orEmpty() }
+
     var filter by rememberSaveable { mutableStateOf("") }
     var filterOpen by rememberSaveable { mutableStateOf(false) }
+    val query = filter.trim()
+    val matching: Set<LocalDate>? = remember(query, allSets, allSessions, exercises, allGroups, zone) {
+        if (query.isEmpty()) null else {
+            val ids = exercises.filter { it.name.contains(query, ignoreCase = true) }.map { it.id }.toSet() +
+                allGroups.filter { it.isTag && it.name.contains(query, ignoreCase = true) }.flatMap { it.items }.map { it.exerciseId }
+            buildSet<LocalDate> {
+                allSets.orEmpty().filter { it.exerciseId in ids }.forEach { add(LocalDate.parse(it.day)) }
+                allSessions.orEmpty().filter { it.workoutName.contains(query, ignoreCase = true) }.forEach { add(it.day(zone)) }
+            }
+        }
+    }
+    val rows = remember(byDay, setsByDay, notes, today, selectedDay, matching) {
+        app.intervals.core.diaryRows(byDay.keys + setsByDay.keys + notes.filterValues { it.isNotBlank() }.keys.map(LocalDate::parse), today, selectedDay, matching)
+    }
+    val totals = remember(byDay, setsByDay) {
+        (byDay.keys + setsByDay.keys).groupBy { YearMonth.from(it) }.mapValues { (_, days) ->
+            Triple(days.sumOf { byDay[it].orEmpty().size + if (it in setsByDay) 1 else 0 }, days.size, days.sumOf { setsByDay[it].orEmpty().size })
+        }
+    }
+    // the day at the top of the diary: the week shown when the month is shrunk
+    val readingDay by remember(rows) { derivedStateOf { rows.getOrNull(feed.firstVisibleItemIndex)?.day } }
+
     val keyboard = LocalSoftwareKeyboardController.current
     val searchFocus = remember { FocusRequester() }
     val closeFilter: () -> Unit = {
@@ -148,50 +194,65 @@ private fun JournalCalendar(vm: AppViewModel) {
         filterOpen = false
     }
     BackHandler(enabled = filterOpen && vm.overlays.isEmpty(), onBack = closeFilter)
-    val gymOfDay = key(dayText) {
-        remember { vm.gymDay(dayText) }.collectAsState(initial = emptyList()).value
+
+    // reading another month in the diary: the calendar follows, so opening it shows that month
+    LaunchedEffect(feed, rows) {
+        snapshotFlow { readingDay }.collect { d -> if (d != null && feed.isScrollInProgress && pageOf(d) != pager.currentPage) pager.scrollToPage(pageOf(d)) }
     }
-    val gymNote = key(dayText) {
-        remember { vm.gymDayNote(dayText) }.collectAsState(initial = "").value
+    // swiped or stepped to another month: the diary goes to its newest day (an empty month leaves it where it is)
+    LaunchedEffect(pager.settledPage) {
+        val m = firstMonth.plusMonths(pager.settledPage.toLong())
+        if (readingDay?.let(YearMonth::from) == m) return@LaunchedEffect
+        val i = rows.indexOfFirst { YearMonth.from(it.day) == m }
+        if (i >= 0) feed.scrollToItem(i)
     }
-    val showGymCard = gymOfDay.isNotEmpty() || gymNote.isNotBlank()
-    val exercises by vm.exercises.collectAsState()
-    val allGroups by vm.groups.collectAsState()
-    // records of the selected day need each exercise's history up to that day
-    val dayIds = gymOfDay.map { it.exerciseId }.toSet()
-    val history by remember(dayText, dayIds) {
-        if (dayIds.isEmpty()) kotlinx.coroutines.flow.flowOf(emptyList()) else vm.gymSetsBetween("0000-01-01", LocalDate.parse(dayText).plusDays(1).toString())
-    }.collectAsState(initial = emptyList())
-    val records = remember(history, dayText, exercises, dayIds) {
-        app.intervals.core.recordsOn(dayText, history.filter { it.exerciseId in dayIds }, exercises.filter { it.id in dayIds })
-    }
-    // swiped to another month: select its last trained day (or today / its last day), once its data is loaded
-    LaunchedEffect(month, loadedSessions, loadedGymSets) {
-        if (vm.journalFocusDay != null || YearMonth.from(selectedDay) == month || loadedSessions == null || loadedGymSets == null) {
-            return@LaunchedEffect
+    // a picked day: the diary scrolls to it once it is in the rows
+    LaunchedEffect(jumpTo, rows) {
+        val d = jumpTo ?: return@LaunchedEffect
+        val i = rows.indexOfFirst { it is app.intervals.core.DiaryDay && it.day == d }
+        if (i >= 0) {
+            feed.animateScrollToItem(i)
+            jumpTo = null
         }
-        dayText = (trainedDays.maxOrNull() ?: if (month == YearMonth.from(today)) today else month.atEndOfMonth()).toString()
     }
     // Opened for a specific date.
     LaunchedEffect(vm.journalFocusDay) {
         val d = vm.journalFocusDay?.let(LocalDate::parse) ?: return@LaunchedEffect
-        pager.scrollToPage(ChronoUnit.MONTHS.between(firstMonth, YearMonth.from(d)).toInt().coerceIn(0, monthCount - 1))
+        pager.scrollToPage(pageOf(d))
         dayText = d.toString()
+        jumpTo = d
         vm.journalFocusDay = null
+    }
+    val pick = { d: LocalDate ->
+        dayText = d.toString()
+        jumpTo = d
+    }
+    // scrolling the diary down shrinks the month; pulling down once it is at the top opens it again
+    val shrink = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (available.y < -2f) collapsed = true
+                return Offset.Zero
+            }
+
+            override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
+                if (available.y > 2f) collapsed = false
+                return Offset.Zero
+            }
+        }
     }
     var editing by remember { mutableStateOf<Session?>(null) }
     var deleting by remember { mutableStateOf<Session?>(null) }
-    var dayMenu by remember(dayText) { mutableStateOf(false) }
 
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = 16.dp)) {
-        item {
+    Column(Modifier.fillMaxSize().nestedScroll(shrink)) {
+        Column(Modifier.padding(horizontal = 12.dp).animateContentSize()) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 val active = filter.isNotBlank()
                 IconButton(onClick = { if (filterOpen) closeFilter() else filterOpen = true }) {
                     Box {
                         Icon(
                             AppIcons.Search,
-                            if (active) "Filter calendar, active filter" else "Filter calendar",
+                            if (active) "Filter journal, active filter" else "Filter journal",
                             tint = if (active || filterOpen) p.accentText else p.muted,
                         )
                         if (active) Box(Modifier.align(Alignment.TopEnd).size(5.dp).clip(CircleShape).background(p.accent))
@@ -199,82 +260,64 @@ private fun JournalCalendar(vm: AppViewModel) {
                 }
                 Spacer(Modifier.weight(1f))
                 IconButton(onClick = { scope.launch { pager.animateScrollToPage(pager.currentPage - 1) } }, enabled = pager.currentPage > 0) { Icon(AppIcons.Back, "Previous month", tint = p.text) }
-                Text(month.month.getDisplayName(TextStyle.FULL, Locale.ENGLISH) + " " + month.year, color = p.text, fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, modifier = Modifier.width(108.dp))
+                Text(
+                    month.month.getDisplayName(TextStyle.FULL, Locale.ENGLISH) + " " + month.year + if (collapsed) " ▾" else " ▴",
+                    color = p.text, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center,
+                    modifier = Modifier.width(120.dp).clip(RoundedCornerShape(8.dp))
+                        .clickable(role = Role.Button, onClickLabel = if (collapsed) "Show the month" else "Show only the week") { collapsed = !collapsed }
+                        .padding(vertical = 6.dp),
+                )
                 IconButton(onClick = { scope.launch { pager.animateScrollToPage(pager.currentPage + 1) } }, enabled = month < YearMonth.from(today)) {
                     Icon(AppIcons.Back, "Next month", tint = if (month < YearMonth.from(today)) p.text else p.faint,
                         modifier = Modifier.size(24.dp).scale(scaleX = -1f, scaleY = 1f))
                 }
             }
-        }
-        if (filterOpen) item {
-            LaunchedEffect(Unit) {
-                if (vm.overlays.isEmpty()) {
-                    searchFocus.requestFocus()
-                    keyboard?.show()
-                }
-            }
-            OutlinedTextField(
-                filter, { filter = it }, placeholder = { Text("Filter calendar by exercise or tag") }, singleLine = true,
-                trailingIcon = if (filter.isNotEmpty()) ({
-                    IconButton(onClick = { filter = "" }) { Icon(AppIcons.Close, "Clear calendar filter") }
-                }) else null,
-                modifier = Modifier.fillMaxWidth().focusRequester(searchFocus),
-            )
-        }
-        item {
-            MonthTotals(loadedSessions.orEmpty().size + gymDates.size, trainedDays.size, loadedGymSets.orEmpty().size)
-        }
-        item {
-            HorizontalPager(pager, key = { it }, verticalAlignment = Alignment.Top,
-                flingBehavior = PagerDefaults.flingBehavior(pager, pagerSnapDistance = PagerSnapDistance.atMost(1))) { page ->
-                val pageMonth = firstMonth.plusMonths(page.toLong())
-                val entries = if (pageMonth == month) loadedSessions to loadedGymSets else monthEntries(vm, pageMonth, zone)
-                MonthCalendar(pageMonth, today, selectedDay, zone, entries.first.orEmpty(), entries.second.orEmpty(), exercises, allGroups, filter) {
-                    dayText = it.toString()
-                }
-            }
-        }
-        item {
-            Row(Modifier.fillMaxWidth().padding(start = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    selectedDay.format(DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.ENGLISH)),
-                    color = p.muted, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f),
-                )
-                if (selectedDay <= today) {
-                    val running = dayText in vm.activeGroups
-                    Box {
-                        IconButton(onClick = { dayMenu = true }) {
-                            Icon(AppIcons.More, "Day actions", tint = p.accentText, modifier = Modifier.rotate(90f))
-                        }
-                        DropdownMenu(expanded = dayMenu, onDismissRequest = { dayMenu = false }) {
-                            DropdownMenuItem(
-                                text = { Text(if (running) "Resume workout" else "Add exercise") },
-                                onClick = {
-                                    dayMenu = false
-                                    closeFilter()
-                                    if (running) vm.openGymDay(dayText) else vm.openGymPick(dayText)
-                                },
-                            )
-                        }
+            if (filterOpen) {
+                LaunchedEffect(Unit) {
+                    if (vm.overlays.isEmpty()) {
+                        searchFocus.requestFocus()
+                        keyboard?.show()
                     }
                 }
+                OutlinedTextField(
+                    filter, { filter = it }, placeholder = { Text("Filter by exercise or tag") }, singleLine = true,
+                    trailingIcon = if (filter.isNotEmpty()) ({
+                        IconButton(onClick = { filter = "" }) { Icon(AppIcons.Close, "Clear filter") }
+                    }) else null,
+                    modifier = Modifier.fillMaxWidth().focusRequester(searchFocus),
+                )
+            }
+            if (collapsed) {
+                Calendar(month, today, selectedDay, byDay, strips, matching.orEmpty(), matching != null, pick, weekOf = readingDay ?: selectedDay)
+            } else {
+                MonthTotals(totals[month])
+                HorizontalPager(pager, key = { it }, verticalAlignment = Alignment.Top,
+                    flingBehavior = PagerDefaults.flingBehavior(pager, pagerSnapDistance = PagerSnapDistance.atMost(1))) { page ->
+                    Calendar(firstMonth.plusMonths(page.toLong()), today, selectedDay, byDay, strips, matching.orEmpty(), matching != null, pick)
+                }
             }
         }
-        val ofDay = byDay[selectedDay].orEmpty().sortedBy { it.startedAt }
-        if (showGymCard) item(key = "gym") {
-            GymDayCard(gymOfDay, exercises.associateBy { it.id }, allGroups, records, note = gymNote) { vm.openGymDay(dayText) }
-            Spacer(Modifier.height(6.dp))
-        }
-        if (ofDay.isEmpty() && !showGymCard) item {
-            Text(
-                if (selectedDay == today) "No sessions today." else "No sessions this day.",
-                color = p.faint, fontSize = 14.sp, modifier = Modifier.padding(start = 4.dp),
-            )
-        }
-        items(ofDay, key = { it.id }) { s ->
-            SessionCard(s, zone, onNote = { editing = s }, onLongPress = { deleting = s })
-            Spacer(Modifier.height(6.dp))
+        LazyColumn(Modifier.fillMaxSize(), state = feed, contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 16.dp)) {
+            items(rows, key = { r -> (if (r is app.intervals.core.DiaryMonth) "m" else "d") + r.day }) { r ->
+                if (r is app.intervals.core.DiaryMonth) {
+                    Column(Modifier.padding(top = 10.dp, bottom = 6.dp, start = 4.dp)) {
+                        Text(r.month.month.getDisplayName(TextStyle.FULL, Locale.ENGLISH).uppercase() + " " + r.month.year,
+                            color = p.muted, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.6.sp)
+                        MonthTotals(totals[r.month])
+                    }
+                } else {
+                    val d = r.day
+                    val sets = setsByDay[d].orEmpty()
+                    val records = remember(d, allSets, exercises) {
+                        val ids = sets.map { it.exerciseId }.toSet()
+                        if (ids.isEmpty()) 0 else app.intervals.core.recordsOn(d.toString(), allSets.orEmpty().filter { it.exerciseId in ids }, exercises.filter { it.id in ids })
+                    }
+                    DiaryDayEntry(
+                        vm, d, today, picked = d == selectedDay, sets, byDay[d].orEmpty().sortedBy { it.startedAt }, noteOf(d),
+                        exercises, allGroups, records, zone, closeFilter, onNote = { editing = it }, onDelete = { deleting = it },
+                    )
+                }
+            }
         }
     }
 
@@ -299,9 +342,63 @@ private fun JournalCalendar(vm: AppViewModel) {
     }
 }
 
+/** One day of the diary: its date with the day menu, the gym card, the interval sessions. The picked day has an accent edge. */
 @Composable
-private fun MonthTotals(sessions: Int, days: Int, sets: Int) {
+private fun DiaryDayEntry(
+    vm: AppViewModel, d: LocalDate, today: LocalDate, picked: Boolean, sets: List<GymSet>, sessions: List<Session>, note: String,
+    exercises: List<Exercise>, groups: List<GymGroup>, records: Int, zone: ZoneId, closeFilter: () -> Unit,
+    onNote: (Session) -> Unit, onDelete: (Session) -> Unit,
+) {
     val p = LocalPalette.current
+    val day = d.toString()
+    var dayMenu by remember(day) { mutableStateOf(false) }
+    Column(
+        Modifier.padding(bottom = 6.dp).fillMaxWidth().clip(RoundedCornerShape(18.dp))
+            .border(2.dp, if (picked) p.accent else Color.Transparent, RoundedCornerShape(18.dp)).padding(if (picked) 4.dp else 0.dp),
+    ) {
+        Row(Modifier.fillMaxWidth().padding(start = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                if (d == today) "Today" else d.format(DateTimeFormatter.ofPattern(if (d.year == today.year) "EEEE d MMMM" else "EEEE d MMMM yyyy", Locale.ENGLISH)),
+                color = p.muted, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f),
+            )
+            val running = day in vm.activeGroups
+            Box {
+                IconButton(onClick = { dayMenu = true }) {
+                    Icon(AppIcons.More, "Day actions", tint = p.accentText, modifier = Modifier.rotate(90f))
+                }
+                DropdownMenu(expanded = dayMenu, onDismissRequest = { dayMenu = false }) {
+                    DropdownMenuItem(
+                        text = { Text(if (running) "Resume workout" else "Add exercise") },
+                        onClick = {
+                            dayMenu = false
+                            closeFilter()
+                            if (running) vm.openGymDay(day) else vm.openGymPick(day)
+                        },
+                    )
+                }
+            }
+        }
+        if (sets.isNotEmpty() || note.isNotBlank()) {
+            GymDayCard(sets, exercises.associateBy { it.id }, groups, records, note = note) { vm.openGymDay(day) }
+            Spacer(Modifier.height(6.dp))
+        }
+        if (sessions.isEmpty() && sets.isEmpty() && note.isBlank()) {
+            Text(
+                if (d == today) "No sessions today." else "No sessions this day.",
+                color = p.faint, fontSize = 14.sp, modifier = Modifier.padding(start = 4.dp, bottom = 6.dp),
+            )
+        }
+        sessions.forEach { s ->
+            SessionCard(s, zone, onNote = { onNote(s) }, onLongPress = { onDelete(s) })
+            Spacer(Modifier.height(6.dp))
+        }
+    }
+}
+
+@Composable
+private fun MonthTotals(t: Triple<Int, Int, Int>?) {
+    val p = LocalPalette.current
+    val (sessions, days, sets) = t ?: Triple(0, 0, 0)
     Text(
         buildAnnotatedString {
             val totals = listOf(
@@ -319,42 +416,13 @@ private fun MonthTotals(sessions: Int, days: Int, sets: Int) {
     )
 }
 
+/** The month (Monday first), or only the week of [weekOf] when the month is shrunk. */
 @Composable
-private fun monthEntries(vm: AppViewModel, month: YearMonth, zone: ZoneId): Pair<List<Session>?, List<GymSet>?> = key(month, zone) {
-    val start = month.atDay(1)
-    val end = month.plusMonths(1).atDay(1)
-    val sessions by remember {
-        vm.sessions(start.atStartOfDay(zone).toInstant().toEpochMilli(), end.atStartOfDay(zone).toInstant().toEpochMilli())
-    }.collectAsState(initial = null)
-    val gymSets by remember { vm.gymSetsBetween(start.toString(), end.toString()) }.collectAsState(initial = null)
-    sessions to gymSets
-}
-
-@Composable
-private fun MonthCalendar(
-    month: YearMonth, today: LocalDate, selected: LocalDate, zone: ZoneId,
-    sessions: List<Session>, gymSets: List<GymSet>, exercises: List<Exercise>, groups: List<GymGroup>,
-    filter: String, onPick: (LocalDate) -> Unit,
+private fun Calendar(
+    month: YearMonth, today: LocalDate, selected: LocalDate, byDay: Map<LocalDate, List<Session>>,
+    gym: Map<LocalDate, List<app.intervals.core.StripPiece>>, highlighted: Set<LocalDate>, filtering: Boolean,
+    onPick: (LocalDate) -> Unit, weekOf: LocalDate? = null,
 ) {
-    val query = filter.trim()
-    val matchingExercises = remember(exercises, groups, query) {
-        if (query.isEmpty()) emptySet() else exercises.filter { it.name.contains(query, ignoreCase = true) }.map { it.id }.toSet() +
-            groups.filter { it.isTag && it.name.contains(query, ignoreCase = true) }.flatMap { it.items }.map { it.exerciseId }
-    }
-    val highlighted = remember(sessions, gymSets, matchingExercises, query, zone) {
-        if (query.isEmpty()) emptySet() else buildSet {
-            addAll(gymSets.filter { it.exerciseId in matchingExercises }.map { LocalDate.parse(it.day) })
-            addAll(sessions.filter { it.workoutName.contains(query, ignoreCase = true) }.map { it.day(zone) })
-        }
-    }
-    val strips = remember(gymSets, groups) {
-        gymSets.groupBy { LocalDate.parse(it.day) }.mapValues { (_, s) -> app.intervals.core.dayStrip(s, groups) }
-    }
-    Calendar(month, today, selected, sessions.groupBy { it.day(zone) }, strips, highlighted, query.isNotEmpty(), onPick)
-}
-
-@Composable
-private fun Calendar(month: YearMonth, today: LocalDate, selected: LocalDate, byDay: Map<LocalDate, List<Session>>, gym: Map<LocalDate, List<app.intervals.core.StripPiece>>, highlighted: Set<LocalDate>, filtering: Boolean, onPick: (LocalDate) -> Unit) {
     val p = LocalPalette.current
     Column(
         Modifier.padding(top = 4.dp).fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(p.surface)
@@ -365,9 +433,14 @@ private fun Calendar(month: YearMonth, today: LocalDate, selected: LocalDate, by
                 Text(it, color = p.muted, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
             }
         }
-        val lead = month.atDay(1).dayOfWeek.value - 1 // Monday = 0
-        val cells = List(lead) { null } + (1..month.lengthOfMonth()).map { month.atDay(it) }
-        cells.chunked(7).forEach { week ->
+        val weeks = if (weekOf != null) {
+            val monday = weekOf.minusDays(weekOf.dayOfWeek.value - 1L)
+            listOf((0L..6L).map { monday.plusDays(it) })
+        } else {
+            val lead = month.atDay(1).dayOfWeek.value - 1 // Monday = 0
+            (List(lead) { null } + (1..month.lengthOfMonth()).map { month.atDay(it) }).chunked(7)
+        }
+        weeks.forEach { week ->
             Row(Modifier.fillMaxWidth()) {
                 week.forEach { d -> DayCell(d, today, selected, byDay[d].orEmpty(), gym[d].orEmpty(), d in highlighted, filtering, onPick, Modifier.weight(1f)) }
                 repeat(7 - week.size) { Spacer(Modifier.weight(1f)) }

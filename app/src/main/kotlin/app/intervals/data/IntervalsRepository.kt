@@ -131,6 +131,9 @@ class IntervalsRepository(
 
     fun gymDayNote(day: String): Flow<String> = gymDao.observeDayNote(day).map { it.orEmpty() }
 
+    /** Every gym day note, by day. */
+    fun gymDayNotes(): Flow<Map<String, String>> = gymDao.observeDayNotes().map { list -> list.associate { it.day to it.note } }
+
     suspend fun saveGymDayNote(day: String, note: String) {
         val trimmed = note.trim()
         if (trimmed.isEmpty()) gymDao.deleteDayNote(day)

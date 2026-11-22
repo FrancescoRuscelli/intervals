@@ -113,6 +113,9 @@ interface GymDao {
     @Query("SELECT * FROM gym_day_notes ORDER BY day")
     suspend fun getDayNotes(): List<GymDayNoteEntity>
 
+    @Query("SELECT * FROM gym_day_notes")
+    fun observeDayNotes(): Flow<List<GymDayNoteEntity>>
+
     @Insert
     suspend fun insertDayNotes(notes: List<GymDayNoteEntity>)
 

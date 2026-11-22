@@ -345,6 +345,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun gymDayNote(day: String) = repo.gymDayNote(day)
 
+    fun gymDayNotes() = repo.gymDayNotes()
+
     /** Exercise id → last day done, for "recent" in the picker. */
     val lastUsed: StateFlow<Map<Long, String>> = repo.lastUsed.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
