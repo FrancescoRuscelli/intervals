@@ -484,7 +484,9 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun updateGymSet(set: GymSet) = viewModelScope.launch { repo.updateSet(set) }
 
-    fun deleteGymSet(id: Long) = viewModelScope.launch { repo.deleteSet(id) }
+    fun saveGymSetNotes(ids: List<Long>, note: String) = viewModelScope.launch { repo.setGymNotes(ids, note) }
+
+    fun deleteGymSets(ids: List<Long>) = viewModelScope.launch { repo.deleteSets(ids) }
 
     /** Creates an exercise and opens its log in place of the picker. */
     fun createExercise(exercise: Exercise, day: String) = viewModelScope.launch {

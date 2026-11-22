@@ -165,8 +165,11 @@ interface GymDao {
     @Update
     suspend fun updateSet(set: GymSetEntity)
 
-    @Query("DELETE FROM gym_sets WHERE id = :id")
-    suspend fun deleteSet(id: Long)
+    @Query("UPDATE gym_sets SET note = :note WHERE id IN (:ids)")
+    suspend fun setNotes(ids: List<Long>, note: String)
+
+    @Query("DELETE FROM gym_sets WHERE id IN (:ids)")
+    suspend fun deleteSets(ids: List<Long>)
 
     @Insert
     suspend fun insertExercise(exercise: ExerciseEntity): Long

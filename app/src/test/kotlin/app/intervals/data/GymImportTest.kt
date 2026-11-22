@@ -145,16 +145,19 @@ class GymImportTest {
         repo.replaceGym(FitNotesImport.convert(FitNotesReader.read(fakeFitNotes())))
         val id = repo.addExercise(app.intervals.core.Exercise(name = "Hip Thrust", fields = listOf(app.intervals.core.GymField.WEIGHT, app.intervals.core.GymField.REPS)))
         val s = app.intervals.core.GymSet(exerciseId = id, day = "2026-11-17", order = 0, weightKg = 60.0, reps = 8, restSec = 125)
-        val ids = repo.addSets(listOf(s, s.copy(weightKg = 70.0)))
+        val ids = repo.addSets(listOf(s, s.copy(weightKg = 70.0), s.copy(weightKg = 80.0, note = "Keep")))
         // after the two imported sets of that day
-        assertEquals(listOf(2, 3), repo.exerciseDay(id, "2026-11-17").first().map { it.order })
+        assertEquals(listOf(2, 3, 4), repo.exerciseDay(id, "2026-11-17").first().map { it.order })
         assertEquals("2026-11-17", repo.lastUsed.first()[id])
 
-        repo.updateSet(repo.exerciseDay(id, "2026-11-17").first()[0].copy(note = "Max"))
-        repo.deleteSet(ids[1])
+        val before = repo.exerciseDay(id, "2026-11-17").first()
+        repo.updateSet(before[0].copy(reps = 9))
+        repo.setGymNotes(ids.take(2), "  Max  ")
+        val updated = listOf(before[0].copy(reps = 9, note = "Max"), before[1].copy(note = "Max"), before[2])
+        assertEquals(updated, repo.exerciseDay(id, "2026-11-17").first())
+        repo.deleteSets(ids.drop(1))
         val left = repo.exerciseDay(id, "2026-11-17").first().single()
-        assertEquals("Max", left.note)
-        assertEquals(125, left.restSec)
+        assertEquals(updated.first(), left)
         assertEquals(4, repo.gymSetCount())
     }
 

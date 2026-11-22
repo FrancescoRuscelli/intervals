@@ -163,7 +163,9 @@ class IntervalsRepository(
 
     suspend fun updateSet(set: GymSet) = gymDao.updateSet(set.toEntity())
 
-    suspend fun deleteSet(id: Long) = gymDao.deleteSet(id)
+    suspend fun setGymNotes(ids: List<Long>, note: String) = gymDao.setNotes(ids, note.trim())
+
+    suspend fun deleteSets(ids: List<Long>) = gymDao.deleteSets(ids)
 
     /** Returns the new exercise's id. */
     suspend fun addExercise(exercise: Exercise): Long = gymDao.insertExercise(exercise.copy(id = 0).toEntity())
