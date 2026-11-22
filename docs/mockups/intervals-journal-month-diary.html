@@ -1,0 +1,263 @@
+<title>Journal Month Diary</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: an option switcher, then three phone screens of that option side by side (scrolling sideways on a phone), then its pros / cons. */
+:root {
+  --bg: #f4f2fa; --surface: #ffffff; --ink: #18151f; --muted: #5b5668; --line: #dfdbe9; --accent: #6d28d9; --accent-soft: #ece4fd;
+  --good: #0f7a5c; --warn: #9a4a00;
+  /* the phones always use the app's own dark look */
+  --ph-bg: #000000; --ph-card: #1a1c21; --ph-card2: #111216; --ph-line: #23262c; --ph-ink: #f2f3f5; --ph-muted: #9aa0aa; --ph-faint: #6e747e;
+  --ph-accent: #7c3aed; --ph-accent-ink: #c4b1ff; --ph-tint: #2a2340; --ph-pink: #e91e63; --ph-teal: #00bfa5; --ph-yellow: #ffc107;
+  --display: "Space Grotesk", Inter, system-ui, sans-serif; --text: Inter, system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0b10; --surface: #17151d; --ink: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --accent-soft: #241d38;
+  --good: #4fd1a5; --warn: #ffb35c; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0c0b10; --surface: #17151d; --ink: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --accent-soft: #241d38;
+  --good: #4fd1a5; --warn: #ffb35c; color-scheme: dark }
+
+body { background: var(--bg); color: var(--ink); font-family: var(--text); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 48px; }
+.wrap { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+h1 { font-family: var(--display); font-size: clamp(28px, 5vw, 40px); line-height: 1.1; margin: 0; text-wrap: balance; letter-spacing: -0.5px; }
+.lead { margin: 6px 0 0; color: var(--muted); max-width: 68ch; }
+.switch { display: flex; flex-wrap: wrap; gap: 8px; }
+.switch button { font: 600 14px var(--text); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
+  padding: 9px 14px; cursor: pointer; display: flex; gap: 8px; align-items: center; }
+.switch button .k { font-family: var(--display); color: var(--accent); }
+.switch button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.switch button[aria-pressed="true"] .k { color: #fff; }
+.switch button:focus-visible, .phone button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.concept h2 { font-family: var(--display); font-size: 26px; margin: 0; letter-spacing: -0.3px; }
+.concept .idea { margin: 4px 0 0; color: var(--muted); max-width: 70ch; }
+.phones { display: flex; gap: 22px; overflow-x: auto; padding: 6px 2px 14px; scroll-snap-type: x mandatory; }
+figure { margin: 0; display: flex; flex-direction: column; gap: 8px; scroll-snap-align: start; }
+figcaption { font-size: 13px; color: var(--muted); max-width: 300px; }
+figcaption b { color: var(--ink); }
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.note { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; min-width: 0; }
+.note h3 { margin: 0 0 6px; font-size: 13px; letter-spacing: 0.6px; text-transform: uppercase; }
+.note.pro h3 { color: var(--good); } .note.con h3 { color: var(--warn); }
+.note ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.compare { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 14px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+thead th { font-size: 12px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted); }
+td.n { font-family: var(--display); font-variant-numeric: tabular-nums; font-weight: 600; }
+tr.pick td { background: var(--accent-soft); }
+.reco { background: var(--accent-soft); border-radius: 14px; padding: 16px 18px; }
+.reco h2 { font-family: var(--display); margin: 0 0 6px; font-size: 22px; }
+.reco p { margin: 0; max-width: 75ch; }
+
+/* ---- phone ---- */
+.phone { width: 300px; height: 620px; flex: none; background: var(--ph-bg); color: var(--ph-ink); border-radius: 34px; border: 8px solid #1e1d24;
+  box-sizing: border-box; position: relative; overflow: hidden; display: flex; flex-direction: column; font-size: 13px; line-height: 1.35;
+  box-shadow: 0 10px 30px rgba(20, 10, 40, 0.18); }
+.phone .body { flex: 1; overflow: hidden; padding: 14px 12px 10px; display: flex; flex-direction: column; gap: 9px; }
+.phone .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.phone .h { font-family: var(--display); font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+.phone .sub { color: var(--ph-muted); font-size: 11.5px; }
+.phone .card { background: var(--ph-card); border-radius: 14px; padding: 10px 11px; display: flex; flex-direction: column; gap: 5px; }
+.phone .card.dim { background: var(--ph-card2); }
+.phone .card.hi { background: #1c1828; border: 2px solid var(--ph-accent); }
+.phone .row { display: flex; align-items: center; gap: 8px; }
+.phone .grow { flex: 1; min-width: 0; }
+.phone .t { font-weight: 700; font-size: 13.5px; }
+.phone .m { color: var(--ph-muted); font-size: 11.5px; }
+.phone .num { font-family: var(--display); font-variant-numeric: tabular-nums; font-weight: 700; }
+.phone .big { font-family: var(--display); font-weight: 700; font-size: 44px; line-height: 1; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+.phone button { font: 700 13px var(--text); border: 0; border-radius: 12px; cursor: pointer; }
+.phone .btn { background: var(--ph-accent); color: #fff; height: 42px; width: 100%; }
+.phone .btn.soft { background: var(--ph-tint); color: var(--ph-accent-ink); }
+.phone .btn.teal { background: var(--ph-teal); color: #04241f; }
+.phone .btn.pink { background: var(--ph-pink); }
+.phone .pill { padding: 3px 9px; border-radius: 999px; background: var(--ph-tint); color: var(--ph-accent-ink); font-size: 11px; font-weight: 700; white-space: nowrap; }
+.phone .pill.pink { background: rgba(233, 30, 99, 0.18); color: #ff8ab3; }
+.phone .pill.teal { background: rgba(0, 191, 165, 0.16); color: #5eead4; }
+.phone .pill.yellow { background: rgba(255, 193, 7, 0.16); color: #ffd666; }
+.phone .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.phone .chev { color: var(--ph-faint); font-size: 18px; }
+.phone .tabs { display: flex; border-top: 1px solid var(--ph-line); background: #0b0c0f; padding: 6px 4px 10px; }
+.phone .tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--ph-faint); font-size: 10.5px; font-weight: 600; }
+.phone .tab i { width: 30px; height: 22px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-style: normal; font-size: 13px; }
+.phone .tab.on { color: var(--ph-accent-ink); } .phone .tab.on i { background: var(--ph-tint); }
+.phone .tab.fab i { width: 48px; height: 48px; border-radius: 24px; margin-top: -22px; background: var(--ph-accent); color: #fff; font-size: 24px; box-shadow: 0 4px 14px rgba(124, 58, 237, 0.5); }
+.phone .mini { margin: 0 8px 6px; background: #1c1828; border: 1px solid #3b2f63; border-radius: 16px; padding: 8px 10px; display: flex; align-items: center; gap: 9px; }
+.phone .ring { width: 34px; height: 34px; border-radius: 50%; flex: none; background: conic-gradient(var(--ph-teal) 0 62%, #2a2d34 0); display: flex; align-items: center; justify-content: center; }
+.phone .ring span { width: 26px; height: 26px; border-radius: 50%; background: #1c1828; display: flex; align-items: center; justify-content: center; font: 700 9px var(--display); color: #5eead4; }
+.phone .sheet { position: absolute; inset: auto 0 0 0; background: #15161b; border-radius: 22px 22px 0 0; padding: 10px 12px 14px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 -10px 30px rgba(0,0,0,0.6); }
+.phone .grab { width: 38px; height: 4px; border-radius: 2px; background: #3a3d45; align-self: center; }
+.phone .scrim { position: absolute; inset: 0; background: rgba(0,0,0,0.55); }
+.phone .seg { display: flex; background: var(--ph-card); border-radius: 12px; padding: 3px; }
+.phone .seg span { flex: 1; text-align: center; padding: 7px 0; border-radius: 9px; font-weight: 700; color: var(--ph-muted); font-size: 12px; }
+.phone .seg span.on { background: var(--ph-accent); color: #fff; }
+.phone .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.phone .week div { background: var(--ph-card2); border-radius: 10px; padding: 5px 0; text-align: center; font-size: 10px; color: var(--ph-muted); display: flex; flex-direction: column; gap: 3px; align-items: center; }
+.phone .week div b { font-family: var(--display); color: var(--ph-ink); font-size: 13px; }
+.phone .week div.today { outline: 2px solid var(--ph-accent); }
+.phone .bar { height: 5px; border-radius: 3px; width: 70%; }
+.phone .boxes { display: flex; flex-wrap: wrap; gap: 4px; }
+.phone .boxes span { min-width: 22px; height: 22px; padding: 0 5px; box-sizing: border-box; border-radius: 6px; border: 1px solid #2a2d34; display: inline-flex; align-items: center; justify-content: center; font: 600 11.5px var(--display); }
+.phone .search { background: var(--ph-card); border-radius: 12px; padding: 9px 11px; color: var(--ph-faint); }
+.phone .tile { flex: 1; background: var(--ph-card); border-radius: 16px; padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.phone .tile .big { font-size: 34px; }
+.phone .pm { display: flex; gap: 6px; width: 100%; } .phone .pm button { flex: 1; height: 34px; background: var(--ph-tint); color: var(--ph-accent-ink); font-size: 18px; }
+@media (prefers-reduced-motion: no-preference) { .concept { animation: in 220ms ease-out; } @keyframes in { from { opacity: 0.4; transform: translateY(6px); } } }
+.phone .month { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.phone .month span { height: 27px; border-radius: 8px; background: var(--ph-card2); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  font: 600 11.5px var(--display); color: var(--ph-ink); font-variant-numeric: tabular-nums; }
+.phone .month span.hd { background: none; height: 16px; font: 600 9.5px var(--text); color: var(--ph-faint); }
+.phone .month span.e { background: none; }
+.phone .month span.fut { color: var(--ph-faint); }
+.phone .month span.today { outline: 2px solid var(--ph-accent); }
+.phone .month span.sel { background: var(--ph-accent); color: #fff; }
+.phone .month i { width: 14px; height: 3px; border-radius: 2px; }
+.phone .sep { font-size: 10.5px; letter-spacing: 0.6px; color: var(--ph-faint); font-weight: 700; margin-top: 2px; }
+.phone .flash { outline: 2px solid var(--ph-accent); }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Journal: il mese intero, con dentro il diario</h1>
+    <p class="lead">Si parte da B: le tab restano Journal · Intervals · Gym, e durante un allenamento la barra della sessione sta sopra le tab.
+      Cambia solo il Journal: il mese intero al posto della settimana, e tre modi di metterci dentro il diario. A, D, E e F sono tolti.</p>
+  </header>
+
+  <nav class="switch" aria-label="Opzioni" id="switch"></nav>
+  <section class="concept" id="concept" aria-live="polite"></section>
+
+  <section class="reco">
+    <h2>Cosa farei</h2>
+    <p><b>2 · Il mese si chiude</b>: apri il Journal e vedi il mese intero. Appena scorri il diario, il mese si riduce alla sua settimana e resta in alto,
+      così sai sempre dove sei. Il colpo d'occhio del mese e il diario da scorrere stanno nella stessa schermata, senza interruttori.
+      Il mese si cambia ancora scorrendo a destra e sinistra come oggi, e il diario lo segue.</p>
+  </section>
+
+  <section>
+    <h2 style="font-family: var(--display); margin: 0 0 10px;">Confronto</h2>
+    <div class="compare">
+      <table>
+        <thead><tr><th>Opzione</th><th>Cosa vedi aprendo</th><th>Andare a un giorno</th><th>Scorrere la storia</th><th>Quanto cambia da oggi</th></tr></thead>
+        <tbody id="cmp"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script>
+const tabs = (on) => `<div class="tabs">${[['☰', 'Journal'], ['◔', 'Intervals'], ['▦', 'Gym']].map(([ic, l], i) =>
+  `<div class="tab${i === on ? ' on' : ''}"><i>${ic}</i>${l}</div>`).join('')}</div>`;
+const phone = (inner) => `<div class="phone" role="img">${inner}</div>`;
+const body = (html) => `<div class="body">${html}</div>`;
+const mini = `<div class="mini"><div class="ring"><span>1:12</span></div><div class="grow"><div class="t">Squat · normal 90×5</div><div class="m">set 7 · resting · buzz at 3:00</div></div><span class="pill teal">Open</span></div>`;
+
+// November 2026, Monday first: the 1st is a Sunday. g = gym, i = intervals.
+const done = { 3: 'g', 4: 'g', 6: 'i', 8: 'g', 11: 'g', 13: 'g', 14: 'i', 17: 'g', 19: 'g', 21: 'i', 22: 'g' };
+const col = { g: 'var(--ph-accent)', i: 'var(--ph-pink)' };
+const TODAY = 22;
+const heads = ['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((x) => `<span class="hd">${x}</span>`).join('');
+const dayCell = (d, sel) => `<span class="${[d === TODAY && 'today', d === sel && 'sel', d > TODAY && 'fut'].filter(Boolean).join(' ')}">${d}${done[d] ? `<i style="background:${d === sel ? '#fff' : col[done[d]]}"></i>` : ''}</span>`;
+const month = (sel) => `<div class="month">${heads}${'<span class="e"></span>'.repeat(6)}${Array.from({ length: 30 }, (_, i) => dayCell(i + 1, sel)).join('')}</div>`;
+const week = (sel) => `<div class="month">${heads}${[16, 17, 18, 19, 20, 21, 22].map((d) => dayCell(d, sel)).join('')}</div>`;
+const monthHead = `<div class="top"><div><div class="h">Journal</div><div class="sub">‹ November 2026 › · 11 sessions</div></div></div>`;
+const card = (dot, title, right, line) => `<div class="card"><div class="row"><span class="dot" style="background:${dot}"></span><span class="t grow">${title}</span>${right}</div><div class="m">${line}</div></div>`;
+const G = 'var(--ph-accent)', I = 'var(--ph-pink)';
+
+const entry = {
+  22: card(G, 'Today · Legs', '<span class="pill teal">in corso</span>', 'Squat deep 40–80 · normal 90×5 ×3'),
+  21: card(I, 'Fri 21 · hangboard 70%', '<span class="m">22 min</span>', '6 of 6 rounds · 20 mm +10 kg'),
+  19: card(G, 'Wed 19 · Fingers', '<span class="m">41 min</span>', 'Block Pulls R 50×5 ×3 · L 45×5 ×3 · Pinch'),
+  17: card(G, 'Mon 17 · Legs', '<span class="pill yellow">PR</span>', 'Squat normal 90×5 ×5 · Deadlift 120×2'),
+  14: card(I, 'Sat 14 · block pulls 60%', '<span class="m">18 min</span>', '8 of 8 rounds'),
+  13: card(G, 'Thu 13 · Pull', '<span class="m">48 min</span>', 'Pull Up +30×5 · Muscle Up 3×3'),
+};
+const feed = (days, flash) => days.map((d) => d === flash ? entry[d].replace('class="card"', 'class="card flash"') : entry[d]).join('');
+const dayDetail = `
+  <div class="card"><div class="row"><span class="t grow">Squat</span><span class="pill yellow">PR normal 90×5 ×5</span></div>
+    <span class="m">deep</span><div class="boxes"><span>40·5</span><span>60·5</span><span>70·5</span><span>80·3</span></div>
+    <span class="m">normal</span><div class="boxes"><span>90·5</span><span>90·5</span><span>90·5</span><span>90·5</span><span>90·5</span></div></div>
+  <div class="card"><div class="t">Deadlift</div><div class="boxes"><span>70·5</span><span>90·5</span><span>110·3</span><span>120·2</span></div></div>`;
+const octWeek = `<div class="month">${heads}${[27, 28, 29, 30, 31].map((d) => `<span>${d}${d === 28 || d === 30 ? `<i style="background:${G}"></i>` : ''}</span>`).join('')}<span>1</span><span>2</span></div>`;
+
+const C = [
+  { k: '1', name: 'Mese, con il diario sotto', short: 'Diario sotto',
+    idea: 'In alto il mese intero. Sotto, il diario del mese: le sessioni dalla più recente, con i record. Tocchi un giorno nel mese e il diario salta lì.',
+    shots: [
+      ['<b>Apri il Journal:</b> il mese in alto, il diario del mese sotto. La barra della sessione resta sopra le tab.',
+        phone(body(monthHead + month(0) + feed([22, 21, 19])) + mini + tabs(0))],
+      ['<b>Tocchi il 17:</b> il diario scorre a quel giorno e lo evidenzia.',
+        phone(body(monthHead + month(17) + feed([17, 14], 17)) + mini + tabs(0))],
+      ['<b>Tocchi la sessione:</b> si apre il giorno con tutte le serie, che puoi modificare.',
+        phone(body(`<div class="top"><div><div class="h">Mon 17 · Legs</div><div class="sub">52 min · 24 sets</div></div></div>${dayDetail}<button class="btn soft">Repeat this workout</button>`) + mini + tabs(0))],
+    ],
+    pro: ['Semplice: una schermata con due parti fisse.', 'Il mese si vede sempre per intero.'],
+    con: ['Il mese prende metà schermo, quindi del diario si vedono solo 2–3 sessioni.', 'Il diario si ferma alla fine del mese: per quello prima cambi mese.'],
+    row: ['mese + 3 sessioni', '1 tocco', 'solo dentro il mese', 'poco'] },
+
+  { k: '2', name: 'Il mese si chiude scorrendo', short: 'Mese che si chiude',
+    idea: 'Come 1, ma quando scorri il diario il mese si riduce alla sua settimana e resta fisso in alto. Torni su e il mese si riapre. Finito il mese, il diario continua con quello prima.',
+    shots: [
+      ['<b>Apri il Journal:</b> il mese intero, e sotto inizia il diario.',
+        phone(body(monthHead + month(0) + feed([22, 21, 19])) + mini + tabs(0))],
+      ['<b>Scorri:</b> il mese diventa la sua settimana in alto e il diario prende lo schermo.',
+        phone(body(`<div class="top"><div class="h" style="font-size:17px">November</div><span class="m">▾ mese</span></div>` + week(17) + feed([19, 17, 14, 13])) + mini + tabs(0))],
+      ['<b>Più giù:</b> finito novembre continua ottobre, con un separatore.',
+        phone(body(`<div class="top"><div class="h" style="font-size:17px">October</div><span class="m">▾ mese</span></div>${octWeek}`
+          + card(G, 'Mon 3 Nov · Legs', '<span class="m">55 min</span>', 'Squat normal 85×5 ×5')
+          + `<div class="sep">OCTOBER · 13 SESSIONS · 289 SETS</div>`
+          + card(G, 'Thu 30 · Push', '<span class="m">44 min</span>', 'Dips +20×6 · Handstand 0:40 ×4')
+          + card(G, 'Tue 28 · Legs', '<span class="m">50 min</span>', 'Squat normal 85×5 ×4 · Pistol R L 5')) + mini + tabs(0))],
+    ],
+    pro: ['Il mese per il colpo d\'occhio, il diario quasi a tutto schermo per leggere.', 'Sai sempre in che settimana sei.', 'Nessun interruttore da imparare.'],
+    con: ['Un comportamento in più da costruire: il mese che si chiude.'],
+    row: ['mese + 3 sessioni', '1 tocco', 'continua, mese dopo mese', 'medio'] },
+
+  { k: '3', name: 'Mese o Diario, con un interruttore', short: 'Interruttore',
+    idea: 'In alto Mese | Diario. Mese è il Journal di oggi: il mese intero, e sotto il giorno scelto. Diario è il feed di tutte le sessioni, senza calendario.',
+    shots: [
+      ['<b>Mese:</b> il calendario intero e sotto il giorno toccato, come oggi.',
+        phone(body(monthHead + `<div class="seg"><span class="on">Mese</span><span>Diario</span></div>` + month(17) + entry[17]) + mini + tabs(0))],
+      ['<b>Diario:</b> solo le sessioni, a tutto schermo.',
+        phone(body(`<div class="top"><div class="h">Journal</div><span class="pill">All ▾</span></div><div class="seg"><span>Mese</span><span class="on">Diario</span></div>` + feed([22, 21, 19, 17, 14])) + mini + tabs(0))],
+      ['<b>Un filtro</b> nel diario: un esercizio o un gruppo, tutte le volte che l\'hai fatto.',
+        phone(body(`<div class="top"><div class="h">Journal</div><span class="pill">Squat ✕</span></div><div class="seg"><span>Mese</span><span class="on">Diario</span></div>
+          <div class="card"><div class="row"><span class="t grow">Today</span><span class="pill teal">in corso</span></div><div class="m">deep 40–80 · normal 90×5 ×3</div></div>
+          <div class="card"><div class="row"><span class="t grow">Mon 17 Nov</span><span class="pill yellow">PR</span></div><div class="m">deep 40–80 · normal 90×5 ×5</div></div>
+          <div class="card"><div class="t">Tue 11 Nov</div><div class="m">deep 40–80 · normal 85×5 ×5</div></div>
+          <div class="card"><div class="t">Tue 4 Nov</div><div class="m">deep 40–70 · normal 85×5 ×4</div></div>`) + mini + tabs(0))],
+    ],
+    pro: ['Ognuna delle due viste è pulita e a tutto schermo.', 'Mese resta identico a oggi.'],
+    con: ['Un tocco in più per passare da una vista all\'altra.', 'Due posti per la stessa cosa.'],
+    row: ['quella usata l\'ultima volta', '1 tocco (in Mese)', 'in Diario', 'poco'] },
+];
+
+const sw = document.getElementById('switch');
+const box = document.getElementById('concept');
+let current = 1;
+try { const saved = localStorage.getItem('intervals-journal-option'); if (saved !== null && C[+saved]) current = +saved; } catch (e) {}
+
+function render() {
+  const c = C[current];
+  sw.innerHTML = C.map((x, i) => `<button type="button" aria-pressed="${i === current}" data-i="${i}"><span class="k">${x.k}</span>${x.short}</button>`).join('');
+  box.innerHTML = `
+    <h2>${c.k} · ${c.name}</h2>
+    <p class="idea">${c.idea}</p>
+    <div class="phones">${c.shots.map(([cap, ph]) => `<figure>${ph}<figcaption>${cap}</figcaption></figure>`).join('')}</div>
+    <div class="notes">
+      <div class="note pro"><h3>A favore</h3><ul>${c.pro.map((x) => `<li>${x}</li>`).join('')}</ul></div>
+      <div class="note con"><h3>Attenzione</h3><ul>${c.con.map((x) => `<li>${x}</li>`).join('')}</ul></div>
+    </div>`;
+  box.querySelectorAll('.phone').forEach((p, i) => p.setAttribute('aria-label', `${c.name}, screen ${i + 1}`));
+  try { localStorage.setItem('intervals-journal-option', String(current)); } catch (e) {}
+}
+sw.addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-i]');
+  if (!b) return;
+  current = +b.dataset.i;
+  render();
+});
+document.getElementById('cmp').innerHTML = C.map((c) => `<tr class="${c.k === '2' ? 'pick' : ''}"><td><b>${c.k} · ${c.name}</b></td>${c.row.map((x) => `<td>${x}</td>`).join('')}</tr>`).join('');
+render();
+</script>
