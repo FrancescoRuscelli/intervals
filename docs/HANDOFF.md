@@ -25,6 +25,15 @@ Chosen from the [layout concepts](mockups/intervals-app-concepts.html): **B**, a
 - **Filter.** The filter now keeps only the matching days in the diary.
 - **Check on the phone:** that the shrink and open feel right, that reading back into October moves the month, and the speed with the whole history loaded.
 
+## Rest timer (not yet on the phone)
+
+Built from option **3** in the [rest timer mockup](mockups/intervals-rest-timer.html). Like the Journal diary, it waits for the phone to be connected.
+
+- **Pill in the header.** On the set screen the rest is a pill beside the exercise name: "⏱ 1:12 / 3:00", then a filled "Ready 3:14". Tapping it stops the clock. The rest is still saved on the next set, because the clock only hides. The group run screen keeps the old wide clock.
+- **Notification.** `RestAlarm.kt` shows a notification with a chronometer, **Stop**, and **Open**, also on the lock screen. A forgotten rest goes away by itself 15 minutes after the target.
+- **Buzz.** The buzz at the target comes from an exact alarm (`USE_EXACT_ALARM`), so it works with the app closed. The notification then turns to "Ready".
+- **Check on the phone:** the buzz with the app swiped away, Stop from the notification also hiding the pill, and that there is only one buzz.
+
 ## Journal and Stats decision
 
 The installed app still uses the **Calendar / Stats** switch inside Journal. The user prefers option **B** in the [Stats mockups](mockups/intervals-journal-stats.html). The revised mockup gives the monthly summary a visible **Stats ›** action so its destination is clear.

@@ -2,17 +2,14 @@ package app.intervals.ui
 
 import android.app.Application
 import android.database.SQLException
-import android.os.Build
 import android.os.SystemClock
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import app.intervals.RestAlarm
 import app.intervals.core.AppSettings
 import app.intervals.core.Exercise
 import app.intervals.core.GymGroup
@@ -43,8 +40,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -261,6 +256,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         if (ia.player != null && Overlay.Player !in overlays) overlays += Overlay.Player
         else if (ia.finished != null && Overlay.Finished !in overlays) overlays += Overlay.Finished
         viewModelScope.launch { repo.upgradeGym() }
+        viewModelScope.launch { RestAlarm.stops.collect { gymRest = gymRest?.copy(visible = false) } }
     }
 
     fun player(id: Long) {
@@ -461,12 +457,11 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     var gymRest by mutableStateOf<GymRest?>(null)
         private set
-    private var restBuzz: Job? = null
     private val logMutex = Mutex()
 
     fun dismissGymRest() {
         gymRest = gymRest?.copy(visible = false)
-        restBuzz?.cancel()
+        RestAlarm.cancel(getApplication())
     }
 
     /** Logs sets (one, or one per side); on today, the real rest since the last set is saved on the first one. */
@@ -480,25 +475,16 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             val rest = gymRest?.takeIf { today && it.day == day }
                 ?.let { (now - it.startedAt) / 1000 }?.takeIf { it in 0 until 3 * 3600L }?.toInt()
             repo.addSets(sets.mapIndexed { i, s -> s.copy(restSec = if (i == 0) rest else null) })
-            if (today) startGymRest(GymRest(day, now, targetSec, visible = run == activeGroups[day]))
+            val name = exercises.value.firstOrNull { it.id == sets.first().exerciseId }?.name.orEmpty()
+            if (today) startGymRest(GymRest(day, now, targetSec, visible = run == activeGroups[day]), name)
         }
     }
 
-    private fun startGymRest(rest: GymRest) {
+    /** The rest clock in the app, and outside it the notification and the buzz (RestAlarm). */
+    private fun startGymRest(rest: GymRest, exercise: String) {
         gymRest = rest
-        restBuzz?.cancel()
-        if (!rest.visible || rest.targetSec <= 0) return
-        restBuzz = viewModelScope.launch {
-            delay(rest.startedAt + rest.targetSec * 1000L - SystemClock.elapsedRealtime())
-            if (rest.day != LocalDate.now().toString()) return@launch
-            val app = getApplication<Application>()
-            val vibrator = if (Build.VERSION.SDK_INT >= 31) {
-                app.getSystemService(VibratorManager::class.java)?.defaultVibrator
-            } else {
-                @Suppress("DEPRECATION") app.getSystemService(Vibrator::class.java)
-            }
-            vibrator?.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 300, 150, 300), -1))
-        }
+        val app = getApplication<Application>()
+        if (rest.visible) RestAlarm.start(app, exercise, rest.startedAt, rest.targetSec) else RestAlarm.cancel(app)
     }
 
     fun updateGymSet(set: GymSet) = viewModelScope.launch { repo.updateSet(set) }

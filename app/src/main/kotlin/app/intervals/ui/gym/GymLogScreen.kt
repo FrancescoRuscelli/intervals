@@ -211,6 +211,8 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
                     color = p.muted, fontSize = 13.sp, maxLines = 2,
                 )
             }
+            // the rest clock (mockup intervals-rest-timer.html, option 3): tap to stop it
+            vm.gymRest?.takeIf { it.day == day && it.visible && day == LocalDate.now().toString() }?.let { RestPill(it, vm::dismissGymRest) }
             IconButton(onClick = { vm.editExercise(exerciseId) }) { Icon(AppIcons.Edit, "Edit exercise", tint = p.muted) }
         }
 
@@ -326,9 +328,6 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
                         }
                     },
                 )
-            }
-            if (day == LocalDate.now().toString() && editing == null) item {
-                vm.gymRest?.takeIf { it.day == day && it.visible }?.let { RestClock(it, vm::dismissGymRest) }
             }
 
             if (list.isNotEmpty()) item {

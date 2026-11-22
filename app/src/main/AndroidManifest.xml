@@ -8,6 +8,9 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- gym rest clock: a buzz at the rest target -->
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- the buzz on time even with the app closed; a timer app may use exact alarms -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
 
     <application
         android:name=".IntervalsApp"
@@ -21,6 +24,10 @@
             android:name=".player.PlayerService"
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
+
+        <receiver
+            android:name=".RestReceiver"
+            android:exported="false" />
 
         <activity
             android:name=".MainActivity"

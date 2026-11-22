@@ -175,6 +175,22 @@ internal fun RestClock(rest: GymRest, onDismiss: () -> Unit, next: String? = nul
     }
 }
 
+/** The rest as a small pill: "⏱ 1:12 / 3:00" while resting, filled "Ready 3:14" once the target passed. Tap = stop. */
+@Composable
+internal fun RestPill(rest: GymRest, onStop: () -> Unit) {
+    val p = LocalPalette.current
+    val elapsed = elapsedSeconds(rest.startedAt)
+    val ready = rest.targetSec in 1..elapsed
+    val fg = if (ready) p.onRestReady else p.restText
+    Text(
+        if (ready) "Ready ${formatTime(elapsed)}" else "⏱ ${formatTime(elapsed)}" + if (rest.targetSec > 0) " / ${formatTime(rest.targetSec)}" else "",
+        color = fg, fontSize = 15.sp, fontWeight = FontWeight.Bold, style = NumberStyle,
+        modifier = Modifier.padding(start = 6.dp).clip(RoundedCornerShape(50)).background(if (ready) p.restReady else p.restTint)
+            .clickable(role = Role.Button, onClickLabel = "Stop the rest clock", onClick = onStop)
+            .padding(horizontal = 12.dp, vertical = 9.dp),
+    )
+}
+
 @Composable
 private fun elapsedSeconds(startedAt: Long): Int {
     val seconds by produceState(0, startedAt) {
