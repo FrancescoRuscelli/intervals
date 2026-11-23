@@ -64,7 +64,6 @@ import app.intervals.core.Exercise
 import app.intervals.core.GymGroup
 import app.intervals.core.GymSet
 import app.intervals.core.JournalSets
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.widthIn
 import app.intervals.core.Session
 import app.intervals.core.day
@@ -554,13 +553,14 @@ private fun LoadTable(rows: List<app.intervals.core.LoadRow>) {
                         app.intervals.core.Side.RIGHT -> p.teal.copy(alpha = 0.25f)
                         null -> p.bg
                     }
-                    Box(Modifier.padding(top = 4.dp, start = 4.dp)) {
-                        Box(Modifier.height(24.dp).widthIn(min = 24.dp).clip(RoundedCornerShape(6.dp)).background(tint).padding(horizontal = 5.dp), contentAlignment = Alignment.Center) {
-                            Text(s.reps?.toString() ?: s.timeSec?.let { app.intervals.core.formatTime(it) } ?: "✓", color = p.text, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                        }
-                        // the set's number in the day; yellow when it has a note
+                    Row(
+                        Modifier.height(24.dp).widthIn(min = 24.dp).clip(RoundedCornerShape(6.dp)).background(tint).padding(start = 6.dp, end = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(s.reps?.toString() ?: s.timeSec?.let { app.intervals.core.formatTime(it) } ?: "✓", color = p.text, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        // the set's number in the day, small inside the box; yellow when it has a note
                         Text("$n", color = if (s.note.isNotBlank()) p.yellow else p.muted, fontSize = 8.sp, fontWeight = FontWeight.Bold,
-                            modifier = Modifier.align(Alignment.TopStart).offset(x = (-4).dp, y = (-4).dp).clip(RoundedCornerShape(4.dp)).background(p.surface).padding(horizontal = 2.dp))
+                            modifier = Modifier.align(Alignment.Top).padding(start = 2.dp, top = 2.dp))
                     }
                 }
             }
