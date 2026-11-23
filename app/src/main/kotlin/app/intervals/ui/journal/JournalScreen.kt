@@ -147,8 +147,9 @@ private fun JournalCalendar(vm: AppViewModel) {
     val feed = rememberLazyListState()
     val scope = rememberCoroutineScope()
     val month = firstMonth.plusMonths(pager.currentPage.toLong())
-    var dayText by rememberSaveable { mutableStateOf(today.toString()) }
-    val selectedDay = LocalDate.parse(dayText)
+    // the day tapped on the calendar; none at first, so an empty today is not in the diary
+    var dayText by rememberSaveable { mutableStateOf("") }
+    val selectedDay = dayText.takeIf { it.isNotEmpty() }?.let(LocalDate::parse)
     var collapsed by rememberSaveable { mutableStateOf(false) }
     var jumpTo by remember { mutableStateOf<LocalDate?>(null) }
 
@@ -288,7 +289,7 @@ private fun JournalCalendar(vm: AppViewModel) {
                 )
             }
             if (collapsed) {
-                Calendar(month, today, selectedDay, byDay, strips, matching.orEmpty(), matching != null, pick, weekOf = readingDay ?: selectedDay)
+                Calendar(month, today, selectedDay, byDay, strips, matching.orEmpty(), matching != null, pick, weekOf = readingDay ?: selectedDay ?: today)
             } else {
                 MonthTotals(totals[month])
                 HorizontalPager(pager, key = { it }, verticalAlignment = Alignment.Top,
@@ -419,7 +420,7 @@ private fun MonthTotals(t: Triple<Int, Int, Int>?) {
 /** The month (Monday first), or only the week of [weekOf] when the month is shrunk. */
 @Composable
 private fun Calendar(
-    month: YearMonth, today: LocalDate, selected: LocalDate, byDay: Map<LocalDate, List<Session>>,
+    month: YearMonth, today: LocalDate, selected: LocalDate?, byDay: Map<LocalDate, List<Session>>,
     gym: Map<LocalDate, List<app.intervals.core.StripPiece>>, highlighted: Set<LocalDate>, filtering: Boolean,
     onPick: (LocalDate) -> Unit, weekOf: LocalDate? = null,
 ) {
@@ -450,7 +451,7 @@ private fun Calendar(
 }
 
 @Composable
-private fun DayCell(d: LocalDate?, today: LocalDate, selected: LocalDate, sessions: List<Session>, strip: List<app.intervals.core.StripPiece>, highlighted: Boolean, filtering: Boolean, onPick: (LocalDate) -> Unit, modifier: Modifier) {
+private fun DayCell(d: LocalDate?, today: LocalDate, selected: LocalDate?, sessions: List<Session>, strip: List<app.intervals.core.StripPiece>, highlighted: Boolean, filtering: Boolean, onPick: (LocalDate) -> Unit, modifier: Modifier) {
     val gym = strip.isNotEmpty()
     val p = LocalPalette.current
     Box(modifier.height(44.dp), contentAlignment = Alignment.Center) {

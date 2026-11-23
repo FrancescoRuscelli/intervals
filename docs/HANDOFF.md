@@ -21,7 +21,7 @@ Chosen from the [layout concepts](mockups/intervals-app-concepts.html): **B**, a
 
 - **Month and diary.** The whole month sits on top. Below it is a diary of every day trained, newest first, with a heading and totals before each older month.
 - **Collapsing month.** Scrolling the diary down shrinks the month to the week being read. Pulling down at the top, or tapping the month name, opens it again.
-- **Picking days and months.** Tapping a day scrolls the diary to it and gives it an accent edge; an empty past day is shown so that **⋯ Add exercise** still works. Swiping the month moves the diary to that month's newest day, and an empty month leaves the diary where it is.
+- **Picking days and months.** An empty today is not in the diary. Tapping a day scrolls the diary to it and gives it an accent edge; an empty past day is shown so that **⋯ Add exercise** still works. Swiping the month moves the diary to that month's newest day, and an empty month leaves the diary where it is.
 - **Filter.** The filter now keeps only the matching days in the diary.
 - **Check on the phone:** that the shrink and open feel right, that reading back into October moves the month, and the speed with the whole history loaded.
 
