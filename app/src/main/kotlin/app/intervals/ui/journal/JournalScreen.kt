@@ -65,7 +65,6 @@ import app.intervals.core.GymGroup
 import app.intervals.core.GymSet
 import app.intervals.core.JournalSets
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.offset
 import app.intervals.core.Session
 import app.intervals.core.day
 import app.intervals.core.formatDuration
@@ -541,7 +540,7 @@ private fun LoadTable(rows: List<app.intervals.core.LoadRow>) {
     val p = LocalPalette.current
     rows.forEach { r ->
         Row(verticalAlignment = Alignment.Top) {
-            Row(Modifier.width(70.dp).padding(top = 9.dp, end = 8.dp), horizontalArrangement = Arrangement.spacedBy(2.dp, Alignment.End), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.width(70.dp).padding(top = 5.dp, end = 8.dp), horizontalArrangement = Arrangement.spacedBy(2.dp, Alignment.End), verticalAlignment = Alignment.CenterVertically) {
                 r.colors.forEach { Box(Modifier.size(11.dp).clip(CircleShape).background(Color(it)).border(1.dp, Color(0x55FFFFFF), CircleShape)) }
                 if (r.label.isNotEmpty() || r.colors.isEmpty()) {
                     Text(r.label.ifEmpty { "–" }, color = p.muted, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, textAlign = TextAlign.End)
@@ -554,15 +553,12 @@ private fun LoadTable(rows: List<app.intervals.core.LoadRow>) {
                         app.intervals.core.Side.RIGHT -> p.teal.copy(alpha = 0.25f)
                         null -> p.bg
                     }
-                    Box(Modifier.padding(top = 5.dp, start = 5.dp)) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Box(Modifier.height(24.dp).widthIn(min = 24.dp).clip(RoundedCornerShape(6.dp)).background(tint).padding(horizontal = 5.dp), contentAlignment = Alignment.Center) {
                             Text(s.reps?.toString() ?: s.timeSec?.let { app.intervals.core.formatTime(it) } ?: "✓", color = p.text, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
-                        // the set's number in the day, a small pill on the corner that stands out from box and card; yellow when it has a note
-                        val noted = s.note.isNotBlank()
-                        Text("$n", color = if (noted) Color(0xFF1A1400) else p.accentText, fontSize = 8.sp, fontWeight = FontWeight.Bold,
-                            modifier = Modifier.align(Alignment.TopStart).offset(x = (-5).dp, y = (-5).dp).clip(RoundedCornerShape(5.dp))
-                                .background(if (noted) p.yellow else p.tint).padding(horizontal = 3.dp))
+                        // the set's number in the day, under its box so it never reads as part of the reps; yellow when it has a note
+                        Text("#$n", color = if (s.note.isNotBlank()) p.yellow else p.faint, fontSize = 9.sp, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
