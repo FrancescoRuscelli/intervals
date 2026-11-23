@@ -15,7 +15,7 @@ The Android source is committed at `0792a43`. The debug APK from that source was
 
 The earlier workout and Stats changes are in the same history. Ring counters and simplified Gym Stats landed in `6cc234d`, and Most Trained's Sets, Days, and Reps landed in `8dac65c`. The Gym improvements, restored exercise library, and set multi-selection landed in `5aeffb2`, `0ee09eb`, and `4401f14`.
 
-## Journal: month and diary (not yet on the phone)
+## Journal: month and diary (installed 2026-11-23, to try)
 
 Chosen from the [layout concepts](mockups/intervals-app-concepts.html): **B**, a session bar above the tabs, which is not built yet. Also chosen: option **2** in the [month and diary mockup](mockups/intervals-journal-month-diary.html), which is built in `JournalScreen.kt` but not installed, because the phone was not connected.
 
@@ -25,7 +25,7 @@ Chosen from the [layout concepts](mockups/intervals-app-concepts.html): **B**, a
 - **Filter.** The filter now keeps only the matching days in the diary.
 - **Check on the phone:** that the shrink and open feel right, that reading back into October moves the month, and the speed with the whole history loaded.
 
-## Rest timer (not yet on the phone)
+## Rest timer (installed 2026-11-23, to try)
 
 Built from option **3** in the [rest timer mockup](mockups/intervals-rest-timer.html). Like the Journal diary, it waits for the phone to be connected.
 
@@ -33,6 +33,15 @@ Built from option **3** in the [rest timer mockup](mockups/intervals-rest-timer.
 - **Notification.** `RestAlarm.kt` shows a notification with a chronometer, **Stop**, and **Open**, also on the lock screen. A forgotten rest goes away by itself 15 minutes after the target.
 - **Buzz.** The buzz at the target comes from an exact alarm (`USE_EXACT_ALARM`), so it works with the app closed. The notification then turns to "Ready".
 - **Check on the phone:** the buzz with the app swiped away, Stop from the notification also hiding the pill, and that there is only one buzz.
+
+## Set screen: A + B1 (installed 2026-11-23, being compared)
+
+From the [set screen ideas](mockups/intervals-set-screen-ideas.html), the user chose **A** and **B1**.
+
+- **A, spec chips.** The specifications are one row of chips ("20 mm ✎", "half crimp ✎"). Tapping one opens a dialog, and a single choice closes it.
+- **B1, three buttons.** For a per-side exercise, the L / R / Both switch is replaced by **Log L · L + R · Log R**, with the next side lit in its color. Editing a set still has the L / R switch.
+- **Trial setting.** Settings › Workout › "Gym log buttons at the bottom" puts the buttons fixed at the bottom (on, the default) or after the numbers, as before (off). Remove the setting once the user picks one.
+- **Not changed yet.** The variant switch stays as it is, for the one-tap switch between deep and normal. D (START for timed sets) is for later.
 
 ## Journal and Stats decision
 

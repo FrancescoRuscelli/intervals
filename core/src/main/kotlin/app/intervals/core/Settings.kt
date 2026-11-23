@@ -30,6 +30,8 @@ data class AppSettings(
     /** Player: small "3/6" (work series) and "2/4" (rounds) chips on the rings. */
     val showCounters: Boolean = true,
     val lockControls: Boolean = false,
+    /** Trial: the gym log buttons fixed at the bottom (true) or after the numbers, as before (false). */
+    val logButtonsAtBottom: Boolean = true,
 ) {
     init {
         require(volume in 0f..1f) { "volume must be in 0..1" }

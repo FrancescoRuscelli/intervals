@@ -28,6 +28,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -175,6 +176,18 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
     BackHandler(enabled = selecting || edit != null) {
         if (selecting) selectedIds = emptySet() else editing = null
     }
+    var openSpec by remember { mutableStateOf<app.intervals.core.Spec?>(null) }
+    // trial: compare the log buttons fixed at the bottom with the buttons after the numbers
+    val buttonsAtBottom = vm.settings.collectAsStateWithLifecycle().value.logButtonsAtBottom
+    val logButtons: @Composable () -> Unit = {
+        val timing = timerFrom != null
+        LogButtons(ex.perSide, side, ex.variants.takeIf { it.isNotEmpty() }?.let { vs -> v.variant?.takeIf { it in vs } ?: vs.first() },
+            timing, blocked = timing || selecting) { chosen ->
+            vm.logSets(chosen.sides().map { s -> v.into(GymSet(exerciseId = ex.id, day = day, order = 0, side = s), ex) }, ex.restSec)
+            side = chosen?.afterSet()
+            measured = false
+        }
+    }
 
     Column(Modifier.fillMaxSize().background(p.bg).statusBarsPadding().navigationBarsPadding()) {
         if (selecting || edit != null) Row(
@@ -264,18 +277,13 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
                     Segmented(ex.variants, ex.variants.indexOf(cur)) { i -> change { it.copy(variant = ex.variants[i]) } }
                 }
             }
-            if (ex.perSide) item {
-                if (edit == null) {
-                    Segmented(listOf("L", "R", "Both"), side?.ordinal ?: 0, listOf(p.pink, p.teal, p.accent)) { side = SideChoice.entries[it] }
-                } else {
-                    val sides = listOf(Side.LEFT, Side.RIGHT)
-                    Segmented(listOf("L", "R"), editSide?.let(sides::indexOf) ?: -1, listOf(p.pink, p.teal)) { editSide = sides[it] }
-                }
+            // a new set picks its side with the log buttons; editing a set keeps L / R here
+            if (ex.perSide && edit != null) item {
+                val sides = listOf(Side.LEFT, Side.RIGHT)
+                Segmented(listOf("L", "R"), editSide?.let(sides::indexOf) ?: -1, listOf(p.pink, p.teal)) { editSide = sides[it] }
             }
             if (ex.specs.isNotEmpty()) item {
-                SpecTiles(ex.specs, v.specs, onType = { typingSpec = it }) { name, value ->
-                    change { it.copy(specs = if (value == null) it.specs - name else it.specs + (name to value)) }
-                }
+                SpecChips(ex.specs, v.specs) { openSpec = it }
             }
             item {
                 val tiles = listOf(GymField.WEIGHT, GymField.REPS, GymField.DISTANCE).filter { it in ex.fields }
@@ -312,23 +320,7 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
                     )
                 }
             }
-            if (edit == null) item {
-                val timing = timerFrom != null
-                val blocked = timing || selecting
-                BigButton(
-                    if (timing) "Stop the timer first"
-                    else when (side) { SideChoice.LEFT -> "Log set · L"; SideChoice.RIGHT -> "Log set · R"; SideChoice.BOTH -> "Log L + R"; null -> "Log set" } +
-                        (if (ex.variants.isNotEmpty()) " · " + (v.variant?.takeIf { it in ex.variants } ?: ex.variants.first()) else ""),
-                    if (blocked) p.tint else p.accent, if (blocked) p.faint else p.onAccent,
-                    {
-                        if (!blocked) {
-                            vm.logSets(side.sides().map { s -> v.into(GymSet(exerciseId = ex.id, day = day, order = 0, side = s), ex) }, ex.restSec)
-                            side = side?.afterSet()
-                            measured = false
-                        }
-                    },
-                )
-            }
+            if (edit == null && !buttonsAtBottom) item { logButtons() }
 
             if (list.isNotEmpty()) item {
                 Text("SETS · ${list.size} · TAP TO EDIT · HOLD TO SELECT", color = p.muted, fontSize = 13.sp, letterSpacing = 0.6.sp, fontWeight = FontWeight.SemiBold,
@@ -339,8 +331,26 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
                 SetBlocks(list, ex, markedIds, selecting, ::tapSet, ::selectSet)
             }
         }
+        // the buttons fixed at the bottom, under the thumb (mockup intervals-set-screen-ideas.html, B1)
+        if (tab == 0 && edit == null && buttonsAtBottom) {
+            Box(Modifier.fillMaxWidth().background(p.bg).padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 12.dp)) { logButtons() }
+        }
     }
 
+    openSpec?.let { sp ->
+        AlertDialog(
+            onDismissRequest = { openSpec = null },
+            title = { Text(sp.name) },
+            text = {
+                SpecTiles(listOf(sp), v.specs, onType = { typingSpec = it }) { name, value ->
+                    change { it.copy(specs = if (value == null) it.specs - name else it.specs + (name to value)) }
+                    // one choice: picking it is all there is to do
+                    if (sp.isChoice && !sp.multiple) openSpec = null
+                }
+            },
+            confirmButton = { TextButton(onClick = { openSpec = null }) { Text("Done") } },
+        )
+    }
     if (typing == GymField.TIME) {
         app.intervals.ui.editor.DurationDialog("Time", v.timeSec, 0, { typing = null }) { t -> change { it.copy(timeSec = t) }; typing = null }
     } else typing?.let { f ->
@@ -543,6 +553,72 @@ private fun Segmented(options: List<String>, selected: Int, colors: List<Color>?
                     .clickable { onSelect(i) },
                 contentAlignment = Alignment.Center,
             ) { Text(o, color = if (i == selected) p.onAccent else p.soft, fontSize = 15.sp, fontWeight = FontWeight.SemiBold) }
+        }
+    }
+}
+
+/**
+ * The specifications as one row of chips (mockup intervals-set-screen-ideas.html, A): what stays the same between sets,
+ * e.g. "20 mm ✎ · half crimp ✎"; tap one to change it. A number without a unit keeps its name ("Ring 3").
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun SpecChips(specs: List<app.intervals.core.Spec>, values: Map<String, String>, onOpen: (app.intervals.core.Spec) -> Unit) {
+    val p = LocalPalette.current
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        specs.forEach { sp ->
+            val value = values[sp.name]?.takeIf(String::isNotBlank)
+            val shape = RoundedCornerShape(12.dp)
+            Row(
+                Modifier.clip(shape).background(p.surface).border(1.dp, p.line, shape)
+                    .clickable(onClickLabel = "Change ${sp.name}") { onOpen(sp) }.padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    when {
+                        value == null -> "${sp.name} –"
+                        !sp.isChoice && sp.unit.isBlank() -> "${sp.name} $value"
+                        else -> sp.text(value)
+                    },
+                    color = if (value == null) p.muted else p.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
+                )
+                Icon(AppIcons.Edit, null, tint = p.muted, modifier = Modifier.padding(start = 6.dp).size(14.dp))
+            }
+        }
+    }
+}
+
+/**
+ * The log buttons (mockup intervals-set-screen-ideas.html, B1): per side Log L · L + R · Log R, the next side lit and each
+ * in its side's color; otherwise one Log set. Blocked while the timer runs or sets are selected.
+ */
+@Composable
+private fun LogButtons(perSide: Boolean, next: SideChoice?, variant: String?, timing: Boolean, blocked: Boolean, onLog: (SideChoice?) -> Unit) {
+    val p = LocalPalette.current
+    when {
+        blocked -> BigButton(if (timing) "Stop the timer first" else "Log set", p.tint, p.faint, {})
+        !perSide -> BigButton("Log set" + (variant?.let { " · $it" } ?: ""), p.accent, p.onAccent, { onLog(null) })
+        else -> Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(Triple(SideChoice.LEFT, "Log L", p.pink), Triple(SideChoice.BOTH, "L + R", p.accent), Triple(SideChoice.RIGHT, "Log R", p.teal))
+                .forEach { (choice, label, color) ->
+                    val lit = choice == next
+                    val shape = RoundedCornerShape(14.dp)
+                    Box(
+                        Modifier.weight(if (choice == SideChoice.BOTH) 0.75f else 1f).height(54.dp).clip(shape)
+                            .background(if (lit) color else p.surface).border(1.dp, if (lit) color else p.line, shape)
+                            .clickable(onClickLabel = label) { onLog(choice) },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            label, fontSize = 16.sp, fontWeight = FontWeight.Bold,
+                            color = when {
+                                !lit -> if (choice == SideChoice.BOTH) p.accentText else color
+                                color.luminance() > 0.4f -> Color(0xFF04241F)
+                                else -> Color.White
+                            },
+                        )
+                    }
+                }
         }
     }
 }
