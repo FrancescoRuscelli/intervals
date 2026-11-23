@@ -1,0 +1,215 @@
+<title>Set Number Ideas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: an option switcher, then the Journal table of that option on two real exercises, then pros / cons. */
+:root {
+  --bg: #f4f2fa; --surface: #ffffff; --ink: #18151f; --muted: #5b5668; --line: #dfdbe9; --accent: #6d28d9; --accent-soft: #ece4fd;
+  --good: #0f7a5c; --warn: #9a4a00;
+  /* the phones always use the app's own dark look */
+  --ph-bg: #000000; --ph-card: #1a1c21; --ph-card2: #111216; --ph-line: #23262c; --ph-ink: #f2f3f5; --ph-muted: #9aa0aa; --ph-faint: #6e747e;
+  --ph-accent: #7c3aed; --ph-accent-ink: #c4b1ff; --ph-tint: #2a2340; --ph-pink: #e91e63; --ph-teal: #00bfa5; --ph-yellow: #ffc107;
+  --display: "Space Grotesk", Inter, system-ui, sans-serif; --text: Inter, system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0b10; --surface: #17151d; --ink: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --accent-soft: #241d38;
+  --good: #4fd1a5; --warn: #ffb35c; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0c0b10; --surface: #17151d; --ink: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --accent-soft: #241d38;
+  --good: #4fd1a5; --warn: #ffb35c; color-scheme: dark }
+
+body { background: var(--bg); color: var(--ink); font-family: var(--text); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 48px; }
+.wrap { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+h1 { font-family: var(--display); font-size: clamp(28px, 5vw, 40px); line-height: 1.1; margin: 0; text-wrap: balance; letter-spacing: -0.5px; }
+.lead { margin: 6px 0 0; color: var(--muted); max-width: 68ch; }
+.switch { display: flex; flex-wrap: wrap; gap: 8px; }
+.switch button { font: 600 14px var(--text); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
+  padding: 9px 14px; cursor: pointer; display: flex; gap: 8px; align-items: center; }
+.switch button .k { font-family: var(--display); color: var(--accent); }
+.switch button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.switch button[aria-pressed="true"] .k { color: #fff; }
+.switch button:focus-visible, .phone button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.concept h2 { font-family: var(--display); font-size: 26px; margin: 0; letter-spacing: -0.3px; }
+.concept .idea { margin: 4px 0 0; color: var(--muted); max-width: 70ch; }
+.phones { display: flex; gap: 22px; overflow-x: auto; padding: 6px 2px 14px; scroll-snap-type: x mandatory; }
+figure { margin: 0; display: flex; flex-direction: column; gap: 8px; scroll-snap-align: start; }
+figcaption { font-size: 13px; color: var(--muted); max-width: 300px; }
+figcaption b { color: var(--ink); }
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.note { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; min-width: 0; }
+.note h3 { margin: 0 0 6px; font-size: 13px; letter-spacing: 0.6px; text-transform: uppercase; }
+.note.pro h3 { color: var(--good); } .note.con h3 { color: var(--warn); }
+.note ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.compare { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 14px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+thead th { font-size: 12px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted); }
+td.n { font-family: var(--display); font-variant-numeric: tabular-nums; font-weight: 600; }
+tr.pick td { background: var(--accent-soft); }
+.reco { background: var(--accent-soft); border-radius: 14px; padding: 16px 18px; }
+.reco h2 { font-family: var(--display); margin: 0 0 6px; font-size: 22px; }
+.reco p { margin: 0; max-width: 75ch; }
+
+/* ---- phone ---- */
+.phone { width: 300px; height: 620px; flex: none; background: var(--ph-bg); color: var(--ph-ink); border-radius: 34px; border: 8px solid #1e1d24;
+  box-sizing: border-box; position: relative; overflow: hidden; display: flex; flex-direction: column; font-size: 13px; line-height: 1.35;
+  box-shadow: 0 10px 30px rgba(20, 10, 40, 0.18); }
+.phone .body { flex: 1; overflow: hidden; padding: 14px 12px 10px; display: flex; flex-direction: column; gap: 9px; }
+.phone .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.phone .h { font-family: var(--display); font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+.phone .sub { color: var(--ph-muted); font-size: 11.5px; }
+.phone .card { background: var(--ph-card); border-radius: 14px; padding: 10px 11px; display: flex; flex-direction: column; gap: 5px; }
+.phone .card.dim { background: var(--ph-card2); }
+.phone .card.hi { background: #1c1828; border: 2px solid var(--ph-accent); }
+.phone .row { display: flex; align-items: center; gap: 8px; }
+.phone .grow { flex: 1; min-width: 0; }
+.phone .t { font-weight: 700; font-size: 13.5px; }
+.phone .m { color: var(--ph-muted); font-size: 11.5px; }
+.phone .num { font-family: var(--display); font-variant-numeric: tabular-nums; font-weight: 700; }
+.phone .big { font-family: var(--display); font-weight: 700; font-size: 44px; line-height: 1; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+.phone button { font: 700 13px var(--text); border: 0; border-radius: 12px; cursor: pointer; }
+.phone .btn { background: var(--ph-accent); color: #fff; height: 42px; width: 100%; }
+.phone .btn.soft { background: var(--ph-tint); color: var(--ph-accent-ink); }
+.phone .btn.teal { background: var(--ph-teal); color: #04241f; }
+.phone .btn.pink { background: var(--ph-pink); }
+.phone .pill { padding: 3px 9px; border-radius: 999px; background: var(--ph-tint); color: var(--ph-accent-ink); font-size: 11px; font-weight: 700; white-space: nowrap; }
+.phone .pill.pink { background: rgba(233, 30, 99, 0.18); color: #ff8ab3; }
+.phone .pill.teal { background: rgba(0, 191, 165, 0.16); color: #5eead4; }
+.phone .pill.yellow { background: rgba(255, 193, 7, 0.16); color: #ffd666; }
+.phone .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.phone .chev { color: var(--ph-faint); font-size: 18px; }
+.phone .tabs { display: flex; border-top: 1px solid var(--ph-line); background: #0b0c0f; padding: 6px 4px 10px; }
+.phone .tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--ph-faint); font-size: 10.5px; font-weight: 600; }
+.phone .tab i { width: 30px; height: 22px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-style: normal; font-size: 13px; }
+.phone .tab.on { color: var(--ph-accent-ink); } .phone .tab.on i { background: var(--ph-tint); }
+.phone .tab.fab i { width: 48px; height: 48px; border-radius: 24px; margin-top: -22px; background: var(--ph-accent); color: #fff; font-size: 24px; box-shadow: 0 4px 14px rgba(124, 58, 237, 0.5); }
+.phone .mini { margin: 0 8px 6px; background: #1c1828; border: 1px solid #3b2f63; border-radius: 16px; padding: 8px 10px; display: flex; align-items: center; gap: 9px; }
+.phone .ring { width: 34px; height: 34px; border-radius: 50%; flex: none; background: conic-gradient(var(--ph-teal) 0 62%, #2a2d34 0); display: flex; align-items: center; justify-content: center; }
+.phone .ring span { width: 26px; height: 26px; border-radius: 50%; background: #1c1828; display: flex; align-items: center; justify-content: center; font: 700 9px var(--display); color: #5eead4; }
+.phone .sheet { position: absolute; inset: auto 0 0 0; background: #15161b; border-radius: 22px 22px 0 0; padding: 10px 12px 14px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 -10px 30px rgba(0,0,0,0.6); }
+.phone .grab { width: 38px; height: 4px; border-radius: 2px; background: #3a3d45; align-self: center; }
+.phone .scrim { position: absolute; inset: 0; background: rgba(0,0,0,0.55); }
+.phone .seg { display: flex; background: var(--ph-card); border-radius: 12px; padding: 3px; }
+.phone .seg span { flex: 1; text-align: center; padding: 7px 0; border-radius: 9px; font-weight: 700; color: var(--ph-muted); font-size: 12px; }
+.phone .seg span.on { background: var(--ph-accent); color: #fff; }
+.phone .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.phone .week div { background: var(--ph-card2); border-radius: 10px; padding: 5px 0; text-align: center; font-size: 10px; color: var(--ph-muted); display: flex; flex-direction: column; gap: 3px; align-items: center; }
+.phone .week div b { font-family: var(--display); color: var(--ph-ink); font-size: 13px; }
+.phone .week div.today { outline: 2px solid var(--ph-accent); }
+.phone .bar { height: 5px; border-radius: 3px; width: 70%; }
+.phone .boxes { display: flex; flex-wrap: wrap; gap: 4px; }
+.phone .boxes span { min-width: 22px; height: 22px; padding: 0 5px; box-sizing: border-box; border-radius: 6px; border: 1px solid #2a2d34; display: inline-flex; align-items: center; justify-content: center; font: 600 11.5px var(--display); }
+.phone .search { background: var(--ph-card); border-radius: 12px; padding: 9px 11px; color: var(--ph-faint); }
+.phone .tile { flex: 1; background: var(--ph-card); border-radius: 16px; padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.phone .tile .big { font-size: 34px; }
+.phone .pm { display: flex; gap: 6px; width: 100%; } .phone .pm button { flex: 1; height: 34px; background: var(--ph-tint); color: var(--ph-accent-ink); font-size: 18px; }
+@media (prefers-reduced-motion: no-preference) { .concept { animation: in 220ms ease-out; } @keyframes in { from { opacity: 0.4; transform: translateY(6px); } } }
+.phone .ex { background: var(--ph-card); border-radius: 14px; padding: 10px; display: flex; flex-direction: column; gap: 7px; }
+.phone .ex .nm { display: flex; justify-content: space-between; align-items: baseline; }
+.phone .ex .nm b { font-size: 13.5px; } .phone .ex .nm span { font-size: 10.5px; color: var(--ph-muted); }
+.phone .ln { display: flex; align-items: center; gap: 8px; }
+.phone .ld { width: 58px; flex: none; text-align: right; font: 700 12px var(--display); color: var(--ph-muted); display: flex; justify-content: flex-end; }
+.phone .bx { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.phone .band { width: 11px; height: 11px; border-radius: 6px; display: inline-block; border: 1px solid rgba(255,255,255,0.35); }
+.phone .k { font: 700 12.5px var(--display); color: var(--ph-ink); font-variant-numeric: tabular-nums; }
+/* A: split box, the number in its own darker segment */
+.phone .a { display: inline-flex; height: 26px; border-radius: 7px; overflow: hidden; background: #000; border: 1px solid #2a2d34; }
+.phone .a .k { padding: 0 7px; display: flex; align-items: center; }
+.phone .a i { font: 700 9px var(--display); font-style: normal; color: var(--ph-accent-ink); background: #2a2340; padding: 0 5px; display: flex; align-items: center; }
+.phone .a.nt i { background: #4a3b00; color: var(--ph-yellow); }
+/* B: an attached tab under the box */
+.phone .b { display: inline-flex; flex-direction: column; border-radius: 7px; overflow: hidden; border: 1px solid #2a2d34; min-width: 26px; }
+.phone .b .k { background: #000; height: 22px; display: flex; align-items: center; justify-content: center; padding: 0 6px; }
+.phone .b i { font: 700 8.5px var(--display); font-style: normal; text-align: center; color: var(--ph-accent-ink); background: #2a2340; line-height: 12px; }
+.phone .b.nt i { background: #4a3b00; color: var(--ph-yellow); }
+/* C: number before the reps, inside, as a dim circled digit */
+.phone .c { display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 8px 0 4px; border-radius: 7px; background: #000; border: 1px solid #2a2d34; }
+.phone .c i { width: 15px; height: 15px; border-radius: 8px; background: #2a2340; color: var(--ph-accent-ink); font: 700 8.5px var(--display); font-style: normal; display: flex; align-items: center; justify-content: center; }
+.phone .c.nt i { background: #4a3b00; color: var(--ph-yellow); }
+/* D: no numbers; a toggle shows the order with a line through the boxes */
+.phone .d { position: relative; display: inline-flex; height: 26px; min-width: 26px; padding: 0 6px; align-items: center; justify-content: center; border-radius: 7px; background: #000; border: 1px solid #2a2d34; }
+.phone .d.nt::after { content: ""; position: absolute; top: -3px; right: -3px; width: 7px; height: 7px; border-radius: 4px; background: var(--ph-yellow); }
+.phone .pillx { align-self: flex-start; font-size: 10.5px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: var(--ph-tint); color: var(--ph-accent-ink); }
+.phone .seq { display: flex; gap: 3px; align-items: center; flex-wrap: wrap; font: 700 10px var(--display); color: var(--ph-muted); }
+.phone .seq b { color: var(--ph-ink); background: #000; border: 1px solid #2a2d34; border-radius: 5px; padding: 1px 4px; font-weight: 700; }
+/* now: number under the box */
+.phone .u { display: inline-flex; flex-direction: column; align-items: center; gap: 1px; }
+.phone .u .k { background: #000; border-radius: 7px; height: 24px; min-width: 24px; display: flex; align-items: center; justify-content: center; padding: 0 5px; }
+.phone .u i { font: 600 9px var(--text); font-style: normal; color: var(--ph-faint); }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Il numero della serie, sul quadrato</h1>
+    <p class="lead">Nella tabella per carico ogni casella ha le ripetizioni; il numero dice in che ordine l'hai fatta. Sotto la casella rende la tabella scomoda,
+      sull'angolo copre o sembra una cifra in più («14»). Quattro modi di metterlo sul quadrato senza confondersi. Overhead Press del 19 e Muscle Up del 20, dati veri.</p>
+  </header>
+  <nav class="switch" aria-label="Opzioni" id="switch"></nav>
+  <section class="concept" id="concept" aria-live="polite"></section>
+  <section class="reco">
+    <h2>Cosa farei</h2>
+    <p><b>A · Casella divisa</b>: le ripetizioni a sinistra, su nero, grandi; il numero in uno spicchio viola a destra, attaccato ma di un altro colore e più piccolo.
+      Non copre niente e non si legge «54», perché sono chiaramente due pezzi diversi. Con una nota, lo spicchio è giallo.
+      <b>B</b> (linguetta sotto) è l'alternativa se preferisci il numero più discreto.</p>
+  </section>
+</div>
+
+<script>
+const phone = (inner) => `<div class="phone" role="img">${inner}</div>`;
+const body = (html) => `<div class="body">${html}</div>`;
+const B = { purple: '#8e44d8', black: '#16181c', red: '#e53935', yellow: '#ffc107' };
+const band = (c) => `<i class="band" style="background:${B[c]}"></i>`;
+// [reps, set number, note?]
+const OHP = [['20 kg', [[6, 1]]], ['25 kg', [[5, 2]]], ['30 kg', [[5, 3]]], ['35 kg', [[5, 4], [5, 9], [5, 10], [4, 11]]], ['37.5 kg', [[5, 5], [5, 7], [5, 8]]], ['40 kg', [[3, 6]]]];
+const MU = [[band('purple'), [[1, 1], [1, 6], [1, 7]]], [band('black'), [[1, 2], [1, 8]]], [band('red'), [[1, 3], [1, 9]]], [band('yellow'), [[1, 4]]], ['none', [[1, 5, true]]]];
+const box = {
+  now: ([r, n, nt]) => `<span class="u"><span class="k">${r}</span><i style="${nt ? 'color:var(--ph-yellow)' : ''}">#${n}</i></span>`,
+  A: ([r, n, nt]) => `<span class="a${nt ? ' nt' : ''}"><span class="k">${r}</span><i>${n}</i></span>`,
+  B: ([r, n, nt]) => `<span class="b${nt ? ' nt' : ''}"><span class="k">${r}</span><i>${n}</i></span>`,
+  C: ([r, n, nt]) => `<span class="c${nt ? ' nt' : ''}"><i>${n}</i><span class="k">${r}</span></span>`,
+  D: ([r, n, nt]) => `<span class="d${nt ? ' nt' : ''}"><span class="k">${r}</span></span>`,
+};
+const table = (rows, kind) => rows.map(([ld, xs]) => `<div class="ln"><span class="ld">${ld}</span><div class="bx">${xs.map(box[kind]).join('')}</div></div>`).join('');
+const card = (name, sum, rows, kind, extra = '') => `<div class="ex"><div class="nm"><b>${name}</b><span>${sum}</span></div>${extra}${table(rows, kind)}</div>`;
+const screen = (kind, extraOhp = '', extraMu = '') => phone(body(`<div class="top"><div class="h" style="font-size:18px">Journal</div><span class="sub">Table</span></div>`
+  + card('Overhead Press', '11 sets · top 40 × 3', OHP, kind, extraOhp) + card('Muscle Up', '9 sets · 9 reps', MU, kind, extraMu)));
+const seqOhp = `<div class="seq">order: <b>6</b>20 → <b>5</b>25 → <b>5</b>30 → <b>5</b>35 → <b>5</b>37.5 → <b>3</b>40 → <b>5</b>37.5 → <b>5</b>37.5 → <b>5</b>35 → <b>5</b>35 → <b>4</b>35</div>`;
+
+const C = [
+  { k: '0', name: 'Com\'è ora', short: 'Ora (sotto)', idea: 'Il numero sotto la casella, «#4». Non si confonde, ma ogni riga diventa più alta e la tabella si allarga.',
+    shots: [['<b>Ora:</b> #1, #2… sotto ogni casella.', screen('now')]], pro: ['Nessuna confusione con le ripetizioni.'], con: ['Tabella alta e scomoda da leggere.'] },
+  { k: 'A', name: 'Casella divisa', short: 'A · Casella divisa', idea: 'La casella è in due pezzi: le ripetizioni su nero a sinistra, il numero in uno spicchio viola a destra, più piccolo. Gialla con una nota.',
+    shots: [['<b>A:</b> «5 | 4» — due pezzi di colore diverso, non «54».', screen('A')]],
+    pro: ['Sempre a vista, nessuna sovrapposizione.', 'Stessa altezza di oggi.', 'Il colore separa i due numeri.'], con: ['Caselle un po\' più larghe.'] },
+  { k: 'B', name: 'Linguetta sotto', short: 'B · Linguetta', idea: 'Una linguetta viola attaccata sotto la casella, dentro lo stesso bordo: fa parte del quadrato, ma è un altro pezzo.',
+    shots: [['<b>B:</b> il numero in una striscia sotto le ripetizioni.', screen('B')]],
+    pro: ['Discreto: le ripetizioni restano grandi e sole.', 'Larghezza di oggi.'], con: ['Caselle un po\' più alte.'] },
+  { k: 'C', name: 'Pallino a sinistra', short: 'C · Pallino', idea: 'Dentro la casella, prima delle ripetizioni, un pallino viola con il numero.',
+    shots: [['<b>C:</b> ④ 5 — il pallino dice l\'ordine.', screen('C')]],
+    pro: ['Leggibile: il pallino è chiaramente un indice.'], con: ['Il primo colpo d\'occhio cade sul numero sbagliato (prima il pallino, poi le ripetizioni).'] },
+  { k: 'D', name: 'Niente numeri, l\'ordine a parte', short: 'D · Ordine a parte', idea: 'Le caselle restano pulite. Sotto il nome, una riga «order» racconta la seduta in sequenza: reps e peso, nell\'ordine. Si potrebbe anche mostrare solo toccando.',
+    shots: [['<b>D:</b> la tabella pulita, l\'ordine come una frase sotto.', screen('D', seqOhp, `<div class="seq">order: purple → black → red → yellow → none → purple → purple → black → red</div>`)]],
+    pro: ['Caselle pulitissime.', 'L\'ordine si legge come racconto.'], con: ['Due posti per le stesse serie.', 'Con tante serie la riga diventa lunga.'] },
+];
+
+const sw = document.getElementById('switch');
+const boxEl = document.getElementById('concept');
+let current = 1;
+function render() {
+  const c = C[current];
+  sw.innerHTML = C.map((x, i) => `<button type="button" aria-pressed="${i === current}" data-i="${i}"><span class="k">${x.k}</span>${x.short}</button>`).join('');
+  boxEl.innerHTML = `<h2>${c.k} · ${c.name}</h2><p class="idea">${c.idea}</p>
+    <div class="phones">${c.shots.map(([cap, ph]) => `<figure>${ph}<figcaption>${cap}</figcaption></figure>`).join('')}</div>
+    <div class="notes"><div class="note pro"><h3>A favore</h3><ul>${c.pro.map((x) => `<li>${x}</li>`).join('')}</ul></div>
+    <div class="note con"><h3>Attenzione</h3><ul>${c.con.map((x) => `<li>${x}</li>`).join('')}</ul></div></div>`;
+  boxEl.querySelectorAll('.phone').forEach((p, i) => p.setAttribute('aria-label', `${c.name}, screen ${i + 1}`));
+}
+sw.addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-i]');
+  if (!b) return;
+  current = +b.dataset.i;
+  render();
+});
+render();
+</script>
