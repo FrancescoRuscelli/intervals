@@ -149,7 +149,7 @@ tr.pick td { background: var(--accent-soft); }
   <header>
     <h1>Il numero della serie, sul quadrato</h1>
     <p class="lead">Nella tabella per carico ogni casella ha le ripetizioni; il numero dice in che ordine l'hai fatta. Sotto la casella rende la tabella scomoda,
-      sull'angolo copre o sembra una cifra in più («14»). Cinque modi di metterlo sul quadrato senza confondersi. Overhead Press del 19 e Muscle Up del 20, dati veri.</p>
+      sull'angolo copre o sembra una cifra in più («14»). Diversi modi di mostrarlo senza confondersi; dalla F in poi, modi senza numeri sempre a vista. Overhead Press del 19 e Muscle Up del 20, dati veri.</p>
   </header>
   <nav class="switch" aria-label="Opzioni" id="switch"></nav>
   <section class="concept" id="concept" aria-live="polite"></section>
@@ -172,12 +172,26 @@ const MU = [[band('purple'), [[1, 1], [1, 6], [1, 7]]], [band('black'), [[1, 2],
 const box = {
   now: ([r, n, nt]) => `<span class="u"><span class="k">${r}</span><i style="${nt ? 'color:var(--ph-yellow)' : ''}">#${n}</i></span>`,
   A: ([r, n, nt]) => `<span class="a${nt ? ' nt' : ''}"><span class="k">${r}</span><i>${n}</i></span>`,
-  B: ([r, n, nt]) => `<span class="b${nt ? ' nt' : ''}"><span class="k">${r}</span><i>${n}</i></span>`,
+  B: ([r, n, nt]) => `<span class="b${nt ? ' nt' : ''}"><span class="k">${r}</span><i>#${n}</i></span>`,
   C: ([r, n, nt]) => `<span class="c${nt ? ' nt' : ''}"><i>${n}</i><span class="k">${r}</span></span>`,
   D: ([r, n, nt]) => `<span class="d${nt ? ' nt' : ''}"><span class="k">${r}</span></span>`,
   E: ([r, n, nt]) => `<span class="e${nt ? ' nt' : ''}"><i>${n}</i><span class="k">${r}</span></span>`,
 };
-const table = (rows, kind) => rows.map(([ld, xs]) => `<div class="ln"><span class="ld">${ld}</span><div class="bx">${xs.map(box[kind]).join('')}</div></div>`).join('');
+const table = (rows, kind) => rows.map(([ld, xs]) => `<div class="ln"><span class="ld">${ld}</span><div class="bx">${xs.map(typeof kind === 'function' ? kind : box[kind]).join('')}</div></div>`).join('');
+// F / I: one set marked (pressed, or picked on the bars)
+const marked = (m, base) => (x) => base(x).replace(/^<span class="(\w+)/, (s0, c) => `<span style="outline:2px solid var(--ph-accent);outline-offset:1px;${x[1] === m ? '' : 'opacity:.55;'}" class="${c}`);
+const onlyMark = (m) => (x) => x[1] === m ? marked(m, box.B)(x).replace('opacity:.55;', '') : box.B(x);
+// H: from light (first set) to dark (last set)
+const shade = (total) => ([r, n, nt]) => {
+  const t = (n - 1) / Math.max(1, total - 1);
+  const l = Math.round(78 - t * 62);
+  return `<span class="d${nt ? ' nt' : ''}" style="background:hsl(262 60% ${l}%);border-color:transparent"><span class="k" style="color:${l > 50 ? '#17112a' : '#fff'}">${r}</span></span>`;
+};
+// I: the day's bars, as high as the reps, one marked
+const barsOhp = (m) => `<div style="display:flex;gap:3px;align-items:flex-end;height:46px">${[6, 5, 5, 5, 5, 3, 5, 5, 5, 5, 4].map((r, i) =>
+  `<div style="flex:1;max-width:20px;display:flex;flex-direction:column;align-items:center;gap:1px"><small style="font:700 9px var(--display);color:var(--ph-ink)">${r}</small><i style="display:block;width:100%;height:${r * 6}px;border-radius:3px 3px 0 0;background:var(--ph-accent);${i + 1 === m ? 'outline:2px solid #fff;' : 'opacity:.55;'}"></i></div>`).join('')}</div>`;
+const toggle = (on) => `<div style="display:flex;justify-content:flex-end;margin-top:-4px"><span class="pillx" style="${on ? 'background:var(--ph-accent);color:#fff' : ''}"># order ${on ? 'on' : 'off'}</span></div>`;
+const tip = `<div style="align-self:center;background:#fff;color:#111;font:700 11px var(--text);padding:4px 9px;border-radius:8px">set 4 of 11 · after 30 × 5, before 37.5 × 5</div>`;
 const card = (name, sum, rows, kind, extra = '') => `<div class="ex"><div class="nm"><b>${name}</b><span>${sum}</span></div>${extra}${table(rows, kind)}</div>`;
 const screen = (kind, extraOhp = '', extraMu = '') => phone(body(`<div class="top"><div class="h" style="font-size:18px">Journal</div><span class="sub">Table</span></div>`
   + card('Overhead Press', '11 sets · top 40 × 3', OHP, kind, extraOhp) + card('Muscle Up', '9 sets · 9 reps', MU, kind, extraMu)));
@@ -189,8 +203,8 @@ const C = [
   { k: 'A', name: 'Casella divisa', short: 'A · Casella divisa', idea: 'La casella è in due pezzi: le ripetizioni su nero a sinistra, il numero in uno spicchio viola a destra, più piccolo. Gialla con una nota.',
     shots: [['<b>A:</b> «5 | 4» — due pezzi di colore diverso, non «54».', screen('A')]],
     pro: ['Sempre a vista, nessuna sovrapposizione.', 'Stessa altezza di oggi.', 'Il colore separa i due numeri.'], con: ['Caselle un po\' più larghe.'] },
-  { k: 'B', name: 'Linguetta sotto', short: 'B · Linguetta', idea: 'Una linguetta viola attaccata sotto la casella, dentro lo stesso bordo: fa parte del quadrato, ma è un altro pezzo.',
-    shots: [['<b>B:</b> il numero in una striscia sotto le ripetizioni.', screen('B')]],
+  { k: 'B', name: 'Linguetta sotto (nell\'app ora)', short: 'B · Linguetta ✓', idea: 'Una linguetta viola con «#4» attaccata sotto la casella, dentro lo stesso bordo: fa parte del quadrato, ma è un altro pezzo. È quella appena messa nell\'app.',
+    shots: [['<b>B:</b> «#4» in una striscia sotto le ripetizioni.', screen('B')]],
     pro: ['Discreto: le ripetizioni restano grandi e sole.', 'Larghezza di oggi.'], con: ['Caselle un po\' più alte.'] },
   { k: 'C', name: 'Pallino a sinistra', short: 'C · Pallino', idea: 'Dentro la casella, prima delle ripetizioni, un pallino viola con il numero.',
     shots: [['<b>C:</b> ④ 5 — il pallino dice l\'ordine.', screen('C')]],
@@ -201,11 +215,26 @@ const C = [
   { k: 'D', name: 'Niente numeri, l\'ordine a parte', short: 'D · Ordine a parte', idea: 'Le caselle restano pulite. Sotto il nome, una riga «order» racconta la seduta in sequenza: reps e peso, nell\'ordine. Si potrebbe anche mostrare solo toccando.',
     shots: [['<b>D:</b> la tabella pulita, l\'ordine come una frase sotto.', screen('D', seqOhp, `<div class="seq">order: purple → black → red → yellow → none → purple → purple → black → red</div>`)]],
     pro: ['Caselle pulitissime.', 'L\'ordine si legge come racconto.'], con: ['Due posti per le stesse serie.', 'Con tante serie la riga diventa lunga.'] },
+  { k: 'F', name: 'Tieni premuto per vedere', short: 'F · Tieni premuto', idea: 'Di base niente numeri. Tieni premuta una casella: compaiono le linguette #1… su tutto l\'esercizio, quella premuta è evidenziata e un fumetto dice dov\'è nella seduta. Lasci e tornano pulite.',
+    shots: [['<b>Di base:</b> caselle pulite.', screen('D')],
+      ['<b>Tenendo premuto il 35 × 5:</b> i numeri compaiono, il fumetto spiega.', phone(body(`<div class="top"><div class="h" style="font-size:18px">Journal</div><span class="sub">Table</span></div>`
+        + card('Overhead Press', '11 sets · top 40 × 3', OHP, onlyMark(4), tip) + card('Muscle Up', '9 sets · 9 reps', MU, 'D')))]],
+    pro: ['Pulito quando non serve, preciso quando serve.'], con: ['Nascosto: bisogna sapere che c\'è.', 'Un dito sopra copre parte della tabella.'] },
+  { k: 'G', name: 'Interruttore «# order»', short: 'G · Interruttore', idea: 'Una pastiglia «# order» sopra la tabella accende o spegne le linguette, per tutti gli esercizi. L\'app la ricorda.',
+    shots: [['<b>Spento:</b> caselle pulite.', screen('D', toggle(false))], ['<b>Acceso:</b> le linguette #.', screen('B', toggle(true))]],
+    pro: ['Scegli tu quando vederlo, e si vede che esiste.'], con: ['Un controllo in più.'] },
+  { k: 'H', name: 'Sfumatura', short: 'H · Sfumatura', idea: 'Niente numeri: le caselle vanno dal viola chiaro (prime serie) al viola scuro (ultime). L\'ordine si intuisce dal colore.',
+    shots: [['<b>H:</b> il 35 kg ha una casella chiara (serie 4) e tre scure (9, 10, 11): sei tornato giù alla fine.', screen(shade(11))]],
+    pro: ['Nessun numero in più, si vede a colpo d\'occhio.'], con: ['Approssimativo: 9 e 10 sono quasi uguali.', 'Il colore non dice più il lato (L / R).'] },
+  { k: 'I', name: 'Barre e caselle collegate', short: 'I · Barre ↔ caselle', idea: 'Con «Both»: tocchi una barra e si evidenzia la sua casella nella tabella (e viceversa). Le barre danno l\'ordine, la tabella il peso; niente numeri.',
+    shots: [['<b>Tocchi la 6ª barra</b> (la bassa): si accende il 40 × 3 nella tabella.', phone(body(`<div class="top"><div class="h" style="font-size:18px">Journal</div><span class="sub">Both</span></div>`
+      + `<div class="ex"><div class="nm"><b>Overhead Press</b><span>11 sets · top 40 × 3</span></div>${barsOhp(6)}${table(OHP, marked(6, box.D))}</div>`))]],
+    pro: ['Nessun numero: l\'ordine lo danno le barre, che già ci sono.'], con: ['Serve «Both» e un tocco.'] },
 ];
 
 const sw = document.getElementById('switch');
 const boxEl = document.getElementById('concept');
-let current = 4;
+let current = 6;
 function render() {
   const c = C[current];
   sw.innerHTML = C.map((x, i) => `<button type="button" aria-pressed="${i === current}" data-i="${i}"><span class="k">${x.k}</span>${x.short}</button>`).join('');
