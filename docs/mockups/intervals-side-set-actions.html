@@ -1,0 +1,286 @@
+<title>Side Set Actions</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: an idea switcher, then the set screen of that idea (and a second state), side by side, then pros / cons. */
+:root {
+  --bg: #f4f2fa; --surface: #ffffff; --ink: #18151f; --muted: #5b5668; --line: #dfdbe9; --accent: #6d28d9; --accent-soft: #ece4fd;
+  --good: #0f7a5c; --warn: #9a4a00;
+  /* the phones always use the app's own dark look */
+  --ph-bg: #000000; --ph-card: #1a1c21; --ph-card2: #111216; --ph-line: #23262c; --ph-ink: #f2f3f5; --ph-muted: #9aa0aa; --ph-faint: #6e747e;
+  --ph-accent: #7c3aed; --ph-accent-ink: #c4b1ff; --ph-tint: #2a2340; --ph-pink: #e91e63; --ph-teal: #00bfa5; --ph-yellow: #ffc107;
+  --display: "Space Grotesk", Inter, system-ui, sans-serif; --text: Inter, system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0b10; --surface: #17151d; --ink: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --accent-soft: #241d38;
+  --good: #4fd1a5; --warn: #ffb35c; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0c0b10; --surface: #17151d; --ink: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --accent-soft: #241d38;
+  --good: #4fd1a5; --warn: #ffb35c; color-scheme: dark }
+
+body { background: var(--bg); color: var(--ink); font-family: var(--text); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 48px; }
+.wrap { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+h1 { font-family: var(--display); font-size: clamp(28px, 5vw, 40px); line-height: 1.1; margin: 0; text-wrap: balance; letter-spacing: -0.5px; }
+.lead { margin: 6px 0 0; color: var(--muted); max-width: 68ch; }
+.switch { display: flex; flex-wrap: wrap; gap: 8px; }
+.switch button { font: 600 14px var(--text); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
+  padding: 9px 14px; cursor: pointer; display: flex; gap: 8px; align-items: center; }
+.switch button .k { font-family: var(--display); color: var(--accent); }
+.switch button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.switch button[aria-pressed="true"] .k { color: #fff; }
+.switch button:focus-visible, .phone button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.concept h2 { font-family: var(--display); font-size: 26px; margin: 0; letter-spacing: -0.3px; }
+.concept .idea { margin: 4px 0 0; color: var(--muted); max-width: 70ch; }
+.phones { display: flex; gap: 22px; overflow-x: auto; padding: 6px 2px 14px; scroll-snap-type: x mandatory; }
+figure { margin: 0; display: flex; flex-direction: column; gap: 8px; scroll-snap-align: start; }
+figcaption { font-size: 13px; color: var(--muted); max-width: 300px; }
+figcaption b { color: var(--ink); }
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.note { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; min-width: 0; }
+.note h3 { margin: 0 0 6px; font-size: 13px; letter-spacing: 0.6px; text-transform: uppercase; }
+.note.pro h3 { color: var(--good); } .note.con h3 { color: var(--warn); }
+.note ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.compare { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 14px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+thead th { font-size: 12px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted); }
+td.n { font-family: var(--display); font-variant-numeric: tabular-nums; font-weight: 600; }
+tr.pick td { background: var(--accent-soft); }
+.reco { background: var(--accent-soft); border-radius: 14px; padding: 16px 18px; }
+.reco h2 { font-family: var(--display); margin: 0 0 6px; font-size: 22px; }
+.reco p { margin: 0; max-width: 75ch; }
+
+/* ---- phone ---- */
+.phone { width: 300px; height: 620px; flex: none; background: var(--ph-bg); color: var(--ph-ink); border-radius: 34px; border: 8px solid #1e1d24;
+  box-sizing: border-box; position: relative; overflow: hidden; display: flex; flex-direction: column; font-size: 13px; line-height: 1.35;
+  box-shadow: 0 10px 30px rgba(20, 10, 40, 0.18); }
+.phone .body { flex: 1; overflow: hidden; padding: 14px 12px 10px; display: flex; flex-direction: column; gap: 9px; }
+.phone .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.phone .h { font-family: var(--display); font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+.phone .sub { color: var(--ph-muted); font-size: 11.5px; }
+.phone .card { background: var(--ph-card); border-radius: 14px; padding: 10px 11px; display: flex; flex-direction: column; gap: 5px; }
+.phone .card.dim { background: var(--ph-card2); }
+.phone .card.hi { background: #1c1828; border: 2px solid var(--ph-accent); }
+.phone .row { display: flex; align-items: center; gap: 8px; }
+.phone .grow { flex: 1; min-width: 0; }
+.phone .t { font-weight: 700; font-size: 13.5px; }
+.phone .m { color: var(--ph-muted); font-size: 11.5px; }
+.phone .num { font-family: var(--display); font-variant-numeric: tabular-nums; font-weight: 700; }
+.phone .big { font-family: var(--display); font-weight: 700; font-size: 44px; line-height: 1; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+.phone button { font: 700 13px var(--text); border: 0; border-radius: 12px; cursor: pointer; }
+.phone .btn { background: var(--ph-accent); color: #fff; height: 42px; width: 100%; }
+.phone .btn.soft { background: var(--ph-tint); color: var(--ph-accent-ink); }
+.phone .btn.teal { background: var(--ph-teal); color: #04241f; }
+.phone .btn.pink { background: var(--ph-pink); }
+.phone .pill { padding: 3px 9px; border-radius: 999px; background: var(--ph-tint); color: var(--ph-accent-ink); font-size: 11px; font-weight: 700; white-space: nowrap; }
+.phone .pill.pink { background: rgba(233, 30, 99, 0.18); color: #ff8ab3; }
+.phone .pill.teal { background: rgba(0, 191, 165, 0.16); color: #5eead4; }
+.phone .pill.yellow { background: rgba(255, 193, 7, 0.16); color: #ffd666; }
+.phone .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.phone .chev { color: var(--ph-faint); font-size: 18px; }
+.phone .tabs { display: flex; border-top: 1px solid var(--ph-line); background: #0b0c0f; padding: 6px 4px 10px; }
+.phone .tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--ph-faint); font-size: 10.5px; font-weight: 600; }
+.phone .tab i { width: 30px; height: 22px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-style: normal; font-size: 13px; }
+.phone .tab.on { color: var(--ph-accent-ink); } .phone .tab.on i { background: var(--ph-tint); }
+.phone .tab.fab i { width: 48px; height: 48px; border-radius: 24px; margin-top: -22px; background: var(--ph-accent); color: #fff; font-size: 24px; box-shadow: 0 4px 14px rgba(124, 58, 237, 0.5); }
+.phone .mini { margin: 0 8px 6px; background: #1c1828; border: 1px solid #3b2f63; border-radius: 16px; padding: 8px 10px; display: flex; align-items: center; gap: 9px; }
+.phone .ring { width: 34px; height: 34px; border-radius: 50%; flex: none; background: conic-gradient(var(--ph-teal) 0 62%, #2a2d34 0); display: flex; align-items: center; justify-content: center; }
+.phone .ring span { width: 26px; height: 26px; border-radius: 50%; background: #1c1828; display: flex; align-items: center; justify-content: center; font: 700 9px var(--display); color: #5eead4; }
+.phone .sheet { position: absolute; inset: auto 0 0 0; background: #15161b; border-radius: 22px 22px 0 0; padding: 10px 12px 14px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 -10px 30px rgba(0,0,0,0.6); }
+.phone .grab { width: 38px; height: 4px; border-radius: 2px; background: #3a3d45; align-self: center; }
+.phone .scrim { position: absolute; inset: 0; background: rgba(0,0,0,0.55); }
+.phone .seg { display: flex; background: var(--ph-card); border-radius: 12px; padding: 3px; }
+.phone .seg span { flex: 1; text-align: center; padding: 7px 0; border-radius: 9px; font-weight: 700; color: var(--ph-muted); font-size: 12px; }
+.phone .seg span.on { background: var(--ph-accent); color: #fff; }
+.phone .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.phone .week div { background: var(--ph-card2); border-radius: 10px; padding: 5px 0; text-align: center; font-size: 10px; color: var(--ph-muted); display: flex; flex-direction: column; gap: 3px; align-items: center; }
+.phone .week div b { font-family: var(--display); color: var(--ph-ink); font-size: 13px; }
+.phone .week div.today { outline: 2px solid var(--ph-accent); }
+.phone .bar { height: 5px; border-radius: 3px; width: 70%; }
+.phone .boxes { display: flex; flex-wrap: wrap; gap: 4px; }
+.phone .boxes span { min-width: 22px; height: 22px; padding: 0 5px; box-sizing: border-box; border-radius: 6px; border: 1px solid #2a2d34; display: inline-flex; align-items: center; justify-content: center; font: 600 11.5px var(--display); }
+.phone .search { background: var(--ph-card); border-radius: 12px; padding: 9px 11px; color: var(--ph-faint); }
+.phone .tile { flex: 1; background: var(--ph-card); border-radius: 16px; padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.phone .tile .big { font-size: 34px; }
+.phone .pm { display: flex; gap: 6px; width: 100%; } .phone .pm button { flex: 1; height: 34px; background: var(--ph-tint); color: var(--ph-accent-ink); font-size: 18px; }
+@media (prefers-reduced-motion: no-preference) { .concept { animation: in 220ms ease-out; } @keyframes in { from { opacity: 0.4; transform: translateY(6px); } } }
+.phone .dock { border-top: 1px solid var(--ph-line); background: #0b0c0f; padding: 8px 10px 12px; display: flex; flex-direction: column; gap: 7px; }
+.phone .logbtn { height: 52px; border-radius: 14px; background: var(--ph-accent); color: #fff; font: 700 14px var(--text); display: flex; align-items: center; justify-content: center; gap: 8px; flex: 1; }
+.phone .logbtn.l { background: var(--ph-pink); } .phone .logbtn.r { background: var(--ph-teal); color: #04241f; }
+.phone .logbtn.off { background: var(--ph-card); color: var(--ph-muted); border: 1px solid var(--ph-line); }
+.phone .hdr { display: flex; align-items: center; gap: 8px; }
+.phone .hdr .back { color: var(--ph-muted); font-size: 20px; }
+.phone .tabsx { display: flex; gap: 14px; justify-content: center; font-size: 12px; font-weight: 700; color: var(--ph-faint); }
+.phone .tabsx .on { color: var(--ph-accent-ink); border-bottom: 2px solid var(--ph-accent); padding-bottom: 3px; }
+.phone .lbl { font-size: 10.5px; letter-spacing: 0.6px; font-weight: 700; color: var(--ph-muted); }
+.phone .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.phone .chip { padding: 6px 10px; border-radius: 10px; background: var(--ph-card); font-weight: 700; font-size: 12px; color: var(--ph-ink); }
+.phone .chip.on { background: var(--ph-accent); color: #fff; }
+.phone .chip.ghost { background: transparent; border: 1px dashed #3a3d45; color: var(--ph-muted); }
+.phone .seg span.l.on { background: var(--ph-pink); } .phone .seg span.r.on { background: var(--ph-teal); color: #04241f; }
+.phone .timer { background: var(--ph-card); border-radius: 16px; padding: 10px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.phone .timer .big { font-size: 40px; }
+.phone .go { height: 46px; width: 100%; border-radius: 14px; background: var(--ph-pink); color: #fff; font: 800 15px var(--text); display: flex; align-items: center; justify-content: center; letter-spacing: 1px; }
+.phone .sentence { background: #1c1828; border: 2px solid var(--ph-accent); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.phone .tok { display: inline-flex; align-items: baseline; gap: 3px; padding: 4px 9px; border-radius: 10px; background: var(--ph-tint); color: var(--ph-accent-ink); font: 700 17px var(--display); }
+.phone .tok small { font: 600 10px var(--text); color: var(--ph-muted); }
+.phone .tok.l { background: rgba(233, 30, 99, 0.2); color: #ff8ab3; }
+.phone .hint { font-size: 11px; color: var(--ph-faint); }
+.phone .set { display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--ph-muted); }
+.phone .set b { color: var(--ph-ink); font-family: var(--display); }
+.phone .side { width: 18px; height: 18px; border-radius: 6px; font: 800 10px var(--text); display: inline-flex; align-items: center; justify-content: center; }
+.phone .side.l { background: rgba(233, 30, 99, 0.25); color: #ff8ab3; } .phone .side.r { background: rgba(0, 191, 165, 0.22); color: #5eead4; }
+.phone .blkx { background: var(--ph-card); border: 1px solid var(--ph-line); border-radius: 10px; padding: 5px 7px; display: flex; align-items: center; gap: 6px; font: 600 11.5px var(--display); }
+.phone .bd { width: 10px; height: 10px; border-radius: 5px; background: #16181c; border: 1px solid rgba(255,255,255,0.35); display: inline-block; }
+.phone .sb { min-width: 26px; height: 26px; padding: 0 6px; box-sizing: border-box; border-radius: 8px; border: 1px solid #2a2d34; background: #000; display: inline-flex; align-items: center; justify-content: center; font: 700 13px var(--display); color: var(--ph-ink); }
+.phone .sb.nt { border-color: var(--ph-pink); }
+.phone .sb.sel { background: #4a1a33; border-color: var(--ph-pink); }
+.phone .sb.l { background: rgba(233, 30, 99, 0.2); } .phone .sb.r { background: rgba(0, 191, 165, 0.18); }
+.phone .sb.l.sel, .phone .sb.r.sel { outline: 2px solid #fff; outline-offset: -2px; }
+.phone .pinkbar { background: #4a1a33; color: #ffd0e2; display: flex; align-items: center; gap: 10px; padding: 8px 10px; font: 700 13px var(--text); }
+.phone .pinkbar .grow { flex: 1; }
+.phone .round { display: grid; grid-template-columns: 18px 1fr 1fr 22px; align-items: center; gap: 6px; background: var(--ph-card); border: 1px solid var(--ph-line); border-radius: 12px; padding: 6px 8px; }
+.phone .round .n { font: 700 10px var(--display); color: var(--ph-faint); }
+.phone .round .half { display: flex; align-items: center; gap: 5px; border-radius: 8px; padding: 4px 6px; font: 700 13px var(--display); }
+.phone .round .half.l { background: rgba(233, 30, 99, 0.16); } .phone .round .half.r { background: rgba(0, 191, 165, 0.14); }
+.phone .round .half i { font: 800 10px var(--text); font-style: normal; color: var(--ph-muted); }
+.phone .round .half small { font: 600 9.5px var(--text); color: #ffb3cf; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.phone .round .half.sel { outline: 2px solid #fff; }
+.phone .round .dots3 { color: var(--ph-muted); font-size: 16px; text-align: center; }
+.phone .acts { display: flex; gap: 6px; }
+.phone .acts div { flex: 1; height: 50px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font: 700 14px var(--text); background: var(--ph-card); color: var(--ph-ink); border: 1px solid var(--ph-line); }
+.phone .acts .del { color: #ff8a80; }
+.phone .acts .x { flex: 0 0 50px; }
+.phone .pop { position: absolute; z-index: 3; background: #2a2d34; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); padding: 4px; display: flex; gap: 2px; }
+.phone .pop span { padding: 9px 11px; border-radius: 9px; font: 700 12.5px var(--text); color: var(--ph-ink); }
+.phone .pop span.del { color: #ff8a80; }
+.phone .toast { background: #2a2d34; border-radius: 12px; padding: 8px 10px; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ph-ink); }
+.phone .toast .grow { flex: 1; }
+.phone .toast .act { font-weight: 800; color: var(--ph-accent-ink); padding: 4px 8px; border-radius: 8px; background: var(--ph-tint); }
+.phone .qt { display: flex; gap: 5px; flex-wrap: wrap; }
+.phone .qt span { padding: 5px 8px; border-radius: 9px; background: var(--ph-tint); color: var(--ph-accent-ink); font: 700 11px var(--text); }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Note e cancellazione sui set L / R</h1>
+    <p class="lead">Solo idee, l'app non è cambiata. L'esempio è il tuo Resistance Band One Arm Pull Up del 20: elastico nero, L 1 · R 1 · L 3 · R 3 · L 3 · R 3 · L 2 · R 2,
+      con «half rep» e «last rep half» su alcuni L. Oggi ogni set è un blocco a sé (otto blocchi da una casella), e per una nota tocchi la casella, poi «Note» nella barra rosa in cima, poi scrivi.
+      Per cancellare una coppia L + R devi selezionare due caselle in due blocchi diversi, salire in cima a «Delete» e confermare.</p>
+  </header>
+
+  <nav class="switch" aria-label="Idee" id="switch"></nav>
+  <section class="concept" id="concept" aria-live="polite"></section>
+
+  <section class="reco">
+    <h2>Cosa farei</h2>
+    <p><b>A + B + D.</b> I set per lato si mostrano a coppie (una riga per giro, L a sinistra e R a destra), così le caselle sono la metà dei blocchi e la coppia si seleziona in un tocco.
+      Quando selezioni, Note e Delete prendono il posto dei pulsanti Log, sotto il pollice; Delete non chiede conferma ma lascia «Annulla».
+      E subito dopo ogni Log compare per qualche secondo «+ nota»: la nota «half rep» la scrivi quasi sempre appena finito il set.</p>
+  </section>
+
+  <section>
+    <h2 style="font-family: var(--display); margin: 0 0 10px;">Confronto</h2>
+    <div class="compare">
+      <table>
+        <thead><tr><th>Idea</th><th>Tocchi per «half rep» sull'ultimo L</th><th>Tocchi per cancellare una coppia L + R</th><th>Dove sono le azioni</th><th>Quanto cambia</th></tr></thead>
+        <tbody id="cmp"></tbody>
+      </table>
+    </div>
+    <p class="lead" style="font-size: 13px;">Tocchi contati sull'esempio, senza contare la scrittura della nota (una nota veloce come «+½ rep» è un tocco).</p>
+  </section>
+</div>
+
+<script>
+const phone = (inner) => `<div class="phone" role="img" style="position:relative">${inner}</div>`;
+const body = (html) => `<div class="body">${html}</div>`;
+const header = `<div class="hdr"><span class="back">‹</span><div class="grow"><div class="h" style="font-size:16px">Resistance Band One Arm Pull Up</div></div><span class="m">✎</span></div>
+  <div class="tabsx"><span class="on">Log</span><span>History</span><span>Graph</span><span>Records</span></div>`;
+const pinkTop = (n) => `<div class="pinkbar"><span>✕</span><span class="grow">${n} selected</span><span>Note</span><span>Delete</span></div>`;
+const tile = (label, val) => `<div class="tile"><span class="m">${label}</span><span class="big num" style="font-size:30px">${val}</span><div class="pm"><button aria-label="less">−</button><button aria-label="more">+</button></div></div>`;
+const tiles = `<div class="chips"><span class="chip"><i class="bd"></i> black ✎</span></div><div class="row" style="gap:8px">${tile('REPS', '2')}</div>`;
+const S = [['L', 1, 'half rep'], ['R', 1, ''], ['L', 3, 'last rep half'], ['R', 3, ''], ['L', 3, 'last half rep'], ['R', 3, 'last half rep'], ['L', 2, ''], ['R', 2, '']];
+const today = (sel = [], skip = -1) => `<span class="lbl">SETS · ${skip < 0 ? 8 : 7} · TAP TO EDIT · HOLD TO SELECT</span>` + S.map(([sd, r, nt], i) => i === skip ? '' :
+  `<div class="blkx"><i class="bd"></i><span class="side ${sd.toLowerCase()}">${sd}</span><span class="sb${nt ? ' nt' : ''}${sel.includes(i) ? ' sel' : ''}">${r}</span></div>`).join('');
+const rounds = (sel = [], selRow = -1) => `<span class="lbl">SETS · 4 ROUNDS · <i class="bd"></i> BLACK</span>` + [0, 2, 4, 6].map((i, k) =>
+  `<div class="round" style="${selRow === k ? 'outline:2px solid #fff;' : ''}"><span class="n">${k + 1}</span>${[i, i + 1].map((j) => { const [sd, r, nt] = S[j]; return `<span class="half ${sd.toLowerCase()}${sel.includes(j) ? ' sel' : ''}"><i>${sd}</i>${r}${nt ? `<small>${nt}</small>` : ''}</span>`; }).join('')}<span class="dots3">⋯</span></div>`).join('');
+const logDock = `<div class="dock"><div class="row" style="gap:6px"><div class="logbtn l">Log L</div><div class="logbtn off" style="flex:.7">L + R</div><div class="logbtn off">Log R</div></div></div>`;
+const actDock = (n) => `<div class="dock"><span class="hint" style="text-align:center">${n} selected · tocca altri set per aggiungerli</span><div class="acts"><div class="x">✕</div><div>Note</div><div class="del">Delete</div></div></div>`;
+
+const C = [
+  { k: '0', name: 'Com\'è oggi', short: 'Oggi',
+    idea: 'Ogni set per lato è un blocco con una casella. Selezioni toccando; Note e Delete sono nella barra rosa in cima.',
+    shots: [
+      ['<b>Otto blocchi</b> per otto set: la lista è lunga e le caselle piccole.', phone(body(header + tiles + today()) + logDock)],
+      ['<b>Per cancellare L 2 + R 2:</b> tocchi due caselle, sali in cima a Delete, confermi.', phone(pinkTop(2) + body(tiles + today([6, 7])) + logDock)],
+    ],
+    pro: ['Ogni set è a sé: l\'ordine è esatto.'],
+    con: ['Lista lunga, il doppio dei blocchi.', 'Le azioni sono in cima, lontane dal pollice.', 'Una coppia L + R va selezionata in due tocchi.', 'Delete chiede sempre conferma.'],
+    row: ['3 (casella, Note, nota)', '4 (due caselle, Delete, conferma)', 'in cima', '—'] },
+
+  { k: 'A', name: 'A coppie: una riga per giro', short: 'Coppie',
+    idea: 'I set per lato si accoppiano nell\'ordine in cui li fai: una riga per giro, L a sinistra e R a destra, con la nota scritta sotto il numero. Tocchi una metà per quel lato, il ⋯ della riga per tutta la coppia.',
+    shots: [
+      ['<b>Quattro righe</b> invece di otto blocchi; la nota si legge senza aprirla.', phone(body(header + tiles + rounds()) + logDock)],
+      ['<b>Tocchi il ⋯ del giro 4:</b> L 2 + R 2 selezionati insieme.', phone(pinkTop(2) + body(tiles + rounds([6, 7], 3)) + logDock)],
+    ],
+    pro: ['Metà delle righe, caselle più grandi.', 'Una coppia L + R in un tocco.', 'Si vede subito quale lato ha fatto meno (L 3 · R 3, L 1 · R 1).'],
+    con: ['Se fai tre L di fila e poi tre R, i giri hanno un lato vuoto.', 'Il peso, se cambia, va scritto in ogni metà.'],
+    row: ['3', '3 (⋯, Delete, conferma)', 'in cima', 'medio'] },
+
+  { k: 'B', name: 'Azioni al posto dei pulsanti Log', short: 'Azioni in basso',
+    idea: 'Quando selezioni un set, i pulsanti Log in fondo diventano ✕ · Note · Delete, grandi, sotto il pollice. La barra rosa in cima sparisce. Delete non chiede conferma: compare «Annulla» per qualche secondo.',
+    shots: [
+      ['<b>Tocchi L 3:</b> in fondo Note e Delete.', phone(body(header + tiles + today([2])) + actDock(1))],
+      ['<b>Delete:</b> cancellato subito, con «Annulla».', phone(body(header + tiles + today([], 2)) + `<div class="dock"><div class="toast"><span class="grow">Deleted L 3</span><span class="act">Undo</span></div><div class="row" style="gap:6px"><div class="logbtn l">Log L</div><div class="logbtn off" style="flex:.7">L + R</div><div class="logbtn off">Log R</div></div></div>`)],
+    ],
+    pro: ['Le azioni sono dove già hai il pollice.', 'Un tocco in meno per cancellare, e niente paura di sbagliare (Annulla).'],
+    con: ['Mentre selezioni non puoi registrare (già oggi è così).'],
+    row: ['3', '3 (due caselle, Delete)', 'in basso', 'poco'] },
+
+  { k: 'C', name: 'Tieni premuto: menu sulla casella', short: 'Menu sulla casella',
+    idea: 'Tenere premuta una casella apre un piccolo menu proprio lì: Note · Delete · Edit. Niente modalità di selezione per il caso più comune, un set solo.',
+    shots: [
+      ['<b>Tieni premuto L 3:</b> il menu accanto al dito.', phone(body(header + tiles + today([2])) + logDock + `<div class="pop" style="left:70px;top:410px"><span>Note</span><span>Edit</span><span class="del">Delete</span></div>`)],
+    ],
+    pro: ['Un gesto e un tocco per qualunque azione su un set.', 'Le azioni compaiono dove guardi.'],
+    con: ['Per più set insieme serve comunque la selezione.', 'Il menu copre i set vicini.'],
+    row: ['2 (tieni, Note)', '4 (due volte tieni + Delete)', 'sulla casella', 'poco'] },
+
+  { k: 'D', name: '«+ nota» subito dopo il Log', short: 'Nota dopo il Log',
+    idea: 'Dopo ogni Log, sopra i pulsanti compare per qualche secondo «Logged L 2 · + note · Undo». Toccando «+ note» si aprono le note veloci (Max, Failed, +½ rep…) e il campo di testo, per il set appena fatto.',
+    shots: [
+      ['<b>Hai appena fatto Log L:</b> «+ note» e «Undo» per qualche secondo.', phone(body(header + tiles + today()) + `<div class="dock"><div class="toast"><span class="grow">Logged <b>L 2</b></span><span class="act">+ note</span><span class="act">Undo</span></div><div class="row" style="gap:6px"><div class="logbtn off">Log L</div><div class="logbtn off" style="flex:.7">L + R</div><div class="logbtn r">Log R</div></div></div>`)],
+      ['<b>Tocchi «+ note»:</b> le note veloci, un tocco per «+½ rep».', phone(body(header + tiles + today()) + '<div class="scrim"></div>' + `<div class="sheet"><div class="grab"></div><div class="t" style="font-size:15px">Note · L 2</div><div class="qt"><span>Max</span><span>Bad form</span><span>Assisted</span><span>Failed</span><span>+½ rep</span></div><div class="card" style="color:var(--ph-faint);padding:10px">Note…</div></div>`)],
+    ],
+    pro: ['La nota si mette quando ti serve: appena finito il set.', 'Undo copre anche il Log sbagliato, senza Delete.'],
+    con: ['Dopo qualche secondo sparisce: per i set vecchi resta A, B o C.'],
+    row: ['2 (+ note, +½ rep)', '— (Undo subito dopo)', 'in basso, dopo il Log', 'poco'] },
+];
+
+const sw = document.getElementById('switch');
+const box = document.getElementById('concept');
+let current = 1;
+function render() {
+  const c = C[current];
+  sw.innerHTML = C.map((x, i) => `<button type="button" aria-pressed="${i === current}" data-i="${i}"><span class="k">${x.k}</span>${x.short}</button>`).join('');
+  box.innerHTML = `
+    <h2>${c.k} · ${c.name}</h2>
+    <p class="idea">${c.idea}</p>
+    <div class="phones">${c.shots.map(([cap, ph]) => `<figure>${ph}<figcaption>${cap}</figcaption></figure>`).join('')}</div>
+    <div class="notes">
+      <div class="note pro"><h3>A favore</h3><ul>${c.pro.map((x) => `<li>${x}</li>`).join('')}</ul></div>
+      <div class="note con"><h3>Attenzione</h3><ul>${c.con.map((x) => `<li>${x}</li>`).join('')}</ul></div>
+    </div>`;
+  box.querySelectorAll('.phone').forEach((p, i) => p.setAttribute('aria-label', `${c.name}, screen ${i + 1}`));
+}
+sw.addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-i]');
+  if (!b) return;
+  current = +b.dataset.i;
+  render();
+});
+document.getElementById('cmp').innerHTML = C.map((c) => `<tr class="${['A', 'B', 'D'].includes(c.k) ? 'pick' : ''}"><td><b>${c.k} · ${c.name}</b></td>${c.row.map((x) => `<td>${x}</td>`).join('')}</tr>`).join('');
+render();
+</script>
