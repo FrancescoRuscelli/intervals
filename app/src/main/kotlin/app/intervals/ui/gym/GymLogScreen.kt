@@ -37,6 +37,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.widthIn
 import app.intervals.core.loadBlocks
 import app.intervals.core.boxText
+import app.intervals.core.loadText
+import androidx.compose.ui.text.style.TextAlign
 import app.intervals.core.variantOf
 import app.intervals.core.lastOfVariant
 import androidx.compose.foundation.horizontalScroll
@@ -128,7 +130,9 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
     var editSide by remember(exerciseId, day) { mutableStateOf<Side?>(null) }
     var selectedIds by remember(exerciseId, day) { mutableStateOf(emptySet<Long>()) }
     var noteTargets by remember(exerciseId, day) { mutableStateOf(emptyList<GymSet>()) }
-    var deleteTargets by remember(exerciseId, day) { mutableStateOf(emptyList<Long>()) }
+    // the sets just deleted, while Undo is offered
+    var deleted by remember(exerciseId, day) { mutableStateOf(emptyList<GymSet>()) }
+    LaunchedEffect(deleted) { if (deleted.isNotEmpty()) { kotlinx.coroutines.delay(6000); deleted = emptyList() } }
     var typing by remember { mutableStateOf<GymField?>(null) }
     // free timer for timed sets (mockup G18): started at (elapsedRealtime) while running; measured = stopped, time filled in
     var timerFrom by remember(exerciseId) { mutableStateOf<Long?>(null) }
@@ -197,12 +201,37 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
             }
             Spacer(Modifier.height(8.dp))
         }
+        // with sets selected, their actions take the log buttons' place (mockup intervals-side-set-actions.html, B)
+        if (selecting) {
+            Text("${selectedSets.size} selected · tap sets to add or remove them", color = p.muted, fontSize = 12.sp, textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp).semantics { liveRegion = LiveRegionMode.Polite })
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                val shape = RoundedCornerShape(14.dp)
+                Box(Modifier.size(54.dp).clip(shape).background(p.surface).clickable(onClickLabel = "Cancel selection") { selectedIds = emptySet() },
+                    contentAlignment = Alignment.Center) { Icon(AppIcons.Close, "Cancel selection", tint = p.text) }
+                BigButton("Note", p.surface, p.text, { noteTargets = selectedSets }, Modifier.weight(1f))
+                BigButton("Delete", p.surface, p.dangerText, {
+                    deleted = selectedSets
+                    vm.deleteGymSets(selectedSets.map { it.id })
+                    selectedIds = emptySet()
+                }, Modifier.weight(1f))
+            }
+            if (edit != null) Spacer(Modifier.height(8.dp))
+        } else if (deleted.isNotEmpty()) {
+            // no confirmation on delete: Undo for a few seconds instead
+            Row(Modifier.fillMaxWidth().padding(bottom = 8.dp).clip(RoundedCornerShape(12.dp)).background(p.surface).padding(start = 12.dp),
+                verticalAlignment = Alignment.CenterVertically) {
+                Text("Deleted " + (deleted.singleOrNull()?.let { s -> (s.side?.let { it.letter + " " } ?: "") + s.summary(ex) } ?: "${deleted.size} sets"),
+                    color = p.text, fontSize = 14.sp, maxLines = 1, modifier = Modifier.weight(1f).semantics { liveRegion = LiveRegionMode.Polite })
+                TextButton(onClick = { vm.undoDeleteGymSets(); deleted = emptyList() }) { Text("Undo", color = p.accentText, fontWeight = FontWeight.Bold) }
+            }
+        }
         if (edit != null) {
             BigButton("Update set", p.workTint, p.workText, {
                 vm.updateGymSet(v.into(edit.copy(side = editSide), ex))
                 selectedIds = emptySet()
             })
-        } else {
+        } else if (!selecting) {
             val timing = timerFrom != null
             val variant = ex.variants.takeIf { it.isNotEmpty() }?.let { vs -> v.variant?.takeIf { it in vs } ?: vs.first() }
             LogButtons(ex.perSide, side, variant, timing = timing && !bulk, blocked = timing || bulk) { chosen ->
@@ -214,18 +243,7 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
     } }
 
     Column(Modifier.fillMaxSize().background(p.bg).statusBarsPadding().navigationBarsPadding()) {
-        if (selecting) Row(
-            Modifier.fillMaxWidth().background(p.workTint).heightIn(min = 52.dp).padding(horizontal = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            IconButton(onClick = { selectedIds = emptySet() }) {
-                Icon(AppIcons.Close, "Cancel selection", tint = p.workText)
-            }
-            Text("${selectedSets.size} selected", color = p.workText, fontSize = 18.sp, fontWeight = FontWeight.Bold,
-                modifier = Modifier.weight(1f).semantics { liveRegion = LiveRegionMode.Polite })
-            TextButton(onClick = { noteTargets = selectedSets }) { Text("Note", color = p.workText) }
-            TextButton(onClick = { deleteTargets = selectedSets.map { it.id } }) { Text("Delete", color = p.workText) }
-        } else Row(Modifier.fillMaxWidth().padding(start = 4.dp, end = 16.dp, top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().padding(start = 4.dp, end = 16.dp, top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = { vm.back() }) { Icon(AppIcons.Back, "Back", tint = p.text) }
             Text(ex.name, modifier = Modifier.weight(1f), color = p.text, fontSize = 20.sp, fontWeight = FontWeight.Bold, maxLines = 2)
             // the rest clock (mockup intervals-rest-timer.html, option 3): tap to stop it
@@ -323,9 +341,13 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
                     modifier = Modifier.padding(top = 4.dp))
             }
             if (list.isNotEmpty()) item {
-                SetBlocks(list, ex, selectedIds, selecting, ::tapSet) { set ->
-                    if (set.id !in selectedIds) select(selectedIds + set.id)
+                val hold = { set: GymSet -> if (set.id !in selectedIds) select(selectedIds + set.id) }
+                // per side: one row per round, L beside R (mockup intervals-side-set-actions.html, A)
+                if (ex.perSide && list.all { it.side != null }) SideRounds(list, ex, selectedIds, selecting, ::tapSet, hold) { round ->
+                    val ids = round.map { it.id }.toSet()
+                    select(if (selectedIds.containsAll(ids)) selectedIds - ids else selectedIds + ids)
                 }
+                else SetBlocks(list, ex, selectedIds, selecting, ::tapSet, hold)
             }
         }
         // the buttons fixed at the bottom, under the thumb (mockup intervals-set-screen-ideas.html, B1)
@@ -378,20 +400,6 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
             vm.saveGymSetNotes(noteTargets.map { it.id }, note)
             noteTargets = emptyList()
         }
-    }
-    if (deleteTargets.isNotEmpty()) {
-        AlertDialog(
-            onDismissRequest = { deleteTargets = emptyList() },
-            title = { Text(if (deleteTargets.size == 1) "Delete this set?" else "Delete ${deleteTargets.size} sets?") },
-            confirmButton = {
-                TextButton(onClick = {
-                    vm.deleteGymSets(deleteTargets)
-                    selectedIds = emptySet()
-                    deleteTargets = emptyList()
-                }) { Text("Delete", color = p.dangerText) }
-            },
-            dismissButton = { TextButton(onClick = { deleteTargets = emptyList() }) { Text("Cancel") } },
-        )
     }
 }
 
@@ -485,6 +493,66 @@ private fun SetBlocks(
                     ) {
                         Text(set.boxText(ex), color = if (marked) p.workText else p.text, fontSize = 16.sp, style = NumberStyle)
                     }
+                }
+            }
+        }
+    }
+}
+
+/** The sets of a per-side exercise as rounds: L on the left, R on the right, the note under the reps; ⋯ picks the whole round. */
+@Composable
+private fun SideRounds(
+    sets: List<GymSet>, ex: Exercise, markedIds: Set<Long>, selecting: Boolean,
+    onTap: (GymSet) -> Unit, onHold: (GymSet) -> Unit, onRound: (List<GymSet>) -> Unit,
+) {
+    val p = LocalPalette.current
+    val rounds = remember(sets) { app.intervals.core.sideRounds(sets) }
+    val head = { s: GymSet -> listOfNotNull(s.variantOf(ex), s.loadText(ex).ifEmpty { null }).joinToString(" · ") }
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        var shown: String? = null
+        rounds.forEachIndexed { i, round ->
+            // the load once above its rounds; a round whose two sides differ shows it in each half
+            val same = round.sets.map(head).distinct().singleOrNull()
+            if (same != null && same != shown && same.isNotEmpty()) {
+                Text(same, color = p.text, fontSize = 15.sp, style = NumberStyle, modifier = Modifier.padding(top = if (i == 0) 0.dp else 4.dp))
+            }
+            if (same != null) shown = same
+            val whole = round.sets.all { it.id in markedIds }
+            Row(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(p.surface)
+                    .border(if (whole) 2.dp else 1.dp, if (whole) p.pink else p.line, RoundedCornerShape(12.dp)).padding(start = 8.dp, top = 6.dp, bottom = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("${i + 1}", color = p.faint, fontSize = 11.sp, modifier = Modifier.width(16.dp))
+                listOf(Side.LEFT to round.left, Side.RIGHT to round.right).forEach { (sd, set) ->
+                    if (set == null) Spacer(Modifier.weight(1f)) else {
+                        val marked = set.id in markedIds
+                        val action = if (!selecting) "Edit" else if (marked) "Deselect" else "Select"
+                        val shape = RoundedCornerShape(10.dp)
+                        Column(
+                            Modifier.weight(1f).heightIn(min = 44.dp).clip(shape).background(if (marked) p.workTint else p.sideTint(sd))
+                                .border(if (marked) 2.dp else 0.dp, if (marked) p.pink else Color.Transparent, shape)
+                                .semantics { if (selecting) selected = marked }
+                                .combinedClickable(
+                                    onClickLabel = "$action set ${set.summary(ex)}, ${sd.name.lowercase()}",
+                                    onLongClickLabel = "Select set", hapticFeedbackEnabled = true,
+                                    onClick = { onTap(set) }, onLongClick = { onHold(set) },
+                                )
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalArrangement = Arrangement.Center,
+                        ) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Text(sd.letter, color = p.muted, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                Text(set.boxText(ex), color = if (marked) p.workText else p.text, fontSize = 16.sp, style = NumberStyle, maxLines = 1)
+                                if (same == null) Text(head(set), color = p.muted, fontSize = 11.sp, maxLines = 1)
+                            }
+                            if (set.note.isNotBlank()) Text(set.note, color = p.pink, fontSize = 11.sp, maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                        }
+                    }
+                }
+                IconButton(onClick = { onRound(round.sets) }) {
+                    Icon(AppIcons.More, if (whole) "Deselect round ${i + 1}" else "Select round ${i + 1}", tint = p.muted)
                 }
             }
         }

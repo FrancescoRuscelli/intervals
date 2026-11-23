@@ -174,9 +174,15 @@ class IntervalsRepository(
         ids.distinct().chunked(997).forEach { gymDao.appendSetNote(it, text) }
     }
 
-    suspend fun deleteSets(ids: List<Long>) = db.withTransaction {
+    /** Deletes the sets and returns their rows as they were, for [restoreSets]. */
+    suspend fun deleteSets(ids: List<Long>): List<GymSetEntity> = db.withTransaction {
+        val rows = ids.chunked(999).flatMap { gymDao.setsById(it) }
         ids.chunked(999).forEach { gymDao.deleteSets(it) }
+        rows
     }
+
+    /** Puts deleted rows back with their ids and positions (Undo). */
+    suspend fun restoreSets(rows: List<GymSetEntity>) = db.withTransaction { rows.forEach { gymDao.insertSet(it) } }
 
     /** Returns the new exercise's id. */
     suspend fun addExercise(exercise: Exercise): Long = gymDao.insertExercise(exercise.copy(id = 0).toEntity())

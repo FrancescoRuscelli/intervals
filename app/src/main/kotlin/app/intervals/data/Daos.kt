@@ -170,6 +170,9 @@ interface GymDao {
     @Query("UPDATE gym_sets SET note = CASE WHEN note = '' THEN :note ELSE note || ' · ' || :note END WHERE id IN (:ids)")
     suspend fun appendSetNote(ids: List<Long>, note: String)
 
+    @Query("SELECT * FROM gym_sets WHERE id IN (:ids)")
+    suspend fun setsById(ids: List<Long>): List<GymSetEntity>
+
     @Query("DELETE FROM gym_sets WHERE id IN (:ids)")
     suspend fun deleteSets(ids: List<Long>)
 

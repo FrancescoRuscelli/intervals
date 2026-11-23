@@ -122,6 +122,18 @@ class GymRowsTest {
     }
 
     @Test
+    fun sideSetsPairIntoRounds() {
+        val l = { r: Int -> set(0.0, r, Side.LEFT) }
+        val r = { n: Int -> set(0.0, n, Side.RIGHT) }
+        // 20 Nov: L 1 · R 1 · L 3 · R 3
+        assertEquals(listOf(1 to 1, 3 to 3), sideRounds(listOf(l(1), r(1), l(3), r(3))).map { it.left!!.reps to it.right!!.reps })
+        // R first still pairs; three L in a row stand alone
+        val rounds = sideRounds(listOf(r(5), l(4), l(1), l(2), r(2)))
+        assertEquals(listOf(4 to 5, 1 to null, 2 to 2), rounds.map { it.left?.reps to it.right?.reps })
+        assertEquals(5, rounds.sumOf { it.sets.size })
+    }
+
+    @Test
     fun barsAreAlwaysReps() {
         val pu = Exercise(14, "Pull Up", listOf(GymField.WEIGHT, GymField.REPS))
         val bars = dayBars(listOf(set(15.0, 5).copy(note = "slow"), set(0.0, 7)), pu)

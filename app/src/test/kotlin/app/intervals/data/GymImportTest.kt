@@ -160,10 +160,14 @@ class GymImportTest {
             before[2],
         )
         assertEquals(updated, repo.exerciseDay(id, "2026-11-17").first())
-        repo.deleteSets(ids.drop(1))
+        val gone = repo.deleteSets(ids.drop(1))
         val left = repo.exerciseDay(id, "2026-11-17").first().single()
         assertEquals(updated.first(), left)
         assertEquals(4, repo.gymSetCount())
+        // Undo puts them back where they were
+        repo.restoreSets(gone)
+        assertEquals(updated, repo.exerciseDay(id, "2026-11-17").first())
+        repo.deleteSets(ids.drop(1))
     }
 
     @Test

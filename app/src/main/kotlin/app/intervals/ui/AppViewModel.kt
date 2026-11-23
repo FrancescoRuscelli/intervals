@@ -493,7 +493,15 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         if (ids.size == 1) repo.setGymNotes(ids, note) else repo.appendGymSetNote(ids, note)
     }
 
-    fun deleteGymSets(ids: List<Long>) = viewModelScope.launch { repo.deleteSets(ids) }
+    // the rows of the last delete, for Undo
+    private var deletedSets: List<app.intervals.data.GymSetEntity> = emptyList()
+
+    fun deleteGymSets(ids: List<Long>) = viewModelScope.launch { deletedSets = repo.deleteSets(ids) }
+
+    fun undoDeleteGymSets() = viewModelScope.launch {
+        repo.restoreSets(deletedSets)
+        deletedSets = emptyList()
+    }
 
     /** Creates an exercise and opens its log in place of the picker. */
     fun createExercise(exercise: Exercise, day: String) = viewModelScope.launch {

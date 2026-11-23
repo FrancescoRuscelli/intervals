@@ -74,6 +74,12 @@ From the [set screen ideas](mockups/intervals-set-screen-ideas.html), the user c
   - With more than three variants the row scrolls, and the fourth is cut off to show it goes on.
   - Tapping a variant switches to it and brings back that variant's last numbers (`lastOfVariant`, on the same side). Editing a set changes only its variant.
   - Not yet seen on the phone.
+- **L / R sets (A + B from the [side set mockup](mockups/intervals-side-set-actions.html), installed 2026-11-24).**
+  - A per-side exercise shows its sets as rounds: one row per L + R pair done one after the other (`sideRounds`), the note under the reps.
+  - The load appears once above its rounds, or in each half when the two sides differ. ⋯ selects the whole round.
+  - With sets selected, ✕ · Note · Delete replace the log buttons (Update set below them for a single set). The pink bar on top is gone.
+  - Delete has no confirmation: «Deleted … · Undo» for 6 s, which puts the rows back as they were (`restoreSets`).
+  - Seen on the phone: the rounds. Not yet seen: the bottom actions and Undo.
 - **Later.** D (START for timed sets).
 
 ## Journal and Stats decision

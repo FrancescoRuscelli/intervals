@@ -119,6 +119,25 @@ fun loadBlocks(sets: List<GymSet>, ex: Exercise): List<LoadBlock> {
     return out
 }
 
+/** A round of a per-side exercise (mockup intervals-side-set-actions.html, A): the L and R sets done one after the other. */
+data class SideRound(val left: GymSet?, val right: GymSet?) {
+    val sets: List<GymSet> get() = listOfNotNull(left, right)
+}
+
+/** Consecutive sets of opposite sides pair into rounds, in the order done; a set with no partner next to it is a round alone. */
+fun sideRounds(sets: List<GymSet>): List<SideRound> {
+    val out = mutableListOf<SideRound>()
+    var i = 0
+    while (i < sets.size) {
+        val a = sets[i]
+        val b = sets.getOrNull(i + 1)
+        val two = if (b != null && a.side != null && b.side != null && a.side != b.side) listOf(a, b) else listOf(a)
+        out += SideRound(two.firstOrNull { it.side == Side.LEFT }, two.firstOrNull { it.side == Side.RIGHT })
+        i += two.size
+    }
+    return out
+}
+
 /** The colors of a set's colored specs (e.g. its bands), one per band; empty when none. */
 fun GymSet.specColors(ex: Exercise): List<Long> = ex.specs.filter { it.colors.isNotEmpty() }.flatMap { sp ->
     specs[sp.name]?.let { v -> if (sp.multiple) sp.counts(v).flatMap { (c, n) -> List(n) { sp.colors[c] } } else listOf(sp.colors[v]) }.orEmpty()
