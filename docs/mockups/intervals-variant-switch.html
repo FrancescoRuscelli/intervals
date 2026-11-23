@@ -144,6 +144,12 @@ tr.pick td { background: var(--accent-soft); }
 .phone .pager .peek { position: absolute; top: 40%; font-size: 18px; color: var(--ph-faint); }
 .phone .blk { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: 11.5px; color: var(--ph-muted); }
 .phone .blk em { font-style: normal; font-weight: 700; padding: 1px 6px; border-radius: 6px; background: var(--ph-tint); color: var(--ph-accent-ink); }
+.phone .vp.scroll { overflow: hidden; }
+.phone .vp.scroll span { flex: 0 0 74px; }
+.phone .vp.scroll { -webkit-mask-image: linear-gradient(90deg, #000 82%, transparent); mask-image: linear-gradient(90deg, #000 82%, transparent); }
+.phone .vp.wrap5 { flex-wrap: wrap; }
+.phone .vp.wrap5 span { flex: 1 0 28%; }
+.phone .vp span.more { border-style: dashed; color: var(--ph-muted); }
 .phone .flash { background: #1c1828; border: 1px solid var(--ph-accent); border-radius: 10px; padding: 6px 9px; font-size: 11px; color: var(--ph-accent-ink); }
 </style>
 
@@ -160,7 +166,8 @@ tr.pick td { background: var(--accent-soft); }
 
   <section class="reco">
     <h2>Cosa farei</h2>
-    <p><b>A</b>. Le varianti scendono in fondo, sopra il pulsante, come pulsanti grandi con sotto l'ultima serie di quella variante («normal · 90 × 5»).
+    <p><b>Con tante varianti: A5b fino a 6 (due righe, tutte a un tocco), A5c oltre</b> (le 3 recenti + «altre»). Con 2 o 3 varianti resta la riga singola di A.</p>
+    <p style="margin-top:8px"><b>A</b>. Le varianti scendono in fondo, sopra il pulsante, come pulsanti grandi con sotto l'ultima serie di quella variante («normal · 90 × 5»).
       Un tocco cambia variante <b>e</b> rimette i numeri di quella variante. Quindi deep → normal → deep costa un tocco ogni volta, e il peso è già giusto.
       Il comportamento «ogni variante ricorda i suoi numeri» vale anche per B e C: è quello che toglie la fatica, più ancora di dove sta il controllo.</p>
   </section>
@@ -192,6 +199,14 @@ const vp = (on) => `<div class="vp">${[['deep', '80 × 3'], ['half', '—'], ['n
 const dock = (inner) => `<div class="dock">${inner}</div>`;
 const logBtn = (v) => `<div class="row"><div class="logbtn">Log set · ${v}</div></div>`;
 
+// five variants: Pull Up, made-up numbers
+const PU = [['wide', '+5 × 6'], ['narrow', '+10 × 5'], ['neutral', '+10 × 6'], ['chin', '+15 × 5'], ['archer', '0 × 4']];
+const header5 = header.replace('>Squat<', '>Pull Up<');
+const vp5 = (on, cls = '', list = PU) => `<div class="vp ${cls}">${list.map(([v, l]) => `<span class="${v === on ? 'on' : ''}">${v}<small>${l}</small></span>`).join('')}</div>`;
+const sets5 = `<span class="lbl">SETS · TAP TO EDIT</span>
+  <div class="blk"><em>wide</em><span class="boxes"><span>6</span><span>6</span></span><span>+5 kg</span></div>
+  <div class="blk"><em>chin</em><span class="boxes"><span>5</span></span><span>+15 kg</span></div>`;
+
 const C = [
   { k: '0', name: 'Com\'è oggi', short: 'Oggi',
     idea: 'L\'interruttore in cima. Toccare «normal» cambia solo il nome: il peso resta 80, e va riportato a 90 a mano.',
@@ -213,6 +228,37 @@ const C = [
     pro: ['Un tocco per cambiare, vicino al pollice e al pulsante.', 'Il peso segue la variante: niente da riscrivere.', 'Si vede subito dove sei e cosa hai fatto l\'ultima volta in ogni variante.'],
     con: ['Una riga in più nel pannello in basso.', 'Con 4 o più varianti i pulsanti diventano stretti (si scorrono).'],
     row: ['1', 'in basso, sopra Log', 'sì, acceso sul pulsante', 'medio'] },
+
+  { k: 'A5a', name: 'A con 5 varianti: la riga scorre', short: '5 · scorre',
+    idea: 'Le varianti restano una riga sola, larghe come oggi; quelle che non entrano si raggiungono scorrendo la riga. L\'ultima è tagliata a metà, così si capisce che continua. La variante accesa resta sempre in vista.',
+    shots: [
+      ['<b>Su wide:</b> se ne vedono tre, la terza tagliata dice che la riga continua.', phone(body(header5 + tiles('+5', '6') + sets5) + dock(vp5('wide', 'scroll', PU) + logBtn('wide')))],
+      ['<b>Scorri la riga e tocchi chin:</b> compaiono chin e archer, i numeri passano a +15 × 5.', phone(body(header5 + tiles('+15', '5') + sets5) + dock(vp5('chin', 'scroll', PU.slice(2)) + logBtn('chin')))],
+    ],
+    pro: ['Stessa altezza di A con 3 varianti.', 'Va bene con qualunque numero.'],
+    con: ['Quelle in fondo vanno cercate scorrendo.', 'Lo scorrere della riga va scoperto.'],
+    row: ['1, o 1 scorrimento + 1', 'in basso, riga che scorre', 'sì', 'medio'] },
+
+  { k: 'A5b', name: 'A con 5 varianti: due righe', short: '5 · due righe',
+    idea: 'Fino a 3 varianti una riga; da 4 a 6 vanno su due righe, tutte visibili, un po\' più basse. Oltre 6 si passa a A5c.',
+    shots: [
+      ['<b>Cinque su due righe:</b> tutto a vista, un tocco.', phone(body(header5 + tiles('+15', '5') + sets5) + dock(vp5('chin', 'wrap5') + logBtn('chin')))],
+      ['<b>Tocchi «archer»:</b> i numeri passano a 0 × 4.', phone(body(header5 + `<div class="flash">archer: last time 0 × 4 (12 Nov)</div>` + tiles('0', '4') + sets5) + dock(vp5('archer', 'wrap5') + logBtn('archer')))],
+    ],
+    pro: ['Sempre un tocco, niente da cercare.', 'Si vedono tutte con la loro ultima serie.'],
+    con: ['Il pannello in basso cresce di una riga e copre un po\' della lista.'],
+    row: ['1', 'in basso, 2 righe', 'sì', 'medio'] },
+
+  { k: 'A5c', name: 'A con 5 varianti: le recenti + «altre»', short: '5 · recenti',
+    idea: 'In basso solo le 3 usate più di recente (oggi o l\'ultima volta), più un pulsante «+2». Toccandolo si apre il pannello con tutte. L\'ordine delle tre cambia solo all\'inizio della seduta, non mentre ti alleni.',
+    shots: [
+      ['<b>Le tre di oggi:</b> chin, wide, narrow, e «+2».', phone(body(header5 + tiles('+15', '5') + sets5) + dock(vp5('chin', '', [PU[3], PU[0], PU[1], ['+2', 'more']]).replace('<span class="">+2', '<span class="more">+2') + logBtn('chin')))],
+      ['<b>Tocchi «+2»:</b> tutte e cinque, con i loro numeri.', phone(body(header5 + tiles('+15', '5') + sets5) + '<div class="scrim"></div>' +
+        `<div class="sheet"><div class="grab"></div><div class="t" style="font-size:16px">Variant</div>${vp5('chin', 'wrap5')}<span class="hint">Una volta scelta, entra tra le tre in basso.</span></div>`)],
+    ],
+    pro: ['Il pannello resta piccolo con qualunque numero.', 'Di solito in una seduta ne usi 2 o 3: quelle sono a un tocco.'],
+    con: ['Le altre costano due tocchi.', 'Non tutte a vista.'],
+    row: ['1 (recenti) / 2 (altre)', 'in basso + pannello', 'sì', 'medio'] },
 
   { k: 'B', name: 'Scorri i numeri', short: 'Scorri',
     idea: 'Peso e reps stanno in una scheda che si scorre di lato: una pagina per variante, ciascuna con i suoi numeri. Scorri a sinistra = normal. I pallini dicono quante ce ne sono.',
@@ -258,6 +304,6 @@ sw.addEventListener('click', (e) => {
   current = +b.dataset.i;
   render();
 });
-document.getElementById('cmp').innerHTML = C.map((c) => `<tr class="${c.k === 'A' ? 'pick' : ''}"><td><b>${c.k} · ${c.name}</b></td>${c.row.map((x) => `<td>${x}</td>`).join('')}</tr>`).join('');
+document.getElementById('cmp').innerHTML = C.map((c) => `<tr class="${['A', 'A5b'].includes(c.k) ? 'pick' : ''}"><td><b>${c.k} · ${c.name}</b></td>${c.row.map((x) => `<td>${x}</td>`).join('')}</tr>`).join('');
 render();
 </script>
