@@ -145,7 +145,8 @@ tr.pick td { background: var(--accent-soft); }
 
   <section class="reco">
     <h2>Cosa farei</h2>
-    <p><b>A + B insieme</b>, e <b>D</b> per gli esercizi a tempo. Quello che non cambia tra le serie (presa, tacca, variante) diventa una riga sola di etichette in alto, toccabile.
+    <p><b>Per non perdere Both: B1</b>, tre pulsanti Log L · L + R · Log R, tutto a vista. Se in un esercizio fai sempre i due lati insieme, B2 (l'interruttore ricordato per esercizio) è la scelta più comoda.</p>
+    <p style="margin-top:8px"><b>A + B insieme</b>, e <b>D</b> per gli esercizi a tempo. Quello che non cambia tra le serie (presa, tacca, variante) diventa una riga sola di etichette in alto, toccabile.
       Sotto restano grandi solo i numeri che cambi davvero. Il lato smette di essere un interruttore L / R / Both: diventa due pulsanti in fondo, <b>Log L</b> rosa e <b>Log R</b> verde,
       con quello del lato successivo acceso. Per gli esercizi a tempo il pulsante grande è <b>START</b>: fermi il cronometro e la serie è registrata.
       Il risultato: tre zone chiare, <b>com'è impostato</b> · <b>quanto</b> · <b>registra</b>.</p>
@@ -228,6 +229,55 @@ const C = [
     con: ['«Both» con tenuta lunga è nascosto; serve una scritta.'],
     row: ['3 (con A)', '1', 'L e R: due pulsanti colorati', 'medio'] },
 
+  { k: 'B1', name: 'Lato nel pulsante, con L + R in mezzo', short: 'B1 · tre pulsanti',
+    idea: 'Tre pulsanti in fondo: Log L, L + R, Log R. Both resta sempre a vista, senza gesti nascosti. Quello del lato successivo è acceso.',
+    shots: [
+      ['<b>Prossimo lato L:</b> L acceso; L + R in mezzo, più stretto, per le serie fatte insieme.',
+        phone(body(header + `
+          <div class="chips"><span class="chip">20 mm ✎</span><span class="chip">half crimp ✎</span></div>
+          <div class="row" style="gap:8px">${tile('WEIGHT', '+10', 'kg')}${tile('TIME', '0:07')}</div>` + done)
+          + `<div class="dock"><div class="row" style="gap:6px"><div class="logbtn l">Log L</div><div class="logbtn off" style="flex:.7">L + R</div><div class="logbtn off">Log R</div></div></div>`)],
+      ['<b>Hai premuto L + R:</b> due serie, una per lato, con gli stessi numeri; si riaccende L + R per la prossima.',
+        phone(body(header + `
+          <div class="chips"><span class="chip">20 mm ✎</span><span class="chip">half crimp ✎</span></div>
+          <div class="row" style="gap:8px">${tile('WEIGHT', '+10', 'kg')}${tile('TIME', '0:07')}</div>` + done.replace('</div>', '<span class="side l">L</span><span class="side r">R</span><b>+10 kg × 0:07</b></div>'))
+          + `<div class="dock"><div class="row" style="gap:6px"><div class="logbtn off">Log L</div><div class="logbtn" style="flex:.7">L + R</div><div class="logbtn off">Log R</div></div></div>`)],
+    ],
+    pro: ['Tutto a vista: si capisce senza spiegazioni.', 'Il colore dice il lato: rosa L, viola insieme, verde R.'],
+    con: ['Tre pulsanti più stretti; su telefoni piccoli le scritte vanno corte.'],
+    row: ['3', '1', 'tre pulsanti: sinistro, insieme, destro', 'medio'] },
+
+  { k: 'B2', name: 'Lato nel pulsante, con «insieme» come interruttore', short: 'B2 · interruttore',
+    idea: 'Sopra i due pulsanti, un interruttore «L + R insieme». Acceso, i due pulsanti diventano uno solo viola, Log L + R. L\'app ricorda la scelta per ogni esercizio.',
+    shots: [
+      ['<b>Spento:</b> Log L e Log R, come in B.',
+        phone(body(header + `
+          <div class="chips"><span class="chip">20 mm ✎</span><span class="chip">half crimp ✎</span></div>
+          <div class="row" style="gap:8px">${tile('WEIGHT', '+10', 'kg')}${tile('TIME', '0:07')}</div>` + done)
+          + `<div class="dock"><div class="row" style="justify-content:space-between"><span class="m">L + R together</span><span style="width:38px;height:22px;border-radius:11px;background:#2a2d34;position:relative"><span style="position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:8px;background:#6e747e"></span></span></div><div class="row" style="gap:8px"><div class="logbtn l">Log L</div><div class="logbtn off">Log R</div></div></div>`)],
+      ['<b>Acceso:</b> un pulsante solo; per esercizi come Block Pulls a due mani resta acceso.',
+        phone(body(header + `
+          <div class="chips"><span class="chip">20 mm ✎</span><span class="chip">half crimp ✎</span></div>
+          <div class="row" style="gap:8px">${tile('WEIGHT', '+10', 'kg')}${tile('TIME', '0:07')}</div>` + done)
+          + `<div class="dock"><div class="row" style="justify-content:space-between"><span class="m" style="color:var(--ph-accent-ink)">L + R together</span><span style="width:38px;height:22px;border-radius:11px;background:var(--ph-accent);position:relative"><span style="position:absolute;right:3px;top:3px;width:16px;height:16px;border-radius:8px;background:#fff"></span></span></div><div class="row"><div class="logbtn">Log L + R</div></div></div>`)],
+    ],
+    pro: ['Pulsanti larghi in entrambi i casi.', 'Chi fa sempre insieme lo imposta una volta e non ci pensa più.'],
+    con: ['Un controllo in più (ma piccolo e chiaro).'],
+    row: ['3', '1', 'due lati, o insieme se acceso', 'medio'] },
+
+  { k: 'B3', name: 'Lato nel pulsante, Both tenendo premuto', short: 'B3 · tieni premuto',
+    idea: 'Come B: due pulsanti, e L + R insieme tenendo premuto uno dei due. Una scritta sotto lo ricorda.',
+    shots: [
+      ['<b>Come B:</b> la scritta ricorda la tenuta lunga.',
+        phone(body(header + `
+          <div class="chips"><span class="chip">20 mm ✎</span><span class="chip">half crimp ✎</span></div>
+          <div class="row" style="gap:8px">${tile('WEIGHT', '+10', 'kg')}${tile('TIME', '0:07')}</div>` + done)
+          + `<div class="dock"><div class="row" style="gap:8px"><div class="logbtn l">Log L</div><div class="logbtn off">Log R</div></div><span class="hint" style="text-align:center">tieni premuto per L + R insieme</span></div>`)],
+    ],
+    pro: ['La più pulita.'],
+    con: ['Un gesto nascosto: chi non legge la scritta non lo scopre.'],
+    row: ['3', '1 (lungo)', 'due lati; «insieme» solo leggendo', 'medio'] },
+
   { k: 'C', name: 'La serie come una frase', short: 'Frase',
     idea: 'Al centro una frase: «L · 20 mm · half crimp · +10 kg · 0:07». Ogni parola si tocca per cambiarla. È la serie che verrà registrata, scritta come la leggi nella storia.',
     shots: [
@@ -290,6 +340,6 @@ sw.addEventListener('click', (e) => {
   current = +b.dataset.i;
   render();
 });
-document.getElementById('cmp').innerHTML = C.map((c) => `<tr class="${'ABD'.includes(c.k) ? 'pick' : ''}"><td><b>${c.k} · ${c.name}</b></td>${c.row.map((x) => `<td>${x}</td>`).join('')}</tr>`).join('');
+document.getElementById('cmp').innerHTML = C.map((c) => `<tr class="${['A', 'B1', 'D'].includes(c.k) ? 'pick' : ''}"><td><b>${c.k} · ${c.name}</b></td>${c.row.map((x) => `<td>${x}</td>`).join('')}</tr>`).join('');
 render();
 </script>
