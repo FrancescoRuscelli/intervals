@@ -517,15 +517,20 @@ private fun ExerciseOfDay(ex: Exercise, sets: List<GymSet>, mode: JournalSets) {
 private fun DayBars(bars: List<app.intervals.core.DayBar>) {
     val p = LocalPalette.current
     val max = bars.maxOfOrNull { it.value }?.coerceAtLeast(1.0) ?: return
-    Row(Modifier.fillMaxWidth().height(78.dp), horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.Bottom) {
+    // no fixed height: the row is as tall as its tallest bar, so every bar stands on the same base line
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.Bottom) {
         bars.forEach { b ->
-            Column(Modifier.weight(1f, fill = false).width(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Bottom) {
+            val sideColor = when (b.side) { app.intervals.core.Side.LEFT -> p.pink; app.intervals.core.Side.RIGHT -> p.teal; null -> null }
+            Column(Modifier.weight(1f, fill = false).width(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(b.top, color = if (b.note) p.yellow else p.text, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
                 val shape = RoundedCornerShape(topStart = 3.dp, topEnd = 3.dp)
                 Column(Modifier.fillMaxWidth().height((6 + 40 * b.value / max).dp).clip(shape).border(1.dp, p.line, shape)) {
-                    b.side?.let { Box(Modifier.fillMaxWidth().height(3.dp).background(if (it == app.intervals.core.Side.LEFT) p.pink else p.teal)) }
-                    if (b.colors.isEmpty()) Box(Modifier.fillMaxWidth().weight(1f).background(p.accent))
-                    b.colors.forEach { Box(Modifier.fillMaxWidth().weight(1f).background(Color(it))) }
+                    // the side colors the whole bar; with bands the bar is the band and the side is a cap on top
+                    if (b.colors.isEmpty()) Box(Modifier.fillMaxWidth().weight(1f).background(sideColor ?: p.accent))
+                    else {
+                        sideColor?.let { Box(Modifier.fillMaxWidth().height(3.dp).background(it)) }
+                        b.colors.forEach { Box(Modifier.fillMaxWidth().weight(1f).background(Color(it))) }
+                    }
                 }
                 Text(b.under, color = p.muted, fontSize = 9.sp, maxLines = 1, softWrap = false)
             }
