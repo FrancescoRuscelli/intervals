@@ -132,6 +132,9 @@ tr.pick td { background: var(--accent-soft); }
 .phone .bars small { font: 700 9.5px var(--display); color: var(--ph-ink); }
 .phone .bars em { font: 600 8.5px var(--display); color: var(--ph-muted); font-style: normal; }
 .phone .chev2 { color: var(--ph-faint); font-size: 14px; }
+.phone .bars > div { max-width: 26px; } .phone .bars > div[style*="row"] { max-width: 52px; }
+.phone .bx span sup { position: absolute; top: -5px; left: -3px; font: 700 8px var(--display); color: var(--ph-muted); background: var(--ph-card); border-radius: 4px; padding: 0 2px; line-height: 10px; }
+.phone .bx span:has(sup) { margin: 3px 1px 0 3px; }
 </style>
 
 <div class="wrap">
@@ -147,7 +150,8 @@ tr.pick td { background: var(--accent-soft); }
 
   <section class="reco">
     <h2>Cosa farei</h2>
-    <p><b>A · Per carico</b>, con la riga riassuntiva di B in testa a ogni esercizio. Il peso a sinistra, una volta sola; a destra le ripetizioni in caselline.
+    <p><b>Dopo il secondo giro:</b> se ti piacciono le barre, <b>C2</b> funziona per tutti gli esercizi, elastici e lati compresi, e mostra l'ordine da sé. Se vuoi i numeri esatti, <b>A2</b> tiene la tabella per carico e aggiunge l'ordine con un numerino per casella. Si possono anche unire: barre in alto, tabella sotto.</p>
+    <p style="margin-top:8px"><b>A · Per carico</b>, con la riga riassuntiva di B in testa a ogni esercizio. Il peso a sinistra, una volta sola; a destra le ripetizioni in caselline.
       Si legge come la schermata della serie (stessa grafica), i lati hanno due colonne rosa/verde e gli elastici il loro pallino colorato.
       Le note diventano un puntino giallo sulla serie e la nota sotto. L'ordine esatto delle serie resta nella schermata dell'esercizio.</p>
   </section>
@@ -220,6 +224,33 @@ const d19 = ex('Overhead Press', '11 sets · top 40 × 3', ln('20 kg', [6]) + ln
 const d20 = ex('Muscle Up', '9 sets · 9 reps', ln(band('purple'), [1]) + ln(band('black'), [1]) + ln(band('red'), [1]) + ln(band('yellow'), [1]) + ln('none', [1]) + ln(band('purple'), [1, 1]) + ln(band('black'), [1]) + ln(band('red'), [1]))
   + ex('Pull Up', '6 sets · 35 reps', ln('+15 kg', [5, 6, 7, 7, 5, 5]));
 
+// ---- C2: bars for every kind of exercise ----
+// band help, strongest first as in the exercise's list: green, purple, black, red, yellow; no band = no help
+const HELP = { green: 5, purple: 4, black: 3, red: 2, yellow: 1, none: 0 };
+const bar = (h, r, fill, opts = {}) => `<div><small>${r}${opts.note ? '<b style="color:var(--ph-yellow)">•</b>' : ''}</small><i style="height:${h}px;background:${fill};${opts.edge ? `box-shadow:inset 0 3px 0 ${opts.edge};` : ''}${fill === '#16181c' ? 'outline:1px solid #555;outline-offset:-1px;' : ''}"></i><em>${opts.label ?? ''}</em></div>`;
+const legend = (t) => `<span class="m" style="font-size:9.5px">${t}</span>`;
+const exb = (name, sum, hint, inner) => `<div class="ex"><div class="nm"><b>${name}</b><span>${sum}</span></div>${legend(hint)}<div class="bars" style="height:62px">${inner}</div></div>`;
+const muscle = ['purple', 'black', 'red', 'yellow', 'none', 'purple', 'purple', 'black', 'red'];
+const BC = { ...B, black: '#16181c', none: 'var(--ph-accent)' };
+const c2_20 = exb('Muscle Up', '9 sets · 9 reps', 'height = less help · color = band', muscle.map((b) => bar(8 + (5 - HELP[b]) * 7, 1, BC[b])).join(''))
+  + exb('One Arm Pull Up · band', '8 sets', 'same band (black) · height = reps · L pink, R green on top', [[1, 1, true, false], [3, 3, true, false], [3, 3, true, true], [2, 2, false, false]]
+    .map(([l, r, nl, nr]) => `<div style="flex-direction:row;align-items:flex-end;gap:1px">${bar(l * 13, l, '#16181c', { edge: 'var(--ph-pink)', note: nl })}${bar(r * 13, r, '#16181c', { edge: 'var(--ph-teal)', note: nr })}</div>`).join(''))
+  + exb('Pull Up', '6 sets · +15 kg · 35 reps', 'same load · height = reps', [5, 6, 7, 7, 5, 5].map((r) => bar(r * 6, r, 'var(--ph-accent)')).join(''))
+  + `<div class="nt">half rep · last rep half · last half rep</div>`;
+const c2_19 = exb('Overhead Press', '11 sets · top 40 × 3', 'height = kg, from the lightest (20) to the heaviest (40)', [[20, 6], [25, 5], [30, 5], [35, 5], [37.5, 5], [40, 3], [37.5, 5], [37.5, 5], [35, 5], [35, 5], [35, 4]]
+    .map(([kg, r]) => bar(10 + Math.round(((kg - 20) / 20) * 34), r, 'var(--ph-accent)', { label: kg })).join(''))
+  + exb('Box Pike Push Up', '6 sets · 30 reps', 'bodyweight · height = reps', [5, 6, 4, 5, 5, 5].map((r) => bar(r * 7, r, 'var(--ph-accent)')).join(''))
+  + exb('Lateral dumbbell raise', '3 sets · 6 kg', 'same load · height = reps', [10, 10, 10].map((r) => bar(40, r, 'var(--ph-accent)')).join(''));
+
+// ---- A2: by load, with the set number on each box ----
+const bxo = (xs, cls = '') => `<div class="bx ${cls}">${xs.map(([r, n, note]) => `<span${note ? ' class="n"' : ''}>${r}<sup>${n}</sup></span>`).join('')}</div>`;
+const lno = (ld, xs, cls) => `<div class="ln"><span class="ld">${ld}</span>${bxo(xs, cls)}</div>`;
+const a2_19 = ex('Overhead Press', '11 sets · top 40 × 3', lno('20 kg', [[6, 1]]) + lno('25 kg', [[5, 2]]) + lno('30 kg', [[5, 3]]) + lno('35 kg', [[5, 4], [5, 9], [5, 10], [4, 11]]) + lno('37.5 kg', [[5, 5], [5, 7], [5, 8]]) + lno('40 kg', [[3, 6]]))
+  + ex('Box Pike Push Up', '6 sets · 30 reps', lno('body', [[5, 1], [6, 2], [4, 3], [5, 4], [5, 5], [5, 6]]))
+  + ex('Lateral dumbbell raise', '3 sets', lno('6 kg', [[10, 1], [10, 2], [10, 3]]));
+const a2_20 = ex('Muscle Up', '9 sets · 9 reps', lno(band('purple'), [[1, 1], [1, 6], [1, 7]]) + lno(band('black'), [[1, 2], [1, 8]]) + lno(band('red'), [[1, 3], [1, 9]]) + lno(band('yellow'), [[1, 4]]) + lno('none', [[1, 5]]))
+  + ex('Pull Up', '6 sets · 35 reps', lno('+15 kg', [[5, 1], [6, 2], [7, 3], [7, 4], [5, 5], [5, 6]]));
+
 const day = (sel, label, inner) => phone(body(dayTop(sel, label) + inner));
 const C = [
   { k: '0', name: 'Com\'è oggi', short: 'Oggi',
@@ -253,12 +284,26 @@ const C = [
       ['<b>20 novembre:</b> il Muscle Up con elastici diversi diventa 8 righe.', day(20, 'Friday 20 November', d20)]],
     pro: ['Racconta la seduta com\'è andata.', 'Identica alla schermata della serie.'], con: ['Con molti cambi di carico torna lunga (Muscle Up: 8 righe da una serie).'],
     row: ['8 righe', 'l\'andamento della seduta', 'compattezza', 'medio'] },
+  { k: 'C2', name: 'Barre, anche con elastici e lati', short: 'Barre + elastici',
+    idea: 'Le barre in ordine di tempo, con una regola per ogni tipo di esercizio. Con il peso: altezza = peso. Con gli elastici: la barra è del colore dell\'elastico, e più è alta meno aiuto hai avuto (senza elastico = la più alta). Se il carico è sempre lo stesso (corpo libero, +15 kg fisso, stesso elastico): altezza = ripetizioni. Per lato: due barre affiancate, L rosa e R verde. Le ripetizioni sempre sopra.',
+    shots: [['<b>20 novembre:</b> Muscle Up a colori, il One Arm Pull Up a coppie L R, il Pull Up a +15 fisso per ripetizioni.', day(20, 'Friday 20 November', c2_20)],
+      ['<b>19 novembre:</b> la piramide per peso; il Box Pike a corpo libero per ripetizioni.', day(19, 'Thursday 19 November', c2_19)]],
+    pro: ['La forma della seduta in un colpo d\'occhio, per tutti i tipi di esercizio.', 'L\'ordine si vede: è il tempo, da sinistra a destra.', 'Gli elastici diventano il colore della barra.'],
+    con: ['L\'altezza vuol dire cose diverse a seconda dell\'esercizio (lo dice la scritta piccola accanto al nome).', 'Per gli elastici serve sapere quale aiuta di più: l\'ordine della lista nell\'esercizio, dal più forte al più leggero.'],
+    row: ['1 riga di barre', 'forma e ordine della seduta', 'il peso preciso di ogni barra (sotto, piccolo)', 'molto'] },
+  { k: 'A2', name: 'Per carico, con l\'ordine', short: 'Per carico + ordine',
+    idea: 'Come A, ma ogni casella porta un numerino: la serie in cui l\'hai fatta. Le righe restano per peso, l\'ordine si legge dai numeri.',
+    shots: [['<b>19 novembre:</b> il 35 kg ha le serie 4, 9, 10, 11: dopo il 40 sei sceso.', day(19, 'Thursday 19 November', a2_19)],
+      ['<b>20 novembre:</b> con gli elastici: purple alla serie 1 e poi di nuovo alla 6 e 7.', day(20, 'Friday 20 November', a2_20)]],
+    pro: ['La compattezza di A, e l\'ordine c\'è.', 'Si vede quando sei tornato indietro di peso.'],
+    con: ['Numerini piccoli: l\'ordine si legge, non si vede.'],
+    row: ['6 righe', 'peso, serie per peso, e l\'ordine', 'niente', 'medio'] },
 ];
 
 const sw = document.getElementById('switch');
 const box = document.getElementById('concept');
-let current = 1;
-try { const saved = localStorage.getItem('intervals-day-idea'); if (saved !== null && C[+saved]) current = +saved; } catch (e) {}
+let current = 5;
+try { const saved = localStorage.getItem('intervals-day-idea-2'); if (saved !== null && C[+saved]) current = +saved; } catch (e) {}
 function render() {
   const c = C[current];
   sw.innerHTML = C.map((x, i) => `<button type="button" aria-pressed="${i === current}" data-i="${i}"><span class="k">${x.k}</span>${x.short}</button>`).join('');
@@ -271,7 +316,7 @@ function render() {
       <div class="note con"><h3>Attenzione</h3><ul>${c.con.map((x) => `<li>${x}</li>`).join('')}</ul></div>
     </div>`;
   box.querySelectorAll('.phone').forEach((p, i) => p.setAttribute('aria-label', `${c.name}, screen ${i + 1}`));
-  try { localStorage.setItem('intervals-day-idea', String(current)); } catch (e) {}
+  try { localStorage.setItem('intervals-day-idea-2', String(current)); } catch (e) {}
 }
 sw.addEventListener('click', (e) => {
   const b = e.target.closest('button[data-i]');
@@ -279,6 +324,6 @@ sw.addEventListener('click', (e) => {
   current = +b.dataset.i;
   render();
 });
-document.getElementById('cmp').innerHTML = C.map((c) => `<tr class="${c.k === 'A' ? 'pick' : ''}"><td><b>${c.k} · ${c.name}</b></td>${c.row.map((x) => `<td>${x}</td>`).join('')}</tr>`).join('');
+document.getElementById('cmp').innerHTML = C.map((c) => `<tr class="${['C2', 'A2'].includes(c.k) ? 'pick' : ''}"><td><b>${c.k} · ${c.name}</b></td>${c.row.map((x) => `<td>${x}</td>`).join('')}</tr>`).join('');
 render();
 </script>
