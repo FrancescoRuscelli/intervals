@@ -14,6 +14,12 @@ fun startValues(today: List<GymSet>, lastTime: List<GymSet>, side: Side? = null)
     side?.let { s -> today.lastOrNull { it.side == s } ?: lastTime.firstOrNull { it.side == s } }
         ?: today.lastOrNull() ?: lastTime.firstOrNull()
 
+/** The last set done in [variant], today's included; on [side] when there is one there. Null = never done. */
+fun lastOfVariant(all: List<GymSet>, ex: Exercise, variant: String, side: Side? = null): GymSet? {
+    val mine = all.filter { it.variantOf(ex) == variant }.sortedWith(compareBy({ it.day }, { it.order }))
+    return side?.let { sd -> mine.lastOrNull { it.side == sd } } ?: mine.lastOrNull()
+}
+
 /** After a set on one side, the next is on the other; "both" stays both. */
 fun SideChoice.afterSet(): SideChoice = when (this) {
     SideChoice.LEFT -> SideChoice.RIGHT

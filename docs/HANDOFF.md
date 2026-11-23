@@ -69,7 +69,12 @@ From the [set screen ideas](mockups/intervals-set-screen-ideas.html), the user c
 - **A, spec chips.** The specifications are one row of chips ("20 mm ✎", "half crimp ✎"). Tapping one opens a dialog, and a single choice closes it.
 - **B1, three buttons.** For a per-side exercise, the L / R / Both switch is replaced by **Log L · L + R · Log R**, with the next side lit in its color. Editing a set still has the L / R switch.
 - **Trial setting.** Settings › Workout › "Gym log buttons at the bottom" puts the buttons fixed at the bottom (on, the default) or after the numbers, as before (off). Remove the setting once the user picks one.
-- **Not changed yet.** The variant switch stays as it is, for the one-tap switch between deep and normal. D (START for timed sets) is for later.
+- **Variants (A5a from the [variant mockup](mockups/intervals-variant-switch.html), installed 2026-11-24).**
+  - The switch at the top is gone. The variants are one row just above the log buttons, each showing its last set ("normal · 90 × 5").
+  - With more than three variants the row scrolls, and the fourth is cut off to show it goes on.
+  - Tapping a variant switches to it and brings back that variant's last numbers (`lastOfVariant`, on the same side). Editing a set changes only its variant.
+  - Not yet seen on the phone.
+- **Later.** D (START for timed sets).
 
 ## Journal and Stats decision
 

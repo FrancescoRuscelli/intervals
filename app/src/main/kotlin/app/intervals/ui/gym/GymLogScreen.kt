@@ -38,6 +38,7 @@ import androidx.compose.foundation.layout.widthIn
 import app.intervals.core.loadBlocks
 import app.intervals.core.boxText
 import app.intervals.core.variantOf
+import app.intervals.core.lastOfVariant
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
@@ -119,6 +120,7 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
     val ex = exercises.firstOrNull { it.id == exerciseId } ?: return
     val sets by remember(exerciseId, day) { vm.exerciseDay(exerciseId, day) }.collectAsStateWithLifecycle(null)
     val lastTime by produceState<List<GymSet>?>(null, exerciseId, day) { value = vm.lastSets(exerciseId, day) }
+    val allSets by remember(exerciseId) { vm.exerciseAll(exerciseId) }.collectAsStateWithLifecycle(emptyList())
 
     var values by remember(exerciseId) { mutableStateOf<Values?>(null) }
     var side by remember(exerciseId) { mutableStateOf<SideChoice?>(null) }
@@ -151,7 +153,9 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
         val today = sets ?: return@LaunchedEffect
         val last = lastTime ?: return@LaunchedEffect
         val s = when (side) { SideChoice.LEFT -> Side.LEFT; SideChoice.RIGHT -> Side.RIGHT; else -> return@LaunchedEffect }
-        startValues(today, last, s)?.let { values = it.toValues() }
+        // with variants, the side's last set in the variant in use
+        val variant = ex.variants.takeIf { it.isNotEmpty() }?.let { vs -> values?.variant?.takeIf { it in vs } ?: vs.first() }
+        (variant?.let { lastOfVariant(allSets, ex, it, s) } ?: startValues(today, last, s))?.let { values = it.toValues() }
     }
     val list = sets.orEmpty()
     val selectedSets = list.filter { it.id in selectedIds }
@@ -180,7 +184,19 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
     var openSpec by remember { mutableStateOf<app.intervals.core.Spec?>(null) }
     // trial: compare the log buttons fixed at the bottom with the buttons after the numbers
     val buttonsAtBottom = vm.settings.collectAsStateWithLifecycle().value.logButtonsAtBottom
-    val setButtons: @Composable () -> Unit = {
+    val setButtons: @Composable () -> Unit = { Column {
+        // the variants just above the button (mockup intervals-variant-switch.html, A5a): a tap switches and brings back that variant's numbers
+        if (ex.variants.isNotEmpty()) {
+            val cur = v.variant?.takeIf { it in ex.variants } ?: ex.variants.first()
+            val plain = remember(ex) { ex.copy(variants = emptyList(), specs = emptyList()) }
+            VariantRow(ex.variants, cur, { lastOfVariant(allSets, ex, it)?.summary(plain) ?: "—" }, enabled = !bulk) { picked ->
+                val side1 = when (side) { SideChoice.LEFT -> Side.LEFT; SideChoice.RIGHT -> Side.RIGHT; else -> null }
+                // editing a set changes only its variant; a new set takes the variant's own last numbers
+                if (edit != null) change { it.copy(variant = picked) }
+                else values = lastOfVariant(allSets, ex, picked, side1)?.toValues()?.copy(variant = picked) ?: v.copy(variant = picked)
+            }
+            Spacer(Modifier.height(8.dp))
+        }
         if (edit != null) {
             BigButton("Update set", p.workTint, p.workText, {
                 vm.updateGymSet(v.into(edit.copy(side = editSide), ex))
@@ -195,7 +211,7 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
                 measured = false
             }
         }
-    }
+    } }
 
     Column(Modifier.fillMaxSize().background(p.bg).statusBarsPadding().navigationBarsPadding()) {
         if (selecting) Row(
@@ -233,7 +249,6 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
             }
         }
         Box(Modifier.fillMaxWidth().height(1.dp).background(p.surface))
-        val allSets by remember(exerciseId) { vm.exerciseAll(exerciseId) }.collectAsStateWithLifecycle(emptyList())
         // with variants, History / Graph / Records can show one variant (mockup G19c)
         var variantFilter by androidx.compose.runtime.saveable.rememberSaveable(exerciseId) { mutableStateOf<String?>(null) }
         if (tab != 0 && ex.variants.isNotEmpty()) {
@@ -257,13 +272,6 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
         if (tab == 0) LazyColumn(
             Modifier.weight(1f), state = logScroll, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            if (ex.variants.isNotEmpty()) item {
-                val cur = v.variant?.takeIf { it in ex.variants } ?: ex.variants.first()
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("VARIANT \u00B7 STAYS ON THE LAST ONE", color = p.muted, fontSize = 12.sp, letterSpacing = 0.4.sp, fontWeight = FontWeight.SemiBold)
-                    Segmented(ex.variants, ex.variants.indexOf(cur), enabled = !bulk) { i -> change { it.copy(variant = ex.variants[i]) } }
-                }
-            }
             // a new set picks its side with the log buttons; editing a set keeps L / R here
             if (ex.perSide && edit != null) item {
                 val sides = listOf(Side.LEFT, Side.RIGHT)
@@ -530,6 +538,38 @@ private fun NumberDialog(title: String, initial: String, decimal: Boolean, onDis
         confirmButton = { TextButton(enabled = n != null, onClick = { n?.let(onDone) }) { Text("OK") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     )
+}
+
+/** The exercise's variants in one row, each with its last set under the name; past three the row scrolls, the fourth cut to show it goes on. */
+@Composable
+private fun VariantRow(variants: List<String>, current: String, last: (String) -> String, enabled: Boolean, onPick: (String) -> Unit) {
+    val p = LocalPalette.current
+    val state = androidx.compose.foundation.lazy.rememberLazyListState()
+    // keep the variant in use on screen
+    LaunchedEffect(current) {
+        val i = variants.indexOf(current)
+        if (state.layoutInfo.visibleItemsInfo.none { it.index == i && it.offset >= 0 }) state.animateScrollToItem(i)
+    }
+    androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxWidth().alpha(if (enabled) 1f else 0.45f)) {
+        val gap = 6.dp
+        val w = if (variants.size <= 3) (maxWidth - gap * (variants.size - 1)) / variants.size else (maxWidth - gap * 3) / 3.4f
+        androidx.compose.foundation.lazy.LazyRow(state = state, horizontalArrangement = Arrangement.spacedBy(gap)) {
+            items(variants.size) { i ->
+                val name = variants[i]
+                val on = name == current
+                val shape = RoundedCornerShape(12.dp)
+                Column(
+                    Modifier.width(w).heightIn(min = 48.dp).clip(shape).background(if (on) p.accent else p.surface).border(1.dp, if (on) p.accent else p.line, shape)
+                        .semantics { selected = on }.clickable(enabled = enabled, onClickLabel = "Switch to $name") { onPick(name) }
+                        .padding(horizontal = 4.dp, vertical = 6.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(name, color = if (on) p.onAccent else p.text, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                    Text(last(name), color = if (on) p.onAccent.copy(alpha = 0.8f) else p.muted, fontSize = 11.sp, maxLines = 1)
+                }
+            }
+        }
+    }
 }
 
 @Composable

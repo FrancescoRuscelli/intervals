@@ -25,6 +25,19 @@ class GymLogTest {
     }
 
     @Test
+    fun eachVariantStartsFromItsOwnLastSet() {
+        // 17 Nov: deep up to 80, normal 90, then back to deep
+        val squat = Exercise(1, "Squat", listOf(GymField.WEIGHT, GymField.REPS), variants = listOf("deep", "half", "normal"))
+        val old = set(70.0).copy(day = "2026-11-10", variant = "normal")
+        val today = listOf(set(60.0).copy(order = 0, variant = "deep"), set(80.0).copy(order = 1, variant = "deep"), set(90.0).copy(order = 2, variant = "normal"))
+        assertEquals(90.0, lastOfVariant(today + old, squat, "normal")?.weightKg)
+        assertEquals(80.0, lastOfVariant(listOf(old) + today, squat, "deep")?.weightKg)
+        assertEquals(null, lastOfVariant(today, squat, "half"))
+        // no variant written = the first one
+        assertEquals(40.0, lastOfVariant(listOf(set(40.0)), squat, "deep")?.weightKg)
+    }
+
+    @Test
     fun sidesAlternateAndBothWritesTwo() {
         assertEquals(SideChoice.RIGHT, SideChoice.LEFT.afterSet())
         assertEquals(SideChoice.BOTH, SideChoice.BOTH.afterSet())
