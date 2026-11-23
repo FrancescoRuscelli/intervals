@@ -233,12 +233,12 @@ const BC = { ...B, black: '#16181c', none: 'var(--ph-accent)' };
 const c2_20 = exb('Muscle Up', '9 sets · 9 reps', 'height = reps · color = band', muscle.map((b) => bar(13, 1, BC[b])).join(''))
   + exb('One Arm Pull Up · band', '8 sets', 'height = reps · color = band · L pink, R green on top', [[1, 1, true, false], [3, 3, true, false], [3, 3, true, true], [2, 2, false, false]]
     .map(([l, r, nl, nr]) => `<div style="flex-direction:row;align-items:flex-end;gap:1px">${bar(l * 13, l, '#16181c', { edge: 'var(--ph-pink)', note: nl })}${bar(r * 13, r, '#16181c', { edge: 'var(--ph-teal)', note: nr })}</div>`).join(''))
-  + exb('Pull Up', '6 sets · +15 kg · 35 reps', 'same load · height = reps', [5, 6, 7, 7, 5, 5].map((r) => bar(r * 6, r, 'var(--ph-accent)')).join(''))
+  + exb('Pull Up', '6 sets · 35 reps', 'height = reps · kg under each bar', [5, 6, 7, 7, 5, 5].map((r) => bar(r * 6, r, 'var(--ph-accent)', { label: 15 })).join(''))
   + `<div class="nt">half rep · last rep half · last half rep</div>`;
-const c2_19 = exb('Overhead Press', '11 sets · top 40 × 3', 'height = kg, from the lightest (20) to the heaviest (40)', [[20, 6], [25, 5], [30, 5], [35, 5], [37.5, 5], [40, 3], [37.5, 5], [37.5, 5], [35, 5], [35, 5], [35, 4]]
-    .map(([kg, r]) => bar(10 + Math.round(((kg - 20) / 20) * 34), r, 'var(--ph-accent)', { label: kg })).join(''))
-  + exb('Box Pike Push Up', '6 sets · 30 reps', 'bodyweight · height = reps', [5, 6, 4, 5, 5, 5].map((r) => bar(r * 7, r, 'var(--ph-accent)')).join(''))
-  + exb('Lateral dumbbell raise', '3 sets · 6 kg', 'same load · height = reps', [10, 10, 10].map((r) => bar(40, r, 'var(--ph-accent)')).join(''));
+const c2_19 = exb('Overhead Press', '11 sets · top 40 × 3', 'height = reps · kg under each bar', [[20, 6], [25, 5], [30, 5], [35, 5], [37.5, 5], [40, 3], [37.5, 5], [37.5, 5], [35, 5], [35, 5], [35, 4]]
+    .map(([kg, r]) => bar(r * 7, r, 'var(--ph-accent)', { label: kg })).join(''))
+  + exb('Box Pike Push Up', '6 sets · 30 reps', 'height = reps · bodyweight', [5, 6, 4, 5, 5, 5].map((r) => bar(r * 7, r, 'var(--ph-accent)')).join(''))
+  + exb('Lateral dumbbell raise', '3 sets', 'height = reps · kg under each bar', [10, 10, 10].map((r) => bar(r * 4, r, 'var(--ph-accent)', { label: 6 })).join(''));
 
 // ---- A2: by load, with the set number on each box ----
 const bxo = (xs, cls = '') => `<div class="bx ${cls}">${xs.map(([r, n, note]) => `<span${note ? ' class="n"' : ''}>${r}<sup>${n}</sup></span>`).join('')}</div>`;
@@ -283,11 +283,11 @@ const C = [
     pro: ['Racconta la seduta com\'è andata.', 'Identica alla schermata della serie.'], con: ['Con molti cambi di carico torna lunga (Muscle Up: 8 righe da una serie).'],
     row: ['8 righe', 'l\'andamento della seduta', 'compattezza', 'medio'] },
   { k: 'C2', name: 'Barre, anche con elastici e lati', short: 'Barre + elastici',
-    idea: 'Le barre in ordine di tempo, con una regola per ogni tipo di esercizio. Con il peso: altezza = peso. Con gli elastici: altezza = ripetizioni, e la barra ha il colore dell\'elastico (senza elastico, viola). Se il carico è sempre lo stesso (corpo libero, +15 kg fisso): altezza = ripetizioni. Per lato: due barre affiancate, L rosa e R verde. Le ripetizioni sempre sopra.',
+    idea: 'Le barre in ordine di tempo, e l\'altezza è sempre la stessa cosa: le ripetizioni. Il carico è scritto sotto ogni barra (i kg) o è il colore della barra (l\'elastico; senza elastico, viola). Per lato: due barre affiancate, con L rosa e R verde in cima. Le ripetizioni anche scritte sopra.',
     shots: [['<b>20 novembre:</b> Muscle Up: una ripetizione per serie, quindi barre uguali; il colore dice l\'elastico. One Arm Pull Up a coppie L R.', day(20, 'Friday 20 November', c2_20)],
-      ['<b>19 novembre:</b> la piramide per peso; il Box Pike a corpo libero per ripetizioni.', day(19, 'Thursday 19 November', c2_19)]],
-    pro: ['La forma della seduta in un colpo d\'occhio, per tutti i tipi di esercizio.', 'L\'ordine si vede: è il tempo, da sinistra a destra.', 'Gli elastici diventano il colore della barra.'],
-    con: ['L\'altezza vuol dire cose diverse a seconda dell\'esercizio (lo dice la scritta piccola accanto al nome).', 'Con il peso l\'altezza è il peso, altrimenti sono le ripetizioni.'],
+      ['<b>19 novembre:</b> l\'Overhead Press per ripetizioni: il 40 × 3 è la barra bassa in mezzo, i kg sotto.', day(19, 'Thursday 19 November', c2_19)]],
+    pro: ['La forma della seduta in un colpo d\'occhio, per tutti i tipi di esercizio.', 'L\'ordine si vede: è il tempo, da sinistra a destra.', 'Gli elastici diventano il colore della barra.', 'L\'altezza vuol dire sempre la stessa cosa: le ripetizioni.'],
+    con: ['La forma della piramide di pesi non si vede più: i kg sono solo i numeri sotto (per quello c\'è la tabella A2).'],
     row: ['1 riga di barre', 'forma e ordine della seduta', 'il peso preciso di ogni barra (sotto, piccolo)', 'molto'] },
   { k: 'A2', name: 'Per carico, con l\'ordine', short: 'Per carico + ordine',
     idea: 'Come A, ma ogni casella porta un numerino: la serie in cui l\'hai fatta. Le righe restano per peso, l\'ordine si legge dai numeri.',
