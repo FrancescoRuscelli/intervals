@@ -105,6 +105,35 @@ class GymRowsTest {
     }
 
     @Test
+    fun loadRowsByWeightKeepTheSetNumbers() {
+        // 19 Nov: the pyramid, back down after the 40
+        val ohp = Exercise(12, "Overhead Press", listOf(GymField.WEIGHT, GymField.REPS))
+        val day = listOf(20.0 to 6, 25.0 to 5, 35.0 to 5, 40.0 to 3, 35.0 to 4).map { (kg, r) -> set(kg, r).copy(exerciseId = 12) }
+        val rows = loadRows(day, ohp)
+        assertEquals(listOf("20 kg", "25 kg", "35 kg", "40 kg"), rows.map { it.label })
+        assertEquals(listOf(3, 5), rows[2].sets.map { it.index })
+        // bands: the color, not the word, and one row per band
+        val mu = Exercise(13, "Muscle Up", listOf(GymField.REPS), specs = listOf(BANDS_SPEC))
+        val b = { band: String? -> GymSet(exerciseId = 13, day = "2026-11-20", order = 0, reps = 1, specs = band?.let { mapOf("Bands" to it) }.orEmpty()) }
+        val bandRows = loadRows(listOf(b("purple"), b("black"), b(null), b("purple")), mu)
+        assertEquals(listOf(listOf(BANDS_SPEC.colors.getValue("purple")), listOf(BANDS_SPEC.colors.getValue("black")), emptyList()), bandRows.map { it.colors })
+        assertEquals(listOf(listOf(1, 4), listOf(2), listOf(3)), bandRows.map { r -> r.sets.map { it.index } })
+        assertEquals("", bandRows[0].label)
+    }
+
+    @Test
+    fun barsAreAlwaysReps() {
+        val pu = Exercise(14, "Pull Up", listOf(GymField.WEIGHT, GymField.REPS))
+        val bars = dayBars(listOf(set(15.0, 5).copy(note = "slow"), set(0.0, 7)), pu)
+        assertEquals(listOf(5.0, 7.0), bars.map { it.value })
+        assertEquals(listOf("15", ""), bars.map { it.under })
+        assertEquals(listOf(true, false), bars.map { it.note })
+        val mu = Exercise(13, "Muscle Up", listOf(GymField.REPS), specs = listOf(BANDS_SPEC))
+        val two = GymSet(exerciseId = 13, day = "2026-11-20", order = 0, reps = 2, specs = mapOf("Bands" to "red+red"))
+        assertEquals(listOf(BANDS_SPEC.colors.getValue("red"), BANDS_SPEC.colors.getValue("red")), dayBars(listOf(two), mu).single().colors)
+    }
+
+    @Test
     fun variantsInTheTextAndRows() {
         val squat = Exercise(10, "Squat", listOf(GymField.WEIGHT, GymField.REPS), variants = listOf("deep", "half", "normal"))
         val deep = set(70.0, 5).copy(exerciseId = 10)

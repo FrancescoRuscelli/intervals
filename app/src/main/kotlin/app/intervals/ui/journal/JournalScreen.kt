@@ -63,6 +63,9 @@ import androidx.compose.ui.unit.sp
 import app.intervals.core.Exercise
 import app.intervals.core.GymGroup
 import app.intervals.core.GymSet
+import app.intervals.core.JournalSets
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.widthIn
 import app.intervals.core.Session
 import app.intervals.core.day
 import app.intervals.core.formatDuration
@@ -323,7 +326,8 @@ private fun DayEntry(
             }
         }
         if (sets.isNotEmpty() || note.isNotBlank()) {
-            GymDayCard(sets, exercises.associateBy { it.id }, groups, records, note = note) { vm.openGymDay(day) }
+            val mode = vm.settings.collectAsState().value.journalSets
+            GymDayCard(sets, exercises.associateBy { it.id }, groups, records, note = note, mode = mode) { vm.openGymDay(day) }
             Spacer(Modifier.height(6.dp))
         }
         if (sessions.isEmpty() && sets.isEmpty() && note.isBlank()) {
@@ -448,11 +452,11 @@ private fun SessionCard(s: Session, zone: ZoneId, onNote: () -> Unit, onLongPres
     }
 }
 
-/** The gym sets of a day as one card: each exercise with its rows ("80 × 5 ×3, 85 × 3"), then the notes. Tap = open in Gym. */
+/** The gym sets of a day as one card: each exercise as bars and / or its table by load ([mode]), then the notes. Tap = open in Gym. */
 @Composable
 private fun GymDayCard(
     sets: List<app.intervals.core.GymSet>, exercises: Map<Long, app.intervals.core.Exercise>,
-    groups: List<app.intervals.core.GymGroup>, records: Int, note: String = "", onOpen: () -> Unit,
+    groups: List<app.intervals.core.GymGroup>, records: Int, note: String = "", mode: JournalSets = JournalSets.BOTH, onOpen: () -> Unit,
 ) {
     val p = LocalPalette.current
     val byExercise = sets.sortedBy { it.order }.groupBy { it.exerciseId }
@@ -485,16 +489,80 @@ private fun GymDayCard(
             }
             byExercise.forEach { (id, exSets) ->
                 val ex = exercises[id] ?: return@forEach
-                val rows = app.intervals.core.dayRows(exSets).joinToString(", ") { r ->
-                    (if (r.set.side != null) r.label + " " else "") + r.set.summary(ex) + if (r.count > 1) " ×${r.count}" else ""
-                }
-                Text(buildAnnotatedString {
-                    withStyle(SpanStyle(color = p.text, fontWeight = FontWeight.SemiBold)) { append(ex.name) }
-                    append("  $rows")
-                }, color = p.soft, fontSize = 13.sp)
+                ExerciseOfDay(ex, exSets, mode)
             }
             (listOf(note) + sets.map { it.note }).filter { it.isNotBlank() }.distinct().forEach {
                 Text("“$it”", color = p.muted, fontSize = 13.sp, fontStyle = FontStyle.Italic)
+            }
+        }
+    }
+}
+
+/** One exercise of the day (mockup intervals-journal-day-ideas.html): its name and sets, then the bars (C2) and / or the table by load (A2). */
+@Composable
+private fun ExerciseOfDay(ex: Exercise, sets: List<GymSet>, mode: JournalSets) {
+    val p = LocalPalette.current
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 4.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(ex.name, color = p.text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+            val top = app.intervals.core.topSet(sets, ex)?.takeIf { app.intervals.core.GymField.WEIGHT in ex.fields }
+            Text("${sets.size} set${if (sets.size == 1) "" else "s"}" + (top?.let { " · top " + it.summary(ex) } ?: ""), color = p.muted, fontSize = 11.sp, maxLines = 1)
+        }
+        if (mode != JournalSets.TABLE) DayBars(app.intervals.core.dayBars(sets, ex))
+        if (mode != JournalSets.BARS) LoadTable(app.intervals.core.loadRows(sets, ex))
+    }
+}
+
+/** A bar per set in the order done, always as high as its reps; the band colors fill it, the side is a cap (L pink, R green), the kg are under it. */
+@Composable
+private fun DayBars(bars: List<app.intervals.core.DayBar>) {
+    val p = LocalPalette.current
+    val max = bars.maxOfOrNull { it.value }?.coerceAtLeast(1.0) ?: return
+    Row(Modifier.fillMaxWidth().height(78.dp), horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.Bottom) {
+        bars.forEach { b ->
+            Column(Modifier.weight(1f, fill = false).width(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Bottom) {
+                Text(b.top, color = if (b.note) p.yellow else p.text, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
+                val shape = RoundedCornerShape(topStart = 3.dp, topEnd = 3.dp)
+                Column(Modifier.fillMaxWidth().height((6 + 40 * b.value / max).dp).clip(shape).border(1.dp, p.line, shape)) {
+                    b.side?.let { Box(Modifier.fillMaxWidth().height(3.dp).background(if (it == app.intervals.core.Side.LEFT) p.pink else p.teal)) }
+                    if (b.colors.isEmpty()) Box(Modifier.fillMaxWidth().weight(1f).background(p.accent))
+                    b.colors.forEach { Box(Modifier.fillMaxWidth().weight(1f).background(Color(it))) }
+                }
+                Text(b.under, color = p.muted, fontSize = 9.sp, maxLines = 1, softWrap = false)
+            }
+        }
+    }
+}
+
+/** The sets by load, lightest first: the load (or its band colors) on the left, the reps in boxes with their number in the day's order. */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun LoadTable(rows: List<app.intervals.core.LoadRow>) {
+    val p = LocalPalette.current
+    rows.forEach { r ->
+        Row(verticalAlignment = Alignment.Top) {
+            Row(Modifier.width(70.dp).padding(top = 9.dp, end = 8.dp), horizontalArrangement = Arrangement.spacedBy(2.dp, Alignment.End), verticalAlignment = Alignment.CenterVertically) {
+                r.colors.forEach { Box(Modifier.size(11.dp).clip(CircleShape).background(Color(it)).border(1.dp, Color(0x55FFFFFF), CircleShape)) }
+                if (r.label.isNotEmpty() || r.colors.isEmpty()) {
+                    Text(r.label.ifEmpty { "–" }, color = p.muted, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, textAlign = TextAlign.End)
+                }
+            }
+            androidx.compose.foundation.layout.FlowRow(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(5.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                r.sets.forEach { (n, s) ->
+                    val tint = when (s.side) {
+                        app.intervals.core.Side.LEFT -> p.pink.copy(alpha = 0.25f)
+                        app.intervals.core.Side.RIGHT -> p.teal.copy(alpha = 0.25f)
+                        null -> p.bg
+                    }
+                    Box(Modifier.padding(top = 4.dp, start = 4.dp)) {
+                        Box(Modifier.height(24.dp).widthIn(min = 24.dp).clip(RoundedCornerShape(6.dp)).background(tint).padding(horizontal = 5.dp), contentAlignment = Alignment.Center) {
+                            Text(s.reps?.toString() ?: s.timeSec?.let { app.intervals.core.formatTime(it) } ?: "✓", color = p.text, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                        // the set's number in the day; yellow when it has a note
+                        Text("$n", color = if (s.note.isNotBlank()) p.yellow else p.muted, fontSize = 8.sp, fontWeight = FontWeight.Bold,
+                            modifier = Modifier.align(Alignment.TopStart).offset(x = (-4).dp, y = (-4).dp).clip(RoundedCornerShape(4.dp)).background(p.surface).padding(horizontal = 2.dp))
+                    }
+                }
             }
         }
     }

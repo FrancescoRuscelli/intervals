@@ -118,3 +118,37 @@ fun loadBlocks(sets: List<GymSet>, ex: Exercise): List<LoadBlock> {
     }
     return out
 }
+
+/** The colors of a set's colored specs (e.g. its bands), one per band; empty when none. */
+fun GymSet.specColors(ex: Exercise): List<Long> = ex.specs.filter { it.colors.isNotEmpty() }.flatMap { sp ->
+    specs[sp.name]?.let { v -> if (sp.multiple) sp.counts(v).flatMap { (c, n) -> List(n) { sp.colors[c] } } else listOf(sp.colors[v]) }.orEmpty()
+}.filterNotNull()
+
+/** One row of a day's table by load (mockup intervals-journal-day-ideas.html, A2): the load, its band colors, and its sets with their number in the day. */
+data class LoadRow(val label: String, val colors: List<Long>, val sets: List<IndexedValue<GymSet>>)
+
+/** The day's sets of an exercise by load, lightest first; each set keeps its number (1-based) in the order they were done. */
+fun loadRows(sets: List<GymSet>, ex: Exercise): List<LoadRow> {
+    val colored = ex.specs.filter { it.colors.isNotEmpty() }.map { it.name }.toSet()
+    return sets.withIndex().map { IndexedValue(it.index + 1, it.value) }
+        .groupBy { (_, s) ->
+            val plain = s.copy(specs = s.specs - colored)
+            Triple(s.variantOf(ex), plain.loadText(ex), s.specColors(ex))
+        }
+        .entries.sortedWith(compareBy({ it.value.first().value.weightKg ?: 0.0 }, { it.value.first().index }))
+        .map { (k, v) -> LoadRow(listOfNotNull(k.first, k.second.ifEmpty { null }).joinToString(" · "), k.third, v) }
+}
+
+/** One bar of a day's bars (mockup intervals-journal-day-ideas.html, C2): always as high as its reps (else time, distance), in the day's order. */
+data class DayBar(val value: Double, val top: String, val under: String, val colors: List<Long>, val side: Side?, val note: Boolean)
+
+fun dayBars(sets: List<GymSet>, ex: Exercise): List<DayBar> = sets.map { s ->
+    val value = when (boxField(ex)) {
+        GymField.REPS -> (s.reps ?: 0).toDouble()
+        GymField.TIME -> (s.timeSec ?: 0).toDouble()
+        GymField.DISTANCE -> s.distance ?: 0.0
+        else -> 1.0
+    }
+    val kg = s.weightKg?.takeIf { GymField.WEIGHT in ex.fields && it != 0.0 }?.let(::formatKg).orEmpty()
+    DayBar(value, s.boxText(ex), kg, s.specColors(ex), s.side, s.note.isNotBlank())
+}

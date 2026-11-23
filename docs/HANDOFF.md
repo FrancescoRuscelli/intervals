@@ -24,6 +24,18 @@ The user tried the diary of option 2 in the [month and diary mockup](mockups/int
 - **Picking.** Tapping a day selects it. Swiping the month selects its last trained day.
 - **Code.** The diary code (`Diary.kt`) is gone.
 
+## Journal day: bars and the table by load (installed 2026-11-23)
+
+The user could not choose between ideas C2 and A2 in the [Journal day ideas](mockups/intervals-journal-day-ideas.html), so both are built.
+
+- **Setting.** Settings > Workout > "Gym sets in the Journal" offers Bars, Table, or Both. The default is Both.
+- **Bars (C2).** There is one bar per set, in the order done. The height is always the reps (or the time).
+  - Band colors fill the bar.
+  - The side is a cap on top: L pink, R green.
+  - The kg are written under the bar. The reps are above it, in yellow when the set has a note.
+- **Table (A2).** The sets are grouped by load, lightest first, with the band dots as the label. Each reps box carries its set number in the day, in yellow when the set has a note. L and R boxes are tinted pink and green.
+- **Code.** The logic is `loadRows` and `dayBars` in `GymRows.kt`, with tests.
+
 ## Rest timer (installed 2026-11-23, to try)
 
 Built from option **3** in the [rest timer mockup](mockups/intervals-rest-timer.html). Like the Journal diary, it waits for the phone to be connected.

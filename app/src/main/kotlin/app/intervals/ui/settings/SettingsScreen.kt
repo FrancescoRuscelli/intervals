@@ -43,6 +43,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.intervals.core.AppSettings
 import app.intervals.core.DiscAnimation
 import app.intervals.core.ThemeMode
+import app.intervals.core.JournalSets
 import app.intervals.ui.AppViewModel
 import app.intervals.ui.LocalPalette
 import app.intervals.ui.editor.Labeled
@@ -107,6 +108,10 @@ fun SettingsScreen(vm: AppViewModel) {
             SwitchRow("Series and round numbers", "Small 3/6 and 2/4 on the rings of the player", s.showCounters) { v -> set { it.copy(showCounters = v) } }
             SwitchRow("Keep the screen on", "Only while a workout runs", s.keepScreenOn) { v -> set { it.copy(keepScreenOn = v) } }
             SwitchRow("Lock the controls", "Avoid taps by mistake; hold to unlock", s.lockControls) { v -> set { it.copy(lockControls = v) } }
+            Text("Gym sets in the Journal", color = p.text, fontSize = 15.sp, modifier = Modifier.padding(top = 10.dp))
+            Text("Bars: a bar per set, as high as its reps · Table: by load, with the set number", color = p.muted, fontSize = 12.sp, modifier = Modifier.padding(bottom = 8.dp))
+            Segmented(listOf("Bars", "Table", "Both"), s.journalSets.ordinal) { i -> set { it.copy(journalSets = JournalSets.entries[i]) } }
+            Spacer(Modifier.height(6.dp))
             SwitchRow("Gym log buttons at the bottom", "Trial: off puts them after the numbers, as before", s.logButtonsAtBottom) { v -> set { it.copy(logButtonsAtBottom = v) } }
         }
 

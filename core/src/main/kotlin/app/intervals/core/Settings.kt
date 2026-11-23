@@ -5,6 +5,9 @@ import kotlinx.serialization.Serializable
 @Serializable
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
+@Serializable
+enum class JournalSets { BARS, TABLE, BOTH }
+
 /** What the disc does at every new series (it always inflates; the end of the workout is always a coin flip). */
 @Serializable
 enum class DiscAnimation { CALM, CRAZY_SPIN }
@@ -32,6 +35,8 @@ data class AppSettings(
     val lockControls: Boolean = false,
     /** Trial: the gym log buttons fixed at the bottom (true) or after the numbers, as before (false). */
     val logButtonsAtBottom: Boolean = true,
+    /** How the Journal shows a day's gym sets: bars, the table by load, or both (bars above the table). */
+    val journalSets: JournalSets = JournalSets.BOTH,
 ) {
     init {
         require(volume in 0f..1f) { "volume must be in 0..1" }
