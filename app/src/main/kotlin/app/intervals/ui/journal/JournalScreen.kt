@@ -561,7 +561,7 @@ private fun LoadTable(rows: List<app.intervals.core.LoadRow>, numbers: Boolean, 
     val p = LocalPalette.current
     rows.forEach { r ->
         Row(verticalAlignment = Alignment.Top) {
-            Row(Modifier.width(70.dp).padding(top = 9.dp, end = 8.dp), horizontalArrangement = Arrangement.spacedBy(2.dp, Alignment.End), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.width(70.dp).padding(top = 3.dp, end = 8.dp), horizontalArrangement = Arrangement.spacedBy(2.dp, Alignment.End), verticalAlignment = Alignment.CenterVertically) {
                 r.colors.forEach { Box(Modifier.size(11.dp).clip(CircleShape).background(Color(it)).border(1.dp, Color(0x55FFFFFF), CircleShape)) }
                 if (r.label.isNotEmpty() || r.colors.isEmpty()) {
                     Text(r.label.ifEmpty { "–" }, color = p.muted, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, textAlign = TextAlign.End)
