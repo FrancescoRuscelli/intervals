@@ -111,6 +111,19 @@ data class GymSetEntity(
     @androidx.room.ColumnInfo(defaultValue = "NULL") val sessionName: String? = null,
 )
 
+/** The fields changed when editing a logged set or upgrading its exercise values. */
+data class GymSetValues(
+    val id: Long,
+    val side: String?,
+    val weightKg: Double?,
+    val reps: Int?,
+    val timeSec: Int?,
+    val distance: Double?,
+    val bands: String,
+    val specs: String,
+    val variant: String?,
+)
+
 /** A category tag or workout group (name + ordered exercises with optional plans, as JSON). */
 @Entity(tableName = "gym_groups")
 data class GymGroupEntity(

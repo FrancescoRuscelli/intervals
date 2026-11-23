@@ -161,11 +161,14 @@ interface GymDao {
     @Insert
     suspend fun insertSet(set: GymSetEntity): Long
 
-    @Update
-    suspend fun updateSet(set: GymSetEntity)
+    @Update(entity = GymSetEntity::class)
+    suspend fun updateSet(set: GymSetValues)
 
     @Query("UPDATE gym_sets SET note = :note WHERE id IN (:ids)")
     suspend fun setNotes(ids: List<Long>, note: String)
+
+    @Query("UPDATE gym_sets SET note = CASE WHEN note = '' THEN :note ELSE note || ' · ' || :note END WHERE id IN (:ids)")
+    suspend fun appendSetNote(ids: List<Long>, note: String)
 
     @Query("DELETE FROM gym_sets WHERE id IN (:ids)")
     suspend fun deleteSets(ids: List<Long>)

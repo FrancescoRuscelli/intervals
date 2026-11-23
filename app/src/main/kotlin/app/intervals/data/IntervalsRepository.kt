@@ -163,11 +163,20 @@ class IntervalsRepository(
         sets.map { s -> gymDao.insertSet(s.copy(id = 0, order = gymDao.nextPosition(s.day)).toEntity()) }
     }
 
-    suspend fun updateSet(set: GymSet) = gymDao.updateSet(set.toEntity())
+    suspend fun updateSet(set: GymSet) = gymDao.updateSet(set.toSetValues())
 
     suspend fun setGymNotes(ids: List<Long>, note: String) = gymDao.setNotes(ids, note.trim())
 
-    suspend fun deleteSets(ids: List<Long>) = gymDao.deleteSets(ids)
+    suspend fun appendGymSetNote(ids: List<Long>, note: String) = db.withTransaction {
+        val text = note.trim()
+        if (text.isEmpty()) return@withTransaction
+        // Leave room for the note's two binds on older Android SQLite versions.
+        ids.distinct().chunked(997).forEach { gymDao.appendSetNote(it, text) }
+    }
+
+    suspend fun deleteSets(ids: List<Long>) = db.withTransaction {
+        ids.chunked(999).forEach { gymDao.deleteSets(it) }
+    }
 
     /** Returns the new exercise's id. */
     suspend fun addExercise(exercise: Exercise): Long = gymDao.insertExercise(exercise.copy(id = 0).toEntity())
@@ -186,7 +195,7 @@ class IntervalsRepository(
         val exChanged = ex2.zip(ex).filter { (a, b) -> a != b }.map { it.first }
         val setsChanged = sets2.zip(sets).filter { (a, b) -> a != b }.map { it.first }
         exChanged.forEach { gymDao.updateExercise(it.toEntity()) }
-        setsChanged.forEach { gymDao.updateSet(it.toEntity()) }
+        setsChanged.forEach { updateSet(it) }
         exChanged.size + setsChanged.size
     }
 
@@ -373,6 +382,11 @@ private fun ExerciseEntity.toExercise() = BackupJson.decodeExercise(json).copy(i
 private fun GymSet.toEntity() = GymSetEntity(
     id, exerciseId, day, order, side?.name, weightKg, reps, timeSec, distance,
     bands.joinToString(",") { it.name }, note, restSec, BackupJson.encodeSpecs(specs), variant,
+)
+
+private fun GymSet.toSetValues() = GymSetValues(
+    id, side?.name, weightKg, reps, timeSec, distance,
+    bands.joinToString(",") { it.name }, BackupJson.encodeSpecs(specs), variant,
 )
 
 private fun GymSetEntity.toSet() = GymSet(

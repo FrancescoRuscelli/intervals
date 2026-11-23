@@ -501,9 +501,9 @@ private fun EmptyState(onImport: () -> Unit, onNew: () -> Unit) {
 }
 
 @Composable
-fun BigButton(label: String, bg: Color, fg: Color, onClick: () -> Unit, modifier: Modifier = Modifier.fillMaxWidth()) {
+fun BigButton(label: String, bg: Color, fg: Color, onClick: () -> Unit, modifier: Modifier = Modifier.fillMaxWidth(), enabled: Boolean = true) {
     Box(
-        modifier.height(54.dp).clip(RoundedCornerShape(14.dp)).background(bg).clickable(onClick = onClick),
+        modifier.height(54.dp).clip(RoundedCornerShape(14.dp)).background(bg).clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) { Text(label, color = fg, fontSize = 16.sp, fontWeight = FontWeight.SemiBold) }
 }

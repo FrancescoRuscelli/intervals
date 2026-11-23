@@ -151,9 +151,14 @@ class GymImportTest {
         assertEquals("2026-11-17", repo.lastUsed.first()[id])
 
         val before = repo.exerciseDay(id, "2026-11-17").first()
-        repo.updateSet(before[0].copy(reps = 9))
-        repo.setGymNotes(ids.take(2), "  Max  ")
-        val updated = listOf(before[0].copy(reps = 9, note = "Max"), before[1].copy(note = "Max"), before[2])
+        repo.setGymNotes(ids.take(1), "  Max  ")
+        repo.appendGymSetNote(ids.take(2), "  Grip felt good  ")
+        repo.updateSet(before[0].copy(reps = 9, restSec = null))
+        val updated = listOf(
+            before[0].copy(reps = 9, note = "Max · Grip felt good"),
+            before[1].copy(note = "Grip felt good"),
+            before[2],
+        )
         assertEquals(updated, repo.exerciseDay(id, "2026-11-17").first())
         repo.deleteSets(ids.drop(1))
         val left = repo.exerciseDay(id, "2026-11-17").first().single()

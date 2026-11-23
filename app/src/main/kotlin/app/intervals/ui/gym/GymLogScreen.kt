@@ -50,8 +50,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontStyle
@@ -119,7 +122,6 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
 
     var values by remember(exerciseId) { mutableStateOf<Values?>(null) }
     var side by remember(exerciseId) { mutableStateOf<SideChoice?>(null) }
-    var editing by remember(exerciseId, day) { mutableStateOf<GymSet?>(null) }
     var editValues by remember(exerciseId, day) { mutableStateOf(Values()) }
     var editSide by remember(exerciseId, day) { mutableStateOf<Side?>(null) }
     var selectedIds by remember(exerciseId, day) { mutableStateOf(emptySet<Long>()) }
@@ -149,65 +151,64 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
         val today = sets ?: return@LaunchedEffect
         val last = lastTime ?: return@LaunchedEffect
         val s = when (side) { SideChoice.LEFT -> Side.LEFT; SideChoice.RIGHT -> Side.RIGHT; else -> return@LaunchedEffect }
-        if (editing == null) startValues(today, last, s)?.let { values = it.toValues() }
+        startValues(today, last, s)?.let { values = it.toValues() }
     }
-    val edit = editing
     val list = sets.orEmpty()
     val selectedSets = list.filter { it.id in selectedIds }
     val selecting = selectedSets.isNotEmpty()
+    val bulk = selectedSets.size > 1
+    val edit = selectedSets.singleOrNull()
     val v = if (edit != null) editValues else values ?: Values()
     fun change(f: (Values) -> Values) {
         if (edit != null) editValues = f(v) else values = f(v)
     }
-    fun tapSet(set: GymSet) {
-        if (selecting) {
-            selectedIds = if (set.id in selectedIds) selectedIds - set.id else selectedIds + set.id
-        } else {
-            editValues = set.toValues()
-            editSide = set.side
-            editing = set
-            logScroll.requestScrollToItem(0)
+    fun select(ids: Set<Long>) {
+        if (ids.size == 1) {
+            list.firstOrNull { it.id in ids }?.let { set ->
+                editValues = set.toValues()
+                editSide = set.side
+            }
         }
+        selectedIds = ids
     }
-    fun selectSet(set: GymSet) {
-        editing = null
-        selectedIds = selectedIds + set.id
+    fun tapSet(set: GymSet) {
+        if (set.id in selectedIds) select(selectedIds - set.id)
+        else select(selectedIds + set.id)
+        if (!selecting) logScroll.requestScrollToItem(0)
     }
-    BackHandler(enabled = selecting || edit != null) {
-        if (selecting) selectedIds = emptySet() else editing = null
-    }
+    BackHandler(enabled = selecting) { selectedIds = emptySet() }
     var openSpec by remember { mutableStateOf<app.intervals.core.Spec?>(null) }
     // trial: compare the log buttons fixed at the bottom with the buttons after the numbers
     val buttonsAtBottom = vm.settings.collectAsStateWithLifecycle().value.logButtonsAtBottom
-    val logButtons: @Composable () -> Unit = {
-        val timing = timerFrom != null
-        LogButtons(ex.perSide, side, ex.variants.takeIf { it.isNotEmpty() }?.let { vs -> v.variant?.takeIf { it in vs } ?: vs.first() },
-            timing, blocked = timing || selecting) { chosen ->
-            vm.logSets(chosen.sides().map { s -> v.into(GymSet(exerciseId = ex.id, day = day, order = 0, side = s), ex) }, ex.restSec)
-            side = chosen?.afterSet()
-            measured = false
+    val setButtons: @Composable () -> Unit = {
+        if (edit != null) {
+            BigButton("Update set", p.workTint, p.workText, {
+                vm.updateGymSet(v.into(edit.copy(side = editSide), ex))
+                selectedIds = emptySet()
+            })
+        } else {
+            val timing = timerFrom != null
+            val variant = ex.variants.takeIf { it.isNotEmpty() }?.let { vs -> v.variant?.takeIf { it in vs } ?: vs.first() }
+            LogButtons(ex.perSide, side, variant, timing = timing && !bulk, blocked = timing || bulk) { chosen ->
+                vm.logSets(chosen.sides().map { s -> v.into(GymSet(exerciseId = ex.id, day = day, order = 0, side = s), ex) }, ex.restSec)
+                side = chosen?.afterSet()
+                measured = false
+            }
         }
     }
 
     Column(Modifier.fillMaxSize().background(p.bg).statusBarsPadding().navigationBarsPadding()) {
-        if (selecting || edit != null) Row(
-            Modifier.fillMaxWidth().background(p.sheet).heightIn(min = 52.dp).padding(horizontal = 4.dp),
+        if (selecting) Row(
+            Modifier.fillMaxWidth().background(p.workTint).heightIn(min = 52.dp).padding(horizontal = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(onClick = { if (selecting) selectedIds = emptySet() else editing = null }) {
-                Icon(AppIcons.Close, if (selecting) "Cancel selection" else "Cancel edit", tint = p.text)
+            IconButton(onClick = { selectedIds = emptySet() }) {
+                Icon(AppIcons.Close, "Cancel selection", tint = p.workText)
             }
-            Text(if (selecting) "${selectedSets.size} selected" else "Edit set", color = p.text, fontSize = 18.sp,
-                fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-            if (selecting) {
-                TextButton(onClick = { noteTargets = selectedSets }) { Text("Notes", color = p.accentText) }
-                TextButton(onClick = { deleteTargets = selectedSets.map { it.id } }) { Text("Delete", color = p.dangerText) }
-            } else if (edit != null) {
-                IconButton(onClick = { deleteTargets = listOf(edit.id) }) { Icon(AppIcons.Delete, "Delete set", tint = p.dangerText) }
-                TextButton(onClick = { vm.updateGymSet(v.into(edit.copy(side = editSide), ex)); editing = null }) {
-                    Text("Save", color = p.accentText)
-                }
-            }
+            Text("${selectedSets.size} selected", color = p.workText, fontSize = 18.sp, fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f).semantics { liveRegion = LiveRegionMode.Polite })
+            TextButton(onClick = { noteTargets = selectedSets }) { Text("Note", color = p.workText) }
+            TextButton(onClick = { deleteTargets = selectedSets.map { it.id } }) { Text("Delete", color = p.workText) }
         } else Row(Modifier.fillMaxWidth().padding(start = 4.dp, end = 16.dp, top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = { vm.back() }) { Icon(AppIcons.Back, "Back", tint = p.text) }
             Column(Modifier.weight(1f)) {
@@ -236,7 +237,6 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
                 Column(Modifier.clickable {
                     if (tab != i) {
                         selectedIds = emptySet()
-                        editing = null
                         tab = i
                     }
                 }.padding(horizontal = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -274,7 +274,7 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
                 val cur = v.variant?.takeIf { it in ex.variants } ?: ex.variants.first()
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text("VARIANT \u00B7 STAYS ON THE LAST ONE", color = p.muted, fontSize = 12.sp, letterSpacing = 0.4.sp, fontWeight = FontWeight.SemiBold)
-                    Segmented(ex.variants, ex.variants.indexOf(cur)) { i -> change { it.copy(variant = ex.variants[i]) } }
+                    Segmented(ex.variants, ex.variants.indexOf(cur), enabled = !bulk) { i -> change { it.copy(variant = ex.variants[i]) } }
                 }
             }
             // a new set picks its side with the log buttons; editing a set keeps L / R here
@@ -283,7 +283,7 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
                 Segmented(listOf("L", "R"), editSide?.let(sides::indexOf) ?: -1, listOf(p.pink, p.teal)) { editSide = sides[it] }
             }
             if (ex.specs.isNotEmpty()) item {
-                SpecChips(ex.specs, v.specs) { openSpec = it }
+                SpecChips(ex.specs, v.specs, enabled = !bulk) { openSpec = it }
             }
             item {
                 val tiles = listOf(GymField.WEIGHT, GymField.REPS, GymField.DISTANCE).filter { it in ex.fields }
@@ -294,7 +294,7 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
                             GymField.REPS -> Triple("Reps", "${v.reps}", "")
                             else -> Triple("Distance", formatKg(v.distance), "")
                         }
-                        StepTile(label, text, unit, Modifier.weight(1f),
+                        StepTile(label, text, unit, Modifier.weight(1f), enabled = !bulk,
                             onTap = { typing = f },
                             onMinus = { change { it.step(f, ex, -1) } },
                             onPlus = { change { it.step(f, ex, +1) } })
@@ -302,8 +302,8 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
                 }
             }
             if (GymField.TIME in ex.fields) item {
-                if (edit != null) {
-                    StepTile("Time", formatTime(v.timeSec), "", Modifier.fillMaxWidth(),
+                if (selecting) {
+                    StepTile("Time", formatTime(v.timeSec), "", Modifier.fillMaxWidth(), enabled = !bulk,
                         onTap = { typing = GymField.TIME },
                         onMinus = { change { it.step(GymField.TIME, ex, -1) } },
                         onPlus = { change { it.step(GymField.TIME, ex, +1) } })
@@ -320,20 +320,22 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
                     )
                 }
             }
-            if (edit == null && !buttonsAtBottom) item { logButtons() }
+            if (!buttonsAtBottom) item { setButtons() }
 
             if (list.isNotEmpty()) item {
-                Text("SETS · ${list.size} · TAP TO EDIT · HOLD TO SELECT", color = p.muted, fontSize = 13.sp, letterSpacing = 0.6.sp, fontWeight = FontWeight.SemiBold,
+                val hint = if (selecting) "TAP TO ADD OR REMOVE SETS" else "TAP TO EDIT · HOLD TO SELECT"
+                Text("SETS · ${list.size} · $hint", color = p.muted, fontSize = 13.sp, letterSpacing = 0.6.sp, fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(top = 4.dp))
             }
             if (list.isNotEmpty()) item {
-                val markedIds = if (selecting) selectedIds else setOfNotNull(edit?.id)
-                SetBlocks(list, ex, markedIds, selecting, ::tapSet, ::selectSet)
+                SetBlocks(list, ex, selectedIds, selecting, ::tapSet) { set ->
+                    if (set.id !in selectedIds) select(selectedIds + set.id)
+                }
             }
         }
         // the buttons fixed at the bottom, under the thumb (mockup intervals-set-screen-ideas.html, B1)
-        if (tab == 0 && edit == null && buttonsAtBottom) {
-            Box(Modifier.fillMaxWidth().background(p.bg).padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 12.dp)) { logButtons() }
+        if (tab == 0 && buttonsAtBottom) {
+            Box(Modifier.fillMaxWidth().background(p.bg).padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 12.dp)) { setButtons() }
         }
     }
 
@@ -380,7 +382,6 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
         SetNotesDialog(noteTargets, ex, onDismiss = { noteTargets = emptyList() }) { note ->
             vm.saveGymSetNotes(noteTargets.map { it.id }, note)
             noteTargets = emptyList()
-            selectedIds = emptySet()
         }
     }
     if (deleteTargets.isNotEmpty()) {
@@ -390,7 +391,6 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
             confirmButton = {
                 TextButton(onClick = {
                     vm.deleteGymSets(deleteTargets)
-                    editing = null
                     selectedIds = emptySet()
                     deleteTargets = emptyList()
                 }) { Text("Delete", color = p.dangerText) }
@@ -417,13 +417,16 @@ internal fun shortDay(day: String): String {
 }
 
 @Composable
-private fun StepTile(label: String, value: String, unit: String, modifier: Modifier, onTap: () -> Unit, onMinus: () -> Unit, onPlus: () -> Unit) {
+private fun StepTile(
+    label: String, value: String, unit: String, modifier: Modifier, enabled: Boolean = true,
+    onTap: () -> Unit, onMinus: () -> Unit, onPlus: () -> Unit,
+) {
     val p = LocalPalette.current
-    Column(modifier.clip(RoundedCornerShape(16.dp)).background(p.surface).padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(modifier.alpha(if (enabled) 1f else 0.45f).clip(RoundedCornerShape(16.dp)).background(p.surface).padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Text(label, color = p.muted, fontSize = 13.sp, maxLines = 1)
         // every value the same size (21 and 18.5 alike), on a row of fixed height so all tiles line up; very long values shrink a bit
         Row(
-            Modifier.height(52.dp).clickable(onClickLabel = "Type $label", onClick = onTap),
+            Modifier.height(52.dp).clickable(enabled = enabled, onClickLabel = "Type $label", onClick = onTap),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(value, color = p.text, fontSize = (if (value.length <= 6) 34 else 26).sp, style = NumberStyle, maxLines = 1, softWrap = false)
@@ -433,7 +436,7 @@ private fun StepTile(label: String, value: String, unit: String, modifier: Modif
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf(Triple(AppIcons.Minus, "$label less", onMinus), Triple(AppIcons.Plus, "$label more", onPlus)).forEach { (icon, desc, action) ->
                 Box(
-                    Modifier.weight(1f).height(48.dp).clip(RoundedCornerShape(12.dp)).background(p.tint).clickable(onClickLabel = desc, onClick = action),
+                    Modifier.weight(1f).height(48.dp).clip(RoundedCornerShape(12.dp)).background(p.tint).clickable(enabled = enabled, onClickLabel = desc, onClick = action),
                     contentAlignment = Alignment.Center,
                 ) { Icon(icon, desc, tint = p.accentText, modifier = Modifier.size(22.dp)) }
             }
@@ -473,18 +476,19 @@ private fun SetBlocks(
                     val action = if (!selecting) "Edit" else if (marked) "Deselect" else "Select"
                     Box(
                         Modifier.heightIn(min = 44.dp).widthIn(min = 44.dp).clip(RoundedCornerShape(10.dp))
-                            .background(if (marked) p.accent else p.bg)
-                            .border(1.dp, if (set.note.isNotEmpty()) p.pink else p.line, RoundedCornerShape(10.dp))
+                            .background(if (marked) p.workTint else p.bg)
+                            .border(1.dp, if (marked || set.note.isNotEmpty()) p.pink else p.line, RoundedCornerShape(10.dp))
                             .semantics { if (selecting) selected = marked }
                             .combinedClickable(
                                 onClickLabel = "$action set ${set.summary(ex)}${set.side?.let { ", " + it.name.lowercase() }.orEmpty()}",
                                 onLongClickLabel = "Select set",
+                                hapticFeedbackEnabled = true,
                                 onClick = { onTap(set) }, onLongClick = { onHold(set) },
                             )
                             .padding(horizontal = 8.dp),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(set.boxText(ex), color = if (marked) p.onAccent else p.text, fontSize = 16.sp, style = NumberStyle)
+                        Text(set.boxText(ex), color = if (marked) p.workText else p.text, fontSize = 16.sp, style = NumberStyle)
                     }
                 }
             }
@@ -496,17 +500,16 @@ private fun SetBlocks(
 @Composable
 private fun SetNotesDialog(sets: List<GymSet>, ex: Exercise, onDismiss: () -> Unit, onSave: (String) -> Unit) {
     val p = LocalPalette.current
-    val sharedNote = sets.map { it.note }.distinct().singleOrNull()
-    var note by remember(sets) { mutableStateOf(sharedNote.orEmpty()) }
-    val title = sets.singleOrNull()?.let { s ->
+    val single = sets.singleOrNull()
+    var note by remember(sets) { mutableStateOf(single?.note.orEmpty()) }
+    val title = single?.let { s ->
         (s.side?.let { it.letter + " · " } ?: "") + s.summary(ex) + (s.restSec?.let { " · rested ${formatTime(it)}" } ?: "")
-    } ?: "Notes for ${sets.size} sets"
+    } ?: "Add a note to ${sets.size} sets"
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                if (sharedNote == null) Text("Saving replaces the different notes on these sets.", color = p.muted)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     QUICK_TAGS.forEach { tag ->
                         val on = tag in note.split(" · ")
@@ -519,7 +522,7 @@ private fun SetNotesDialog(sets: List<GymSet>, ex: Exercise, onDismiss: () -> Un
                 OutlinedTextField(note, { note = it }, label = { Text("Note") }, minLines = 2)
             }
         },
-        confirmButton = { TextButton(enabled = sharedNote != null || note.isNotBlank(), onClick = { onSave(note) }) { Text("Save") } },
+        confirmButton = { TextButton(enabled = single != null || note.isNotBlank(), onClick = { onSave(note) }) { Text("Save") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     )
 }
@@ -544,13 +547,13 @@ private fun NumberDialog(title: String, initial: String, decimal: Boolean, onDis
 
 @Composable
 /** [colors] = the selected background of each option (default: purple). */
-private fun Segmented(options: List<String>, selected: Int, colors: List<Color>? = null, onSelect: (Int) -> Unit) {
+private fun Segmented(options: List<String>, selected: Int, colors: List<Color>? = null, enabled: Boolean = true, onSelect: (Int) -> Unit) {
     val p = LocalPalette.current
-    Row(Modifier.fillMaxWidth().height(48.dp).clip(RoundedCornerShape(12.dp)).background(p.surface).padding(4.dp)) {
+    Row(Modifier.fillMaxWidth().alpha(if (enabled) 1f else 0.45f).height(48.dp).clip(RoundedCornerShape(12.dp)).background(p.surface).padding(4.dp)) {
         options.forEachIndexed { i, o ->
             Box(
                 Modifier.weight(1f).fillMaxSize().clip(RoundedCornerShape(9.dp)).background(if (i == selected) colors?.getOrNull(i) ?: p.accent else Color.Transparent)
-                    .clickable { onSelect(i) },
+                    .clickable(enabled = enabled) { onSelect(i) },
                 contentAlignment = Alignment.Center,
             ) { Text(o, color = if (i == selected) p.onAccent else p.soft, fontSize = 15.sp, fontWeight = FontWeight.SemiBold) }
         }
@@ -563,15 +566,15 @@ private fun Segmented(options: List<String>, selected: Int, colors: List<Color>?
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun SpecChips(specs: List<app.intervals.core.Spec>, values: Map<String, String>, onOpen: (app.intervals.core.Spec) -> Unit) {
+private fun SpecChips(specs: List<app.intervals.core.Spec>, values: Map<String, String>, enabled: Boolean, onOpen: (app.intervals.core.Spec) -> Unit) {
     val p = LocalPalette.current
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         specs.forEach { sp ->
             val value = values[sp.name]?.takeIf(String::isNotBlank)
             val shape = RoundedCornerShape(12.dp)
             Row(
-                Modifier.clip(shape).background(p.surface).border(1.dp, p.line, shape)
-                    .clickable(onClickLabel = "Change ${sp.name}") { onOpen(sp) }.padding(horizontal = 12.dp, vertical = 10.dp),
+                Modifier.alpha(if (enabled) 1f else 0.45f).clip(shape).background(p.surface).border(1.dp, p.line, shape)
+                    .clickable(enabled = enabled, onClickLabel = "Change ${sp.name}") { onOpen(sp) }.padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
@@ -596,7 +599,7 @@ private fun SpecChips(specs: List<app.intervals.core.Spec>, values: Map<String, 
 private fun LogButtons(perSide: Boolean, next: SideChoice?, variant: String?, timing: Boolean, blocked: Boolean, onLog: (SideChoice?) -> Unit) {
     val p = LocalPalette.current
     when {
-        blocked -> BigButton(if (timing) "Stop the timer first" else "Log set", p.tint, p.faint, {})
+        blocked -> BigButton(if (timing) "Stop the timer first" else "Log set", p.tint, p.faint, {}, enabled = false)
         !perSide -> BigButton("Log set" + (variant?.let { " · $it" } ?: ""), p.accent, p.onAccent, { onLog(null) })
         else -> Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf(Triple(SideChoice.LEFT, "Log L", p.pink), Triple(SideChoice.BOTH, "L + R", p.accent), Triple(SideChoice.RIGHT, "Log R", p.teal))

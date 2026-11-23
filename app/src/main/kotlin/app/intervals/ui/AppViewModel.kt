@@ -489,7 +489,9 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun updateGymSet(set: GymSet) = viewModelScope.launch { repo.updateSet(set) }
 
-    fun saveGymSetNotes(ids: List<Long>, note: String) = viewModelScope.launch { repo.setGymNotes(ids, note) }
+    fun saveGymSetNotes(ids: List<Long>, note: String) = viewModelScope.launch {
+        if (ids.size == 1) repo.setGymNotes(ids, note) else repo.appendGymSetNote(ids, note)
+    }
 
     fun deleteGymSets(ids: List<Long>) = viewModelScope.launch { repo.deleteSets(ids) }
 

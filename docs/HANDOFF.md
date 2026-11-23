@@ -2,32 +2,18 @@
 
 Updated 2026-11-23. Read [CLAUDE.md](../CLAUDE.md) for repo conventions and [DESIGN.md](DESIGN.md) for design history. The current navigation decision is recorded here.
 
-## Moving to the other PC: merge, do not overwrite
+## Syncing work from both PCs
 
-The other PC has changes made with ChatGPT that were never pushed. `origin/main` has the work of 2026-11-22/23, about 25 commits from `0b54996` to the commit that adds this section. **Both must survive.** Do not run `git pull`, `git reset --hard`, `git checkout -- .`, `git stash drop` or `git clean` before step 3.
+Save a local Git checkpoint of uncommitted work before updating. Use the latest app as the base and carry forward the agreed behavior below wherever it is missing. Keep the latest screens, features, and database migrations. The previous working tree was saved on this PC at `8fadd24` on `safety/intervals-before-sync-20261123-123433`.
 
-1. **Look first.** Run `git status`, `git stash list`, `git log --oneline origin/main..HEAD` (unpushed commits) and `git diff --stat`. Write down what is there.
-2. **Freeze the local work on a branch and push it.** Run `git switch -c pc2-chatgpt`, then `git add -A`. Leave out `gradle/gradle-daemon-jvm.properties`, `*.db*` and anything secret. Commit as "PC2: unpushed ChatGPT work", then `git push -u origin pc2-chatgpt`. If there are stashes, `git stash show -p stash@{0}` each one and commit it on the branch too. From here nothing can be lost.
-3. **Bring in today's work.** Run `git fetch`, then `git merge origin/main` on `pc2-chatgpt`.
-4. **Conflicts, file by file.** Never take `--ours` or `--theirs` for a whole file. Keep both sides' features. The files changed on this side are listed below. Where the two sides changed the same thing differently, the user decides, so ask.
-   - `ui/journal/JournalScreen.kt`: calendar plus day pager, bars and table, F/I
-   - `ui/gym/GymLogScreen.kt`: spec chips, Log L · L + R · Log R, rest pill
-   - `ui/gym/GymGroupRun.kt`: `RestPill`
-   - `ui/AppViewModel.kt`: rest via `RestAlarm`
-   - `RestAlarm.kt`: new
-   - `AndroidManifest.xml`: receiver, alarm permissions
-   - `ui/settings/SettingsScreen.kt`
-   - `data/Daos.kt`
-   - `data/IntervalsRepository.kt`
-   - `core/Gym.kt`: band tap
-   - `core/GymRows.kt`
-   - `core/Settings.kt`
-   - their tests
-   - `Diary.kt`: deleted on purpose
-5. **Check.** Run `./gradlew.bat :core:test :app:testDebugUnitTest :app:assembleDebug`. Room is at **DB v6**. If the other side added a migration too, renumber it on top of v6. Do not drop or rewrite one.
-6. **Then publish.** Run `git switch main`, `git merge --ff-only pc2-chatgpt` and `git push`. Keep the `pc2-chatgpt` branch until the user says it can go. Install on the phone only when Intervals is not on screen.
+## Gym behavior to carry forward
 
-## Current Android build
+- **Exercise tags and workout groups.** Tags describe exercises, such as Pull, Legs, or Fingers. Long-press exercises in the Gym library and use **Tag…** to assign them. A workout group is a reusable list of chosen exercises and set plans, such as Pull day. Create one via **Gym → + Add exercise → + New workout**. Journal colors follow the tags, with gray for untagged exercises.
+- **Update one set.** Tap a logged set to load it into the existing inputs. **Update set** saves that entry while keeping its original day, order, rest, and note. Logging is unavailable while sets are selected.
+- **Select sets.** A long press starts selection on the same screen with haptic feedback. One or more sets use the same pink toolbar with a count, **Note**, **Delete**, and an **X**. Tap a set to add or remove it from the selection. Each set is individually selectable, even when several share a row. With several selected, disable and dim the set inputs and logging button. **X** and Android Back exit selection.
+- **Notes and deletion.** For one set, **Note** opens its existing note. For several sets, **Note** appends the same text to each and keeps their existing notes. Deletion asks for confirmation and applies to the selected sets.
+
+## Last documented Pixel install
 
 The Android source is committed at `0792a43`. The debug APK from that source was installed in place on the Pixel 8a with `adb install -r`, and its hash was checked against the installed package.
 
