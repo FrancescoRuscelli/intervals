@@ -2,13 +2,26 @@
 
 Updated 2026-11-23. Read [CLAUDE.md](../CLAUDE.md) for repo conventions and [DESIGN.md](DESIGN.md) for design history. The current navigation decision is recorded here.
 
-## To do first on the other PC: push the Stats work
+## To do first on the other PC (2026-11-25): recover the Stats work
 
-The Stats changes made on the other PC never reached GitHub. The other PC's 2026-11-23 sync started from `origin/main` and carried over only the Gym behavior. The older work is still on that PC, in the local branch `safety/intervals-before-sync-20261123-123433` (commit `8fadd24`).
+**What happened.** The user changed Stats on the other PC, and many other things too. None of it reached GitHub.
+- On 2026-11-23, ChatGPT synced that PC. It started from `origin/main` and carried over only the Gym behavior.
+- The older work was saved in a **local** branch, `safety/intervals-before-sync-20261123-123433`, at commit `8fadd24`. It was never pushed.
+- Each PC has its own copy of the repo, and a commit reaches GitHub only with `git push`. So this PC cannot see `8fadd24`: `git ls-remote origin` lists only `main`, and `git cat-file -t 8fadd24` says "Not a valid object name".
+- Nothing was deleted. No commit since 2026-11-18 touched `ui/stats/` (the last one is `8dac65c`).
 
-1. Check it is there: `git log --oneline -5 safety/intervals-before-sync-20261123-123433`.
-2. Push it as it is, without merging or deleting anything: `git push origin safety/intervals-before-sync-20261123-123433`.
-3. Bring the Stats changes onto `main` by merging file by file. Keep the work already on `main`: the Journal bars and table, the variant row, the L / R rounds, and the rest timer.
+**Steps on the other PC.** Go one at a time, and stop and ask the user if something does not match.
+1. **Look.** Run `git status`, `git branch -a`, `git stash list` and `git log --oneline -5 safety/intervals-before-sync-20261123-123433`. If there is uncommitted work, commit it on a new branch first, for example `pc2-wip`, and push that branch too.
+2. **Push the safety branch as it is**, to back it up: `git push origin safety/intervals-before-sync-20261123-123433`. From here nothing can be lost.
+3. **Update `main`.** Run `git switch main`, then `git pull --ff-only`. If it refuses, `main` there has local commits: put them on a branch and push it, never reset them away.
+4. **See what the safety branch has that `main` lacks:**
+   - `git diff --stat $(git merge-base main safety/intervals-before-sync-20261123-123433) safety/intervals-before-sync-20261123-123433`
+   - The Stats files are in `app/src/main/kotlin/app/intervals/ui/stats/`. List the other changes too, and ask the user which of them they still want.
+5. **Bring them onto `main` on a branch.** Run `git switch -c stats-back`, then carry the changes over file by file.
+   - `ui/stats/` was not touched on `main` since then, so it can be taken whole: `git checkout safety/intervals-before-sync-20261123-123433 -- app/src/main/kotlin/app/intervals/ui/stats`.
+   - Merge everything else by hand. Keep the work already on `main`: the Journal calendar and day pager, the bars and the table with F / I, the variant row, the L / R rounds with actions at the bottom and Undo, the rest timer, the spec chips and the Log L · L + R · Log R buttons. Room is at DB v6; if the safety branch added a migration, renumber it on top of v6.
+6. **Check.** Run `./gradlew.bat :core:test :app:testDebugUnitTest :app:assembleDebug`, then try Stats on the phone. Install only when Intervals is not on screen.
+7. **Publish.** Run `git switch main`, `git merge --ff-only stats-back` and `git push`. Keep the safety branch until the user says it can go.
 
 ## Syncing work from both PCs
 
