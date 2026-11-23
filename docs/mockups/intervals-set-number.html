@@ -110,7 +110,7 @@ tr.pick td { background: var(--accent-soft); }
 .phone .ex .nm b { font-size: 13.5px; } .phone .ex .nm span { font-size: 10.5px; color: var(--ph-muted); }
 .phone .ln { display: flex; align-items: center; gap: 8px; }
 .phone .ld { width: 58px; flex: none; text-align: right; font: 700 12px var(--display); color: var(--ph-muted); display: flex; justify-content: flex-end; }
-.phone .bx { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.phone .bx { display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-end; }
 .phone .band { width: 11px; height: 11px; border-radius: 6px; display: inline-block; border: 1px solid rgba(255,255,255,0.35); }
 .phone .k { font: 700 12.5px var(--display); color: var(--ph-ink); font-variant-numeric: tabular-nums; }
 /* A: split box, the number in its own darker segment */
@@ -133,6 +133,12 @@ tr.pick td { background: var(--accent-soft); }
 .phone .pillx { align-self: flex-start; font-size: 10.5px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: var(--ph-tint); color: var(--ph-accent-ink); }
 .phone .seq { display: flex; gap: 3px; align-items: center; flex-wrap: wrap; font: 700 10px var(--display); color: var(--ph-muted); }
 .phone .seq b { color: var(--ph-ink); background: #000; border: 1px solid #2a2d34; border-radius: 5px; padding: 1px 4px; font-weight: 700; }
+/* E: a round badge on the corner, the reps pushed to the other side so nothing is covered */
+.phone .e { position: relative; display: inline-flex; align-items: flex-end; justify-content: flex-end; height: 28px; min-width: 30px; padding: 0 6px 3px 12px; box-sizing: border-box;
+  border-radius: 7px; background: #000; border: 1px solid #2a2d34; margin: 5px 0 0 5px; }
+.phone .e i { position: absolute; top: -6px; left: -6px; width: 15px; height: 15px; border-radius: 8px; background: #3a2f5c; border: 2px solid var(--ph-card);
+  color: var(--ph-accent-ink); font: 700 8.5px var(--display); font-style: normal; display: flex; align-items: center; justify-content: center; }
+.phone .e.nt i { background: var(--ph-yellow); color: #1a1400; }
 /* now: number under the box */
 .phone .u { display: inline-flex; flex-direction: column; align-items: center; gap: 1px; }
 .phone .u .k { background: #000; border-radius: 7px; height: 24px; min-width: 24px; display: flex; align-items: center; justify-content: center; padding: 0 5px; }
@@ -143,7 +149,7 @@ tr.pick td { background: var(--accent-soft); }
   <header>
     <h1>Il numero della serie, sul quadrato</h1>
     <p class="lead">Nella tabella per carico ogni casella ha le ripetizioni; il numero dice in che ordine l'hai fatta. Sotto la casella rende la tabella scomoda,
-      sull'angolo copre o sembra una cifra in più («14»). Quattro modi di metterlo sul quadrato senza confondersi. Overhead Press del 19 e Muscle Up del 20, dati veri.</p>
+      sull'angolo copre o sembra una cifra in più («14»). Cinque modi di metterlo sul quadrato senza confondersi. Overhead Press del 19 e Muscle Up del 20, dati veri.</p>
   </header>
   <nav class="switch" aria-label="Opzioni" id="switch"></nav>
   <section class="concept" id="concept" aria-live="polite"></section>
@@ -169,6 +175,7 @@ const box = {
   B: ([r, n, nt]) => `<span class="b${nt ? ' nt' : ''}"><span class="k">${r}</span><i>${n}</i></span>`,
   C: ([r, n, nt]) => `<span class="c${nt ? ' nt' : ''}"><i>${n}</i><span class="k">${r}</span></span>`,
   D: ([r, n, nt]) => `<span class="d${nt ? ' nt' : ''}"><span class="k">${r}</span></span>`,
+  E: ([r, n, nt]) => `<span class="e${nt ? ' nt' : ''}"><i>${n}</i><span class="k">${r}</span></span>`,
 };
 const table = (rows, kind) => rows.map(([ld, xs]) => `<div class="ln"><span class="ld">${ld}</span><div class="bx">${xs.map(box[kind]).join('')}</div></div>`).join('');
 const card = (name, sum, rows, kind, extra = '') => `<div class="ex"><div class="nm"><b>${name}</b><span>${sum}</span></div>${extra}${table(rows, kind)}</div>`;
@@ -188,6 +195,9 @@ const C = [
   { k: 'C', name: 'Pallino a sinistra', short: 'C · Pallino', idea: 'Dentro la casella, prima delle ripetizioni, un pallino viola con il numero.',
     shots: [['<b>C:</b> ④ 5 — il pallino dice l\'ordine.', screen('C')]],
     pro: ['Leggibile: il pallino è chiaramente un indice.'], con: ['Il primo colpo d\'occhio cade sul numero sbagliato (prima il pallino, poi le ripetizioni).'] },
+  { k: 'E', name: 'Pallino nell\'angolo', short: 'E · Pallino nell\'angolo', idea: 'Un pallino viola sull\'angolo in alto a sinistra, metà fuori dalla casella, con un bordo del colore della card che lo stacca. Le ripetizioni stanno in basso a destra, così il pallino non le copre mai. Giallo con una nota.',
+    shots: [['<b>E:</b> il pallino sull\'angolo, le ripetizioni libere.', screen('E')]],
+    pro: ['Si capisce subito che è un indice, non una cifra.', 'Le ripetizioni restano il numero grande.'], con: ['Caselle un po\' più grandi, e serve spazio tra loro per i pallini.'] },
   { k: 'D', name: 'Niente numeri, l\'ordine a parte', short: 'D · Ordine a parte', idea: 'Le caselle restano pulite. Sotto il nome, una riga «order» racconta la seduta in sequenza: reps e peso, nell\'ordine. Si potrebbe anche mostrare solo toccando.',
     shots: [['<b>D:</b> la tabella pulita, l\'ordine come una frase sotto.', screen('D', seqOhp, `<div class="seq">order: purple → black → red → yellow → none → purple → purple → black → red</div>`)]],
     pro: ['Caselle pulitissime.', 'L\'ordine si legge come racconto.'], con: ['Due posti per le stesse serie.', 'Con tante serie la riga diventa lunga.'] },
@@ -195,7 +205,7 @@ const C = [
 
 const sw = document.getElementById('switch');
 const boxEl = document.getElementById('concept');
-let current = 1;
+let current = 4;
 function render() {
   const c = C[current];
   sw.innerHTML = C.map((x, i) => `<button type="button" aria-pressed="${i === current}" data-i="${i}"><span class="k">${x.k}</span>${x.short}</button>`).join('');
