@@ -15,15 +15,14 @@ The Android source is committed at `0792a43`. The debug APK from that source was
 
 The earlier workout and Stats changes are in the same history. Ring counters and simplified Gym Stats landed in `6cc234d`, and Most Trained's Sets, Days, and Reps landed in `8dac65c`. The Gym improvements, restored exercise library, and set multi-selection landed in `5aeffb2`, `0ee09eb`, and `4401f14`.
 
-## Journal: month and diary (installed 2026-11-23, to try)
+## Journal: month and the selected day (installed 2026-11-23)
 
-Chosen from the [layout concepts](mockups/intervals-app-concepts.html): **B**, a session bar above the tabs, which is not built yet. Also chosen: option **2** in the [month and diary mockup](mockups/intervals-journal-month-diary.html), which is built in `JournalScreen.kt` but not installed, because the phone was not connected.
+The user tried the diary of option 2 in the [month and diary mockup](mockups/intervals-journal-month-diary.html) and found it awkward: the calendar vanished at the first scroll.
 
-- **Month and diary.** The whole month sits on top. Below it is a diary of every day trained, newest first, with a heading and totals before each older month.
-- **Collapsing month.** Scrolling the diary down shrinks the month to the week being read. Pulling down at the top, or tapping the month name, opens it again.
-- **Picking days and months.** An empty today is not in the diary. Tapping a day scrolls the diary to it and gives it an accent edge; an empty past day is shown so that **⋯ Add exercise** still works. Swiping the month moves the diary to that month's newest day, and an empty month leaves the diary where it is.
-- **Filter.** The filter now keeps only the matching days in the diary.
-- **Check on the phone:** that the shrink and open feel right, that reading back into October moves the month, and the speed with the whole history loaded.
+- **Calendar and day.** The month stays on top, always shown. Below it are only the selected day's workouts.
+- **Swiping.** Swiping that part sideways goes to the day before or after. The calendar marks the day and follows into the next month.
+- **Picking.** Tapping a day selects it. Swiping the month selects its last trained day.
+- **Code.** The diary code (`Diary.kt`) is gone.
 
 ## Rest timer (installed 2026-11-23, to try)
 
