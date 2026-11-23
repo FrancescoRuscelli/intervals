@@ -10,28 +10,32 @@ Updated 2026-11-23. Read [CLAUDE.md](../CLAUDE.md) for repo conventions and [DES
 - Each PC has its own copy of the repo, and a commit reaches GitHub only with `git push`. So this PC cannot see `8fadd24`: `git ls-remote origin` lists only `main`, and `git cat-file -t 8fadd24` says "Not a valid object name".
 - Nothing was deleted. No commit since 2026-11-18 touched `ui/stats/` (the last one is `8dac65c`).
 
+**Only `main`.** The user wants one branch on GitHub, `main`: push no other branches and add nothing else. The method below works directly on `main` and needs no force push. The current `main` stays in the history, so nothing is lost even without backup branches.
+
 **Steps on the other PC.** Go one at a time, and stop and ask the user if something does not match.
-1. **Look.** Run `git status`, `git branch -a`, `git stash list` and `git log --oneline -5 safety/intervals-before-sync-20261123-123433`. If there is uncommitted work, commit it on a new branch first, for example `pc2-wip`, and push that branch too.
-2. **Push the safety branch as it is**, to back it up: `git push origin safety/intervals-before-sync-20261123-123433`. From here nothing can be lost.
-3. **Update `main`.** Run `git switch main`, then `git pull --ff-only`. If it refuses, `main` there has local commits: put them on a branch and push it, never reset them away.
-4. **See what the safety branch has that `main` lacks:**
-   - `git diff --stat $(git merge-base main safety/intervals-before-sync-20261123-123433) safety/intervals-before-sync-20261123-123433`
-   - The Stats files are in `app/src/main/kotlin/app/intervals/ui/stats/`. List the other changes too, and ask the user which of them they still want.
-5. **The other PC's code wins.** The user decided this on 2026-11-24.
-   - Start from the other PC's version: `git switch -c merged safety/intervals-before-sync-20261123-123433`. Add any `pc2-wip` commits from step 1 on top of it.
-   - Everything else on GitHub `main` is dropped, except these three changes made on 2026-11-24 on this PC. Carry them onto `merged`; try `git cherry-pick` first, and if that conflicts, rewrite them by hand:
-     1. **Journal table, set order (F + I).** Hold a box to see every set's "#n". Tap a bar or a box to outline that set in both views, and the exercise line reads "#4 of 11 · after … · before …". Commits `d7e9235` and `2cb2b1b`, in `ui/journal/JournalScreen.kt`.
-     2. **Variant row (A5a).** On the set screen, the variants are one row above the log buttons, each with its last set. Past three the row scrolls. A tap switches and brings back that variant's last numbers. Commit `314218f`: `lastOfVariant` in `core/GymLog.kt` with its test, and `VariantRow` in `ui/gym/GymLogScreen.kt`.
-     3. **L / R sets as rounds, with actions at the bottom (A + B).** One row per L + R pair, the note under the reps, and ⋯ picks the pair. While sets are selected, ✕ · Note · Delete replace the log buttons. Delete has no confirmation, only Undo for 6 s. Commit `15621fc`:
-        - `sideRounds` in `core/GymRows.kt`, with its test
-        - `SideRounds` and the bottom actions in `GymLogScreen.kt`
-        - `setsById` in `Daos.kt`
-        - `deleteSets` returning the rows, and `restoreSets`, in `IntervalsRepository.kt`, with its test
-        - Undo in `AppViewModel.kt`
-   - Some of these build on code the other version may not have, such as the Journal bars and table (`3050788`) for change 1. In that case ask the user before bringing in anything more.
-   - The mockups in `docs/mockups/` and this HANDOFF can be taken from `main` as they are.
-6. **Check.** Run `./gradlew.bat :core:test :app:testDebugUnitTest :app:assembleDebug`, then try Stats on the phone. Install only when Intervals is not on screen.
-7. **Publish.** Show the user what `merged` contains before replacing `main` with it. This replaces GitHub `main`, so first back it up with `git branch main-before-merge origin/main` and `git push origin main-before-merge`. Then run `git switch main`, `git reset --hard merged` and `git push --force-with-lease`. Keep the safety branch and `main-before-merge` until the user says they can go.
+1. **Look.** Run `git status`, `git stash list`, `git branch` and `git log --oneline -3 safety/intervals-before-sync-20261123-123433`. If there is uncommitted work, or a stash, ask the user before going on.
+2. **Bring `main` up to date.** Run `git switch main`, then `git pull --ff-only`. If it refuses, local `main` has commits GitHub lacks: ask the user, and never reset them away.
+3. **Make the other PC's code the content of `main`, as a normal commit.**
+   ```
+   git read-tree -u --reset safety/intervals-before-sync-20261123-123433   # every file as in 8fadd24
+   git checkout origin/main -- docs                                         # but keep this PC's HANDOFF and mockups
+   git commit -m "Back to the other PC's code (8fadd24)"
+   ```
+   `gradle/gradle-daemon-jvm.properties` stays local and uncommitted.
+4. **Add the three changes from 2026-11-24 on top**, in this order: `git cherry-pick d7e9235 2cb2b1b 314218f 15621fc`. If a pick conflicts, rewrite that change by hand on the other PC's code. Never take a whole file from one side.
+   1. **Journal table, set order (F + I).** Hold a box to see every set's "#n". Tap a bar or a box to outline that set in both views, and the exercise line reads "#4 of 11 · after … · before …". In `ui/journal/JournalScreen.kt`.
+   2. **Variant row (A5a).** On the set screen, the variants are one row above the log buttons, each with its last set. Past three the row scrolls. A tap switches and brings back that variant's last numbers. `lastOfVariant` in `core/GymLog.kt` with its test, and `VariantRow` in `GymLogScreen.kt`.
+   3. **L / R sets as rounds, with actions at the bottom (A + B).** One row per L + R pair, the note under the reps, and ⋯ picks the pair. While sets are selected, ✕ · Note · Delete replace the log buttons. Delete has no confirmation, only Undo for 6 s. The code:
+      - `sideRounds` in `core/GymRows.kt`
+      - `SideRounds` in `GymLogScreen.kt`
+      - `setsById` in `Daos.kt`
+      - `deleteSets` / `restoreSets` in `IntervalsRepository.kt`
+      - Undo in `AppViewModel.kt`
+      - their tests
+
+   Some of these build on code the other version may not have, such as the Journal bars and table (`3050788`) for change 1. In that case ask the user before bringing in anything more.
+5. **Check.** Run `./gradlew.bat :core:test :app:testDebugUnitTest :app:assembleDebug`, then try Stats and the three changes on the phone. Install only when Intervals is not on screen. Room: keep the other version's database migrations.
+6. **Publish.** Show the user the result first, then `git push`, a normal push. Then delete the local safety branch with `git branch -D safety/intervals-before-sync-20261123-123433`: its content is now in `main`. Only delete it after the user has seen the app working.
 
 ## Syncing work from both PCs
 
