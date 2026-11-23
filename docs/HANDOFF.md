@@ -2,7 +2,7 @@
 
 Updated 2026-11-23. Read [CLAUDE.md](../CLAUDE.md) for repo conventions and [DESIGN.md](DESIGN.md) for design history. The current navigation decision is recorded here.
 
-## To do first on the other PC (2026-11-25): recover the Stats work
+## To do first on the other PC (2026-11-25): the other PC's code wins, plus three changes from this one
 
 **What happened.** The user changed Stats on the other PC, and many other things too. None of it reached GitHub.
 - On 2026-11-23, ChatGPT synced that PC. It started from `origin/main` and carried over only the Gym behavior.
@@ -17,11 +17,21 @@ Updated 2026-11-23. Read [CLAUDE.md](../CLAUDE.md) for repo conventions and [DES
 4. **See what the safety branch has that `main` lacks:**
    - `git diff --stat $(git merge-base main safety/intervals-before-sync-20261123-123433) safety/intervals-before-sync-20261123-123433`
    - The Stats files are in `app/src/main/kotlin/app/intervals/ui/stats/`. List the other changes too, and ask the user which of them they still want.
-5. **Bring them onto `main` on a branch.** Run `git switch -c stats-back`, then carry the changes over file by file.
-   - `ui/stats/` was not touched on `main` since then, so it can be taken whole: `git checkout safety/intervals-before-sync-20261123-123433 -- app/src/main/kotlin/app/intervals/ui/stats`.
-   - Merge everything else by hand. Keep the work already on `main`: the Journal calendar and day pager, the bars and the table with F / I, the variant row, the L / R rounds with actions at the bottom and Undo, the rest timer, the spec chips and the Log L · L + R · Log R buttons. Room is at DB v6; if the safety branch added a migration, renumber it on top of v6.
+5. **The other PC's code wins.** The user decided this on 2026-11-24.
+   - Start from the other PC's version: `git switch -c merged safety/intervals-before-sync-20261123-123433`. Add any `pc2-wip` commits from step 1 on top of it.
+   - Everything else on GitHub `main` is dropped, except these three changes made on 2026-11-24 on this PC. Carry them onto `merged`; try `git cherry-pick` first, and if that conflicts, rewrite them by hand:
+     1. **Journal table, set order (F + I).** Hold a box to see every set's "#n". Tap a bar or a box to outline that set in both views, and the exercise line reads "#4 of 11 · after … · before …". Commits `d7e9235` and `2cb2b1b`, in `ui/journal/JournalScreen.kt`.
+     2. **Variant row (A5a).** On the set screen, the variants are one row above the log buttons, each with its last set. Past three the row scrolls. A tap switches and brings back that variant's last numbers. Commit `314218f`: `lastOfVariant` in `core/GymLog.kt` with its test, and `VariantRow` in `ui/gym/GymLogScreen.kt`.
+     3. **L / R sets as rounds, with actions at the bottom (A + B).** One row per L + R pair, the note under the reps, and ⋯ picks the pair. While sets are selected, ✕ · Note · Delete replace the log buttons. Delete has no confirmation, only Undo for 6 s. Commit `15621fc`:
+        - `sideRounds` in `core/GymRows.kt`, with its test
+        - `SideRounds` and the bottom actions in `GymLogScreen.kt`
+        - `setsById` in `Daos.kt`
+        - `deleteSets` returning the rows, and `restoreSets`, in `IntervalsRepository.kt`, with its test
+        - Undo in `AppViewModel.kt`
+   - Some of these build on code the other version may not have, such as the Journal bars and table (`3050788`) for change 1. In that case ask the user before bringing in anything more.
+   - The mockups in `docs/mockups/` and this HANDOFF can be taken from `main` as they are.
 6. **Check.** Run `./gradlew.bat :core:test :app:testDebugUnitTest :app:assembleDebug`, then try Stats on the phone. Install only when Intervals is not on screen.
-7. **Publish.** Run `git switch main`, `git merge --ff-only stats-back` and `git push`. Keep the safety branch until the user says it can go.
+7. **Publish.** Show the user what `merged` contains before replacing `main` with it. This replaces GitHub `main`, so first back it up with `git branch main-before-merge origin/main` and `git push origin main-before-merge`. Then run `git switch main`, `git reset --hard merged` and `git push --force-with-lease`. Keep the safety branch and `main-before-merge` until the user says they can go.
 
 ## Syncing work from both PCs
 
