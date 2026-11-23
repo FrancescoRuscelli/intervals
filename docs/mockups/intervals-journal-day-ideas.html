@@ -1,0 +1,284 @@
+<title>Journal Day Ideas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: an idea switcher, then the Journal day of that idea on two real days, side by side, then pros / cons. */
+:root {
+  --bg: #f4f2fa; --surface: #ffffff; --ink: #18151f; --muted: #5b5668; --line: #dfdbe9; --accent: #6d28d9; --accent-soft: #ece4fd;
+  --good: #0f7a5c; --warn: #9a4a00;
+  /* the phones always use the app's own dark look */
+  --ph-bg: #000000; --ph-card: #1a1c21; --ph-card2: #111216; --ph-line: #23262c; --ph-ink: #f2f3f5; --ph-muted: #9aa0aa; --ph-faint: #6e747e;
+  --ph-accent: #7c3aed; --ph-accent-ink: #c4b1ff; --ph-tint: #2a2340; --ph-pink: #e91e63; --ph-teal: #00bfa5; --ph-yellow: #ffc107;
+  --display: "Space Grotesk", Inter, system-ui, sans-serif; --text: Inter, system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0b10; --surface: #17151d; --ink: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --accent-soft: #241d38;
+  --good: #4fd1a5; --warn: #ffb35c; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0c0b10; --surface: #17151d; --ink: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --accent-soft: #241d38;
+  --good: #4fd1a5; --warn: #ffb35c; color-scheme: dark }
+
+body { background: var(--bg); color: var(--ink); font-family: var(--text); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 48px; }
+.wrap { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+h1 { font-family: var(--display); font-size: clamp(28px, 5vw, 40px); line-height: 1.1; margin: 0; text-wrap: balance; letter-spacing: -0.5px; }
+.lead { margin: 6px 0 0; color: var(--muted); max-width: 68ch; }
+.switch { display: flex; flex-wrap: wrap; gap: 8px; }
+.switch button { font: 600 14px var(--text); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
+  padding: 9px 14px; cursor: pointer; display: flex; gap: 8px; align-items: center; }
+.switch button .k { font-family: var(--display); color: var(--accent); }
+.switch button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.switch button[aria-pressed="true"] .k { color: #fff; }
+.switch button:focus-visible, .phone button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.concept h2 { font-family: var(--display); font-size: 26px; margin: 0; letter-spacing: -0.3px; }
+.concept .idea { margin: 4px 0 0; color: var(--muted); max-width: 70ch; }
+.phones { display: flex; gap: 22px; overflow-x: auto; padding: 6px 2px 14px; scroll-snap-type: x mandatory; }
+figure { margin: 0; display: flex; flex-direction: column; gap: 8px; scroll-snap-align: start; }
+figcaption { font-size: 13px; color: var(--muted); max-width: 300px; }
+figcaption b { color: var(--ink); }
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.note { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; min-width: 0; }
+.note h3 { margin: 0 0 6px; font-size: 13px; letter-spacing: 0.6px; text-transform: uppercase; }
+.note.pro h3 { color: var(--good); } .note.con h3 { color: var(--warn); }
+.note ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.compare { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 14px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+thead th { font-size: 12px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted); }
+td.n { font-family: var(--display); font-variant-numeric: tabular-nums; font-weight: 600; }
+tr.pick td { background: var(--accent-soft); }
+.reco { background: var(--accent-soft); border-radius: 14px; padding: 16px 18px; }
+.reco h2 { font-family: var(--display); margin: 0 0 6px; font-size: 22px; }
+.reco p { margin: 0; max-width: 75ch; }
+
+/* ---- phone ---- */
+.phone { width: 300px; height: 620px; flex: none; background: var(--ph-bg); color: var(--ph-ink); border-radius: 34px; border: 8px solid #1e1d24;
+  box-sizing: border-box; position: relative; overflow: hidden; display: flex; flex-direction: column; font-size: 13px; line-height: 1.35;
+  box-shadow: 0 10px 30px rgba(20, 10, 40, 0.18); }
+.phone .body { flex: 1; overflow: hidden; padding: 14px 12px 10px; display: flex; flex-direction: column; gap: 9px; }
+.phone .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.phone .h { font-family: var(--display); font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+.phone .sub { color: var(--ph-muted); font-size: 11.5px; }
+.phone .card { background: var(--ph-card); border-radius: 14px; padding: 10px 11px; display: flex; flex-direction: column; gap: 5px; }
+.phone .card.dim { background: var(--ph-card2); }
+.phone .card.hi { background: #1c1828; border: 2px solid var(--ph-accent); }
+.phone .row { display: flex; align-items: center; gap: 8px; }
+.phone .grow { flex: 1; min-width: 0; }
+.phone .t { font-weight: 700; font-size: 13.5px; }
+.phone .m { color: var(--ph-muted); font-size: 11.5px; }
+.phone .num { font-family: var(--display); font-variant-numeric: tabular-nums; font-weight: 700; }
+.phone .big { font-family: var(--display); font-weight: 700; font-size: 44px; line-height: 1; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+.phone button { font: 700 13px var(--text); border: 0; border-radius: 12px; cursor: pointer; }
+.phone .btn { background: var(--ph-accent); color: #fff; height: 42px; width: 100%; }
+.phone .btn.soft { background: var(--ph-tint); color: var(--ph-accent-ink); }
+.phone .btn.teal { background: var(--ph-teal); color: #04241f; }
+.phone .btn.pink { background: var(--ph-pink); }
+.phone .pill { padding: 3px 9px; border-radius: 999px; background: var(--ph-tint); color: var(--ph-accent-ink); font-size: 11px; font-weight: 700; white-space: nowrap; }
+.phone .pill.pink { background: rgba(233, 30, 99, 0.18); color: #ff8ab3; }
+.phone .pill.teal { background: rgba(0, 191, 165, 0.16); color: #5eead4; }
+.phone .pill.yellow { background: rgba(255, 193, 7, 0.16); color: #ffd666; }
+.phone .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.phone .chev { color: var(--ph-faint); font-size: 18px; }
+.phone .tabs { display: flex; border-top: 1px solid var(--ph-line); background: #0b0c0f; padding: 6px 4px 10px; }
+.phone .tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--ph-faint); font-size: 10.5px; font-weight: 600; }
+.phone .tab i { width: 30px; height: 22px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-style: normal; font-size: 13px; }
+.phone .tab.on { color: var(--ph-accent-ink); } .phone .tab.on i { background: var(--ph-tint); }
+.phone .tab.fab i { width: 48px; height: 48px; border-radius: 24px; margin-top: -22px; background: var(--ph-accent); color: #fff; font-size: 24px; box-shadow: 0 4px 14px rgba(124, 58, 237, 0.5); }
+.phone .mini { margin: 0 8px 6px; background: #1c1828; border: 1px solid #3b2f63; border-radius: 16px; padding: 8px 10px; display: flex; align-items: center; gap: 9px; }
+.phone .ring { width: 34px; height: 34px; border-radius: 50%; flex: none; background: conic-gradient(var(--ph-teal) 0 62%, #2a2d34 0); display: flex; align-items: center; justify-content: center; }
+.phone .ring span { width: 26px; height: 26px; border-radius: 50%; background: #1c1828; display: flex; align-items: center; justify-content: center; font: 700 9px var(--display); color: #5eead4; }
+.phone .sheet { position: absolute; inset: auto 0 0 0; background: #15161b; border-radius: 22px 22px 0 0; padding: 10px 12px 14px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 -10px 30px rgba(0,0,0,0.6); }
+.phone .grab { width: 38px; height: 4px; border-radius: 2px; background: #3a3d45; align-self: center; }
+.phone .scrim { position: absolute; inset: 0; background: rgba(0,0,0,0.55); }
+.phone .seg { display: flex; background: var(--ph-card); border-radius: 12px; padding: 3px; }
+.phone .seg span { flex: 1; text-align: center; padding: 7px 0; border-radius: 9px; font-weight: 700; color: var(--ph-muted); font-size: 12px; }
+.phone .seg span.on { background: var(--ph-accent); color: #fff; }
+.phone .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.phone .week div { background: var(--ph-card2); border-radius: 10px; padding: 5px 0; text-align: center; font-size: 10px; color: var(--ph-muted); display: flex; flex-direction: column; gap: 3px; align-items: center; }
+.phone .week div b { font-family: var(--display); color: var(--ph-ink); font-size: 13px; }
+.phone .week div.today { outline: 2px solid var(--ph-accent); }
+.phone .bar { height: 5px; border-radius: 3px; width: 70%; }
+.phone .boxes { display: flex; flex-wrap: wrap; gap: 4px; }
+.phone .boxes span { min-width: 22px; height: 22px; padding: 0 5px; box-sizing: border-box; border-radius: 6px; border: 1px solid #2a2d34; display: inline-flex; align-items: center; justify-content: center; font: 600 11.5px var(--display); }
+.phone .search { background: var(--ph-card); border-radius: 12px; padding: 9px 11px; color: var(--ph-faint); }
+.phone .tile { flex: 1; background: var(--ph-card); border-radius: 16px; padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.phone .tile .big { font-size: 34px; }
+.phone .pm { display: flex; gap: 6px; width: 100%; } .phone .pm button { flex: 1; height: 34px; background: var(--ph-tint); color: var(--ph-accent-ink); font-size: 18px; }
+@media (prefers-reduced-motion: no-preference) { .concept { animation: in 220ms ease-out; } @keyframes in { from { opacity: 0.4; transform: translateY(6px); } } }
+.phone .mon { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background: var(--ph-card); border-radius: 12px; padding: 5px; }
+.phone .mon span { height: 19px; display: flex; align-items: center; justify-content: center; font: 600 10px var(--display); color: var(--ph-ink); border-radius: 9px; }
+.phone .mon span.e { visibility: hidden; } .phone .mon span.t { color: var(--ph-faint); } .phone .mon span.sel { background: #3a2f5c; }
+.phone .mon span.tr { text-decoration: underline 2px var(--ph-accent); text-underline-offset: 3px; }
+.phone .dayh { display: flex; justify-content: space-between; color: var(--ph-muted); font-weight: 700; font-size: 12px; }
+.phone .ex { background: var(--ph-card); border-radius: 14px; padding: 9px 10px; display: flex; flex-direction: column; gap: 5px; }
+.phone .ex .nm { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
+.phone .ex .nm b { font-size: 13px; } .phone .ex .nm span { font-size: 10.5px; color: var(--ph-muted); white-space: nowrap; }
+.phone .raw { font-size: 12px; color: #c9ccd3; line-height: 1.4; }
+.phone .raw b { color: var(--ph-ink); }
+.phone .ln { display: flex; align-items: center; gap: 6px; }
+.phone .ln .ld { width: 54px; flex: none; font: 700 11.5px var(--display); color: var(--ph-muted); text-align: right; font-variant-numeric: tabular-nums; display: flex; justify-content: flex-end; align-items: center; gap: 4px; }
+.phone .bx { display: flex; flex-wrap: wrap; gap: 3px; }
+.phone .bx span { min-width: 20px; height: 20px; padding: 0 4px; box-sizing: border-box; border-radius: 6px; background: #24272e; display: inline-flex; align-items: center; justify-content: center; font: 700 11px var(--display); color: var(--ph-ink); position: relative; }
+.phone .bx span.n::after { content: ""; position: absolute; top: -2px; right: -2px; width: 6px; height: 6px; border-radius: 3px; background: var(--ph-yellow); }
+.phone .bx.l span { background: rgba(233, 30, 99, 0.22); } .phone .bx.r span { background: rgba(0, 191, 165, 0.2); }
+.phone .cols { display: grid; grid-template-columns: 16px 1fr 1fr; gap: 4px 6px; align-items: center; }
+.phone .cols .hd { font-size: 10px; font-weight: 800; text-align: left; }
+.phone .band { width: 10px; height: 10px; border-radius: 5px; display: inline-block; border: 1px solid rgba(255,255,255,0.3); }
+.phone .nt { font-size: 11px; color: var(--ph-muted); font-style: italic; }
+.phone .nt::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 3px; background: var(--ph-yellow); margin-right: 5px; vertical-align: 1px; }
+.phone .bars { display: flex; align-items: flex-end; gap: 3px; height: 54px; }
+.phone .bars div { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 2px; height: 100%; }
+.phone .bars i { width: 100%; border-radius: 3px 3px 1px 1px; background: var(--ph-accent); display: block; }
+.phone .bars small { font: 700 9.5px var(--display); color: var(--ph-ink); }
+.phone .bars em { font: 600 8.5px var(--display); color: var(--ph-muted); font-style: normal; }
+.phone .chev2 { color: var(--ph-faint); font-size: 14px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Gli allenamenti del giorno, leggibili</h1>
+    <p class="lead">Solo proposte, l'app non è cambiata. Due giorni veri dal telefono: <b>19 novembre</b> (Overhead Press a piramide, Box Pike, alzate)
+      e <b>20 novembre</b> (Muscle Up con gli elastici, One Arm Pull Up per lato con note, Pull Up). Oggi ogni esercizio è una riga di testo come
+      «20 × 6, 25 × 5, 30 × 5, 35 × 5, 37.5 × 5, 40 × 3, 37.5 × 5 ×2, 35 × 5 ×2, 35 × 4»: tutto va letto, niente si vede a colpo d'occhio.</p>
+  </header>
+
+  <nav class="switch" aria-label="Idee" id="switch"></nav>
+  <section class="concept" id="concept" aria-live="polite"></section>
+
+  <section class="reco">
+    <h2>Cosa farei</h2>
+    <p><b>A · Per carico</b>, con la riga riassuntiva di B in testa a ogni esercizio. Il peso a sinistra, una volta sola; a destra le ripetizioni in caselline.
+      Si legge come la schermata della serie (stessa grafica), i lati hanno due colonne rosa/verde e gli elastici il loro pallino colorato.
+      Le note diventano un puntino giallo sulla serie e la nota sotto. L'ordine esatto delle serie resta nella schermata dell'esercizio.</p>
+  </section>
+
+  <section>
+    <h2 style="font-family: var(--display); margin: 0 0 10px;">Confronto</h2>
+    <div class="compare">
+      <table>
+        <thead><tr><th>Idea</th><th>Overhead Press (11 serie) occupa</th><th>Si vede subito</th><th>Si perde</th><th>Quanto cambia</th></tr></thead>
+        <tbody id="cmp"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script>
+const phone = (inner) => `<div class="phone" role="img">${inner}</div>`;
+const body = (html) => `<div class="body">${html}</div>`;
+const trained = [3, 4, 6, 8, 9, 11, 13, 15, 17, 18, 19, 20];
+const cal = (sel) => `<div class="mon">${'<span class="e"></span>'.repeat(6)}${Array.from({ length: 30 }, (_, i) => i + 1).map((d) =>
+  `<span class="${[d === sel && 'sel', trained.includes(d) && 'tr', d > 23 && 't'].filter(Boolean).join(' ')}">${d}</span>`).join('')}</div>`;
+const dayTop = (sel, label) => `<div class="top"><div class="h" style="font-size:18px">Journal</div><span class="sub">November 2026</span></div>${cal(sel)}<div class="dayh"><span>${label}</span><span>⋮</span></div>`;
+const B = { purple: '#8e44ad', black: '#111', red: '#e53935', yellow: '#fdd835', green: '#43a047' };
+const band = (c) => `<i class="band" style="background:${B[c]}"></i>`;
+const bx = (xs, cls = '') => `<div class="bx ${cls}">${xs.map((x) => `<span${String(x).includes('*') ? ' class="n"' : ''}>${String(x).replace('*', '')}</span>`).join('')}</div>`;
+const ln = (ld, xs, cls) => `<div class="ln"><span class="ld">${ld}</span>${bx(xs, cls)}</div>`;
+const ex = (name, sum, inner) => `<div class="ex"><div class="nm"><b>${name}</b><span>${sum}</span></div>${inner}</div>`;
+
+// ---- today (the real text the app shows) ----
+const raw19 = `<div class="ex"><div class="nm"><b>Gym · Push</b><span>23 sets</span></div>
+  <div class="raw"><b>Overhead Press</b>  20 × 6, 25 × 5, 30 × 5, 35 × 5, 37.5 × 5, 40 × 3, 37.5 × 5 ×2, 35 × 5 ×2, 35 × 4</div>
+  <div class="raw"><b>Box Pike Push Up</b>  0 × 5, 0 × 6, 0 × 4, 0 × 5 ×3</div>
+  <div class="raw"><b>Lateral dumbbell raise</b>  6 × 10 ×3</div>
+  <div class="raw"><b>Seated External Shoulder Rotation</b>  6 × 4, 6 × 3 ×2</div></div>`;
+const raw20 = `<div class="ex"><div class="nm"><b>Gym · Pull</b><span>23 sets</span></div>
+  <div class="raw"><b>Muscle Up</b>  purple · 1, black · 1, red · 1, yellow · 1, 1, purple · 1 ×2, black · 1, red · 1</div>
+  <div class="raw"><b>Resistance Band One Arm Pull Up</b>  L black · 1, R black · 1, L black · 3, R black · 3, L black · 3, R black · 3, L R black · 2 ×2</div>
+  <div class="raw"><b>Pull Up</b>  15 × 5, 15 × 6, 15 × 7 ×2, 15 × 5 ×2</div>
+  <div class="raw" style="font-style:italic;color:var(--ph-muted)">“half rep” “last rep half” “last half rep”</div></div>`;
+
+// ---- A: by load ----
+const a19 = ex('Overhead Press', '11 sets · top 40 × 3', ln('20 kg', [6]) + ln('25 kg', [5]) + ln('30 kg', [5]) + ln('35 kg', [5, 5, 5, 4]) + ln('37.5 kg', [5, 5, 5]) + ln('40 kg', [3]))
+  + ex('Box Pike Push Up', '6 sets · 30 reps', ln('body', [5, 6, 4, 5, 5, 5]))
+  + ex('Lateral dumbbell raise', '3 sets', ln('6 kg', [10, 10, 10]))
+  + ex('Seated External Shoulder Rotation', '3 sets', ln('6 kg', [4, 3, 3]));
+const a20 = ex('Muscle Up', '9 sets · 9 reps', ln(band('purple'), [1, 1, 1]) + ln(band('black'), [1, 1]) + ln(band('red'), [1, 1]) + ln(band('yellow'), [1]) + ln('none', [1]))
+  + ex('One Arm Pull Up · band', '8 sets', `<div class="cols"><span></span><span class="hd" style="color:#ff8ab3">L</span><span class="hd" style="color:#5eead4">R</span>
+      <span>${band("black")}</span>${bx(['1*', '3*', '3*', 2], 'l')}${bx([1, 3, '3*', 2], 'r')}</div>
+      <div class="nt">half rep · last rep half · last half rep</div>`)
+  + ex('Pull Up', '6 sets · 35 reps', ln('+15 kg', [5, 6, 7, 7, 5, 5]));
+
+// ---- B: one line each, tap to open ----
+const row = (name, line, open = '') => `<div class="ex"><div class="nm"><b>${name}</b><span class="chev2">${open ? '▾' : '›'}</span></div><div class="m">${line}</div>${open}</div>`;
+const b19 = row('Overhead Press', '11 sets · 20 → 40 kg · top 40 × 3', ln('20 kg', [6]) + ln('25 kg', [5]) + ln('30 kg', [5]) + ln('35 kg', [5, 5, 5, 4]) + ln('37.5 kg', [5, 5, 5]) + ln('40 kg', [3]))
+  + row('Box Pike Push Up', '6 sets · 30 reps') + row('Lateral dumbbell raise', '3 sets · 6 kg × 10') + row('Seated External Shoulder Rotation', '3 sets · 6 kg · 10 reps');
+const b20 = row('Muscle Up', '9 sets · 9 reps · bands purple → none') + row('One Arm Pull Up · band', '8 sets · L 9 reps · R 9 reps · 3 notes') + row('Pull Up', '6 sets · +15 kg · 35 reps · best 7');
+
+// ---- C: bars ----
+const bars = (sets, max) => `<div class="bars">${sets.map(([kg, r]) => `<div><small>${r}</small><i style="height:${Math.max(6, Math.round((kg / max) * 34))}px"></i><em>${kg}</em></div>`).join('')}</div>`;
+const c19 = ex('Overhead Press', '11 sets · top 40 × 3', bars([[20, 6], [25, 5], [30, 5], [35, 5], [37.5, 5], [40, 3], [37.5, 5], [37.5, 5], [35, 5], [35, 5], [35, 4]], 40))
+  + ex('Box Pike Push Up', '6 sets', bars([[1, 5], [1, 6], [1, 4], [1, 5], [1, 5], [1, 5]], 1).replace(/<em>1<\/em>/g, '<em>·</em>'))
+  + ex('Lateral dumbbell raise', '3 sets', bars([[6, 10], [6, 10], [6, 10]], 40));
+const c20 = ex('Pull Up', '6 sets · +15 kg', bars([[15, 5], [15, 6], [15, 7], [15, 7], [15, 5], [15, 5]], 15))
+  + ex('Muscle Up', '9 sets', `<div class="m">le barre non hanno senso: niente peso, solo elastici</div>`);
+
+// ---- D: blocks in time order (like the set screen) ----
+const d19 = ex('Overhead Press', '11 sets · top 40 × 3', ln('20 kg', [6]) + ln('25 kg', [5]) + ln('30 kg', [5]) + ln('35 kg', [5]) + ln('37.5 kg', [5]) + ln('40 kg', [3]) + ln('37.5 kg', [5, 5]) + ln('35 kg', [5, 5, 4]))
+  + ex('Box Pike Push Up', '6 sets · 30 reps', ln('body', [5, 6, 4, 5, 5, 5]))
+  + ex('Lateral dumbbell raise', '3 sets', ln('6 kg', [10, 10, 10]));
+const d20 = ex('Muscle Up', '9 sets · 9 reps', ln(band('purple'), [1]) + ln(band('black'), [1]) + ln(band('red'), [1]) + ln(band('yellow'), [1]) + ln('none', [1]) + ln(band('purple'), [1, 1]) + ln(band('black'), [1]) + ln(band('red'), [1]))
+  + ex('Pull Up', '6 sets · 35 reps', ln('+15 kg', [5, 6, 7, 7, 5, 5]));
+
+const day = (sel, label, inner) => phone(body(dayTop(sel, label) + inner));
+const C = [
+  { k: '0', name: 'Com\'è oggi', short: 'Oggi',
+    idea: 'Per riferimento: il testo che l\'app mostra oggi per quei due giorni.',
+    shots: [['<b>19 novembre</b>', day(19, 'Thursday 19 November', raw19)], ['<b>20 novembre</b>', day(20, 'Friday 20 November', raw20)]],
+    pro: ['Tutto in poco spazio.'], con: ['Va letto parola per parola; il peso si ripete a ogni serie.', 'Lati, elastici e note sono parole in mezzo ai numeri.'],
+    row: ['1 riga lunga (3 a capo)', 'niente', '—', '—'] },
+  { k: 'A', name: 'Per carico', short: 'Per carico',
+    idea: 'Ogni esercizio è una piccola tabella: il carico a sinistra, una volta sola, in ordine di peso; a destra le ripetizioni in caselline. Lati in due colonne (rosa L, verde R), elastici con il loro colore, note con un puntino giallo.',
+    shots: [['<b>19 novembre:</b> la piramide si legge da sola, 35 kg ×4 serie, 37.5 ×3.', day(19, 'Thursday 19 November', a19)],
+      ['<b>20 novembre:</b> elastici come pallini colorati; il One Arm Pull Up in due colonne, L e R.', day(20, 'Friday 20 November', a20)]],
+    pro: ['Il peso si legge una volta, le ripetizioni a colpo d\'occhio.', 'Stessa grafica della schermata della serie: niente da imparare.', 'Lati, elastici e note diventano colori, non parole.'],
+    con: ['L\'ordine in cui le hai fatte non si vede (35 kg prima e dopo il 40 finiscono insieme).', 'Più alto del testo: in un giorno pieno si scorre.'],
+    row: ['6 righe', 'peso, serie per peso, lati', 'l\'ordine delle serie', 'medio'] },
+  { k: 'B', name: 'Una riga per esercizio, tocca per aprire', short: 'Riassunto',
+    idea: 'Ogni esercizio è una riga di riassunto (serie, da quanto a quanto, la migliore). Tocchi e si apre il dettaglio per carico di A.',
+    shots: [['<b>19 novembre,</b> Overhead Press aperto, gli altri chiusi.', day(19, 'Thursday 19 November', b19)],
+      ['<b>20 novembre,</b> tutto chiuso: il giorno in un colpo d\'occhio.', day(20, 'Friday 20 November', b20)]],
+    pro: ['Il giorno intero sta in uno schermo.', 'Il dettaglio c\'è, quando lo vuoi.'],
+    con: ['Un tocco per vedere le serie.', 'Il riassunto va scelto bene per ogni tipo di esercizio.'],
+    row: ['1 riga (6 aperto)', 'quanto hai fatto', 'le serie, finché non apri', 'medio'] },
+  { k: 'C', name: 'Barre', short: 'Barre',
+    idea: 'Ogni serie è una barra: alta quanto il peso, con le ripetizioni sopra. La forma della serata si vede subito (piramide, serie piatte).',
+    shots: [['<b>19 novembre:</b> la piramide dell\'Overhead Press è una forma.', day(19, 'Thursday 19 November', c19)],
+      ['<b>20 novembre:</b> per esercizi senza peso le barre non dicono niente.', day(20, 'Friday 20 November', c20)]],
+    pro: ['Bello e immediato per gli esercizi con il bilanciere.'], con: ['Inutile per corpo libero, elastici, tempi.', 'I numeri piccoli sotto si leggono male.'],
+    row: ['1 riga di barre', 'la forma della seduta', 'leggibilità dei numeri', 'molto'] },
+  { k: 'D', name: 'Blocchi in ordine di tempo', short: 'In ordine',
+    idea: 'Come A, ma le serie restano nell\'ordine in cui le hai fatte: un nuovo blocco ogni volta che cambia il peso. È esattamente la schermata della serie.',
+    shots: [['<b>19 novembre:</b> 37.5 e 35 compaiono due volte, prima e dopo il 40.', day(19, 'Thursday 19 November', d19)],
+      ['<b>20 novembre:</b> il Muscle Up con elastici diversi diventa 8 righe.', day(20, 'Friday 20 November', d20)]],
+    pro: ['Racconta la seduta com\'è andata.', 'Identica alla schermata della serie.'], con: ['Con molti cambi di carico torna lunga (Muscle Up: 8 righe da una serie).'],
+    row: ['8 righe', 'l\'andamento della seduta', 'compattezza', 'medio'] },
+];
+
+const sw = document.getElementById('switch');
+const box = document.getElementById('concept');
+let current = 1;
+try { const saved = localStorage.getItem('intervals-day-idea'); if (saved !== null && C[+saved]) current = +saved; } catch (e) {}
+function render() {
+  const c = C[current];
+  sw.innerHTML = C.map((x, i) => `<button type="button" aria-pressed="${i === current}" data-i="${i}"><span class="k">${x.k}</span>${x.short}</button>`).join('');
+  box.innerHTML = `
+    <h2>${c.k} · ${c.name}</h2>
+    <p class="idea">${c.idea}</p>
+    <div class="phones">${c.shots.map(([cap, ph]) => `<figure>${ph}<figcaption>${cap}</figcaption></figure>`).join('')}</div>
+    <div class="notes">
+      <div class="note pro"><h3>A favore</h3><ul>${c.pro.map((x) => `<li>${x}</li>`).join('')}</ul></div>
+      <div class="note con"><h3>Attenzione</h3><ul>${c.con.map((x) => `<li>${x}</li>`).join('')}</ul></div>
+    </div>`;
+  box.querySelectorAll('.phone').forEach((p, i) => p.setAttribute('aria-label', `${c.name}, screen ${i + 1}`));
+  try { localStorage.setItem('intervals-day-idea', String(current)); } catch (e) {}
+}
+sw.addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-i]');
+  if (!b) return;
+  current = +b.dataset.i;
+  render();
+});
+document.getElementById('cmp').innerHTML = C.map((c) => `<tr class="${c.k === 'A' ? 'pick' : ''}"><td><b>${c.k} · ${c.name}</b></td>${c.row.map((x) => `<td>${x}</td>`).join('')}</tr>`).join('');
+render();
+</script>
