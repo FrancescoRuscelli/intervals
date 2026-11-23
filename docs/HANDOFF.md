@@ -12,10 +12,11 @@ Save a local Git checkpoint of uncommitted work before updating. Use the latest 
 - **Update one set.** Tap a logged set to load it into the existing inputs. **Update set** saves that entry while keeping its original day, order, rest, and note. Logging is unavailable while sets are selected.
 - **Select sets.** A long press starts selection on the same screen with haptic feedback. One or more sets use the same pink toolbar with a count, **Note**, **Delete**, and an **X**. Tap a set to add or remove it from the selection. Each set is individually selectable, even when several share a row. With several selected, disable and dim the set inputs and logging button. **X** and Android Back exit selection.
 - **Notes and deletion.** For one set, **Note** opens its existing note. For several sets, **Note** appends the same text to each and keeps their existing notes. Deletion asks for confirmation and applies to the selected sets.
+- **Set-entry header.** The exercise name sits beside the rest timer when it is visible. Previous sets are available in **History**. The “Last time” line below the exercise name was removed.
 
 ## Last documented Pixel install
 
-The Android source is committed at `0792a43`. The debug APK from that source was installed in place on the Pixel 8a with `adb install -r`, and its hash was checked against the installed package.
+On 2026-11-23, the Pixel 8a received the build with the restored pink set editor and the simplified set-entry header via `adb install -r`. The installed APK matched the local build, and Intervals launched successfully.
 
 - **Navigation.** Journal opens first. The bottom bar is Journal, Intervals, and Gym. The separate Today screen and its Quick Picks are gone. Gym opens on the exercise library. A day opened from a Journal card returns to that date when you go back.
 - **Compact Journal.** The month shows sessions, days trained, and gym sets in one line. A gym day counts as one session alongside the interval sessions on that date. The workout-type pills and Time tile were removed from the calendar.
@@ -54,7 +55,7 @@ The user could not choose between ideas C2 and A2 in the [Journal day ideas](moc
 
 ## Rest timer (installed 2026-11-23, to try)
 
-Built from option **3** in the [rest timer mockup](mockups/intervals-rest-timer.html). Like the Journal diary, it waits for the phone to be connected.
+Built from option **3** in the [rest timer mockup](mockups/intervals-rest-timer.html).
 
 - **Pill in the header.** On the set screen the rest is a pill beside the exercise name: "⏱ 1:12 / 3:00", then a filled "Ready 3:14". Tapping it stops the clock. The rest is still saved on the next set, because the clock only hides. The group run screen keeps the old wide clock.
 - **Notification.** `RestAlarm.kt` shows a notification with a chronometer, **Stop**, and **Open**, also on the lock screen. A forgotten rest goes away by itself 15 minutes after the target.
@@ -80,8 +81,8 @@ The approved Journal design is option **A** in the [Journal concepts](mockups/in
 
 ## Verification
 
-- The core and Android unit suites passed all **89 tests**, including regression tests for consecutive set grouping, tag membership, and returning to the selected Journal day. The debug APK built successfully.
-- The Pixel check confirmed Journal as home, the new bottom tabs, and the Gym library. The filter and day-menu walkthrough ended when the phone switched to Gym during the check.
+- The core and Android unit suites passed all **91 tests** after restoring the Gym set editor. The debug APK built successfully after the header change.
+- An earlier Pixel check confirmed Journal as home, the new bottom tabs, and the Gym library. The filter and day-menu walkthrough ended when the phone switched to Gym. The restored set editor still needs a walkthrough on the Pixel.
 - The updated Stats mockup was checked in Edge. Both entries open Stats, option B opens the month being viewed, and Back restores the Journal date and filter. Both layouts fit a 320 px preview.
 - See the [build and install commands](../README.md#command-line). Keep machine-generated `gradle/gradle-daemon-jvm.properties` local.
 

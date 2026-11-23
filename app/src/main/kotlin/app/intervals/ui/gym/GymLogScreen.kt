@@ -211,20 +211,7 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
             TextButton(onClick = { deleteTargets = selectedSets.map { it.id } }) { Text("Delete", color = p.workText) }
         } else Row(Modifier.fillMaxWidth().padding(start = 4.dp, end = 16.dp, top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = { vm.back() }) { Icon(AppIcons.Back, "Back", tint = p.text) }
-            Column(Modifier.weight(1f)) {
-                Text(ex.name, color = p.text, fontSize = 20.sp, fontWeight = FontWeight.Bold, maxLines = 2)
-                val l = lastTime
-                Text(
-                    when {
-                        l == null -> ""
-                        l.isEmpty() -> "First time"
-                        else -> "Last · ${shortDay(l.first().day)} · " + l.take(4).joinToString(", ") { s ->
-                            (s.side?.let { it.letter + " " } ?: "") + s.summary(ex)
-                        } + if (l.size > 4) " …" else ""
-                    },
-                    color = p.muted, fontSize = 13.sp, maxLines = 2,
-                )
-            }
+            Text(ex.name, modifier = Modifier.weight(1f), color = p.text, fontSize = 20.sp, fontWeight = FontWeight.Bold, maxLines = 2)
             // the rest clock (mockup intervals-rest-timer.html, option 3): tap to stop it
             vm.gymRest?.takeIf { it.day == day && it.visible && day == LocalDate.now().toString() }?.let { RestPill(it, vm::dismissGymRest) }
             IconButton(onClick = { vm.editExercise(exerciseId) }) { Icon(AppIcons.Edit, "Edit exercise", tint = p.muted) }
