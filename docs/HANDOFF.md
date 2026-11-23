@@ -1,6 +1,31 @@
 # Intervals handoff
 
-Updated 2026-11-22. Read [CLAUDE.md](../CLAUDE.md) for repo conventions and [DESIGN.md](DESIGN.md) for design history. The current navigation decision is recorded here.
+Updated 2026-11-23. Read [CLAUDE.md](../CLAUDE.md) for repo conventions and [DESIGN.md](DESIGN.md) for design history. The current navigation decision is recorded here.
+
+## Moving to the other PC: merge, do not overwrite
+
+The other PC has changes made with ChatGPT that were never pushed. `origin/main` has the work of 2026-11-22/23, about 25 commits from `0b54996` to the commit that adds this section. **Both must survive.** Do not run `git pull`, `git reset --hard`, `git checkout -- .`, `git stash drop` or `git clean` before step 3.
+
+1. **Look first.** Run `git status`, `git stash list`, `git log --oneline origin/main..HEAD` (unpushed commits) and `git diff --stat`. Write down what is there.
+2. **Freeze the local work on a branch and push it.** Run `git switch -c pc2-chatgpt`, then `git add -A`. Leave out `gradle/gradle-daemon-jvm.properties`, `*.db*` and anything secret. Commit as "PC2: unpushed ChatGPT work", then `git push -u origin pc2-chatgpt`. If there are stashes, `git stash show -p stash@{0}` each one and commit it on the branch too. From here nothing can be lost.
+3. **Bring in today's work.** Run `git fetch`, then `git merge origin/main` on `pc2-chatgpt`.
+4. **Conflicts, file by file.** Never take `--ours` or `--theirs` for a whole file. Keep both sides' features. The files changed on this side are listed below. Where the two sides changed the same thing differently, the user decides, so ask.
+   - `ui/journal/JournalScreen.kt`: calendar plus day pager, bars and table, F/I
+   - `ui/gym/GymLogScreen.kt`: spec chips, Log L · L + R · Log R, rest pill
+   - `ui/gym/GymGroupRun.kt`: `RestPill`
+   - `ui/AppViewModel.kt`: rest via `RestAlarm`
+   - `RestAlarm.kt`: new
+   - `AndroidManifest.xml`: receiver, alarm permissions
+   - `ui/settings/SettingsScreen.kt`
+   - `data/Daos.kt`
+   - `data/IntervalsRepository.kt`
+   - `core/Gym.kt`: band tap
+   - `core/GymRows.kt`
+   - `core/Settings.kt`
+   - their tests
+   - `Diary.kt`: deleted on purpose
+5. **Check.** Run `./gradlew.bat :core:test :app:testDebugUnitTest :app:assembleDebug`. Room is at **DB v6**. If the other side added a migration too, renumber it on top of v6. Do not drop or rewrite one.
+6. **Then publish.** Run `git switch main`, `git merge --ff-only pc2-chatgpt` and `git push`. Keep the `pc2-chatgpt` branch until the user says it can go. Install on the phone only when Intervals is not on screen.
 
 ## Current Android build
 
@@ -33,7 +58,12 @@ The user could not choose between ideas C2 and A2 in the [Journal day ideas](moc
   - Band colors fill the bar.
   - The side is a cap on top: L pink, R green.
   - The kg are written under the bar. The reps are above it, in yellow when the set has a note.
-- **Table (A2).** The sets are grouped by load, lightest first, with the band dots as the label. Each reps box carries its set number in the day, in yellow when the set has a note. L and R boxes are tinted pink and green.
+- **Table (A2).** The sets are grouped by load, lightest first, with the band dots as the label. L and R boxes are tinted pink and green.
+- **Set order (F + I from the [set number mockup](mockups/intervals-set-number.html)).** The user chose these two together for now and will decide later.
+  - The boxes are clean. A thin yellow strip under a box marks a note.
+  - **Hold a box:** every box shows its "#n" tab.
+  - **Tap a box or a bar:** that set is outlined in both views.
+  - While a box is held or a set is picked, the exercise's line reads "#4 of 11 · after 30 × 5 · before 37.5 × 5".
 - **Code.** The logic is `loadRows` and `dayBars` in `GymRows.kt`, with tests.
 
 ## Rest timer (installed 2026-11-23, to try)

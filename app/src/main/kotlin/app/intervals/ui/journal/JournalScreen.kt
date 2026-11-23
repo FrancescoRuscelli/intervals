@@ -65,6 +65,8 @@ import app.intervals.core.GymGroup
 import app.intervals.core.GymSet
 import app.intervals.core.JournalSets
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.layout.IntrinsicSize
 import app.intervals.core.Session
 import app.intervals.core.day
@@ -502,30 +504,43 @@ private fun GymDayCard(
 @Composable
 private fun ExerciseOfDay(ex: Exercise, sets: List<GymSet>, mode: JournalSets) {
     val p = LocalPalette.current
+    // mockup intervals-set-number.html, F and I: holding a box shows every set's number; tapping a bar or a box picks that set in both
+    var held by remember { mutableStateOf<Int?>(null) }
+    var picked by remember(sets) { mutableStateOf<Int?>(null) }
+    val pick = { n: Int -> picked = if (picked == n) null else n }
     Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 4.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(ex.name, color = p.text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-            val top = app.intervals.core.topSet(sets, ex)?.takeIf { app.intervals.core.GymField.WEIGHT in ex.fields }
-            Text("${sets.size} set${if (sets.size == 1) "" else "s"}" + (top?.let { " · top " + it.summary(ex) } ?: ""), color = p.muted, fontSize = 11.sp, maxLines = 1)
+            val n = held ?: picked
+            val line = if (n != null) setPlace(sets, n, ex) else {
+                val top = app.intervals.core.topSet(sets, ex)?.takeIf { app.intervals.core.GymField.WEIGHT in ex.fields }
+                "${sets.size} set${if (sets.size == 1) "" else "s"}" + (top?.let { " · top " + it.summary(ex) } ?: "")
+            }
+            Text(line, color = if (n != null) p.accentText else p.muted, fontSize = 11.sp, maxLines = 1)
         }
-        if (mode != JournalSets.TABLE) DayBars(app.intervals.core.dayBars(sets, ex))
-        if (mode != JournalSets.BARS) LoadTable(app.intervals.core.loadRows(sets, ex))
+        if (mode != JournalSets.TABLE) DayBars(app.intervals.core.dayBars(sets, ex), held ?: picked, pick)
+        if (mode != JournalSets.BARS) LoadTable(app.intervals.core.loadRows(sets, ex), held != null, held ?: picked, pick) { held = it }
     }
 }
 
+/** "#4 of 11 · after 30 × 5 · before 37.5 × 5": where set [n] (1-based, day order) sits in the day. */
+private fun setPlace(sets: List<GymSet>, n: Int, ex: Exercise): String =
+    "#$n of ${sets.size}" + (sets.getOrNull(n - 2)?.let { " · after " + it.summary(ex) } ?: "") + (sets.getOrNull(n)?.let { " · before " + it.summary(ex) } ?: "")
+
 /** A bar per set in the order done, always as high as its reps; the band colors fill it, the side is a cap (L pink, R green), the kg are under it. */
 @Composable
-private fun DayBars(bars: List<app.intervals.core.DayBar>) {
+private fun DayBars(bars: List<app.intervals.core.DayBar>, picked: Int?, onPick: (Int) -> Unit) {
     val p = LocalPalette.current
     val max = bars.maxOfOrNull { it.value }?.coerceAtLeast(1.0) ?: return
     // no fixed height: the row is as tall as its tallest bar, so every bar stands on the same base line
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.Bottom) {
-        bars.forEach { b ->
+        bars.forEachIndexed { i, b ->
+            val on = picked == i + 1
             val sideColor = when (b.side) { app.intervals.core.Side.LEFT -> p.pink; app.intervals.core.Side.RIGHT -> p.teal; null -> null }
-            Column(Modifier.weight(1f, fill = false).width(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(Modifier.weight(1f, fill = false).width(24.dp).clickable { onPick(i + 1) }, horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(b.top, color = if (b.note) p.yellow else p.text, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
                 val shape = RoundedCornerShape(topStart = 3.dp, topEnd = 3.dp)
-                Column(Modifier.fillMaxWidth().height((6 + 40 * b.value / max).dp).clip(shape).border(1.dp, p.line, shape)) {
+                Column(Modifier.fillMaxWidth().height((6 + 40 * b.value / max).dp).clip(shape).border(if (on) 2.dp else 1.dp, if (on) p.text else p.line, shape)) {
                     // the side colors the whole bar; with bands the bar is the band and the side is a cap on top
                     if (b.colors.isEmpty()) Box(Modifier.fillMaxWidth().weight(1f).background(sideColor ?: p.accent))
                     else {
@@ -542,7 +557,7 @@ private fun DayBars(bars: List<app.intervals.core.DayBar>) {
 /** The sets by load, lightest first: the load (or its band colors) on the left, the reps in boxes with their number in the day's order. */
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-private fun LoadTable(rows: List<app.intervals.core.LoadRow>) {
+private fun LoadTable(rows: List<app.intervals.core.LoadRow>, numbers: Boolean, picked: Int?, onPick: (Int) -> Unit, onHold: (Int?) -> Unit) {
     val p = LocalPalette.current
     rows.forEach { r ->
         Row(verticalAlignment = Alignment.Top) {
@@ -563,12 +578,18 @@ private fun LoadTable(rows: List<app.intervals.core.LoadRow>) {
                     // the tab is yellow when the set has a note
                     val noted = s.note.isNotBlank()
                     val shape = RoundedCornerShape(6.dp)
-                    Column(Modifier.width(IntrinsicSize.Max).widthIn(min = 26.dp).clip(shape).border(1.dp, p.line, shape)) {
+                    val on = picked == n
+                    Column(Modifier.width(IntrinsicSize.Max).widthIn(min = 26.dp).clip(shape).border(if (on) 2.dp else 1.dp, if (on) p.text else p.line, shape)
+                        .pointerInput(n) {
+                            detectTapGestures(onPress = { tryAwaitRelease(); onHold(null) }, onLongPress = { onHold(n) }, onTap = { onPick(n) })
+                        }) {
                         Box(Modifier.fillMaxWidth().height(22.dp).background(tint).padding(horizontal = 5.dp), contentAlignment = Alignment.Center) {
                             Text(s.reps?.toString() ?: s.timeSec?.let { app.intervals.core.formatTime(it) } ?: "✓", color = p.text, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
-                        Text("#$n", color = if (noted) Color(0xFF1A1400) else p.accentText, fontSize = 8.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center,
+                        // the tab only while a box is held (F), or always on a set with a note
+                        if (numbers) Text("#$n", color = if (noted) Color(0xFF1A1400) else p.accentText, fontSize = 8.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center,
                             lineHeight = 11.sp, modifier = Modifier.fillMaxWidth().background(if (noted) p.yellow else p.tint))
+                        else if (noted) Box(Modifier.fillMaxWidth().height(3.dp).background(p.yellow))
                     }
                 }
             }
