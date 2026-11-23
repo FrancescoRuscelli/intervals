@@ -2,6 +2,14 @@
 
 Updated 2026-11-23. Read [CLAUDE.md](../CLAUDE.md) for repo conventions and [DESIGN.md](DESIGN.md) for design history. The current navigation decision is recorded here.
 
+## To do first on the other PC: push the Stats work
+
+The Stats changes made on the other PC never reached GitHub. The other PC's 2026-11-23 sync started from `origin/main` and carried over only the Gym behavior. The older work is still on that PC, in the local branch `safety/intervals-before-sync-20261123-123433` (commit `8fadd24`).
+
+1. Check it is there: `git log --oneline -5 safety/intervals-before-sync-20261123-123433`.
+2. Push it as it is, without merging or deleting anything: `git push origin safety/intervals-before-sync-20261123-123433`.
+3. Bring the Stats changes onto `main` by merging file by file. Keep the work already on `main`: the Journal bars and table, the variant row, the L / R rounds, and the rest timer.
+
 ## Syncing work from both PCs
 
 Save a local Git checkpoint of uncommitted work before updating. Use the latest app as the base and carry forward the agreed behavior below wherever it is missing. Keep the latest screens, features, and database migrations. The previous working tree was saved on this PC at `8fadd24` on `safety/intervals-before-sync-20261123-123433`.
