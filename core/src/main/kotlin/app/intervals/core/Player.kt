@@ -119,6 +119,12 @@ class PlayerPlan(val workout: Workout) {
         return if (work.isEmpty() || k == 0) null else k to work.size
     }
 
+    /** True for a work series: one you can let go of (not a rest, change side, round rest or warm-up). */
+    fun isWork(seg: Segment): Boolean = seg.kind == SegmentKind.SERIES && !isRestName(seg.name)
+
+    /** Work series started before [elapsedMs] (each side of a per-side series counts). */
+    fun workStarted(elapsedMs: Long): Int = segs.count { isWork(it) && it.startSec * 1000L < elapsedMs }
+
     /** Rounds fully done before [elapsedMs]. */
     fun roundsDone(elapsedMs: Long): Int {
         val st = stateAt(elapsedMs) ?: return workout.rounds

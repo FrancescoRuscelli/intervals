@@ -2,7 +2,10 @@
 
 package app.intervals.ui.journal
 
+import app.intervals.core.letGoText
+import app.intervals.ui.gym.withoutColors
 import androidx.activity.compose.BackHandler
+import app.intervals.core.isWarmup
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -248,7 +251,7 @@ private fun JournalCalendar(vm: AppViewModel) {
             val sets = setsByDay[d].orEmpty()
             val records = remember(d, allSets, exercises) {
                 val ids = sets.map { it.exerciseId }.toSet()
-                if (ids.isEmpty()) emptySet() else app.intervals.core.recordSetsOn(d.toString(), allSets.orEmpty().filter { it.exerciseId in ids }, exercises.filter { it.id in ids }).map { it.id }.toSet()
+                if (ids.isEmpty()) emptyMap() else app.intervals.core.recordMarksOn(d.toString(), allSets.orEmpty().filter { it.exerciseId in ids }, exercises.filter { it.id in ids })
             }
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 16.dp)) {
                 DayEntry(
@@ -285,7 +288,7 @@ private fun JournalCalendar(vm: AppViewModel) {
 @Composable
 private fun DayEntry(
     vm: AppViewModel, d: LocalDate, today: LocalDate, sets: List<GymSet>, sessions: List<Session>, note: String,
-    exercises: List<Exercise>, groups: List<GymGroup>, records: Set<Long>, zone: ZoneId, closeFilter: () -> Unit,
+    exercises: List<Exercise>, groups: List<GymGroup>, records: Map<Long, String?>, zone: ZoneId, closeFilter: () -> Unit,
     onNote: (Session) -> Unit, onDelete: (Session) -> Unit, previous: (Session) -> Session? = { null },
 ) {
     val p = LocalPalette.current
@@ -325,7 +328,8 @@ private fun DayEntry(
             )
         }
         sessions.forEach { s ->
-            SessionCard(s, zone, previous(s), onNote = { onNote(s) }, onLongPress = { onDelete(s) })
+            SessionCard(s, zone, previous(s), onNote = { onNote(s) }, onLongPress = { onDelete(s) },
+                onProgress = s.workoutId?.let { id -> { closeFilter(); vm.openWorkoutProgress(id) } })
             Spacer(Modifier.height(6.dp))
         }
     }
@@ -420,7 +424,7 @@ private fun DayCell(d: LocalDate?, today: LocalDate, selected: LocalDate?, sessi
 }
 
 @Composable
-private fun SessionCard(s: Session, zone: ZoneId, before: Session?, onNote: () -> Unit, onLongPress: () -> Unit) {
+private fun SessionCard(s: Session, zone: ZoneId, before: Session?, onNote: () -> Unit, onLongPress: () -> Unit, onProgress: (() -> Unit)? = null) {
     val p = LocalPalette.current
     val time = Instant.ofEpochMilli(s.startedAt).atZone(zone).toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm"))
     Row(
@@ -439,6 +443,8 @@ private fun SessionCard(s: Session, zone: ZoneId, before: Session?, onNote: () -
                 color = if (s.completed) p.soft else p.yellow, fontSize = 13.sp,
             )
             s.valuesLine()?.let { Text(it, color = p.soft, fontSize = 13.sp) }
+            // the hangs let go of early (mockup intervals-ideas-from-other-apps.html, 2)
+            s.letGoText()?.let { Text(it, color = p.dangerText, fontSize = 13.sp) }
             // against the previous session of this workout (mockup intervals-next-features.html, 3C)
             if (s.values.isNotEmpty()) app.intervals.core.valuesChange(s, before)?.let { (text, dir) ->
                 val day = before?.let { java.time.Instant.ofEpochMilli(it.startedAt).atZone(zone).toLocalDate().format(DateTimeFormatter.ofPattern("EEE d MMM", Locale.ENGLISH)) }
@@ -447,11 +453,18 @@ private fun SessionCard(s: Session, zone: ZoneId, before: Session?, onNote: () -
                     color = when (dir) { 1 -> Color(0xFF4ADE80); -1 -> p.workText; else -> p.muted }, fontSize = 12.sp,
                 )
             }
-            Text(
-                if (s.note.isBlank()) "+ note" else "“${s.note}”",
-                color = if (s.note.isBlank()) p.accentText else p.muted, fontSize = 13.sp,
-                fontStyle = if (s.note.isBlank()) FontStyle.Normal else FontStyle.Italic,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    if (s.note.isBlank()) "+ note" else "“${s.note}”",
+                    color = if (s.note.isBlank()) p.accentText else p.muted, fontSize = 13.sp,
+                    fontStyle = if (s.note.isBlank()) FontStyle.Normal else FontStyle.Italic, modifier = Modifier.weight(1f),
+                )
+                // the workout's logged values over time (mockup intervals-ideas-from-other-apps.html, 3)
+                if (onProgress != null && s.values.any { it.text == null }) Text(
+                    "Progress ›", color = p.accentText, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onProgress).padding(horizontal = 6.dp, vertical = 2.dp),
+                )
+            }
         }
     }
 }
@@ -460,7 +473,7 @@ private fun SessionCard(s: Session, zone: ZoneId, before: Session?, onNote: () -
 @Composable
 private fun GymDayCard(
     sets: List<app.intervals.core.GymSet>, exercises: Map<Long, app.intervals.core.Exercise>,
-    groups: List<app.intervals.core.GymGroup>, records: Set<Long>, note: String = "", onOpen: () -> Unit,
+    groups: List<app.intervals.core.GymGroup>, records: Map<Long, String?>, note: String = "", onOpen: () -> Unit,
 ) {
     val p = LocalPalette.current
     val byExercise = sets.sortedBy { it.order }.groupBy { it.exerciseId }
@@ -504,7 +517,7 @@ private fun GymDayCard(
 
 /** One exercise of the day (mockup intervals-journal-day-ideas.html): its name and sets, then the bars (C2). */
 @Composable
-private fun ExerciseOfDay(ex: Exercise, sets: List<GymSet>, records: Set<Long>) {
+private fun ExerciseOfDay(ex: Exercise, sets: List<GymSet>, records: Map<Long, String?>) {
     val p = LocalPalette.current
     // tapping a bar picks that set: the line above says where it sits in the day
     var picked by remember(sets) { mutableStateOf<Int?>(null) }
@@ -514,20 +527,26 @@ private fun ExerciseOfDay(ex: Exercise, sets: List<GymSet>, records: Set<Long>) 
             Text(ex.name, color = p.text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
             val n = picked
             val line = if (n != null) setLine(sets, n, ex, records) else {
-                val top = app.intervals.core.topSet(sets, ex)?.takeIf { app.intervals.core.GymField.WEIGHT in ex.fields }
-                "${sets.size} set${if (sets.size == 1) "" else "s"}" + (top?.let { " · top " + it.summary(ex) } ?: "")
+                val real = sets.filterNot { it.isWarmup }
+                // "top" only with a real weight (at 0 kg it says nothing), and the bands are the bars' colors, not words
+                val top = app.intervals.core.topSet(real, ex)?.takeIf { app.intervals.core.GymField.WEIGHT in ex.fields && (it.weightKg ?: 0.0) != 0.0 }
+                val warm = sets.size - real.size
+                "${real.size} set${if (real.size == 1) "" else "s"}" + (if (warm > 0) " + $warm warm-up" else "") +
+                    (top?.let { " · top " + it.withoutColors(ex).summary(ex) } ?: "")
             }
             Text(line, color = if (n != null) p.accentText else p.muted, fontSize = 11.sp, maxLines = 1)
         }
-        DayBars(app.intervals.core.dayBars(sets, ex, records), picked, pick)
+        DayBars(app.intervals.core.dayBars(sets, ex, records.keys, records.filterValues { it != null }.keys), picked, pick)
     }
 }
 
 /** The line for a tapped set [n] (1-based): "#3 of 5 · “elbow a bit sore”" when it has a note, else its place; " · PR" on a record. */
-private fun setLine(sets: List<GymSet>, n: Int, ex: Exercise, records: Set<Long>): String {
+private fun setLine(sets: List<GymSet>, n: Int, ex: Exercise, records: Map<Long, String?>): String {
     val s = sets[n - 1]
     val text = if (s.note.isNotBlank()) "#$n of ${sets.size} · ${s.summary(ex)} · “${s.note.trim()}”" else setPlace(sets, n, ex)
-    return text + if (s.id in records) " · PR" else ""
+    if (s.id !in records) return text
+    // a record still the best, or one a later day beat (mockup intervals-record-marks.html, A)
+    return text + (records[s.id]?.let { " · was a PR until " + java.time.LocalDate.parse(it).format(java.time.format.DateTimeFormatter.ofPattern("d MMM", java.util.Locale.ENGLISH)) } ?: " · PR, best now")
 }
 
 /** "#4 of 11 · after 30 × 5 · before 37.5 × 5": where set [n] (1-based, day order) sits in the day. */
@@ -547,27 +566,39 @@ internal fun DayBars(bars: List<app.intervals.core.DayBar>, picked: Int?, onPick
     val barWidth = if (bars.any { it.under.isNotEmpty() }) 30.dp else 24.dp
     val ink = { c: Color -> if (c.luminance() > 0.35f) Color(0xFF0B0C0E) else Color.White }
     val shown = { c: Long -> Color(c).let { if (it.luminance() < 0.03f) Color(0xFF3A3D44) else it } }
+    val density = androidx.compose.ui.platform.LocalDensity.current
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.Bottom) {
         bars.forEachIndexed { i, b ->
             val on = picked == i + 1
-            val fills = b.colors.map(shown).ifEmpty { listOf(p.accent) }
+            // a warm-up is only a dashed outline (mockup intervals-ideas-from-other-apps.html, 5)
+            val fills = if (b.warmup) listOf(Color.Transparent) else b.colors.map(shown).ifEmpty { listOf(p.accent) }
             val side = when (b.side) { app.intervals.core.Side.LEFT -> "L"; app.intervals.core.Side.RIGHT -> "R"; null -> null }
             val kg = b.under.takeIf { it.isNotEmpty() && it != bars.getOrNull(i - 1)?.under }
             Column(Modifier.weight(1f, fill = false).width(barWidth).then(if (onPick != null) Modifier.clickable { onPick(i + 1) } else Modifier), horizontalAlignment = Alignment.CenterHorizontally) {
-                if (b.record) Icon(AppIcons.Cup, "Record", tint = p.yellow, modifier = Modifier.padding(bottom = 1.dp).size(11.dp))
-                Text(b.top, color = p.text, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
+                // gold for the best now, grey for a record beaten since
+                if (b.record) Icon(AppIcons.Cup, if (b.beaten) "Past record" else "Record", tint = if (b.beaten) p.faint else p.yellow, modifier = Modifier.padding(bottom = 1.dp).size(11.dp))
+                Text(b.top, color = if (b.warmup) p.muted else p.text, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
                 val shape = RoundedCornerShape(topStart = 3.dp, topEnd = 3.dp)
-                val height = maxOf(6 + 40 * b.value / max, if (side != null) (if (kg != null) 26.0 else 14.0) else if (kg != null) 16.0 else 0.0)
+                // short bars still fit the L / R letter at the top and the kg at the foot, one above the other (in sp, so they grow with the font size)
+                val room = with(density) { (if (side != null && kg != null) 27.sp else if (side != null) 14.sp else if (kg != null) 15.sp else 0.sp).toDp().value }
+                val height = maxOf(6 + 40 * b.value / max, room.toDouble())
                 val border = when {
                     on -> 2.dp to p.text
                     b.colors.isNotEmpty() -> 1.5.dp to p.muted
                     else -> 1.dp to p.line
                 }
                 val noteMark = p.text
+                val dashColor = if (on) p.text else p.muted
                 Box(
-                    Modifier.fillMaxWidth().height(height.dp).clip(shape).border(border.first, border.second, shape)
+                    Modifier.fillMaxWidth().height(height.dp).clip(shape)
+                        .then(if (b.warmup) Modifier else Modifier.border(border.first, border.second, shape))
                         .drawWithContent {
                             drawContent()
+                            if (b.warmup) {
+                                val w = (if (on) 2.dp else 1.dp).toPx()
+                                drawRect(dashColor, topLeft = Offset(w / 2, w / 2), size = androidx.compose.ui.geometry.Size(size.width - w, size.height),
+                                    style = androidx.compose.ui.graphics.drawscope.Stroke(w, pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 3.dp.toPx()))))
+                            }
                             if (b.note) {
                                 val c = 7.dp.toPx()
                                 drawPath(Path().apply { moveTo(size.width - c, 0f); lineTo(size.width, 0f); lineTo(size.width, c); close() }, noteMark)
@@ -587,11 +618,11 @@ internal fun DayBars(bars: List<app.intervals.core.DayBar>, picked: Int?, onPick
                         }
                     })
                     if (side != null) Text(
-                        side, color = ink(fills.first()), fontSize = 8.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false,
+                        side, color = if (b.warmup) p.muted else ink(fills.first()), fontSize = 8.sp, lineHeight = 9.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false,
                         modifier = Modifier.align(Alignment.TopCenter).padding(top = 2.dp),
                     )
                     if (kg != null) Text(
-                        kg, color = ink(fills.last()), fontSize = 9.sp,
+                        kg, color = if (b.warmup) p.muted else ink(fills.last()), fontSize = 9.sp, lineHeight = 10.sp,
                         fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false, letterSpacing = (-0.2).sp,
                         modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 2.dp),
                     )

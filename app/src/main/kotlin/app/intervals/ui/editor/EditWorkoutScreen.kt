@@ -93,6 +93,9 @@ fun EditWorkoutScreen(vm: AppViewModel) {
     var ask by remember { mutableStateOf(Ask.NONE) }
     var menu by remember { mutableStateOf(false) }
     val selecting = selected.isNotEmpty()
+    // the series just swiped away and the workout before, while Undo is offered
+    var deleted by remember { mutableStateOf<Pair<String, app.intervals.core.Workout>?>(null) }
+    androidx.compose.runtime.LaunchedEffect(deleted) { if (deleted != null) { kotlinx.coroutines.delay(6000); deleted = null } }
 
     fun close() { if (draft.changed) ask = Ask.DISCARD else vm.back() }
     BackHandler { if (selecting) selected = emptySet() else close() }
@@ -117,6 +120,15 @@ fun EditWorkoutScreen(vm: AppViewModel) {
             ) { Text("Save", color = p.onAccent, fontSize = 15.sp, fontWeight = FontWeight.SemiBold) }
         }
 
+        deleted?.let { (name, before) ->
+            Row(
+                Modifier.padding(horizontal = 16.dp, vertical = 4.dp).fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(p.surface).padding(start = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("“$name” deleted", color = p.text, fontSize = 14.sp, modifier = Modifier.weight(1f))
+                TextButton(onClick = { vm.updateDraft { before }; deleted = null }) { Text("Undo", color = p.accentText, fontWeight = FontWeight.Bold) }
+            }
+        }
         LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp)) {
             item {
                 Column(Modifier.padding(horizontal = 4.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -210,15 +222,24 @@ fun EditWorkoutScreen(vm: AppViewModel) {
                                 val s = if (row is EditorRow.SingleRow) row.series else (row as EditorRow.InRepeat).series
                                 val group = w.blocks[pos.block] as? Block.Repeat
                                 val skippedLast = group != null && group.skipLast && pos.inner == group.series.lastIndex
-                                SeriesRow(
-                                    s, inGroup = row is EditorRow.InRepeat, skippedLast = skippedLast,
-                                    selecting = selecting, selected = pos in selected,
-                                    onClick = {
-                                        if (selecting) selected = if (pos in selected) selected - pos else selected + pos
-                                        else vm.openSeries(pos, s)
-                                    },
-                                    onLongClick = { selected = selected + pos },
-                                )
+                                // swipe left to delete, with Undo (mockup intervals-ideas-from-other-apps.html, 13)
+                                androidx.compose.runtime.key(pos, s) {
+                                    SwipeToDelete(enabled = !selecting, onDelete = {
+                                        val before = w
+                                        vm.updateDraft { it.deleteSeries(setOf(pos)) }
+                                        deleted = s.name.ifBlank { "series" } to before
+                                    }) {
+                                        SeriesRow(
+                                            s, inGroup = row is EditorRow.InRepeat, skippedLast = skippedLast,
+                                            selecting = selecting, selected = pos in selected,
+                                            onClick = {
+                                                if (selecting) selected = if (pos in selected) selected - pos else selected + pos
+                                                else vm.openSeries(pos, s)
+                                            },
+                                            onLongClick = { selected = selected + pos },
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
@@ -443,4 +464,25 @@ private fun Chip(label: String, bg: Color, fg: Color, modifier: Modifier, onClic
         modifier.height(40.dp).clip(RoundedCornerShape(12.dp)).background(bg).clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) { Text(label, color = fg, fontSize = 14.sp, fontWeight = FontWeight.SemiBold) }
+}
+
+/** A row that can be swiped left to delete: red Delete shows behind it; let go past half and it is gone. */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun SwipeToDelete(enabled: Boolean, onDelete: () -> Unit, content: @Composable () -> Unit) {
+    val state = androidx.compose.material3.rememberSwipeToDismissBoxState(
+        confirmValueChange = { v -> if (v == androidx.compose.material3.SwipeToDismissBoxValue.EndToStart) { onDelete(); true } else false },
+        positionalThreshold = { it * 0.5f },
+    )
+    androidx.compose.material3.SwipeToDismissBox(
+        state, enableDismissFromStartToEnd = false, gesturesEnabled = enabled,
+        backgroundContent = {
+            Box(Modifier.fillMaxSize().background(Color(0xFFB3261E)).padding(end = 18.dp), contentAlignment = Alignment.CenterEnd) {
+                Text("Delete", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            }
+        },
+    ) {
+        // opaque, so the red is only seen where the row moved away
+        Box(Modifier.fillMaxWidth().background(LocalPalette.current.group)) { content() }
+    }
 }

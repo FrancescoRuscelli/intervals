@@ -1,6 +1,7 @@
 package app.intervals.ui.gym
 
 import app.intervals.core.colorAt
+import androidx.compose.ui.text.withStyle
 
 import androidx.compose.foundation.rememberScrollState
 
@@ -89,9 +90,7 @@ fun GymPickScreen(vm: AppViewModel, day: String) {
     val workoutGroups = groups.filterNot { it.isTag }
     val tags = groups.filter { it.isTag }
     // each exercise's tags, written under its name in your tag order (mockup intervals-tag-dots.html, 3)
-    val tagsOf = remember(groups) {
-        tags.flatMap { t -> t.items.map { it.exerciseId to t.name } }.groupBy({ it.first }, { it.second }).mapValues { it.value.joinToString(" · ") }
-    }
+    val tagsOf = remember(groups) { exerciseTags(groups) }
     val since = remember(day) { java.time.LocalDate.parse(day).minusDays(14).toString() }
     val byRecent = compareByDescending<Exercise> { if (it.id in doneCount) "~" else lastUsed[it.id] ?: "" }.thenBy { it.name.lowercase() }
     val shown = when {
@@ -183,7 +182,7 @@ fun GymPickScreen(vm: AppViewModel, day: String) {
                 val place = selection.indexOf(ex.id)
                 ExerciseRow(
                     ex, doneCount[ex.id], lastUsed[ex.id], selected = place >= 0,
-                    lead = if (selecting) ({ SelectBox(place) }) else null, sub = tagsOf[ex.id],
+                    lead = if (selecting) ({ SelectBox(place) }) else null, tags = tagsOf[ex.id].orEmpty(),
                     onLongClick = { if (ex.id !in selection) selection = selection + ex.id },
                 ) { tap(ex) }
             }
@@ -233,7 +232,7 @@ private fun SelectBox(place: Int) {
 @Composable
 internal fun ExerciseRow(
     ex: Exercise, doneToday: Int?, lastDay: String?, selected: Boolean = false,
-    lead: (@Composable () -> Unit)? = null, sub: String? = null, onLongClick: (() -> Unit)? = null, onClick: () -> Unit,
+    lead: (@Composable () -> Unit)? = null, tags: List<Pair<String, Long>> = emptyList(), onLongClick: (() -> Unit)? = null, onClick: () -> Unit,
 ) {
     val p = LocalPalette.current
     Row(
@@ -251,8 +250,17 @@ internal fun ExerciseRow(
                 if (ex.perSide) Text("L\u00B7R", color = p.accentText, fontSize = 11.sp, fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(start = 8.dp).clip(RoundedCornerShape(6.dp)).background(p.tint).padding(horizontal = 6.dp, vertical = 2.dp))
             }
-            // the exercise's tags, small and grey, cut with … when they don't fit
-            sub?.let { Text(it, color = p.muted, fontSize = 12.sp, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
+            // the exercise's tags: a dot in each tag's color and its name in grey (mockup intervals-gym-list-tags.html, B), cut with … when they don't fit
+            if (tags.isNotEmpty()) Text(
+                androidx.compose.ui.text.buildAnnotatedString {
+                    tags.forEachIndexed { i, (name, color) ->
+                        if (i > 0) append("   ")
+                        withStyle(androidx.compose.ui.text.SpanStyle(color = Color(color))) { append("\u25CF ") }
+                        append(name)
+                    }
+                },
+                color = p.muted, fontSize = 12.sp, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            )
         }
         Spacer(Modifier.width(8.dp))
         Text(
@@ -277,7 +285,7 @@ private fun NewExerciseDialog(initial: String, taken: Set<String>, onDismiss: ()
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedTextField(name, { name = it }, label = { Text("Name") }, singleLine = true, isError = clash,
                     supportingText = if (clash) ({ Text("You already have one with this name") }) else null)
-                Text("What do you write down?", color = p.muted, fontSize = 13.sp)
+                Text("Each set records", color = p.muted, fontSize = 13.sp)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     GymField.entries.filter { it != GymField.BANDS }.forEach { f ->
                         val on = f in fields
@@ -317,3 +325,9 @@ private fun Toggle(label: String, sub: String, on: Boolean, onChange: (Boolean) 
         Switch(on, onChange, colors = SwitchDefaults.colors(checkedTrackColor = p.accent))
     }
 }
+
+/** Each exercise's tags as (name, color), in your tag order; the color as in the Journal ([colorAt]). */
+internal fun exerciseTags(groups: List<app.intervals.core.GymGroup>): Map<Long, List<Pair<String, Long>>> =
+    groups.filter { it.isTag }.withIndex()
+        .flatMap { (i, t) -> t.items.map { it.exerciseId to (t.name to t.colorAt(i)) } }
+        .groupBy({ it.first }, { it.second }).mapValues { (_, v) -> v.distinctBy { it.first.lowercase() } }

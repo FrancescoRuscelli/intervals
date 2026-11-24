@@ -1,0 +1,103 @@
+<title>Group Gestures</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: one card per option, each the bottom of One Arm Pull Up's log screen at rest and with its gesture in use */
+:root {
+  --bg: #f4f2fa; --fg: #18151f; --muted: #5b5668; --line: #dfdbe9; --accent: #6d28d9; --card: #ffffff;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif;
+  --ph-bg: #000; --ph-surface: #1A1C21; --ph-sheet: #23252B; --ph-text: #F2F3F5; --ph-muted: #9AA0AA; --ph-soft: #C9CDD3; --ph-line: #2A2D34;
+  --ph-accent: #7C3AED; --ph-accent-text: #C4B1FF; --pink: #FF4F8B; --teal: #00BFA5;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
+main { max-width: 1240px; margin: 0 auto; display: grid; gap: 14px; }
+h1 { font-family: var(--display); font-size: 1.8rem; margin: 0; text-wrap: balance; }
+.lede { color: var(--muted); margin: 0; max-width: 84ch; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 16px; align-items: start; }
+.opt { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; display: grid; gap: 8px; min-width: 0; }
+.head { display: flex; gap: 10px; align-items: baseline; }
+.tag { font-family: var(--display); font-weight: 700; color: var(--accent); font-size: 1.1rem; }
+.name { font-weight: 600; }
+.rec { font-size: .72rem; font-weight: 700; color: var(--accent); border: 1px solid var(--accent); border-radius: 8px; padding: 0 6px; }
+.desc { color: var(--muted); font-size: .86rem; margin: 0; padding-left: 18px; }
+.desc li { margin: 2px 0; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.cap { font-size: .75rem; color: var(--muted); text-align: center; }
+
+.phone { background: var(--ph-bg); border-radius: 20px; padding: 10px; color: var(--ph-text); font-size: 13px; display: grid; gap: 7px; align-content: end; min-height: 270px; position: relative; overflow: hidden; }
+.segc { display: flex; background: var(--ph-surface); border: 1px solid var(--ph-line); border-radius: 12px; padding: 3px; gap: 3px; }
+.segc span { flex: 1; text-align: center; border-radius: 9px; padding: 7px 2px; font-weight: 600; color: var(--ph-soft); line-height: 1.15; position: relative; }
+.segc span.on { background: var(--ph-accent); color: #fff; }
+.segc small { display: block; font-size: 9.5px; font-weight: 500; opacity: .8; }
+.badge { display: inline-flex; align-items: center; gap: 3px; font-size: 9.5px; font-weight: 700; background: #00000055; border-radius: 6px; padding: 0 5px; margin-top: 2px; }
+.dot { width: 18px; height: 18px; border-radius: 9px; box-shadow: inset 0 0 0 1px #ffffff40; display: inline-block; flex: none; }
+.dot.s { width: 9px; height: 9px; }
+.dot.on { box-shadow: 0 0 0 2px var(--ph-sheet), 0 0 0 4px var(--ph-text); }
+.btns { display: grid; grid-template-columns: 1fr .75fr 1fr; gap: 6px; }
+.btns span { text-align: center; padding: 10px 0; border-radius: 12px; font-weight: 700; background: var(--ph-surface); border: 1px solid var(--ph-line); line-height: 1.15; }
+.btns .l { color: var(--pink); } .btns .b { color: #C4B1FF; } .btns .r { background: var(--teal); color: #fff; border-color: var(--teal); }
+.btns small { display: block; font-size: 9.5px; font-weight: 600; opacity: .85; }
+.gest { font-size: 10px; color: var(--ph-accent-text); text-align: center; }
+.sheet { background: var(--ph-sheet); border-radius: 16px 16px 0 0; margin: 0 -10px -10px; padding: 10px 12px 14px; display: grid; gap: 8px; box-shadow: 0 -8px 24px #000a; }
+.sheet .grip { width: 34px; height: 4px; border-radius: 2px; background: var(--ph-line); justify-self: center; }
+.sheet .lbl { font-size: 10px; color: var(--ph-muted); letter-spacing: .6px; font-weight: 700; }
+.pop { position: absolute; left: 10px; right: 10px; bottom: 96px; background: var(--ph-sheet); border-radius: 14px; padding: 10px; display: grid; gap: 8px; box-shadow: 0 8px 28px #000c; border: 1px solid var(--ph-line); }
+.pop .lbl { font-size: 10px; color: var(--ph-muted); letter-spacing: .6px; font-weight: 700; }
+.line { display: flex; align-items: center; gap: 8px; background: var(--ph-surface); border: 1px solid var(--ph-line); border-radius: 12px; padding: 9px 12px; font-weight: 600; }
+.line .sp { flex: 1; }
+.line .chev { color: var(--ph-muted); }
+.dim { opacity: .35; }
+.dotsrow { display: flex; justify-content: space-around; }
+</style>
+
+<main>
+  <h1>Groups with gestures</h1>
+  <p class="lede">One Arm Pull Up again: Range full / first half / 90° hold, Help none / band / deload, band colors. Each option takes
+    less room by moving the less used choice behind a gesture. Left: at rest; right: the gesture in use.</p>
+  <div class="grid" id="grid"></div>
+</main>
+
+<script>
+const BANDS = ["#43A047", "#8E44D8", "#16181C", "#E53935", "#FFC107"];
+const dotsBig = on => `<div class="dotsrow">${BANDS.map((c, i) => `<span class="dot${i === on ? " on" : ""}" style="background:${c}"></span>`).join("")}</div>`;
+const seg = (opts, on) => `<div class="segc">${opts.map(o => `<span class="${o === on ? "on" : ""}">${o}</span>`).join("")}</div>`;
+const btns = sub => `<div class="btns"><span class="l">Log L${sub ? `<small>${sub}</small>` : ""}</span><span class="b">L + R</span><span class="r">Log R${sub ? `<small>${sub}</small>` : ""}</span></div>`;
+
+const OPTS = [
+  ["D", "Help inside the range", true, [
+    "Only the Range bar; the help in use is a small badge in the picked range: “deload”, or the band's dot.",
+    "Long press a range (or the badge) → a small popup: Help none / band / deload and the band colors. Tap = done.",
+    "Swipe the bar left / right to change range.",
+  ],
+    `<div class="segc"><span class="on">full<small><span class="badge">deload</span></small></span><span>first half<small>20 × 3</small></span><span>90° hold<small>0:10</small></span></div>${btns()}`,
+    `<div class="pop"><div class="lbl">HELP · FULL</div>${seg(["none", "band", "deload"], "band")}<div class="lbl">BAND</div>${dotsBig(2)}</div>
+     <div class="segc"><span class="on">full<small><span class="badge"><span class="dot s" style="background:#16181C"></span>band</span></small></span><span class="dim">first half<small>20 × 3</small></span><span class="dim">90° hold<small>0:10</small></span></div>
+     <div class="gest">long press “full”</div>${btns()}`],
+  ["E", "One summary line", false, [
+    "One line says the whole choice: “full · deload”, with the band dots when there is one.",
+    "Tap it → a sheet from the bottom with every group (Range, Help, band colors); the screen stays clean.",
+    "Swipe the line left / right to change range without opening it.",
+  ],
+    `<div class="line"><span>full · deload</span><span class="sp"></span><span class="chev">⌃</span></div>${btns()}`,
+    `<div class="line dim"><span>full · band <span class="dot s" style="background:#16181C"></span></span><span class="sp"></span><span class="chev">⌃</span></div>${btns()}
+     <div class="sheet"><span class="grip"></span><div class="lbl">RANGE</div>${seg(["full", "first half", "90° hold"], "full")}
+     <div class="lbl">HELP</div>${seg(["none", "band", "deload"], "band")}<div class="lbl">BAND</div>${dotsBig(2)}</div>`],
+  ["F", "On the buttons", false, [
+    "Only the Range bar; the help in use is written under Log L / Log R: “deload”, “band ●”.",
+    "Long press Log L or Log R → the help and band colors pop up over the buttons; pick one and that side is logged.",
+    "Fast for “same as always”, hidden for changes.",
+  ],
+    `${seg(["full", "first half", "90° hold"], "full")}${btns("deload")}`,
+    `${seg(["full", "first half", "90° hold"], "full")}<div class="pop" style="bottom:52px"><div class="lbl">HELP · LOG L</div>${seg(["none", "band", "deload"], "band")}${dotsBig(2)}</div>
+     <div class="gest">long press “Log L”</div>${btns("band ●")}`],
+];
+document.getElementById("grid").innerHTML = OPTS.map(([tag, name, rec, desc, rest, active]) => `<section class="opt">
+  <div class="head"><span class="tag">${tag}</span><span class="name">${name}</span>${rec ? '<span class="rec">recommended</span>' : ""}</div>
+  <ul class="desc">${desc.map(d => `<li>${d}</li>`).join("")}</ul>
+  <div class="pair"><div><div class="phone">${rest}</div><div class="cap">at rest</div></div>
+    <div><div class="phone">${active}</div><div class="cap">gesture in use</div></div></div></section>`).join("");
+</script>

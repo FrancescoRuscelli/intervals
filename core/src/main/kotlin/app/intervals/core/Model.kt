@@ -29,10 +29,17 @@ data class LogField(
     val unit: String = "",
     /** One value for the left side and one for the right (only meaningful for a per-side series). */
     val leftRightApart: Boolean = false,
+    /**
+     * A choice instead of a number (mockup intervals-ideas-from-other-apps.html, 9), e.g. Grip: open / half crimp / full crimp.
+     * The value logged is the choice's text ([LoggedValue.text]).
+     */
+    val choices: List<String> = emptyList(),
 ) {
     init {
         require(name.isNotBlank()) { "a log field needs a name" }
     }
+
+    val isChoice: Boolean get() = choices.isNotEmpty()
 }
 
 /** One timed step of a round, e.g. "hang 0:05". */

@@ -58,11 +58,45 @@ fun Session.valuesLine(): String? {
     return values.groupBy { it.series }.entries.joinToString("  ·  ") { (series, vs) ->
         val fields = vs.groupBy { it.field }.entries.joinToString(" · ") { (field, fv) ->
             val unit = fv.first().unit.let { if (it.isBlank()) "" else " $it" }
-            val bySide = fv.groupBy { it.side }.mapValues { (_, x) -> x.maxBy { it.round }.value }
+            // a choice shows its text (Grip half crimp), a number its value
+            val bySide = fv.groupBy { it.side }.mapValues { (_, x) -> x.maxBy { it.round }.let { v -> v.text ?: num(v.value) } }
+            val u = if (fv.any { it.text != null }) "" else unit
             val both = bySide[null]
-            if (both != null) "$field ${num(both)}$unit"
-            else "$field L ${bySide[Side.LEFT]?.let(::num) ?: "–"} · R ${bySide[Side.RIGHT]?.let(::num) ?: "–"}$unit"
+            if (both != null) "$field $both$u"
+            else "$field L ${bySide[Side.LEFT] ?: "–"} · R ${bySide[Side.RIGHT] ?: "–"}$u"
         }
         "$series · $fields"
     }
+}
+
+/** A logged number of a workout over time (mockup intervals-ideas-from-other-apps.html, 3): series · field · side. */
+data class ValueKey(val series: String, val field: String, val unit: String, val side: Side?)
+
+/** The numbers a workout logs (choices left out), in the order first logged. */
+fun valueKeys(sessions: List<Session>): List<ValueKey> =
+    sessions.sortedBy { it.startedAt }.flatMap { s -> s.values.filter { it.text == null }.map { ValueKey(it.series, it.field, it.unit, it.side) } }.distinct()
+
+/**
+ * One point per training day (the highest value of any round that day), oldest first, a record when it beats every
+ * earlier day, like the gym graphs. [dayOf] turns a session's start into its day (yyyy-MM-dd).
+ */
+fun valueSeries(sessions: List<Session>, key: ValueKey, dayOf: (Long) -> String): List<MetricPoint> {
+    var best: Double? = null
+    return sessions.flatMap { s ->
+        s.values.filter { it.text == null && it.series == key.series && it.field == key.field && it.side == key.side }.map { dayOf(s.startedAt) to it.value }
+    }.groupBy({ it.first }, { it.second }).toSortedMap().map { (day, vs) ->
+        val v = vs.max()
+        val record = best != null && v > best!!
+        if (best == null || v > best!!) best = v
+        MetricPoint(day, v, record)
+    }
+}
+
+/** A record of [valueSeries] and the day a later one beat it (null = still the best). */
+data class ValueRecord(val day: String, val value: Double, val beatenOn: String?)
+
+/** The records, newest first: the first one is the best now. The first day counts as the starting best. */
+fun valueRecords(points: List<MetricPoint>): List<ValueRecord> {
+    val recs = points.filterIndexed { i, p -> i == 0 || p.record }
+    return recs.mapIndexed { i, p -> ValueRecord(p.day, p.value, recs.getOrNull(i + 1)?.day) }.reversed()
 }

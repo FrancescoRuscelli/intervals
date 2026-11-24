@@ -72,7 +72,8 @@ fun GymSet.summary(ex: Exercise): String =
 fun GymSet.specsText(ex: Exercise): String =
     ex.specs.mapNotNull { sp -> specs[sp.name]?.takeIf(String::isNotBlank)?.let(sp::text) }.joinToString(" · ")
 
-private fun GymSet.valuesText(ex: Exercise): String = buildList {
+private fun GymSet.valuesText(exercise: Exercise): String = buildList {
+    val ex = exercise.forSet(this@valuesText)
     if (GymField.WEIGHT in ex.fields) weightKg?.let { add(formatKg(it)) }
     if (GymField.REPS in ex.fields) reps?.let { add("$it") }
     if (GymField.TIME in ex.fields) timeSec?.let { add(formatTime(it)) }
@@ -85,7 +86,7 @@ data class LoadBlock(val label: String, val sets: List<GymSet>)
 /** What each box of a block shows: the reps, else the time, else the distance. */
 fun boxField(ex: Exercise): GymField? = listOf(GymField.REPS, GymField.TIME, GymField.DISTANCE).firstOrNull { it in ex.fields }
 
-fun GymSet.boxText(ex: Exercise): String = when (boxField(ex)) {
+fun GymSet.boxText(ex: Exercise): String = when (boxField(ex.forSet(this))) {
     GymField.REPS -> reps?.toString() ?: "–"
     GymField.TIME -> timeSec?.let(::formatTime) ?: "–"
     GymField.DISTANCE -> distance?.let(::formatKg) ?: "–"
@@ -93,7 +94,8 @@ fun GymSet.boxText(ex: Exercise): String = when (boxField(ex)) {
 }
 
 /** The load of a set without the box value: "45 kg", "−20 kg", "40 mm · green+purple", "+10 kg · 0:07"… empty when there is none. */
-fun GymSet.loadText(ex: Exercise): String {
+fun GymSet.loadText(exercise: Exercise): String {
+    val ex = exercise.forSet(this)
     val box = boxField(ex)
     return buildList {
         specsText(ex).takeIf(String::isNotEmpty)?.let(::add)
@@ -125,9 +127,18 @@ fun GymSet.specColors(ex: Exercise): List<Long> = ex.specs.filter { it.colors.is
 }.filterNotNull()
 
 /** One bar of a day's bars (mockup intervals-journal-day-ideas.html, C2): always as high as its reps (else time, distance), in the day's order. */
-data class DayBar(val value: Double, val top: String, val under: String, val colors: List<Long>, val side: Side?, val note: Boolean, val record: Boolean = false)
+data class DayBar(
+    val value: Double, val top: String, val under: String, val colors: List<Long>, val side: Side?, val note: Boolean,
+    val record: Boolean = false,
+    /** A record that a later day beat (mockup intervals-record-marks.html, A: grey cup instead of gold). */
+    val beaten: Boolean = false,
+    /** Tagged Warm-up: drawn as a dashed outline, not counted (mockup intervals-ideas-from-other-apps.html, 5). */
+    val warmup: Boolean = false,
+)
 
-fun dayBars(sets: List<GymSet>, ex: Exercise, records: Set<Long> = emptySet()): List<DayBar> = sets.map { s ->
+fun dayBars(sets: List<GymSet>, exercise: Exercise, records: Set<Long> = emptySet(), beaten: Set<Long> = emptySet()): List<DayBar> = sets.map { s ->
+    // each bar by what its variant records: a hold by its time next to pull-ups by their reps
+    val ex = exercise.forSet(s)
     val value = when (boxField(ex)) {
         GymField.REPS -> (s.reps ?: 0).toDouble()
         GymField.TIME -> (s.timeSec ?: 0).toDouble()
@@ -135,5 +146,5 @@ fun dayBars(sets: List<GymSet>, ex: Exercise, records: Set<Long> = emptySet()): 
         else -> 1.0
     }
     val kg = s.weightKg?.takeIf { GymField.WEIGHT in ex.fields && it != 0.0 }?.let(::formatKg).orEmpty()
-    DayBar(value, s.boxText(ex), kg, s.specColors(ex), s.side, s.note.isNotBlank(), s.id in records)
+    DayBar(value, s.boxText(ex), kg, s.specColors(ex), s.side, s.noteWithoutWarmup.isNotBlank(), s.id in records, s.id in beaten, s.isWarmup)
 }

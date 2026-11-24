@@ -15,6 +15,12 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -113,42 +119,70 @@ fun PlayerScreen(c: PlayerController, keepScreenOn: Boolean, spinLevel: Int = 0,
     val intervalCountdown = st != null && st.secLeft <= 3 && st.segment.durationSec > 3 &&
         !c.starting && !c.paused && !c.celebrating
 
-    Column(
+    val restEdit = st != null && st.segment.kind == SegmentKind.ROUND_REST && c.keys.isNotEmpty() && !c.celebrating
+    BoxWithConstraints(
         Modifier.fillMaxSize().background(p.bg)
             // Taps on blank space must stay on the player overlay.
             .pointerInput(Unit) { detectTapGestures(onTap = {}) }
             .statusBarsPadding().navigationBarsPadding(),
     ) {
-        Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = { askStop = true }) { Icon(AppIcons.Close, "Stop", tint = p.text) }
-            Text(
-                c.saved.workout.name, color = p.text, fontSize = 16.sp, fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center, modifier = Modifier.weight(1f),
-            )
-            Spacer(Modifier.width(48.dp))
+        val landscape = maxWidth > maxHeight
+        val title: @Composable () -> Unit = {
+            Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = { askStop = true }) { Icon(AppIcons.Close, "Stop", tint = p.text) }
+                Text(
+                    c.saved.workout.name, color = p.text, fontSize = 16.sp, fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center, modifier = Modifier.weight(1f),
+                )
+                Spacer(Modifier.width(48.dp))
+            }
         }
         // the whole workout's time left, big, like the old app
-        if (st != null) Text(
-            mmss(if (c.celebrating) 0 else st.totalLeftSec), color = p.soft, style = NumberStyle, fontSize = 52.sp, fontWeight = FontWeight.Light,
-            textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(),
-        )
-
-        BoxWithConstraints(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-            val diameter = (minOf(maxWidth, maxHeight) - 32.dp).coerceAtLeast(0.dp)
-            if (st != null) {
-                val color = st.segment.playerColor(p.teal)
-                val ink = if (color == p.teal || color.luminance() > 0.35f) Color(0xFF14080C) else Color.White
-                Disc(c, st, spinLevel, diameter, color, ink, intervalCountdown, showCounters)
-                if (intervalCountdown) {
-                    val fontSize = with(LocalDensity.current) { (diameter * 0.38f).toSp() }
-                    CountdownDigit(st.secLeft, outside = color, inside = ink, fontSize = fontSize, discSize = diameter - 108.dp)
+        val timeLeft: @Composable (androidx.compose.ui.unit.TextUnit) -> Unit = { size ->
+            if (st != null) Text(
+                mmss(if (c.celebrating) 0 else st.totalLeftSec), color = p.soft, style = NumberStyle, fontSize = size, fontWeight = FontWeight.Light,
+                textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        val disc: @Composable (Modifier) -> Unit = { m ->
+            BoxWithConstraints(m, contentAlignment = Alignment.Center) {
+                val diameter = (minOf(maxWidth, maxHeight) - 32.dp).coerceAtLeast(0.dp)
+                if (st != null) {
+                    val color = st.segment.playerColor(p.teal)
+                    val ink = if (color == p.teal || color.luminance() > 0.35f) Color(0xFF14080C) else Color.White
+                    Disc(c, st, spinLevel, diameter, color, ink, intervalCountdown, showCounters)
+                    if (intervalCountdown) {
+                        val fontSize = with(LocalDensity.current) { (diameter * 0.38f).toSp() }
+                        CountdownDigit(st.secLeft, outside = color, inside = ink, fontSize = fontSize, discSize = diameter - 108.dp)
+                    }
                 }
             }
         }
-
-        if (st != null) NextSegment(st.next)
-        // Keep the disc in place when the navigation buttons disappear for the coin flip.
-        if (c.celebrating) Spacer(Modifier.height(92.dp)) else Controls(c)
+        // the rest between rounds: the next round's values, the clock keeps running (mockup ideas, 12)
+        val restValues: @Composable () -> Unit = {
+            if (restEdit && st != null) RestValues(c, st.round + 1, st.rounds)
+        }
+        if (landscape) {
+            // the phone on its side (mockup ideas, 11): the disc as big as the height allows, the rest on the right
+            Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+                disc(Modifier.fillMaxHeight().aspectRatio(1f, matchHeightConstraintsFirst = true))
+                Column(Modifier.weight(1f).fillMaxHeight().padding(end = 8.dp), verticalArrangement = Arrangement.Center) {
+                    title()
+                    timeLeft(40.sp)
+                    if (restEdit) Box(Modifier.weight(1f, fill = false)) { restValues() } else Spacer(Modifier.height(8.dp))
+                    if (st != null) NextSegment(st.next)
+                    if (c.celebrating) Spacer(Modifier.height(92.dp)) else Controls(c, st)
+                }
+            }
+        } else Column(Modifier.fillMaxSize()) {
+            title()
+            timeLeft(52.sp)
+            disc(Modifier.weight(1f).fillMaxWidth())
+            restValues()
+            if (st != null) NextSegment(st.next)
+            // Keep the disc in place when the navigation buttons disappear for the coin flip.
+            if (c.celebrating) Spacer(Modifier.height(92.dp)) else Controls(c, st)
+        }
     }
 
     if (askStop) {
@@ -292,7 +326,7 @@ private fun Disc(
                         Text(label(st), color = ink, fontSize = 22.sp, fontWeight = FontWeight.SemiBold)
                         Text(mmss(st.secLeft), color = ink, style = NumberStyle, fontSize = (discDp.value * 0.17f).sp, fontWeight = FontWeight.Bold)
                         // what was set before the start for this series, e.g. "20 mm · 5 kg"
-                        c.details[seg.name]?.let { Text(it, color = ink, fontSize = 14.sp, fontWeight = FontWeight.SemiBold) }
+                        c.detailFor(seg)?.let { Text(it, color = ink, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 20.dp)) }
                     }
                 }
             }
@@ -489,19 +523,46 @@ private fun NextSegment(next: Segment?) {
 }
 
 @Composable
-private fun Controls(c: PlayerController) {
+private fun Controls(c: PlayerController, st: PlayState?) {
     val p = LocalPalette.current
     Row(
         Modifier.fillMaxWidth().padding(vertical = 18.dp),
-        horizontalArrangement = Arrangement.spacedBy(28.dp, Alignment.CenterHorizontally),
+        horizontalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.size(56.dp).clip(CircleShape).background(p.surface).clickable(onClickLabel = "Previous") { c.previous() }, contentAlignment = Alignment.Center) {
             Icon(AppIcons.Back, "Previous", tint = p.text, modifier = Modifier.size(24.dp))
         }
+        // during a work series: mark it as let go of, the timer keeps running (mockup ideas, 2); tap again to take it back
+        val work = st != null && !c.starting && c.plan.isWork(st.segment)
+        val marked = st != null && st.index in c.letGo
+        Box(
+            Modifier.width(112.dp).height(48.dp).clip(RoundedCornerShape(24.dp))
+                .background(if (marked) p.dangerText.copy(alpha = 0.18f) else Color.Transparent)
+                .border(if (work || marked) 2.dp else 0.dp, if (work || marked) p.dangerText else Color.Transparent, RoundedCornerShape(24.dp))
+                .then(if (work) Modifier.clickable(onClickLabel = if (marked) "Take back let go" else "Let go") { c.toggleLetGo() } else Modifier),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (work) Text(if (marked) "Let go ✓" else "Let go", color = p.dangerText, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+        }
         Box(Modifier.size(56.dp).clip(CircleShape).background(p.surface).clickable(onClickLabel = "Next") { c.next() }, contentAlignment = Alignment.Center) {
             Icon(AppIcons.Back, "Next", tint = p.text, modifier = Modifier.size(24.dp).scale(scaleX = -1f, scaleY = 1f))
         }
+    }
+}
+
+/** The next round's values during the rest between rounds (mockup ideas, 12): changed here, they count from that round. */
+@Composable
+private fun RestValues(c: PlayerController, nextRound: Int, rounds: Int) {
+    val p = LocalPalette.current
+    Column(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).clip(RoundedCornerShape(16.dp)).background(p.surface)
+            .heightIn(max = 220.dp).verticalScroll(rememberScrollState()).padding(horizontal = 14.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text("Round $nextRound of $rounds with", color = p.muted, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+        val many = c.keys.map { it.series }.distinct().size > 1
+        c.keys.forEach { k -> ValueRow(k, c.values[k] ?: 0.0, many) { c.values[k] = it } }
     }
 }
 

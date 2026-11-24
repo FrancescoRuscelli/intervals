@@ -1,0 +1,89 @@
+<title>Group Panel</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: one card per option, each the bottom of One Arm Pull Up's log screen (groups + log buttons), shown twice:
+   Help = deload, and Help = band with a black band picked. */
+:root {
+  --bg: #f4f2fa; --fg: #18151f; --muted: #5b5668; --line: #dfdbe9; --accent: #6d28d9; --card: #ffffff;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif;
+  --ph-bg: #000; --ph-surface: #1A1C21; --ph-text: #F2F3F5; --ph-muted: #9AA0AA; --ph-soft: #C9CDD3; --ph-line: #2A2D34;
+  --ph-accent: #7C3AED; --pink: #FF4F8B; --teal: #00BFA5;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
+main { max-width: 1240px; margin: 0 auto; display: grid; gap: 14px; }
+h1 { font-family: var(--display); font-size: 1.8rem; margin: 0; text-wrap: balance; }
+.lede { color: var(--muted); margin: 0; max-width: 84ch; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 16px; align-items: start; }
+.opt { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; display: grid; gap: 8px; min-width: 0; }
+.head { display: flex; gap: 10px; align-items: baseline; }
+.tag { font-family: var(--display); font-weight: 700; color: var(--accent); font-size: 1.1rem; }
+.name { font-weight: 600; }
+.rec { font-size: .72rem; font-weight: 700; color: var(--accent); border: 1px solid var(--accent); border-radius: 8px; padding: 0 6px; }
+.desc { color: var(--muted); font-size: .86rem; margin: 0; padding-left: 18px; }
+.desc li { margin: 2px 0; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.cap { font-size: .75rem; color: var(--muted); text-align: center; }
+
+.phone { background: var(--ph-bg); border-radius: 20px; padding: 10px; color: var(--ph-text); font-size: 13px; display: grid; gap: 7px; align-content: end; min-height: 250px; }
+.lbl { font-size: 10px; color: var(--ph-muted); letter-spacing: .6px; font-weight: 700; }
+/* segmented control: one container, equal parts */
+.segc { display: flex; background: var(--ph-surface); border: 1px solid var(--ph-line); border-radius: 12px; padding: 3px; gap: 3px; }
+.segc span { flex: 1; text-align: center; border-radius: 9px; padding: 7px 2px; font-weight: 600; color: var(--ph-soft); line-height: 1.15; }
+.segc span.on { background: var(--ph-accent); color: #fff; }
+.segc small { display: block; font-size: 9.5px; font-weight: 500; opacity: .75; }
+.row { display: grid; grid-template-columns: 52px 1fr; align-items: center; gap: 6px; }
+.dots { display: flex; gap: 8px; align-items: center; }
+.dot { width: 22px; height: 22px; border-radius: 11px; box-shadow: inset 0 0 0 1px #ffffff40; flex: none; }
+.dot.on { box-shadow: 0 0 0 2px var(--ph-bg), 0 0 0 4px var(--ph-text); }
+.segc .dots { justify-content: space-around; flex: 1; padding: 4px 2px; }
+.card { background: var(--ph-surface); border: 1px solid var(--ph-line); border-radius: 14px; overflow: hidden; }
+.card .r { display: grid; grid-template-columns: 52px 1fr; align-items: center; padding: 6px 8px; gap: 6px; }
+.card .r + .r { border-top: 1px solid var(--ph-line); }
+.card .opts { display: flex; gap: 4px; }
+.card .opts span { flex: 1; text-align: center; padding: 6px 2px; border-radius: 8px; font-weight: 600; color: var(--ph-soft); }
+.card .opts span.on { background: var(--ph-accent); color: #fff; }
+.btns { display: grid; grid-template-columns: 1fr .75fr 1fr; gap: 6px; margin-top: 3px; }
+.btns span { text-align: center; padding: 10px 0; border-radius: 12px; font-weight: 700; background: var(--ph-surface); border: 1px solid var(--ph-line); }
+.btns .l { color: var(--pink); } .btns .b { color: #C4B1FF; } .btns .r { background: var(--teal); color: #fff; border-color: var(--teal); }
+</style>
+
+<main>
+  <h1>A tidier group panel</h1>
+  <p class="lede">The bottom of One Arm Pull Up's log, above Log L · L + R · Log R. Each option is shown twice: Help = deload, and Help = band
+    with a black band. The small grey line under each range option is the last set done in it (90° hold shows its time, 0:10, fixed).</p>
+  <div class="grid" id="grid"></div>
+</main>
+
+<script>
+const BANDS = ["#43A047", "#8E44D8", "#16181C", "#E53935", "#FFC107"];
+const btns = '<div class="btns"><span class="l">Log L</span><span class="b">L + R</span><span class="r">Log R</span></div>';
+const seg = (opts, on, sub) => `<div class="segc">${opts.map((o, i) => `<span class="${o === on ? "on" : ""}">${o}${sub ? `<small>${sub[i]}</small>` : ""}</span>`).join("")}</div>`;
+const dots = (on, inSeg) => `<div class="${inSeg ? "segc" : ""}"><div class="dots">${BANDS.map((c, i) => `<span class="dot${i === on ? " on" : ""}" style="background:${c}"></span>`).join("")}</div></div>`;
+const RANGE = ["full", "first half", "90° hold"], LAST = ["−17.5 × 5", "20 × 3", "0:10"], HELP = ["none", "band", "deload"];
+
+const OPTS = [
+  ["A", "Three equal bars", true, ["Every group the same: a label above, one bar split into equal parts.",
+    "The band colors are one more bar of the same height, only with band.", "Range keeps its small last-set line."],
+    (band) => `<div class="lbl">RANGE</div>${seg(RANGE, "full", LAST)}<div class="lbl">HELP</div>${seg(HELP, band ? "band" : "deload")}${band ? `<div class="lbl">BAND</div>${dots(2, true)}` : ""}${btns}`],
+  ["B", "Labels on the left", false, ["The label sits left of each bar, so the panel is lower.",
+    "The colors stay on Help's line: they replace none / deload while band is picked, tap band again to go back.", "No last-set line."],
+    (band) => `<div class="row"><span class="lbl">RANGE</span>${seg(RANGE, "full")}</div><div class="row"><span class="lbl">HELP</span>${band
+      ? `<div class="segc"><span class="on" style="flex:0 0 64px">band</span><div class="dots">${BANDS.map((c, i) => `<span class="dot${i === 2 ? " on" : ""}" style="background:${c}"></span>`).join("")}</div></div>`
+      : seg(HELP, "deload")}</div>${btns}`],
+  ["C", "One card", false, ["All groups in one card, a thin line between them: reads as one block with the buttons.",
+    "The colors are a row inside the card, only with band.", "No last-set line."],
+    (band) => `<div class="card"><div class="r"><span class="lbl">RANGE</span><div class="opts">${RANGE.map(o => `<span class="${o === "full" ? "on" : ""}">${o}</span>`).join("")}</div></div>
+      <div class="r"><span class="lbl">HELP</span><div class="opts">${HELP.map(o => `<span class="${o === (band ? "band" : "deload") ? "on" : ""}">${o}</span>`).join("")}</div></div>
+      ${band ? `<div class="r"><span class="lbl">BAND</span><div class="dots" style="justify-content:space-around">${BANDS.map((c, i) => `<span class="dot${i === 2 ? " on" : ""}" style="background:${c}"></span>`).join("")}</div></div>` : ""}</div>${btns}`],
+];
+document.getElementById("grid").innerHTML = OPTS.map(([tag, name, rec, desc, draw]) => `<section class="opt">
+  <div class="head"><span class="tag">${tag}</span><span class="name">${name}</span>${rec ? '<span class="rec">recommended</span>' : ""}</div>
+  <ul class="desc">${desc.map(d => `<li>${d}</li>`).join("")}</ul>
+  <div class="pair"><div><div class="phone">${draw(false)}</div><div class="cap">Help = deload</div></div>
+    <div><div class="phone">${draw(true)}</div><div class="cap">Help = band, black</div></div></div></section>`).join("");
+</script>

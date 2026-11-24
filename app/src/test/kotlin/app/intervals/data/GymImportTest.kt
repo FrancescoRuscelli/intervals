@@ -171,6 +171,25 @@ class GymImportTest {
     }
 
     @Test
+    fun movingSetsToAnotherExerciseAndBack() = runTest {
+        val f = listOf(app.intervals.core.GymField.WEIGHT, app.intervals.core.GymField.REPS)
+        val bulgarian = repo.addExercise(app.intervals.core.Exercise(name = "Bulgarian Squat", fields = f))
+        val squat = repo.addExercise(app.intervals.core.Exercise(name = "Squat", fields = f, variants = listOf("deep", "normal")))
+        val s = app.intervals.core.GymSet(exerciseId = bulgarian, day = "2026-11-24", order = 0, weightKg = 60.0, reps = 5, restSec = 130)
+        val ids = repo.addSets(listOf(s, s.copy(weightKg = 70.0, note = "deep"), s.copy(weightKg = 80.0, reps = 4)))
+        val before = repo.exerciseDay(bulgarian, "2026-11-24").first()
+        // the first two were squats: they keep their place, rest and note, and take the variant
+        val old = repo.moveSetsTo(ids.take(2), squat, "normal")
+        val moved = repo.exerciseDay(squat, "2026-11-24").first()
+        assertEquals(before.take(2).map { it.copy(exerciseId = squat, variant = "normal") }, moved)
+        assertEquals(listOf(before[2]), repo.exerciseDay(bulgarian, "2026-11-24").first())
+        // Undo
+        repo.putBackSets(old)
+        assertEquals(before, repo.exerciseDay(bulgarian, "2026-11-24").first())
+        assertEquals(emptyList(), repo.exerciseDay(squat, "2026-11-24").first())
+    }
+
+    @Test
     fun groupsAndBackup() = runTest {
         val f = listOf(app.intervals.core.GymField.WEIGHT, app.intervals.core.GymField.REPS)
         val a = repo.addExercise(app.intervals.core.Exercise(name = "Deep Squat", fields = f))
@@ -225,5 +244,30 @@ class GymImportTest {
         )
         r.exercises.forEach { println("  ${it.name}: ${it.fields}${if (it.perSide) " per side" else ""}${if (it.assist) " assist" else ""}, step ${it.weightStep}, rest ${it.restSec}") }
         r.sets.filter { it.note.isNotEmpty() }.map { it.note }.distinct().forEach { println("  note: $it") }
+    }
+
+    @Test
+    fun mergingIntoAnExerciseWithoutVariantsCanKeepThemApart() = runTest {
+        val f = listOf(app.intervals.core.GymField.WEIGHT, app.intervals.core.GymField.REPS)
+        val pike = repo.addExercise(app.intervals.core.Exercise(name = "Pike Push Up", fields = f))
+        val box = repo.addExercise(app.intervals.core.Exercise(name = "Box Pike Push Up", fields = f))
+        val s = app.intervals.core.GymSet(exerciseId = pike, day = "2026-11-24", order = 0, weightKg = 0.0, reps = 8)
+        repo.addSets(listOf(s, s.copy(exerciseId = box, order = 1, reps = 5)))
+        repo.mergeExercises(box, pike, asVariant = "box", ownVariant = "normal")
+        assertEquals(listOf("normal", "box"), repo.exercises.first().first { it.id == pike }.variants)
+        assertEquals(listOf("normal", "box"), repo.exerciseDay(pike, "2026-11-24").first().map { it.variant })
+    }
+
+    @Test
+    fun aMergedHoldKeepsRecordingTime() = runTest {
+        val oap = repo.addExercise(app.intervals.core.Exercise(name = "Deloaded One Arm Pull-Up",
+            fields = listOf(app.intervals.core.GymField.WEIGHT, app.intervals.core.GymField.REPS), perSide = true))
+        val hold = repo.addExercise(app.intervals.core.Exercise(name = "One Arm 90° Hold",
+            fields = listOf(app.intervals.core.GymField.WEIGHT, app.intervals.core.GymField.TIME), specs = listOf(app.intervals.core.BANDS_SPEC)))
+        repo.mergeExercises(hold, oap, asVariant = "90° hold", ownVariant = "full")
+        val ex = repo.exercises.first().first { it.id == oap }
+        assertEquals(listOf("full", "90° hold"), ex.variants)
+        assertEquals(mapOf("90° hold" to listOf(app.intervals.core.GymField.WEIGHT, app.intervals.core.GymField.TIME)), ex.variantFields)
+        assertEquals(listOf("Bands"), ex.specs.map { it.name })
     }
 }

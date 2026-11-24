@@ -1,0 +1,182 @@
+<title>Move Sets</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: three ways in (A, B, C) as phones, then the shared picker and the result */
+:root {
+  --bg: #f4f2fa; --fg: #18151f; --muted: #5b5668; --line: #dfdbe9; --accent: #6d28d9; --card: #ffffff;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif;
+  --ph-bg: #000; --ph-surface: #1A1C21; --ph-sheet: #16181C; --ph-text: #F2F3F5; --ph-muted: #9AA0AA; --ph-soft: #C9CDD3; --ph-faint: #6E747E; --ph-line: #23262C;
+  --ph-accent: #7C3AED; --ph-accent-text: #C4B1FF; --pink: #E91E63; --work-tint: #3A1428; --work-text: #FF8AB3; --danger: #FF6B6B; --yellow: #FFC94D;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
+main { max-width: 1240px; margin: 0 auto; display: grid; gap: 16px; }
+h1 { font-family: var(--display); font-size: 1.8rem; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--display); font-size: 1.2rem; margin: 8px 0 0; }
+.lede { color: var(--muted); margin: 0; max-width: 84ch; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+.opt { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; display: grid; gap: 8px; min-width: 0; }
+.head { display: flex; gap: 10px; align-items: baseline; }
+.tag { font-family: var(--display); font-weight: 700; color: var(--accent); font-size: 1.1rem; }
+.name { font-weight: 600; }
+.desc { color: var(--muted); font-size: .86rem; margin: 0; padding-left: 18px; }
+.desc li { margin: 2px 0; }
+.phone { background: var(--ph-bg); border-radius: 22px; padding: 12px; color: var(--ph-text); font-size: 14px; display: flex; flex-direction: column; gap: 8px; position: relative; overflow: hidden; }
+.num { font-variant-numeric: tabular-nums; }
+.bar { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 700; }
+.bar .sp { flex: 1; } .bar .ic { color: var(--ph-muted); font-weight: 400; }
+.tabs { display: flex; gap: 16px; color: var(--ph-muted); font-size: 13px; font-weight: 600; border-bottom: 1px solid var(--ph-line); padding-bottom: 6px; }
+.tabs .on { color: var(--ph-text); border-bottom: 2px solid var(--ph-accent); padding-bottom: 4px; }
+.cap { color: var(--ph-muted); font-size: 12px; letter-spacing: .6px; font-weight: 600; }
+.block { display: flex; gap: 8px; align-items: flex-start; background: var(--ph-surface); border: 1px solid var(--ph-line); border-radius: 12px; padding: 8px; }
+.block .lbl { width: 52px; font-size: 15px; padding-top: 11px; }
+.sqs { display: flex; flex-wrap: wrap; gap: 6px; }
+.sqc { display: grid; justify-items: center; }
+.sq { width: 44px; height: 44px; box-sizing: border-box; border: 1px solid var(--ph-line); border-radius: 10px; background: var(--ph-bg); display: grid; place-items: center; font-size: 16px; }
+.sq.sel { background: var(--work-tint); border-color: var(--pink); color: var(--work-text); }
+.rest { font-size: 10px; color: var(--ph-muted); }
+.sel-hint { text-align: center; color: var(--ph-muted); font-size: 12px; }
+.actions { display: flex; gap: 8px; }
+.btn { flex: 1; height: 50px; border-radius: 14px; background: var(--ph-surface); display: grid; place-items: center; font-weight: 700; font-size: 15px; }
+.btn.x { flex: 0 0 50px; color: var(--ph-text); font-weight: 400; }
+.btn.new { outline: 2px solid var(--ph-accent-text); outline-offset: -2px; color: var(--ph-accent-text); }
+.btn.del { color: var(--danger); }
+.btn.go { background: var(--ph-accent); color: #fff; flex: none; }
+.menu { position: absolute; right: 12px; top: 44px; background: var(--ph-sheet); border: 1px solid var(--ph-line); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.6); padding: 4px 0; width: 240px; z-index: 2; }
+.menu div { padding: 10px 14px; font-size: 14px; }
+.menu .hl { color: var(--ph-accent-text); font-weight: 700; background: rgba(124,58,237,.14); }
+.menu small { display: block; color: var(--ph-muted); font-weight: 400; font-size: 11.5px; }
+.dim { opacity: .35; }
+.tl { background: var(--ph-surface); border-radius: 12px; padding: 8px 10px; display: grid; gap: 4px; }
+.tl.held { outline: 2px solid var(--pink); }
+.tl .top { display: flex; justify-content: space-between; font-weight: 700; }
+.tl .sum { color: var(--work-text); font-size: 12px; }
+.tl .row { display: flex; gap: 10px; font-size: 13px; color: var(--ph-soft); }
+.sheet { background: var(--ph-sheet); border-radius: 18px; padding: 12px; display: grid; gap: 8px; border: 1px solid var(--ph-line); }
+.search { background: var(--ph-surface); border-radius: 12px; padding: 10px 12px; color: var(--ph-muted); }
+.sec { color: var(--ph-muted); font-size: 11.5px; letter-spacing: .6px; font-weight: 700; margin-top: 4px; }
+.ex { display: flex; align-items: center; gap: 10px; padding: 7px 4px; border-radius: 10px; }
+.ex b { font-weight: 600; } .ex small { display: block; color: var(--ph-muted); font-size: 12px; }
+.ex.on { background: rgba(124,58,237,.18); outline: 1px solid var(--ph-accent); }
+.ex .r { margin-left: auto; color: var(--ph-accent-text); }
+.pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.pill { border: 1px solid var(--ph-line); border-radius: 16px; padding: 6px 12px; font-size: 13px; color: var(--ph-soft); }
+.pill.on { background: rgba(124,58,237,.25); border-color: var(--ph-accent); color: var(--ph-accent-text); font-weight: 700; }
+.warn { color: var(--yellow); font-size: 12px; }
+.toast { display: flex; align-items: center; background: var(--ph-surface); border-radius: 12px; padding: 10px 12px; font-size: 14px; }
+.toast span { flex: 1; } .toast b { color: var(--ph-accent-text); }
+.empty { color: var(--ph-muted); font-size: 13px; text-align: center; padding: 16px 0; }
+</style>
+
+<main>
+  <h1>Move sets to another exercise</h1>
+  <p class="lede">Today you logged four sets as <b>Bulgarian Squat</b>, but they were <b>Squat</b>. Three ways to start the move, then one picker for all three, then Undo. Merging a whole exercise (Finger Pinch into Pinch) stays where it is, in Edit exercise.</p>
+
+  <div class="grid">
+    <section class="opt"><div class="head"><span class="tag">A</span><span class="name">Selected sets · Move</span></div>
+      <ul class="desc"><li>Hold a set, tap the others: the bottom actions get <b>Move</b> beside Note and Delete.</li><li>Moves exactly the sets you picked, also one set out of five.</li></ul>
+      <div class="phone" id="a"></div></section>
+    <section class="opt"><div class="head"><span class="tag">B</span><span class="name">Exercise menu · Move today's sets</span></div>
+      <ul class="desc"><li>⋯ beside the name on the set screen: <b>Move today's sets…</b></li><li>The common case, all of the day, in two taps; no selecting.</li></ul>
+      <div class="phone" id="b"></div></section>
+    <section class="opt"><div class="head"><span class="tag">C</span><span class="name">Gym day · hold the exercise</span></div>
+      <ul class="desc"><li>On the day page (also from the Journal), hold an exercise's block: <b>Move to…</b></li><li>Fixes an old day too, without opening the exercise.</li></ul>
+      <div class="phone" id="c"></div></section>
+  </div>
+
+  <h2>Chosen: C, with the sets to move</h2>
+  <div class="grid">
+    <section class="opt"><div class="head"><span class="tag">C1</span><span class="name">Hold the exercise on the day</span></div>
+      <ul class="desc"><li>Gym day page (from Gym or from a Journal day): hold Bulgarian Squat's block, then <b>Move sets…</b></li><li>Nothing changes on the set screen.</li></ul>
+      <div class="phone" id="c1"></div></section>
+    <section class="opt"><div class="head"><span class="tag">C2</span><span class="name">One sheet: which sets, and where</span></div>
+      <ul class="desc"><li>The day's sets on top, all ticked: tap a square to keep it here (here the 80 × 4 stays).</li><li>Then the exercise (similar first, search) and its variant; the button says what will happen.</li></ul>
+      <div class="phone" id="c2"></div></section>
+    <section class="opt"><div class="head"><span class="tag">C3</span><span class="name">Back on the day</span></div>
+      <ul class="desc"><li>The moved sets show under Squat in the timeline, in their place; the rest stays under Bulgarian Squat.</li><li>Undo for 6 s.</li></ul>
+      <div class="phone" id="c3"></div></section>
+  </div>
+
+  <h2>Earlier: the picker and result for A, B, C</h2>
+  <div class="grid">
+    <section class="opt"><div class="head"><span class="tag">P</span><span class="name">The picker</span></div>
+      <ul class="desc"><li>Similar names first (Squat is the top match), then the rest A–Z; search on top.</li><li>When the target has variants, pick one; when it lacks a field the sets have, a yellow line says so.</li></ul>
+      <div class="phone" id="p"></div></section>
+    <section class="opt"><div class="head"><span class="tag">R</span><span class="name">The result</span></div>
+      <ul class="desc"><li>The sets keep their day, order, rest and notes; you stay on Bulgarian Squat, now empty for today.</li><li>Undo for 6 s, as with Delete. A tap on the toast opens Squat.</li></ul>
+      <div class="phone" id="r"></div></section>
+  </div>
+</main>
+
+<script>
+const SETS = [["60", "5", "2:10"], ["70", "5", "2:40"], ["80", "5", "3:05"], ["80", "4", "3:30"]];
+const header = (name, menu = "⋯") => `<div class="bar"><span class="ic">‹</span><span>${name}</span><span class="sp"></span><span class="ic">${menu}</span></div>
+  <div class="tabs"><span class="on">Log</span><span>History</span><span>Charts</span><span>Records</span></div>`;
+const blocks = sel => {
+  const byKg = {};
+  SETS.forEach((s, i) => (byKg[s[0]] ||= []).push([s, i]));
+  return Object.entries(byKg).map(([kg, list]) => `<div class="block"><span class="lbl num">${kg} kg</span><div class="sqs">${
+    list.map(([s, i]) => `<div class="sqc"><span class="sq num${sel.includes(i) ? " sel" : ""}">${s[1]}</span><span class="rest num">${s[2]}</span></div>`).join("")}</div></div>`).join("");
+};
+
+document.getElementById("a").innerHTML = header("Bulgarian Squat") +
+  `<div class="cap">SETS · 4 · TAP TO ADD OR REMOVE SETS</div>${blocks([0, 1, 2, 3])}
+   <div class="sel-hint">4 selected · tap sets to add or remove them</div>
+   <div class="actions"><span class="btn x">✕</span><span class="btn">Note</span><span class="btn new">Move</span><span class="btn del">Delete</span></div>`;
+
+document.getElementById("b").innerHTML = header("Bulgarian Squat", "⋯") +
+  `<div class="menu"><div class="hl">Move today's sets…<small>4 sets to another exercise</small></div><div>Edit exercise</div><div>Notes</div></div>
+   <div class="dim"><div class="cap">SETS · 4 · TAP TO EDIT · HOLD TO SELECT</div>${blocks([])}</div>`;
+
+document.getElementById("c").innerHTML = `<div class="bar"><span class="ic">‹</span><span>Tue 24 Nov</span><span class="sp"></span></div>
+  <div class="tl"><div class="top"><span>Pull Up</span><span class="num">6 sets</span></div><div class="sum">6 sets · 35 reps</div></div>
+  <div class="tl held"><div class="top"><span>Bulgarian Squat</span><span class="num">4 sets</span></div><div class="sum">4 sets · 19 reps</div>
+    ${SETS.map(s => `<div class="row num"><span>${s[0]} kg</span><span>× ${s[1]}</span></div>`).join("")}</div>
+  <div class="menu" style="top:120px"><div class="hl">Move to…<small>these 4 sets to another exercise</small></div><div>Open Bulgarian Squat</div></div>
+  <div class="tl dim"><div class="top"><span>Overhead Press</span><span class="num">5 sets</span></div></div>`;
+
+document.getElementById("p").innerHTML = `<div class="sheet"><b>Move 4 sets to…</b>
+  <div class="search">Search exercises</div>
+  <div class="sec">SIMILAR</div>
+  <div class="ex on"><div><b>Squat</b><small>deep · half · normal</small></div><span class="r">✓</span></div>
+  <div class="ex"><div><b>Bulgarian Bar Squat</b><small>weight · reps</small></div></div>
+  <div class="ex"><div><b>Free Squat</b><small>weight · reps</small></div></div>
+  <div class="sec">AS VARIANT OF SQUAT</div>
+  <div class="pills"><span class="pill">deep</span><span class="pill">half</span><span class="pill on">normal</span></div>
+  <div class="sec">ALL</div>
+  <div class="ex"><div><b>Box Pike Push Up</b></div></div>
+  <div class="actions"><span class="btn x">✕</span><span class="btn go" style="flex:1">Move 4 sets to Squat</span></div></div>
+  <div class="sheet" style="margin-top:4px"><div class="cap">IF THE TARGET LACKS A FIELD · e.g. Finger Pinch sets to Pinch</div>
+  <div class="warn">Pinch has no Time: the times are kept but not shown. Add Time to Pinch to see them.</div></div>`;
+
+document.getElementById("c1").innerHTML = document.getElementById("c").innerHTML.replace("Move to…<small>these 4 sets to another exercise</small>", "Move sets…<small>to another exercise; pick which</small>");
+
+const tick = (on, i) => `<div class="sqc"><span class="sq num${on ? " sel" : ""}">${SETS[i][1]}</span><span class="rest num">${SETS[i][0]} kg</span></div>`;
+document.getElementById("c2").innerHTML = `<div class="sheet"><b>Move sets of Bulgarian Squat · 24 Nov</b>
+  <div class="sec">SETS · TAP TO KEEP ONE HERE</div>
+  <div class="sqs">${[true, true, true, false].map(tick).join("")}</div>
+  <div class="sec">TO</div>
+  <div class="search">Search exercises</div>
+  <div class="ex on"><div><b>Squat</b><small>deep · half · normal</small></div><span class="r">✓</span></div>
+  <div class="ex"><div><b>Bulgarian Bar Squat</b><small>weight · reps</small></div></div>
+  <div class="ex"><div><b>Free Squat</b><small>weight · reps</small></div></div>
+  <div class="sec">AS VARIANT</div>
+  <div class="pills"><span class="pill">deep</span><span class="pill">half</span><span class="pill on">normal</span></div>
+  <div class="actions"><span class="btn x">✕</span><span class="btn go" style="flex:1">Move 3 sets to Squat</span></div></div>`;
+
+document.getElementById("c3").innerHTML = `<div class="bar"><span class="ic">‹</span><span>Tue 24 Nov</span><span class="sp"></span></div>
+  <div class="tl"><div class="top"><span>Pull Up</span><span class="num">6 sets</span></div><div class="sum">6 sets · 35 reps</div></div>
+  <div class="tl"><div class="top"><span>Squat</span><span class="num">3 sets</span></div><div class="sum">3 sets · 15 reps · normal</div>
+    ${SETS.slice(0, 3).map(s => `<div class="row num"><span>${s[0]} kg</span><span>× ${s[1]}</span></div>`).join("")}</div>
+  <div class="tl"><div class="top"><span>Bulgarian Squat</span><span class="num">1 set</span></div><div class="row num"><span>80 kg</span><span>× 4</span></div></div>
+  <div class="toast"><span>Moved 3 sets to Squat · normal</span><b>Undo</b></div>`;
+
+document.getElementById("r").innerHTML = header("Bulgarian Squat") +
+  `<div class="empty">No sets today.</div>
+   <div class="toast"><span>Moved 4 sets to Squat · normal</span><b>Undo</b></div>
+   <div class="actions"><span class="btn">Log set</span></div>`;
+</script>

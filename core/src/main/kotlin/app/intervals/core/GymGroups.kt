@@ -79,6 +79,28 @@ fun recordSetsOn(day: String, all: List<GymSet>, exercises: List<Exercise>): Lis
     return exercises.flatMap { ex -> byEx[ex.id]?.let { recordSets(ex, day, it) }.orEmpty() }
 }
 
+/**
+ * The record sets of [day] (as [recordSetsOn]), each with the later day that beat it, or null when it is still the best
+ * (per side for a per-side exercise). [all] is the whole history, also after [day].
+ */
+fun recordMarksOn(day: String, all: List<GymSet>, exercises: List<Exercise>): Map<Long, String?> {
+    val byEx = all.groupBy { it.exerciseId }
+    return exercises.flatMap { ex ->
+        val history = byEx[ex.id] ?: return@flatMap emptyList()
+        recordSets(ex, day, history.filter { it.day <= day }).map { s ->
+            val metric = ex.mainMetric(s.variantOf(ex))
+            val v = metric?.let { metricOf(it, listOf(s)) }
+            val beatenOn = v?.let { value ->
+                // the same variant and specs, on the same side (or also without one)
+                val same = history.filter { it.recordKey(ex) == s.recordKey(ex) && !it.isWarmup }.filter { !ex.perSide || it.side == s.side }
+                metricSeries(metric, same)
+                    .firstOrNull { it.day > day && (if (metric.lowerIsBetter) it.value < value else it.value > value) }?.day
+            }
+            s.id to beatenOn
+        }
+    }.toMap()
+}
+
 fun recordsOn(day: String, all: List<GymSet>, exercises: List<Exercise>): Int {
     val byEx = all.filter { it.day <= day }.groupBy { it.exerciseId }
     return exercises.count { ex ->

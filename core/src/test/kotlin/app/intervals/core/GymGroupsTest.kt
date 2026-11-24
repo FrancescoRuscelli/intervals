@@ -65,4 +65,25 @@ class GymGroupsTest {
         assertEquals(listOf("2026-11-17"), made.map { it.day })
         assertEquals(listOf(true), dayBars(numbered.filter { it.day == "2026-11-17" }, sq, made.map { it.id }.toSet()).map { it.record }.distinct().filter { it })
     }
+
+    @Test
+    fun pastRecordsKnowTheDayTheyWereBeaten() {
+        // Pinch, real: left 12 → 13.75 (5 Apr) → 15 (21 Apr) → 16 (7 Jul); right 17 → 21 (7 Jul)
+        val pinch = Exercise(38, "Pinch", listOf(GymField.WEIGHT, GymField.REPS), perSide = true)
+        var id = 0L
+        val s = { d: String, side: Side, kg: Double -> GymSet(id = ++id, exerciseId = 38, day = d, order = id.toInt(), side = side, weightKg = kg, reps = 1) }
+        val all = listOf(
+            s("2026-01-31", Side.LEFT, 12.0), s("2026-01-31", Side.RIGHT, 17.0),
+            s("2026-04-05", Side.LEFT, 13.75), s("2026-04-21", Side.LEFT, 15.0), s("2026-04-27", Side.LEFT, 15.0),
+            s("2026-07-07", Side.RIGHT, 21.0), s("2026-07-07", Side.LEFT, 16.0),
+        )
+        assertEquals(mapOf(3L to "2026-04-21"), recordMarksOn("2026-04-05", all, listOf(pinch)))
+        assertEquals(mapOf(4L to "2026-07-07"), recordMarksOn("2026-04-21", all, listOf(pinch)))
+        // a tie is not a record
+        assertEquals(emptyMap(), recordMarksOn("2026-04-27", all, listOf(pinch)))
+        // both hands' best now: no day beat them
+        assertEquals(mapOf(6L to null, 7L to null), recordMarksOn("2026-07-07", all, listOf(pinch)))
+        val bars = dayBars(all.filter { it.day == "2026-04-05" }, pinch, setOf(3L), setOf(3L))
+        assertEquals(listOf(true), bars.map { it.beaten })
+    }
 }

@@ -21,6 +21,25 @@ fun metricsFor(ex: Exercise): List<GymMetric> = buildList {
     add(GymMetric.REST)
 }
 
+/** The graph records are counted on for [variant]'s sets: the first that fits what it records (rest never). */
+fun Exercise.mainMetric(variant: String?): GymMetric? = metricsFor(forVariant(variant)).firstOrNull { it != GymMetric.REST }
+
+/**
+ * The sides to look at one by one: none for a two-sided exercise; L and R for a per-side one, plus "no side" ([NoSide])
+ * when some sets have none (e.g. holds merged in from an exercise logged without sides).
+ */
+object NoSide
+
+fun sidesOf(ex: Exercise, sets: List<GymSet>): List<Any?> =
+    if (!ex.perSide) listOf(null) else listOf<Any?>(Side.LEFT, Side.RIGHT) + (if (sets.any { it.side == null }) listOf(NoSide) else emptyList())
+
+/** The sets of one entry of [sidesOf]. */
+fun List<GymSet>.onSide(side: Any?): List<GymSet> = when (side) {
+    null -> this
+    NoSide -> filter { it.side == null }
+    else -> filter { it.side == side }
+}
+
 /** One value of a metric over the sets of one day (null when the day has nothing for it). */
 fun metricOf(metric: GymMetric, sets: List<GymSet>): Double? {
     if (sets.isEmpty()) return null
@@ -34,6 +53,26 @@ fun metricOf(metric: GymMetric, sets: List<GymSet>): Double? {
     }
 }
 
+/**
+ * The quick tag that makes a set a warm-up (mockup intervals-ideas-from-other-apps.html, 5): it stays in the log and the bars,
+ * but is left out of records, graphs and set counts.
+ */
+const val WARMUP_TAG = "Warm-up"
+
+val GymSet.isWarmup: Boolean get() = note.split(" · ").any { it.trim().equals(WARMUP_TAG, ignoreCase = true) }
+
+/** The set's note without the warm-up tag ("" when that was all). */
+val GymSet.noteWithoutWarmup: String get() = note.split(" · ").map(String::trim).filter { it.isNotEmpty() && !it.equals(WARMUP_TAG, ignoreCase = true) }.joinToString(" · ")
+
+/**
+ * What a set's records are kept within (mockup intervals-ideas-from-other-apps.html, 6): its variant and its specifications,
+ * so a deep squat never hides a half-squat record and a thumb pinch has its own. A missing single choice counts as the
+ * first choice (like a missing variant); a missing number is its own group.
+ */
+fun GymSet.recordKey(ex: Exercise): String =
+    (listOf(variantOf(ex).orEmpty()) + ex.specs.map { sp -> specs[sp.name] ?: if (sp.isChoice && !sp.multiple) sp.choices.first() else "" })
+        .joinToString("|")
+
 /** For records: lower is better only for rest (a negative assisted weight is just a smaller number, higher is better). */
 val GymMetric.lowerIsBetter: Boolean get() = this == GymMetric.REST
 
@@ -45,7 +84,7 @@ data class MetricPoint(val day: String, val value: Double, val record: Boolean)
  */
 fun metricSeries(metric: GymMetric, sets: List<GymSet>, side: Side? = null): List<MetricPoint> {
     var best: Double? = null
-    return sets.filter { side == null || it.side == side }
+    return sets.filter { (side == null || it.side == side) && !it.isWarmup }
         .groupBy { it.day }.toSortedMap()
         .mapNotNull { (day, s) -> metricOf(metric, s)?.let { day to it } }
         .map { (day, v) ->
@@ -56,16 +95,24 @@ fun metricSeries(metric: GymMetric, sets: List<GymSet>, side: Side? = null): Lis
         }
 }
 
-/** The first set matching a record on [day], once per side for a per-side exercise. */
+/**
+ * The first set matching a record on [day], once per side for a per-side exercise and once per [recordKey]
+ * (variant and specifications). Warm-up sets never count.
+ */
 fun recordSets(exercise: Exercise, day: String, history: List<GymSet>): List<GymSet> {
-    val metric = metricsFor(exercise).firstOrNull { it != GymMetric.REST } ?: return emptyList()
-    val sets = history.filter { it.day == day }
+    val real = history.filterNot { it.isWarmup }
+    val sets = real.filter { it.day == day }
     if (sets.isEmpty()) return emptyList()
-    val sides = if (exercise.perSide) listOf(Side.LEFT, Side.RIGHT) else listOf(null)
-    return sides.mapNotNull { side ->
-        val point = metricSeries(metric, history, side).firstOrNull { it.day == day && it.record } ?: return@mapNotNull null
-        sets.firstOrNull { (side == null || it.side == side) && metricOf(metric, listOf(it)) == point.value }
-    }
+    val sides = sidesOf(exercise, real)
+    val byKey = real.groupBy { it.recordKey(exercise) }
+    return sets.groupBy { it.recordKey(exercise) }.flatMap { (key, mine) ->
+        // each variant by what it records (a hold by its weight or time, pull-ups by weight)
+        val metric = exercise.mainMetric(mine.first().variantOf(exercise)) ?: return@flatMap emptyList()
+        sides.mapNotNull { side ->
+            val point = metricSeries(metric, byKey.getValue(key).onSide(side)).firstOrNull { it.day == day && it.record } ?: return@mapNotNull null
+            mine.onSide(side).firstOrNull { metricOf(metric, listOf(it)) == point.value }
+        }
+    }.sortedBy { it.order }
 }
 
 /** Straight line through the points (least squares), as values at the first and last point. */
@@ -86,7 +133,7 @@ fun trend(values: List<Double>): Pair<Double, Double>? {
 data class RepMax(val reps: Int, val weightKg: Double, val day: String, val beaten: Boolean)
 
 fun repMaxes(sets: List<GymSet>): List<RepMax> {
-    val best = sets.filter { it.reps != null && it.reps > 0 && it.weightKg != null }
+    val best = sets.filter { it.reps != null && it.reps > 0 && it.weightKg != null && !it.isWarmup }
         .groupBy { it.reps!! }
         .mapValues { (_, s) -> s.maxWith(compareBy({ it.weightKg!! }, { -java.time.LocalDate.parse(it.day).toEpochDay() })) }
         .toSortedMap()
@@ -116,12 +163,14 @@ fun recentRecords(exercises: List<Exercise>, sets: List<GymSet>, since: String):
     val byEx = sets.groupBy { it.exerciseId }
     return exercises.mapNotNull { ex ->
         val s = byEx[ex.id] ?: return@mapNotNull null
-        val metric = metricsFor(ex).firstOrNull { it != GymMetric.REST } ?: return@mapNotNull null
-        val sides: List<Side?> = if (ex.perSide) listOf(Side.LEFT, Side.RIGHT) else listOf(null)
-        sides.flatMap { side -> metricSeries(metric, s, side) }
-            .filter { it.record && it.day >= since }
-            .maxByOrNull { it.day }
-            ?.let { GymRecord(ex, metric, it.day, it.value) }
+        val sides = sidesOf(ex, s)
+        s.groupBy { it.recordKey(ex) }.values.flatMap { same ->
+            val metric = ex.mainMetric(same.first().variantOf(ex)) ?: return@flatMap emptyList()
+            sides.flatMap { side -> metricSeries(metric, same.onSide(side)).map { metric to it } }
+        }
+            .filter { it.second.record && it.second.day >= since }
+            .maxByOrNull { it.second.day }
+            ?.let { (metric, pt) -> GymRecord(ex, metric, pt.day, pt.value) }
     }.sortedByDescending { it.day }
 }
 
@@ -137,9 +186,9 @@ data class ExerciseTraining(
     val work: Long? get() = if (timed) timeSec else reps
 }
 
-/** Totals for the supplied period. Sides and variants share the same exercise and training dates. */
+/** Totals for the supplied period, warm-ups left out. Sides and variants share the same exercise and training dates. */
 fun exerciseTraining(sets: List<GymSet>): List<ExerciseTraining> =
-    sets.groupBy { it.exerciseId }.map { (id, logged) ->
+    sets.filterNot { it.isWarmup }.groupBy { it.exerciseId }.map { (id, logged) ->
         val reps = logged.mapNotNull { it.reps }
         val seconds = logged.mapNotNull { it.timeSec }
         ExerciseTraining(

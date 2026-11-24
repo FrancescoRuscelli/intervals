@@ -1,0 +1,186 @@
+<title>Variant Fields</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: part 1 the new title for "What you write down" (options side by side); part 2 variants with their own fields
+   (edit screen options), part 3 what the log and the Journal then show. Phones are the app's dark screens. */
+:root {
+  --bg: #f4f2fa; --fg: #18151f; --muted: #5b5668; --line: #dfdbe9; --accent: #6d28d9; --card: #ffffff;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif;
+  --ph-bg: #000; --ph-surface: #1A1C21; --ph-text: #F2F3F5; --ph-muted: #9AA0AA; --ph-soft: #C9CDD3; --ph-faint: #6E747E; --ph-line: #23262C;
+  --ph-accent: #7C3AED; --ph-accent-text: #C4B1FF; --ph-tint: #241A3A; --pink: #E91E63; --L: #FF8AB3; --R: #2DD4BF;
+  --teal: #00BFA5; --teal-tint: #0E2B27; --teal-text: #5EEAD4;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
+main { max-width: 1240px; margin: 0 auto; display: grid; gap: 14px; }
+h1 { font-family: var(--display); font-size: 1.8rem; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--display); font-size: 1.3rem; margin: 16px 0 0; }
+.lede { color: var(--muted); margin: 0; max-width: 84ch; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 16px; align-items: start; }
+.opt { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; display: grid; gap: 8px; min-width: 0; }
+.head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.tag { font-family: var(--display); font-weight: 700; color: var(--accent); font-size: 1.1rem; }
+.name { font-weight: 600; }
+.rec { font-size: .72rem; font-weight: 700; color: var(--accent); border: 1px solid var(--accent); border-radius: 8px; padding: 0 6px; }
+.desc { color: var(--muted); font-size: .86rem; margin: 0; }
+
+.phone { background: var(--ph-bg); border-radius: 22px; padding: 12px; color: var(--ph-text); font-size: 14px; display: grid; gap: 10px; }
+.st { font-size: 15px; font-weight: 600; }
+.hint { font-size: 12px; color: var(--ph-muted); margin-top: -6px; }
+.pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill { border: 1px solid var(--ph-line); border-radius: 16px; padding: 5px 12px; font-size: 13.5px; color: var(--ph-soft); }
+.pill.on { border-color: var(--ph-accent); background: var(--ph-tint); color: var(--ph-accent-text); font-weight: 700; }
+.pill.sm { padding: 2px 9px; font-size: 12px; }
+.vrow { background: var(--ph-surface); border-radius: 12px; padding: 10px 12px; display: grid; gap: 6px; }
+.vrow .top { display: flex; align-items: center; gap: 8px; }
+.vrow .top b { flex: 1; font-size: 15.5px; }
+.vrow .top span { color: var(--ph-muted); font-size: 12px; }
+.ic { color: var(--ph-muted); }
+.uses { font-size: 12px; color: var(--ph-muted); }
+.uses b { color: var(--ph-accent-text); font-weight: 600; }
+table.m { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.m th { color: var(--ph-muted); font-weight: 600; font-size: 11.5px; padding: 4px 2px; text-align: center; }
+table.m th:first-child, table.m td:first-child { text-align: left; }
+table.m td { padding: 8px 2px; border-top: 1px solid var(--ph-line); text-align: center; }
+.tick { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; border: 1px solid var(--ph-line); color: transparent; font-size: 13px; }
+.tick.on { background: var(--ph-accent); border-color: var(--ph-accent); color: #fff; }
+.dialog { background: #2A2C33; border-radius: 20px; padding: 14px; display: grid; gap: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.6); }
+.dialog .t { font-size: 17px; font-weight: 600; }
+.dialog .btns { display: flex; justify-content: flex-end; gap: 18px; color: var(--ph-accent-text); font-weight: 600; font-size: 14px; }
+.dim { opacity: .35; }
+
+.tabs { display: flex; gap: 16px; color: var(--ph-muted); font-size: 13px; font-weight: 600; border-bottom: 1px solid var(--ph-line); padding-bottom: 6px; justify-content: center; }
+.tabs .on { color: var(--ph-text); border-bottom: 2px solid var(--ph-accent); padding-bottom: 4px; }
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tile { background: var(--ph-surface); border-radius: 14px; padding: 8px 10px; text-align: center; }
+.tile small { color: var(--ph-muted); font-size: 12px; }
+.tile b { display: block; font-family: var(--display); font-size: 28px; }
+.timer { background: var(--ph-surface); border-radius: 14px; padding: 10px; display: flex; align-items: center; gap: 10px; }
+.timer b { font-family: var(--display); font-size: 30px; flex: 1; }
+.timer span { background: var(--teal); color: #04221E; font-weight: 700; border-radius: 12px; padding: 8px 14px; font-size: 13px; }
+.seg { display: flex; background: var(--ph-surface); border-radius: 12px; padding: 3px; }
+.seg span { flex: 1; text-align: center; padding: 6px 0; border-radius: 9px; font-weight: 700; color: var(--ph-muted); }
+.seg .l { background: #3A1428; color: var(--L); box-shadow: inset 0 0 0 1px var(--L); }
+.btn { background: var(--ph-accent); color: #fff; border-radius: 14px; text-align: center; padding: 13px; font-weight: 700; }
+.bars { display: flex; align-items: flex-end; gap: 3px; min-height: 64px; }
+.b { width: 28px; display: flex; flex-direction: column; align-items: center; }
+.b .t { font-size: 9.5px; font-weight: 700; white-space: nowrap; }
+.b .bb { width: 100%; background: var(--ph-accent); border: 1px solid var(--ph-line); border-radius: 3px 3px 0 0; box-sizing: border-box; position: relative; }
+.b .bb i { position: absolute; left: 0; right: 0; top: 2px; text-align: center; font-style: normal; font-size: 8px; font-weight: 700; color: #fff; }
+.b .bb em { position: absolute; left: 0; right: 0; bottom: 2px; text-align: center; font-style: normal; font-size: 8px; font-weight: 700; color: #fff; letter-spacing: -.3px; }
+.b.hold .bb { background: #0F7A6C; }
+.gap { width: 8px; }
+.ln { font-size: 12px; color: var(--ph-muted); }
+.ln b { color: var(--ph-text); }
+</style>
+
+<main>
+  <h1>Variants with their own fields</h1>
+  <p class="lede">Your real exercises: Deloaded One Arm Pull-Up (weight + reps, left and right apart; last time L −25 × 5, R −17.5 × 5…) and
+    One Arm 90° Hold (weight + time; last time 0:10, 0:05 × 3). Merged, the hold becomes a variant “90° hold” of the pull-up that
+    records <b>time</b> instead of reps. First the new name for “What you write down”.</p>
+
+  <h2>1 · A better title</h2>
+  <div class="grid" id="titles"></div>
+
+  <h2>2 · Fields per variant in Edit exercise</h2>
+  <p class="lede">The exercise keeps its fields as the default; a variant only says where it differs. Sets already logged keep their values.</p>
+  <div class="grid">
+    <section class="opt">
+      <div class="head"><span class="tag">A</span><span class="name">A line on each variant</span><span class="rec">recommended</span></div>
+      <p class="desc">Each variant row says what it records. Tap it: a small dialog with the same chips. “Same as the exercise” is the default.</p>
+      <div class="phone">
+        <div class="st">Each set records</div>
+        <div class="pills"><span class="pill on">Weight</span><span class="pill on">Reps</span><span class="pill">Time</span><span class="pill">Distance</span></div>
+        <div class="st" style="margin-top:4px">Variants</div>
+        <div class="vrow"><div class="top"><b>full</b><span>193 sets</span><span class="ic">↑ ✎</span></div>
+          <div class="uses">records: weight · reps (as the exercise)</div></div>
+        <div class="vrow"><div class="top"><b>90° hold</b><span>34 sets</span><span class="ic">↑ ✎</span></div>
+          <div class="uses">records: <b>weight · time</b> ›</div></div>
+        <div class="dialog">
+          <div class="t">“90° hold” records</div>
+          <div class="pills"><span class="pill on">Weight</span><span class="pill">Reps</span><span class="pill on">Time</span><span class="pill">Distance</span></div>
+          <div class="pills"><span class="pill sm">Same as the exercise</span></div>
+          <div class="btns"><span>Cancel</span><span>Done</span></div>
+        </div>
+      </div>
+    </section>
+    <section class="opt">
+      <div class="head"><span class="tag">B</span><span class="name">A table</span></div>
+      <p class="desc">One row per variant, one column per field, ticks. Everything visible at once; fills up with four fields and many variants.</p>
+      <div class="phone">
+        <div class="st">Each set records</div>
+        <table class="m">
+          <tr><th></th><th>Weight</th><th>Reps</th><th>Time</th><th>Dist.</th></tr>
+          <tr><td><b>full</b></td><td><span class="tick on">✓</span></td><td><span class="tick on">✓</span></td><td><span class="tick">✓</span></td><td><span class="tick">✓</span></td></tr>
+          <tr><td><b>90° hold</b></td><td><span class="tick on">✓</span></td><td><span class="tick">✓</span></td><td><span class="tick on">✓</span></td><td><span class="tick">✓</span></td></tr>
+        </table>
+        <div class="hint" style="margin-top:0">Without variants it is one row, as today.</div>
+      </div>
+    </section>
+    <section class="opt">
+      <div class="head"><span class="tag">C</span><span class="name">Chips inside each variant</span></div>
+      <p class="desc">The field chips move into the variant rows; the exercise has none of its own once it has variants. Clear, but longer.</p>
+      <div class="phone">
+        <div class="st">Variants · each set records</div>
+        <div class="vrow"><div class="top"><b>full</b><span>193 sets</span><span class="ic">↑ ✎</span></div>
+          <div class="pills"><span class="pill sm on">Weight</span><span class="pill sm on">Reps</span><span class="pill sm">Time</span><span class="pill sm">Distance</span></div></div>
+        <div class="vrow"><div class="top"><b>90° hold</b><span>34 sets</span><span class="ic">↑ ✎</span></div>
+          <div class="pills"><span class="pill sm on">Weight</span><span class="pill sm">Reps</span><span class="pill sm on">Time</span><span class="pill sm">Distance</span></div></div>
+      </div>
+    </section>
+  </div>
+
+  <h2>3 · What changes on the log and in the Journal</h2>
+  <div class="grid">
+    <section class="opt">
+      <div class="head"><span class="name">Log: picking “90° hold”</span></div>
+      <p class="desc">The tiles follow the variant: weight + the timer for the hold, weight + reps for full. Switching variant switches them.</p>
+      <div class="phone">
+        <div class="tabs"><span class="on">Log</span><span>History</span><span>Graph</span><span>Records</span></div>
+        <div class="seg"><span class="l">L</span><span>R</span><span>Both</span></div>
+        <div class="tiles" style="grid-template-columns:1fr"><div class="tile"><small>Weight</small><b>−20 kg</b></div></div>
+        <div class="timer"><b>0:10</b><span>START</span></div>
+        <div class="pills"><span class="pill">full · L −25 × 5</span><span class="pill on">90° hold · 0:10</span></div>
+        <div class="btn">Log set · 90° hold</div>
+      </div>
+    </section>
+    <section class="opt">
+      <div class="head"><span class="name">Journal and History: one day with both</span></div>
+      <p class="desc">Pulls are bars by reps, holds bars by time (in a darker teal so they read apart). Graph and Records follow the
+        variant chip, so “90° hold” shows Longest time, “full” shows the weights; “All” keeps only what both record (weight).</p>
+      <div class="phone">
+        <div class="ln" style="display:flex;justify-content:space-between"><b>Deloaded One Arm Pull-Up</b><span>4 sets + 3 holds</span></div>
+        <div class="bars" id="bars"></div>
+        <div class="ln">full: L −20 × 5 · R −12.5 × 5 · 90° hold: 0:10 · 0:05 · 0:05</div>
+      </div>
+    </section>
+  </div>
+  <p class="lede">One thing to decide when merging: One Arm 90° Hold is logged without sides, the pull-up with L and R. Its 34 sets would come
+    over without a side, and new holds would ask for one like the pull-ups.</p>
+</main>
+
+<script>
+const TITLES = [
+  ["1", "Each set records", "Says what it is: the values every set gets.", true],
+  ["2", "Logged per set", "Short and plain; “logged” is the word the app uses elsewhere.", false],
+  ["3", "Measured", "One word; a bit vague for reps.", false],
+  ["4", "Per set", "Shortest; the chips say the rest.", false],
+];
+document.getElementById("titles").innerHTML = TITLES.map(([tag, t, d, rec]) => `<section class="opt">
+  <div class="head"><span class="tag">${tag}</span><span class="name">${t}</span>${rec ? '<span class="rec">recommended</span>' : ""}</div>
+  <p class="desc">${d}</p>
+  <div class="phone"><div class="st">${t}</div>
+    <div class="pills"><span class="pill on">Weight</span><span class="pill on">Reps</span><span class="pill">Time</span><span class="pill">Distance</span></div>
+    <div class="hint" style="margin-top:0">Step for − / + on the weight · 2.5 kg</div></div></section>`).join("");
+
+// [label on top, height value, side, kg at the foot, hold?]
+const B = [["5", 5, "L", "−20"], ["5", 5, "R", "−12.5"], ["4", 4, "L", "−20"], ["5", 5, "R", "−12.5"], null,
+  ["0:10", 10 / 2, "", "−20", 1], ["0:05", 5 / 2, "", "", 1], ["0:05", 5 / 2, "", "", 1]];
+document.getElementById("bars").innerHTML = B.map(x => x ? `<div class="b${x[4] ? " hold" : ""}"><span class="t">${x[0]}</span>
+  <div class="bb" style="height:${Math.max(6 + 40 * x[1] / 5, 28)}px">${x[2] ? `<i>${x[2]}</i>` : ""}${x[3] ? `<em>${x[3]}</em>` : ""}</div></div>` : '<span class="gap"></span>').join("");
+</script>

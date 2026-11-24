@@ -62,6 +62,11 @@ interface SessionDao {
     )
     suspend fun lastWithValues(workoutId: Long): SessionWithValues?
 
+    /** Every session of a workout, newest first (Progress, load hints). */
+    @Transaction
+    @Query("SELECT * FROM sessions WHERE workoutId = :workoutId ORDER BY startedAt DESC")
+    fun observeForWorkout(workoutId: Long): Flow<List<SessionWithValues>>
+
     @Insert
     suspend fun insert(session: SessionEntity): Long
 
@@ -222,6 +227,10 @@ interface GymDao {
     /** Moves every set of [from] to [into] (merge). */
     @Query("UPDATE gym_sets SET exerciseId = :into WHERE exerciseId = :from")
     suspend fun moveSets(from: Long, into: Long)
+
+    /** Gives sets to another exercise, keeping their day, place, rest and note. */
+    @Query("UPDATE gym_sets SET exerciseId = :into, variant = :variant WHERE id IN (:ids)")
+    suspend fun moveSetsTo(ids: List<Long>, into: Long, variant: String?)
 
     @Query("UPDATE gym_sets SET variant = :variant WHERE exerciseId = :exerciseId")
     suspend fun setVariant(exerciseId: Long, variant: String)

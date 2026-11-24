@@ -27,6 +27,11 @@ data class Spec(
     val multiple: Boolean = false,
     /** Optional color of each choice, 0xAARRGGBB (e.g. the band colors). */
     val colors: Map<String, Long> = emptyMap(),
+    /**
+     * Shown only when another group has one option, as "Help=band" (mockup intervals-variant-groups.html, 3): the band colors
+     * only once "band" is picked. The group is the variants' [Exercise.variantsName] or another choice's name. Null = always.
+     */
+    val onlyWhen: String? = null,
 ) {
     init {
         require(name.isNotBlank()) { "a specification needs a name" }
@@ -84,6 +89,13 @@ data class Exercise(
      * A set without one counts as the first.
      */
     val variants: List<String> = emptyList(),
+    /**
+     * What a variant records when it differs from [fields] (mockup intervals-variant-fields.html, 2A), e.g. the "90° hold" of
+     * a one-arm pull-up: weight + time instead of weight + reps. A variant not in here records [fields].
+     */
+    val variantFields: Map<String, List<GymField>> = emptyMap(),
+    /** The name of the variants' group (mockup intervals-variant-groups.html), e.g. "Range"; the other groups are choice specs. */
+    val variantsName: String = "Variant",
 ) {
     init {
         require(variants.map { it.lowercase() }.toSet().size == variants.size) { "two variants have the same name" }
@@ -128,6 +140,36 @@ data class GymSet(
         require(timeSec == null || timeSec >= 0) { "timeSec must be >= 0" }
     }
 }
+
+/** What sets of [variant] record: its own fields, else the exercise's (null = the first variant). */
+fun Exercise.fieldsOf(variant: String?): List<GymField> =
+    variantFields[variant ?: variants.firstOrNull()]?.takeIf { it.isNotEmpty() } ?: fields
+
+/** The exercise as one variant sees it: its fields are that variant's (for screens and stats of one variant). */
+fun Exercise.forVariant(variant: String?): Exercise =
+    if (variantFields.isEmpty()) this else copy(fields = fieldsOf(variant), variantFields = emptyMap())
+
+/** The exercise as [set]'s variant sees it. */
+fun Exercise.forSet(set: GymSet): Exercise = if (variantFields.isEmpty()) this else forVariant(set.variantOf(this))
+
+/**
+ * The specifications to show for a set with [values] in [variant]: all but those whose [Spec.onlyWhen] is not met
+ * (e.g. the band colors while Help is "none"). A single choice with no value counts as its first option.
+ */
+fun Exercise.shownSpecs(values: Map<String, String>, variant: String?): List<Spec> = specs.filter { sp ->
+    val cond = sp.onlyWhen ?: return@filter true
+    val group = cond.substringBefore('=')
+    val option = cond.substringAfter('=')
+    if (group.equals(variantsName, ignoreCase = true)) (variant ?: variants.firstOrNull()) == option
+    else {
+        val other = specs.firstOrNull { it.name.equals(group, ignoreCase = true) } ?: return@filter true
+        (values[other.name] ?: other.choices.firstOrNull().takeIf { !other.multiple }) == option
+    }
+}
+
+/** The fields every variant records ("All" in Graph and Records: what can be compared across them). */
+fun Exercise.commonFields(): List<GymField> =
+    if (variantFields.isEmpty()) fields else variants.ifEmpty { listOf(null) }.map { fieldsOf(it) }.reduce { a, b -> a.filter { it in b } }.ifEmpty { fields }
 
 /** The set's variant: its own, else the exercise's first; null when the exercise has no variants. */
 fun GymSet.variantOf(ex: Exercise): String? = if (ex.variants.isEmpty()) null else variant ?: ex.variants.first()

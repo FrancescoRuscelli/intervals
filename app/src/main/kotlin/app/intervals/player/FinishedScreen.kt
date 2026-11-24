@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -64,19 +65,48 @@ data class FinishedInfo(
     val elapsedMs: Long,
     val roundsDone: Int,
     val startedAt: Long,
+    /** The previous session's values, to compare with. */
     val last: List<LoggedValue>,
+    /** The values at the end of the run (set before the start, changed in the rests between rounds). */
+    val now: Map<FieldKey, Double> = emptyMap(),
+    /** The values each round was done with (mockup intervals-ideas-from-other-apps.html, 12). */
+    val perRound: Map<Int, Map<FieldKey, Double>> = emptyMap(),
+    val letGo: List<app.intervals.core.LetGo> = emptyList(),
+    val workDone: Int = 0,
+    /** Values to try next time, from this run and the one before (mockup ideas, 1). */
+    val hints: Map<FieldKey, Double> = emptyMap(),
+    /** Where the let-gos are among the work series played (0 first), for the dots. */
+    val letGoAt: Set<Int> = emptySet(),
 )
 
-/** One value to confirm: series · field · side (null = both sides). */
-data class FieldKey(val series: String, val field: String, val unit: String, val side: Side?)
+/**
+ * One value to confirm: series · field · side (null = both sides). A choice field has [choices]; its value is then the
+ * place of the choice in the list.
+ */
+data class FieldKey(val series: String, val field: String, val unit: String, val side: Side?, val choices: List<String> = emptyList()) {
+    /** "20 mm", "half crimp", "+10 kg" as shown on the disc. */
+    fun text(v: Double): String = if (choices.isNotEmpty()) choices.getOrElse(v.toInt()) { "" } else fmtValue(v) + if (unit.isEmpty()) "" else " $unit"
+
+    fun matches(l: LoggedValue) = l.series == series && l.field == field && l.side == side
+
+    /** The value of [l] for this key: a choice's place found by its text (so a renamed list still works), else the number. */
+    fun valueOf(l: LoggedValue): Double = if (choices.isNotEmpty()) l.text?.let { t -> choices.indexOf(t).takeIf { it >= 0 }?.toDouble() } ?: 0.0 else l.value
+
+    fun logged(round: Int, v: Double) = LoggedValue(series, field, unit, round, side, v, choices.getOrNull(v.toInt()).takeIf { choices.isNotEmpty() })
+}
+
+fun fmtValue(v: Double): String = if (v == kotlin.math.floor(v)) v.toLong().toString() else "%.2f".format(v).trimEnd('0').trimEnd('.')
+
+/** The value of [k] in [values] (the last round logged), or null. */
+fun List<LoggedValue>.valueFor(k: FieldKey): Double? = filter { k.matches(it) }.maxByOrNull { it.round }?.let { k.valueOf(it) }
 
 fun fieldKeys(saved: SavedWorkout): List<FieldKey> {
     val series = saved.workout.blocks.flatMap { b -> when (b) { is Block.Single -> listOf(b.series); is Block.Repeat -> b.series } }
         .distinctBy { it.name }
     return series.flatMap { s ->
         s.logFields.flatMap { f ->
-            if (f.leftRightApart && s.perSide != null) listOf(Side.LEFT, Side.RIGHT).map { FieldKey(s.name, f.name, f.unit, it) }
-            else listOf(FieldKey(s.name, f.name, f.unit, null))
+            if (f.leftRightApart && s.perSide != null) listOf(Side.LEFT, Side.RIGHT).map { FieldKey(s.name, f.name, f.unit, it, f.choices) }
+            else listOf(FieldKey(s.name, f.name, f.unit, null, f.choices))
         }
     }
 }
@@ -87,15 +117,11 @@ private fun fmt(v: Double): String = if (v == kotlin.math.floor(v)) v.toLong().t
 fun FinishedScreen(info: FinishedInfo, onDiscard: () -> Unit, onSave: (note: String, values: Map<FieldKey, Double>, repeat: Boolean) -> Unit) {
     val p = LocalPalette.current
     val keys = remember(info) { fieldKeys(info.saved) }
+    // start from the values the run ended with; compare with the session before
     val values = remember(info) {
-        mutableStateMapOf<FieldKey, Double>().apply {
-            keys.forEach { k ->
-                val last = info.last.filter { it.series == k.series && it.field == k.field && it.side == k.side }.maxByOrNull { it.round }
-                put(k, last?.value ?: 0.0)
-            }
-        }
+        mutableStateMapOf<FieldKey, Double>().apply { keys.forEach { k -> put(k, info.now[k] ?: info.last.valueFor(k) ?: 0.0) } }
     }
-    val lastOf = remember(info) { keys.associateWith { k -> info.last.firstOrNull { it.series == k.series && it.field == k.field && it.side == k.side }?.value } }
+    val lastOf = remember(info) { keys.associateWith { k -> info.last.valueFor(k) } }
     var note by remember { mutableStateOf("") }
     var askDiscard by remember { mutableStateOf(false) }
     if (askDiscard) androidx.compose.material3.AlertDialog(
@@ -128,15 +154,25 @@ fun FinishedScreen(info: FinishedInfo, onDiscard: () -> Unit, onSave: (note: Str
                 Stat("Series", "${info.saved.workout.seriesCount * roundsTotal}", Modifier.weight(1f))
             }
 
+            if (info.letGo.isNotEmpty()) LetGoCard(info)
+
             if (keys.isNotEmpty()) {
                 Column(
                     Modifier.padding(top = 16.dp).fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(p.surface)
                         .border(1.dp, p.line, RoundedCornerShape(14.dp)).padding(horizontal = 14.dp, vertical = 8.dp),
                 ) {
-                    Text("Logged values · same in all rounds", color = p.muted, fontSize = 12.sp, modifier = Modifier.padding(bottom = 4.dp))
+                    // rounds done with different values (changed between rounds) say so under the value
+                    val rounds = info.perRound.toSortedMap().values.toList()
+                    val varied = keys.filter { k -> rounds.mapNotNull { it[k] }.distinct().size > 1 }.toSet()
+                    Text(if (varied.isEmpty()) "Logged values · same in all rounds" else "Logged values · a change here counts for all rounds",
+                        color = p.muted, fontSize = 12.sp, modifier = Modifier.padding(bottom = 4.dp))
                     keys.groupBy { it.series }.forEach { (series, ks) ->
                         Text(series, color = p.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 6.dp))
                         ks.forEach { k ->
+                            if (k.choices.isNotEmpty()) {
+                                Box(Modifier.padding(vertical = 6.dp)) { ValueRow(k, values[k] ?: 0.0, showSeries = false) { values[k] = it } }
+                                return@forEach
+                            }
                             val v = values[k] ?: 0.0
                             val step = if (k.unit.equals("kg", true)) 0.5 else 1.0
                             val prev = lastOf[k]
@@ -159,6 +195,13 @@ fun FinishedScreen(info: FinishedInfo, onDiscard: () -> Unit, onSave: (note: Str
                                     textAlign = TextAlign.Center, modifier = Modifier.width(96.dp))
                                 StepCircle(AppIcons.Plus, "${k.field} more") { values[k] = v + step }
                             }
+                            if (k in varied && values[k] == info.now[k]) Text(
+                                "by round: " + rounds.mapNotNull { it[k] }.joinToString(" · ") { fmt(it) },
+                                color = p.muted, fontSize = 12.sp,
+                            )
+                            info.hints[k]?.takeIf { it > v }?.let { h ->
+                                Text("Next time: try ${k.text(h)}", color = p.restText, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
                         }
                     }
                 }
@@ -179,6 +222,36 @@ fun FinishedScreen(info: FinishedInfo, onDiscard: () -> Unit, onSave: (note: Str
                 contentAlignment = Alignment.Center) { Text("Repeat", color = p.accentText, fontSize = 16.sp, fontWeight = FontWeight.SemiBold) }
             Box(Modifier.weight(1.4f).height(54.dp).clip(RoundedCornerShape(14.dp)).background(p.accent).clickable { onSave(note, values.toMap(), false) },
                 contentAlignment = Alignment.Center) { Text("Save to journal", color = p.onAccent, fontSize = 16.sp, fontWeight = FontWeight.SemiBold) }
+        }
+    }
+}
+
+/** "hang 11 / 12" with a dot per work series, an empty one for each let go, and where it happened (mockup ideas, 2). */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun LetGoCard(info: FinishedInfo) {
+    val p = LocalPalette.current
+    val name = info.letGo.map { it.series }.distinct().singleOrNull() ?: "Work"
+    val total = info.workDone.coerceAtLeast(info.letGo.size)
+    Column(
+        Modifier.padding(top = 16.dp).fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(p.surface)
+            .border(1.dp, p.line, RoundedCornerShape(14.dp)).padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(name.replaceFirstChar { it.uppercase() }, color = p.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+            Text("${total - info.letGo.size} / $total", color = p.text, style = NumberStyle, fontSize = 18.sp)
+        }
+        if (total <= 60) androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            repeat(total) { i ->
+                val miss = i in info.letGoAt
+                Box(Modifier.size(11.dp).clip(CircleShape).background(if (miss) Color.Transparent else p.pink)
+                    .border(if (miss) 2.dp else 0.dp, if (miss) p.dangerText else Color.Transparent, CircleShape))
+            }
+        }
+        info.letGo.forEach { g ->
+            Text("Round ${g.round}, ${g.series} ${g.rep}" + when (g.side) { Side.LEFT -> " left"; Side.RIGHT -> " right"; null -> "" } +
+                ": let go at ${formatDuration(g.heldSec)}", color = p.muted, fontSize = 12.sp)
         }
     }
 }

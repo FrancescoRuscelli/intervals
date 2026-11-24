@@ -62,6 +62,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -80,6 +81,12 @@ import app.intervals.core.Exercise
 import app.intervals.core.GymField
 import app.intervals.core.GymSet
 import app.intervals.core.QUICK_TAGS
+import app.intervals.core.specColors
+import app.intervals.core.forVariant
+import app.intervals.core.shownSpecs
+import app.intervals.core.commonFields
+import app.intervals.core.nextLoadHint
+import app.intervals.core.LoadHint
 import app.intervals.core.Side
 import app.intervals.core.SideChoice
 import app.intervals.core.afterSet
@@ -118,7 +125,8 @@ private fun Values.into(s: GymSet, ex: Exercise) = s.copy(
     reps = reps.takeIf { GymField.REPS in ex.fields },
     timeSec = timeSec.takeIf { GymField.TIME in ex.fields },
     distance = distance.takeIf { GymField.DISTANCE in ex.fields },
-    specs = specs.filterKeys { k -> ex.specs.any { it.name == k } },
+    // only what this set shows: the band colors go when Help is not "band"
+    specs = specs.filterKeys { k -> ex.shownSpecs(specs, variant?.takeIf { it in ex.variants } ?: ex.variants.firstOrNull()).any { it.name == k } },
     // always written, so reordering the variants later never changes what this set was
     variant = if (ex.variants.isEmpty()) null else variant?.takeIf { it in ex.variants } ?: ex.variants.first(),
 )
@@ -161,7 +169,8 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String, initialTab: In
             null -> SideChoice.RIGHT
         }
     }
-    // after each set logged, the next one starts from last time's set at that place
+    // after a set the values stay as just logged (following last time's sets jumped 0 → 10 → 15 kg on its own); on a per-side
+    // exercise the next side takes its own last values today, else last time's (the "↑ Try" hint suggests going up)
     var seen by remember { mutableStateOf<Int?>(null) }
     LaunchedEffect(sets?.size) {
         val today = sets ?: return@LaunchedEffect
@@ -169,8 +178,8 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String, initialTab: In
         val before = seen
         seen = today.size
         if (before == null || today.size <= before || selectedIds.isNotEmpty()) return@LaunchedEffect
-        val s = when (side) { SideChoice.LEFT -> Side.LEFT; SideChoice.RIGHT -> Side.RIGHT; else -> null }
-        startValues(today, last, s)?.let { values = it.toValues() }
+        val s = when (side) { SideChoice.LEFT -> Side.LEFT; SideChoice.RIGHT -> Side.RIGHT; else -> return@LaunchedEffect }
+        (today.lastOrNull { it.side == s } ?: startValues(today, last, s))?.let { values = it.toValues() }
     }
     // each side starts from its own last set: switching to L brings back the last L values, R the last R
     LaunchedEffect(side) {
@@ -187,6 +196,8 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String, initialTab: In
     val bulk = selectedSets.size > 1
     val edit = selectedSets.singleOrNull()
     val v = if (edit != null) editValues else values ?: Values()
+    // what the chosen variant records (mockup intervals-variant-fields.html, 3): a hold shows the timer, pull-ups the reps
+    val exV = ex.forVariant(v.variant?.takeIf { it in ex.variants } ?: ex.variants.firstOrNull())
     fun change(f: (Values) -> Values) {
         if (edit != null) editValues = f(v) else values = f(v)
     }
@@ -210,16 +221,29 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String, initialTab: In
     val buttonsAtBottom = vm.settings.collectAsStateWithLifecycle().value.logButtonsAtBottom
     val setButtons: @Composable () -> Unit = { Column {
         // the variants just above the button (mockup intervals-variant-switch.html, A5a): a tap switches and brings back that variant's numbers
+        // the other groups (choices) under the variants, one row of chips each (mockup intervals-variant-groups.html, 2)
+        val curVariant = v.variant?.takeIf { it in ex.variants } ?: ex.variants.firstOrNull()
+        val groups = ex.shownSpecs(v.specs, curVariant).filter { it.isChoice }
         if (ex.variants.isNotEmpty()) {
             val cur = v.variant?.takeIf { it in ex.variants } ?: ex.variants.first()
-            val plain = remember(ex) { ex.copy(variants = emptyList(), specs = emptyList()) }
-            VariantRow(ex.variants, cur, { lastOfVariant(allSets, ex, it)?.summary(plain) ?: "—" }, enabled = !bulk) { picked ->
+            // the last set of each variant, as that variant records it (90° hold: its time), without the variant's name
+            val plain = remember(ex) { ex.copy(specs = emptyList()) }
+            // no label over the variants: their names say what they are (mockup intervals-range-bands.html, B)
+            VariantRow(ex.variants, cur, { vn -> lastOfVariant(allSets, ex, vn)?.let { l -> l.copy(weightKg = l.weightKg?.takeIf { it != 0.0 }) }?.summary(plain)?.removePrefix("$vn · ") ?: "—" }, enabled = !bulk) { picked ->
                 val side1 = when (side) { SideChoice.LEFT -> Side.LEFT; SideChoice.RIGHT -> Side.RIGHT; else -> null }
                 // editing a set changes only its variant; a new set takes the variant's own last numbers
                 if (edit != null) change { it.copy(variant = picked) }
                 else values = lastOfVariant(allSets, ex, picked, side1)?.toValues()?.copy(variant = picked) ?: v.copy(variant = picked)
             }
             Spacer(Modifier.height(8.dp))
+        }
+        if (groups.isNotEmpty() && !bulk) {
+            groups.forEach { g ->
+                GroupChips(g, v.specs[g.name]) { value ->
+                    change { it.copy(specs = if (value == null) it.specs - g.name else it.specs + (g.name to value)) }
+                }
+            }
+            Spacer(Modifier.height(4.dp))
         }
         // with sets selected, their actions take the log buttons' place (mockup intervals-side-set-actions.html, B)
         if (selecting) {
@@ -248,14 +272,17 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String, initialTab: In
         }
         if (edit != null) {
             BigButton("Update set", p.workTint, p.workText, {
-                vm.updateGymSet(v.into(edit.copy(side = editSide), ex))
+                vm.updateGymSet(v.into(edit.copy(side = editSide), exV))
                 selectedIds = emptySet()
             })
         } else if (!selecting) {
             val timing = timerFrom != null
             val variant = ex.variants.takeIf { it.isNotEmpty() }?.let { vs -> v.variant?.takeIf { it in vs } ?: vs.first() }
-            LogButtons(ex.perSide, side, variant, timing = timing && !bulk, blocked = timing || bulk) { chosen ->
-                vm.logSets(chosen.sides().map { s -> v.into(GymSet(exerciseId = ex.id, day = day, order = 0, side = s), ex) }, ex.restSec)
+            // the button says the combination: "Log set · first half · band"
+            val label = (listOfNotNull(variant) + groups.filter { !it.multiple }.mapNotNull { g -> v.specs[g.name] ?: g.choices.firstOrNull() }
+                .filterIndexed { _, c -> c != "none" }).joinToString(" · ").ifEmpty { null }
+            LogButtons(ex.perSide, side, label, timing = timing && !bulk, blocked = timing || bulk) { chosen ->
+                vm.logSets(chosen.sides().map { s -> v.into(GymSet(exerciseId = ex.id, day = day, order = 0, side = s), exV) }, ex.restSec)
                 side = chosen?.afterSet()
                 measured = false
             }
@@ -287,21 +314,38 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String, initialTab: In
             }
         }
         Box(Modifier.fillMaxWidth().height(1.dp).background(p.surface))
-        // with variants, History / Graph / Records can show one variant (mockup G19c)
+        // with variants or choice specs, History / Graph / Records can show one variant and / or one choice (mockup G19c;
+        // records are kept per variant and spec, mockup intervals-ideas-from-other-apps.html, 6)
         var variantFilter by androidx.compose.runtime.saveable.rememberSaveable(exerciseId) { mutableStateOf<String?>(null) }
-        if (tab != 0 && ex.variants.isNotEmpty()) {
+        var specFilter by androidx.compose.runtime.saveable.rememberSaveable(exerciseId) { mutableStateOf<String?>(null) }
+        val choiceSpecs = ex.specs.filter { it.isChoice && !it.multiple }
+        if (tab != 0 && (ex.variants.isNotEmpty() || choiceSpecs.isNotEmpty())) {
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, top = 10.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                (listOf<String?>(null) + ex.variants).forEach { f ->
-                    val on = f == variantFilter
-                    Text(f ?: "All", color = if (on) p.accentText else p.soft, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.clip(RoundedCornerShape(18.dp)).background(if (on) p.tint else p.surface)
-                            .border(1.dp, if (on) p.accent else p.line, RoundedCornerShape(18.dp))
-                            .clickable { variantFilter = f }.padding(horizontal = 14.dp, vertical = 8.dp))
+                @Composable
+                fun FilterChip(label: String, on: Boolean, onClick: () -> Unit) = Text(label, color = if (on) p.accentText else p.soft, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.clip(RoundedCornerShape(18.dp)).background(if (on) p.tint else p.surface)
+                        .border(1.dp, if (on) p.accent else p.line, RoundedCornerShape(18.dp))
+                        .clickable(onClick = onClick).padding(horizontal = 14.dp, vertical = 8.dp))
+                FilterChip("All", variantFilter == null && specFilter == null) { variantFilter = null; specFilter = null }
+                ex.variants.forEach { v -> FilterChip(v, v == variantFilter) { variantFilter = if (v == variantFilter) null else v } }
+                choiceSpecs.forEach { sp ->
+                    sp.choices.forEach { c ->
+                        val key = sp.name + "=" + c
+                        FilterChip("${sp.name}: $c", key == specFilter) { specFilter = if (key == specFilter) null else key }
+                    }
                 }
             }
         }
-        val shown = if (variantFilter == null) allSets else allSets.filter { it.variantOf(ex) == variantFilter }
+        val shown = allSets.filter { s ->
+            (variantFilter == null || s.variantOf(ex) == variantFilter) &&
+                (specFilter == null || specFilter!!.substringBefore('=').let { name ->
+                    val sp = choiceSpecs.firstOrNull { it.name == name }
+                    (s.specs[name] ?: sp?.choices?.first()) == specFilter!!.substringAfter('=')
+                })
+        }
+        // one variant: its own fields; All: only what every variant records (so a hold's time and a pull's reps never mix)
+        val exShown = if (variantFilter != null) ex.forVariant(variantFilter) else ex.copy(fields = ex.commonFields(), variantFields = emptyMap())
         when (tab) {
             1 -> Box(Modifier.weight(1f)) {
                 // the whole workout of each day: first to last set, from the rests of all its sets
@@ -309,9 +353,15 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String, initialTab: In
                 val workoutSec = remember(everything) { everything.groupBy { it.day }.mapValues { (_, s) -> s.sumOf { it.restSec ?: 0 } } }
                 ExerciseHistory(ex, shown, workoutSec) { d -> vm.openGymLog(exerciseId, d) }
             }
-            2 -> Box(Modifier.weight(1f)) { ExerciseGraph(ex, shown) }
-            3 -> Box(Modifier.weight(1f)) { ExerciseRecords(ex, shown) }
+            2 -> Box(Modifier.weight(1f)) { ExerciseGraph(exShown, shown) }
+            3 -> Box(Modifier.weight(1f)) { ExerciseRecords(exShown, shown) }
         }
+        val hintSide = when (side) { SideChoice.LEFT -> Side.LEFT; SideChoice.RIGHT -> Side.RIGHT; else -> null }
+        val hintVariant = ex.variants.takeIf { it.isNotEmpty() }?.let { vs -> v.variant?.takeIf { it in vs } ?: vs.first() }
+        val hint = remember(allSets, hintSide, hintVariant, day) { nextLoadHint(allSets, ex, day, hintSide, hintVariant) }
+        val ctx = androidx.compose.ui.platform.LocalContext.current
+        val hintPrefs = remember { ctx.getSharedPreferences("hints", android.content.Context.MODE_PRIVATE) }
+        var dismissedHints by remember { mutableStateOf(hintPrefs.getStringSet("dismissed", emptySet()).orEmpty().toSet()) }
         if (tab == 0) LazyColumn(
             Modifier.weight(1f), state = logScroll, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
@@ -320,11 +370,12 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String, initialTab: In
                 val sides = listOf(Side.LEFT, Side.RIGHT)
                 Segmented(listOf("L", "R"), editSide?.let(sides::indexOf) ?: -1, listOf(p.pink, p.teal)) { editSide = sides[it] }
             }
-            if (ex.specs.isNotEmpty()) item {
-                SpecChips(ex.specs, v.specs, enabled = !bulk) { openSpec = it }
+            // measurements (numbers) as tiles to tap; the choices are groups near the button
+            if (ex.specs.any { !it.isChoice }) item {
+                SpecChips(ex.specs.filter { !it.isChoice }, v.specs, enabled = !bulk) { openSpec = it }
             }
             item {
-                val tiles = listOf(GymField.WEIGHT, GymField.REPS, GymField.DISTANCE).filter { it in ex.fields }
+                val tiles = listOf(GymField.WEIGHT, GymField.REPS, GymField.DISTANCE).filter { it in exV.fields }
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     tiles.forEach { f ->
                         val (label, text, unit) = when (f) {
@@ -339,7 +390,19 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String, initialTab: In
                     }
                 }
             }
-            if (GymField.TIME in ex.fields) item {
+            // a quiet hint to go up (mockup intervals-ideas-from-other-apps.html, 1): gone once a set at that load is logged
+            if (!selecting && hint != null && v.weightKg < hint.toKg &&
+                list.none { (hintSide == null || it.side == hintSide) && (it.weightKg ?: Double.NEGATIVE_INFINITY) >= hint.toKg }
+                && hintKey(ex.id, hintSide, hintVariant, hint) !in dismissedHints
+            ) item {
+                // swipe it away (left or right) if you don't want it: it stays away for this exercise, side and weight
+                SwipeAway(onGone = {
+                    val k = hintKey(ex.id, hintSide, hintVariant, hint)
+                    dismissedHints = dismissedHints + k
+                    hintPrefs.edit().putStringSet("dismissed", dismissedHints).apply()
+                }) { LoadHintRow(hint, hintSide) { change { it.copy(weightKg = hint.toKg) } } }
+            }
+            if (GymField.TIME in exV.fields) item {
                 if (selecting) {
                     StepTile("Time", formatTime(v.timeSec), "", Modifier.fillMaxWidth(), enabled = !bulk,
                         onTap = { typing = GymField.TIME },
@@ -487,8 +550,9 @@ private fun SetBlocks(
         val rows = remember(sets) { pairSides(sets) }
         val left = sets.count { it.side == Side.LEFT }
         val right = sets.count { it.side == Side.RIGHT }
+        // colored specs (bands) as dots, not names (the words "black+red" were too much)
         val labelWidth = with(density) {
-            sets.maxOf { measurer.measure(it.loadText(ex), TextStyle(fontSize = 13.sp)).size.width }.toDp() + 2.dp
+            sets.maxOf { measurer.measure(it.plainLoad(ex), TextStyle(fontSize = 13.sp)).size.width.toDp() + 12.dp * it.specColors(ex).size + (if (it.specColors(ex).isNotEmpty()) 6.dp else 0.dp) }.value.dp + 4.dp
         }.coerceAtMost(110.dp)
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text("L $left · R $right" + if (rows.all { it.size == 2 }) " · ${rows.size} round${if (rows.size == 1) "" else "s"}" else "",
@@ -506,8 +570,10 @@ private fun SetBlocks(
                                 row.firstOrNull { it.side == side }?.let { set ->
                                     Text(side.letter, color = p.text, fontSize = 12.sp, fontWeight = FontWeight.Bold,
                                         modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(p.sideTint(side)).padding(horizontal = 7.dp, vertical = 3.dp))
-                                    val load = set.loadText(ex)
-                                    if (load.isNotEmpty()) Text(load, color = p.soft, fontSize = 13.sp, maxLines = 2, modifier = Modifier.width(labelWidth))
+                                    if (set.plainLoad(ex).isNotEmpty() || set.specColors(ex).isNotEmpty()) Row(Modifier.width(labelWidth), verticalAlignment = Alignment.CenterVertically) {
+                                        ColorDots(set.specColors(ex))
+                                        Text(set.plainLoad(ex), color = p.soft, fontSize = 13.sp, maxLines = 1, softWrap = false)
+                                    }
                                     square(set, false)
                                 }
                             }
@@ -522,9 +588,9 @@ private fun SetBlocks(
         return
     }
     val blocks = remember(sets, ex) { loadBlocks(sets, ex) }
-    val label = { b: app.intervals.core.LoadBlock -> b.label + (b.sets.first().variantOf(ex)?.let { " $it" } ?: "") }
+    val label = { b: app.intervals.core.LoadBlock -> b.sets.first().plainLoad(ex) + (b.sets.first().variantOf(ex)?.let { " $it" } ?: "") }
     val labelWidth = with(density) {
-        blocks.maxOf { measurer.measure(label(it), TextStyle(fontSize = 15.sp)).size.width }.toDp() + 2.dp
+        blocks.maxOf { measurer.measure(label(it), TextStyle(fontSize = 15.sp)).size.width.toDp() + 12.dp * it.sets.first().specColors(ex).size + (if (it.sets.first().specColors(ex).isNotEmpty()) 6.dp else 0.dp) }.value.dp + 4.dp
     }.coerceAtMost(130.dp)
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         blocks.forEach { block ->
@@ -534,10 +600,11 @@ private fun SetBlocks(
                     .border(1.dp, p.line, RoundedCornerShape(12.dp)).padding(8.dp),
                 verticalAlignment = Alignment.Top,
             ) {
-                Box(Modifier.width(labelWidth).heightIn(min = 44.dp), contentAlignment = Alignment.CenterStart) {
+                Row(Modifier.width(labelWidth).heightIn(min = 44.dp), verticalAlignment = Alignment.CenterVertically) {
+                    ColorDots(block.sets.first().specColors(ex))
                     Text(
                         buildAnnotatedString {
-                            append(block.label)
+                            append(block.sets.first().plainLoad(ex))
                             variant?.let { withStyle(SpanStyle(color = p.muted, fontSize = 13.sp)) { append(" $it") } }
                         },
                         color = p.text, fontSize = 15.sp, style = NumberStyle, maxLines = 2,
@@ -899,4 +966,111 @@ private fun TimerCard(
             ) { Text("START", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp) }
         }
     }
+}
+
+/** "↑ Try 17 kg on the left · 3 reps at 16 kg on 7 Jul and 14 Jul" in teal; a tap puts 17 in the weight tile. */
+@Composable
+private fun LoadHintRow(hint: LoadHint, side: Side?, onUse: () -> Unit) {
+    val p = LocalPalette.current
+    val fmt = java.time.format.DateTimeFormatter.ofPattern("d MMM", java.util.Locale.ENGLISH)
+    val days = hint.days.joinToString(" and ") { LocalDate.parse(it).format(fmt) }
+    val where = when (side) { Side.LEFT -> " on the left"; Side.RIGHT -> " on the right"; null -> "" }
+    val shape = RoundedCornerShape(12.dp)
+    Column(
+        Modifier.fillMaxWidth().clip(shape).background(p.restTint).clickable(onClickLabel = "Use ${formatKg(hint.toKg)} kg", onClick = onUse)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+    ) {
+        Text("↑ Try ${formatKg(hint.toKg)} kg$where", color = p.restText, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        Text("${hint.reps} rep${if (hint.reps == 1) "" else "s"} at ${formatKg(hint.fromKg)} kg on $days. Tap to use.", color = p.soft, fontSize = 12.sp)
+    }
+}
+
+/** The name of a group of choices above its chips ("RANGE", "HELP"). */
+@Composable
+private fun GroupLabel(name: String) {
+    Text(name.uppercase(), color = LocalPalette.current.muted, fontSize = 11.sp, letterSpacing = 0.6.sp, fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(bottom = 4.dp))
+}
+
+/**
+ * One group of choices on the log screen, tight like the variants above it (mockup intervals-variant-groups.html, 2): a small
+ * label and a row of chips. A group whose options all have a color (bands) is a row of dots only: the picked ones ringed,
+ * "×2" on a doubled one, hold for one more. A single choice: tap again to clear it.
+ */
+@OptIn(ExperimentalLayoutApi::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
+@Composable
+private fun GroupChips(g: app.intervals.core.Spec, value: String?, onChange: (String?) -> Unit) {
+    val p = LocalPalette.current
+    val dots = g.choices.isNotEmpty() && g.choices.all { it in g.colors }
+    // a group of colors is one slim line: its name at the left, the dots after it (mockup intervals-range-bands.html, B)
+    val content: @Composable () -> Unit = {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(if (dots) 8.dp else 6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            g.choices.forEach { c ->
+                val n = if (g.multiple) g.counts(value).firstOrNull { it.first == c }?.second ?: 0 else if (value == c) 1 else 0
+                val on = n > 0
+                val tap = { onChange(if (g.multiple) g.tap(value, c) else if (on) null else c) }
+                val more = if (g.multiple) ({ onChange(g.tap(value, c, more = true)) }) else null
+                if (dots) {
+                    Box(
+                        Modifier.size(36.dp).clip(CircleShape)
+                            .border(if (on) 2.5.dp else 0.dp, if (on) p.text else Color.Transparent, CircleShape)
+                            .semantics { selected = on; contentDescription = c + if (n > 1) " ×$n" else "" }
+                            .combinedClickable(onClick = tap, onLongClick = more, onLongClickLabel = if (more != null) "One more $c" else null)
+                            .padding(if (on) 6.dp else 5.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Box(Modifier.fillMaxSize().clip(CircleShape).background(Color(g.colors.getValue(c))).border(1.dp, Color(0x55FFFFFF), CircleShape),
+                            contentAlignment = Alignment.Center) {
+                            if (n > 1) Text("×$n", color = if (Color(g.colors.getValue(c)).luminance() > 0.4f) Color(0xFF111111) else Color.White,
+                                fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                } else {
+                    val shape = RoundedCornerShape(10.dp)
+                    Text(
+                        c + if (n > 1) " ×$n" else "", color = if (on) p.onAccent else p.text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.heightIn(min = 36.dp).clip(shape).background(if (on) p.accent else p.surface)
+                            .border(1.dp, if (on) p.accent else p.line, shape).semantics { selected = on }
+                            .combinedClickable(onClick = tap, onLongClick = more).padding(horizontal = 14.dp, vertical = 8.dp),
+                    )
+                }
+            }
+        }
+    }
+    if (dots) Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(g.name.uppercase(), color = p.muted, fontSize = 11.sp, letterSpacing = 0.6.sp, fontWeight = FontWeight.Bold, modifier = Modifier.width(64.dp))
+        content()
+    } else Column(Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+        GroupLabel(g.name)
+        content()
+    }
+}
+
+/** The load text without the colored specs (bands), which are drawn as dots by [ColorDots]. */
+private fun GymSet.plainLoad(ex: Exercise): String {
+    // 0 kg is body weight: nothing to say (it stacked "0" over "kg" in the narrow column)
+    val colored = ex.specs.filter { it.colors.isNotEmpty() }.map { it.name }.toSet()
+    return copy(specs = specs - colored, weightKg = weightKg?.takeIf { it != 0.0 }).loadText(ex)
+}
+
+/** A small dot per band (a doubled one twice), before the load. */
+@Composable
+private fun ColorDots(colors: List<Long>) {
+    if (colors.isEmpty()) return
+    Row(Modifier.padding(end = 4.dp), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+        colors.forEach { c -> Box(Modifier.size(10.dp).clip(CircleShape).background(bandDotColor(c)).border(1.dp, Color(0x66FFFFFF), CircleShape)) }
+    }
+}
+
+/** What a swiped-away load hint is remembered by: exercise, side, variant and the weight it suggested. */
+private fun hintKey(exerciseId: Long, side: Side?, variant: String?, hint: LoadHint) = "$exerciseId|${side ?: ""}|${variant ?: ""}|${hint.toKg}"
+
+/** A row you can swipe away to either side. */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun SwipeAway(onGone: () -> Unit, content: @Composable () -> Unit) {
+    val state = androidx.compose.material3.rememberSwipeToDismissBoxState(
+        confirmValueChange = { v -> if (v != androidx.compose.material3.SwipeToDismissBoxValue.Settled) { onGone(); true } else false },
+    )
+    androidx.compose.material3.SwipeToDismissBox(state, backgroundContent = {}) { content() }
 }

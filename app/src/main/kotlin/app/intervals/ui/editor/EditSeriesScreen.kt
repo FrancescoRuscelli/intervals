@@ -251,12 +251,33 @@ private fun FieldEditor(f: LogField, perSide: Boolean, onChange: (LogField) -> U
                 Text("Field", color = p.muted, fontSize = 12.sp)
                 UnderlinedField(f.name) { if (it.isNotBlank()) onChange(f.copy(name = it)) }
             }
-            Spacer(Modifier.width(10.dp))
-            Column(Modifier.width(64.dp)) {
-                Text("Unit", color = p.muted, fontSize = 12.sp)
-                UnderlinedField(f.unit) { onChange(f.copy(unit = it.trim())) }
+            if (!f.isChoice) {
+                Spacer(Modifier.width(10.dp))
+                Column(Modifier.width(64.dp)) {
+                    Text("Unit", color = p.muted, fontSize = 12.sp)
+                    UnderlinedField(f.unit) { onChange(f.copy(unit = it.trim())) }
+                }
             }
             IconButton(onClick = onRemove) { Icon(AppIcons.Close, "Remove field ${f.name}", tint = p.muted) }
+        }
+        // a choice instead of a number (mockup intervals-ideas-from-other-apps.html, 9), e.g. Grip
+        SwitchRow("A choice", if (f.isChoice) "Picked from a list, shown on the disc" else "A number, e.g. 10 kg", f.isChoice) { on ->
+            onChange(if (on) f.copy(choices = listOf("open", "half crimp", "full crimp"), unit = "") else f.copy(choices = emptyList()))
+        }
+        if (f.isChoice) Column(Modifier.padding(bottom = 4.dp)) {
+            Text("Choices, separated by /", color = p.muted, fontSize = 12.sp)
+            // its own text while typing, so a "/" just typed is not lost when the list is read back
+            var text by remember { mutableStateOf(f.choices.joinToString(" / ")) }
+            BasicTextField(
+                text, { t ->
+                    text = t
+                    val list = t.split('/', ',').map(String::trim).filter(String::isNotEmpty).distinct()
+                    if (list.isNotEmpty()) onChange(f.copy(choices = list))
+                }, singleLine = true,
+                textStyle = TextStyle(color = p.text, fontSize = 17.sp, fontWeight = FontWeight.SemiBold),
+                cursorBrush = SolidColor(p.accent), modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+            )
+            Box(Modifier.fillMaxWidth().height(2.dp).background(p.line))
         }
         if (perSide) {
             SwitchRow("Left and right apart", if (f.leftRightApart) "One value per side" else "Same value for both sides", f.leftRightApart) {

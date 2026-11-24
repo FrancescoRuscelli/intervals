@@ -160,7 +160,7 @@ internal fun RestClock(rest: GymRest, onDismiss: () -> Unit, next: String? = nul
                 Text(if (next == null) status else "$status · next: $next", color = fg, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 if (rest.targetSec > 0) {
                     val target = formatTime(rest.targetSec)
-                    Text(if (ready) "$target target passed" else "Buzz at $target", color = fg, fontSize = 12.sp)
+                    Text(if (ready) "$target target passed" else "Target $target", color = fg, fontSize = 12.sp)
                 }
             }
             Text(formatTime(elapsed), color = fg, fontSize = 28.sp, style = NumberStyle)

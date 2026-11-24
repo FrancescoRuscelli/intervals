@@ -1,0 +1,135 @@
+<title>Gym List Tags</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: one card per option, each the Gym tab's exercise list on the dark phone, your real exercises and tags */
+:root {
+  --bg: #f4f2fa; --fg: #18151f; --muted: #5b5668; --line: #dfdbe9; --accent: #6d28d9; --card: #ffffff;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif;
+  --ph-bg: #000; --ph-surface: #1A1C21; --ph-text: #F2F3F5; --ph-muted: #9AA0AA; --ph-soft: #C9CDD3; --ph-line: #23262C;
+  --ph-accent: #7C3AED; --ph-accent-text: #C4B1FF; --ph-tint: #241A3A;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
+main { max-width: 1240px; margin: 0 auto; display: grid; gap: 14px; }
+h1 { font-family: var(--display); font-size: 1.8rem; margin: 0; text-wrap: balance; }
+.lede { color: var(--muted); margin: 0; max-width: 84ch; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+.opt { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; display: grid; gap: 8px; min-width: 0; }
+.head { display: flex; gap: 10px; align-items: baseline; }
+.tag { font-family: var(--display); font-weight: 700; color: var(--accent); font-size: 1.1rem; }
+.name { font-weight: 600; }
+.desc { color: var(--muted); font-size: .86rem; margin: 0; }
+.now { font-size: .72rem; font-weight: 700; color: var(--accent); border: 1px solid var(--accent); border-radius: 8px; padding: 0 6px; }
+
+.phone { background: var(--ph-bg); border-radius: 22px; padding: 12px 10px; color: var(--ph-text); font-size: 14px; display: grid; gap: 6px; }
+.top { display: flex; justify-content: space-between; align-items: center; padding: 0 6px; }
+.top b { font-family: var(--display); font-size: 24px; }
+.top span { color: var(--ph-muted); }
+.add { background: var(--ph-tint); color: var(--ph-accent-text); border-radius: 14px; text-align: center; font-weight: 600; padding: 12px; }
+.search { border: 1px solid var(--ph-line); border-radius: 6px; color: var(--ph-muted); padding: 12px; font-size: 13px; }
+.list { display: grid; }
+.row { display: flex; align-items: center; gap: 8px; padding: 9px 8px; position: relative; }
+.row .main { flex: 1; min-width: 0; }
+.row .n { font-size: 15.5px; display: flex; align-items: center; gap: 8px; }
+.lr { font-size: 10.5px; font-weight: 700; color: var(--ph-accent-text); background: var(--ph-tint); border-radius: 6px; padding: 1px 6px; }
+.sub { font-size: 12px; color: var(--ph-muted); display: flex; align-items: center; gap: 6px; margin-top: 1px; }
+.day { font-size: 12.5px; color: var(--ph-muted); white-space: nowrap; }
+.dot { width: 8px; height: 8px; border-radius: 4px; display: inline-block; }
+.chip { font-size: 11px; font-weight: 600; border-radius: 9px; padding: 1px 8px; }
+.edge { position: absolute; left: 0; top: 10px; bottom: 10px; width: 4px; border-radius: 2px; }
+.row.e { padding-left: 14px; }
+.edges { position: absolute; left: 0; top: 10px; bottom: 10px; width: 4px; display: flex; flex-direction: column; gap: 2px; }
+.edges i { flex: 1; border-radius: 2px; }
+.sub.wrap { flex-wrap: wrap; row-gap: 3px; }
+</style>
+
+<main>
+  <h1>Tags under the exercises in the Gym list</h1>
+  <p class="lede">Your Gym tab's list, A–Z, with your real tags and their Journal colors: Legs green, Pull blue, Push orange,
+    Fingers tan, Arms grey. Lateral dumbbell raise has no tag. The search finds tags too, so typing “legs” lists the leg exercises.</p>
+  <div class="grid" id="grid"></div>
+  <h1 style="font-size:1.4rem;margin-top:18px">With two or three tags</h1>
+  <p class="lede">None of your exercises has more than one tag yet, so these extra tags are <b>examples</b>: Deadlift as Legs · Pull,
+    Pull Up as Pull · Arms, Pinch as Fingers · Arms, Mobile Board Rows as Pull · Fingers · Arms. The others keep their real tag.</p>
+  <div class="grid" id="grid2"></div>
+</main>
+
+<script>
+const TAGS = { Legs: "#8BC34A", Pull: "#5B8DEF", Push: "#FF8A50", Fingers: "#C8A97E", Arms: "#90A4AE" };
+// [name, per side, tags, last day]
+const EX = [
+  ["Bar Dips", false, ["Push"], "2026-01-29"],
+  ["Block Pulls", true, ["Fingers"], "2026-11-03"],
+  ["Box Pike Push Up", false, ["Push"], "2026-11-19"],
+  ["Bulgarian Bar Squat", false, ["Legs"], "2026-11-11"],
+  ["Deadlift", false, ["Legs"], "2026-11-17"],
+  ["Dumbbell Curl", true, ["Arms"], "2026-03-10"],
+  ["Lateral dumbbell raise", false, [], "2026-11-19"],
+  ["Pinch", true, ["Fingers"], "2026-11-23"],
+  ["Pull Up", false, ["Pull"], "2026-11-20"],
+  ["Squat", false, ["Legs"], "2026-11-17"],
+];
+// as the app: "Tue 17 Nov" this year, "24 Sep 2025" before
+const fmt = d => d.startsWith("2026")
+  ? new Date(d + "T12:00:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }).replace(",", "")
+  : new Date(d + "T12:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+const tint = c => c + "33";
+const OPTS = [
+  ["A", "Grey text", "What is built now, the same as in Add exercise: the tag names small and grey.", true,
+    t => t.length ? `<div class="sub">${t.join(" · ")}</div>` : ""],
+  ["B", "Color dot + grey text", "A dot in the tag's Journal color before each name, so Legs reads green like the day strip.", false,
+    t => t.length ? `<div class="sub">${t.map(x => `<span class="dot" style="background:${TAGS[x]}"></span>${x}`).join(" ")}</div>` : ""],
+  ["C", "Text in the tag color", "No dot: the tag name itself in its color. Quieter than chips, but colored.", false,
+    t => t.length ? `<div class="sub">${t.map(x => `<span style="color:${TAGS[x]};font-weight:600">${x}</span>`).join(" · ")}</div>` : ""],
+  ["D", "Small chips", "Each tag a small tinted pill in its color. Stands out most; busier with several tags.", false,
+    t => t.length ? `<div class="sub">${t.map(x => `<span class="chip" style="background:${tint(TAGS[x])};color:${TAGS[x]}">${x}</span>`).join(" ")}</div>` : ""],
+  ["E", "Color edge + grey text", "A thin stripe in the tag color at the row's left edge, the names grey under the exercise.", false,
+    t => t.length ? `<div class="sub">${t.join(" · ")}</div>` : "", true],
+];
+document.getElementById("grid").innerHTML = OPTS.map(([tag, name, desc, now, sub, edge]) => `<section class="opt">
+  <div class="head"><span class="tag">${tag}</span><span class="name">${name}</span>${now ? '<span class="now">built</span>' : ""}</div>
+  <p class="desc">${desc}</p>
+  <div class="phone">
+    <div class="top"><b>Gym</b><span>⚙</span></div>
+    <div class="add">+ Add exercise</div>
+    <div class="search">Search exercises</div>
+    <div class="list">${EX.map(([n, lr, t, d]) => `<div class="row${edge ? " e" : ""}">
+      ${edge && t.length ? `<span class="edge" style="background:${TAGS[t[0]]}"></span>` : ""}
+      <div class="main"><div class="n">${n}${lr ? '<span class="lr">L·R</span>' : ""}</div>${sub(t)}</div>
+      <span class="day">${fmt(d)}</span></div>`).join("")}</div>
+  </div></section>`).join("");
+
+// the same list with several tags on some exercises (examples, marked in the lede)
+const EX2 = [
+  ["Box Pike Push Up", false, ["Push"], "2026-11-19"],
+  ["Deadlift", false, ["Legs", "Pull"], "2026-11-17"],
+  ["Lateral dumbbell raise", false, [], "2026-11-19"],
+  ["Mobile Board Rows", false, ["Pull", "Fingers", "Arms"], "2025-09-24"],
+  ["Pinch", true, ["Fingers", "Arms"], "2026-11-23"],
+  ["Pull Up", false, ["Pull", "Arms"], "2026-11-20"],
+  ["Squat", false, ["Legs"], "2026-11-17"],
+];
+const dots = t => t.map(x => `<span class="dot" style="background:${TAGS[x]}"></span>${x}`).join(" ");
+const OPTS2 = [
+  ["B", "Color dot + grey text", "Every tag gets its dot and name in one line. Three tags still fit; a long fourth would be cut with “…”.",
+    t => t.length ? `<div class="sub">${dots(t)}</div>` : "", null],
+  ["D", "Small chips", "One pill per tag; with three they take most of the line and may wrap to a second line on a narrow phone.",
+    t => t.length ? `<div class="sub wrap">${t.map(x => `<span class="chip" style="background:${tint(TAGS[x])};color:${TAGS[x]}">${x}</span>`).join(" ")}</div>` : "", null],
+  ["E1", "Color edge, split", "The stripe splits into one piece per tag, top to bottom in your tag order; names grey.",
+    t => t.length ? `<div class="sub">${t.join(" · ")}</div>` : "", "split"],
+  ["E2", "Color edge, first tag", "The stripe has the first tag's color only (as the Journal strip does); all names grey.",
+    t => t.length ? `<div class="sub">${t.join(" · ")}</div>` : "", "first"],
+];
+document.getElementById("grid2").innerHTML = OPTS2.map(([tag, name, desc, sub, edge]) => `<section class="opt">
+  <div class="head"><span class="tag">${tag}</span><span class="name">${name}</span></div>
+  <p class="desc">${desc}</p>
+  <div class="phone"><div class="list">${EX2.map(([n, lr, t, d]) => `<div class="row${edge ? " e" : ""}">
+      ${edge === "split" && t.length ? `<span class="edges">${t.map(x => `<i style="background:${TAGS[x]}"></i>`).join("")}</span>` : ""}
+      ${edge === "first" && t.length ? `<span class="edge" style="background:${TAGS[t[0]]}"></span>` : ""}
+      <div class="main"><div class="n">${n}${lr ? '<span class="lr">L·R</span>' : ""}</div>${sub(t)}</div>
+      <span class="day">${fmt(d)}</span></div>`).join("")}</div></div></section>`).join("");
+</script>

@@ -4,7 +4,7 @@ package app.intervals.core
 enum class SideChoice { LEFT, RIGHT, BOTH }
 
 /** Quick notes offered on a set; the user's own text goes in the note too. */
-val QUICK_TAGS = listOf("Max", "Bad form", "Assisted", "Failed", "+½ rep")
+val QUICK_TAGS = listOf(WARMUP_TAG, "Max", "Bad form", "Assisted", "Failed", "+½ rep")
 
 /**
  * The values the log screen starts from (mockup intervals-next-features.html, 1A): last time's set at the same place
@@ -73,4 +73,40 @@ fun pickSections(
     }
     out += PickSection("rest", "Everything else A–Z", take(shown.sortedBy { it.name.lowercase() }))
     return out.filter { it.exercises.isNotEmpty() }
+}
+
+/** A hint to go up in load (mockup intervals-ideas-from-other-apps.html, 1): [reps] at [fromKg] on both [days], so try [toKg]. */
+data class LoadHint(val fromKg: Double, val toKg: Double, val reps: Int, val days: List<String>)
+
+/**
+ * The next load to try, as a plain hint, never a target: the last two days before [today] (on [side], in [variant], warm-ups left
+ * out) had the same top weight, the top set's reps held or went up, and no set at that weight was tagged Failed. Null otherwise,
+ * and for exercises without both weight and reps. Assisted (negative) weights go up too: −20 → −17.5 is less help.
+ */
+fun nextLoadHint(history: List<GymSet>, ex: Exercise, today: String, side: Side?, variant: String?): LoadHint? {
+    val f = ex.fieldsOf(variant)
+    if (GymField.WEIGHT !in f || GymField.REPS !in f) return null
+    val mine = history.filter {
+        it.day < today && !it.isWarmup && it.weightKg != null && (side == null || it.side == side) && (variant == null || it.variantOf(ex) == variant)
+    }
+    val days = mine.groupBy { it.day }.toSortedMap().entries.toList().takeLast(2)
+    if (days.size < 2) return null
+    val tops = days.map { (_, s) -> val w = s.maxOf { it.weightKg!! }; w to s.filter { it.weightKg == w } }
+    val w = tops[0].first
+    // no weight (0 kg, body weight only) is left alone
+    if (tops[1].first != w || w == 0.0) return null
+    if (tops.any { (_, s) -> s.any { set -> set.note.split(" · ").any { it.trim().equals("Failed", ignoreCase = true) } } }) return null
+    val before = tops[0].second.maxOf { it.reps ?: 0 }
+    val last = tops[1].second.maxOf { it.reps ?: 0 }
+    if (last == 0 || last < before) return null
+    return LoadHint(w, w + ex.weightStep, last, days.map { it.key })
+}
+
+/**
+ * The variant name a merge suggests: the words of [from] that [into] doesn't have ("Box Pike Push Up" into "Pike Push Up" → "box",
+ * "Barbell Squat" into "Squat" → "barbell"). Null when nothing is left.
+ */
+fun variantSuggestion(from: String, into: String): String? {
+    val have = into.lowercase().split(' ', '(', ')', '-').filter(String::isNotBlank).toSet()
+    return from.lowercase().split(' ', '(', ')', '-').filter { it.isNotBlank() && it !in have }.joinToString(" ").ifEmpty { null }
 }

@@ -3,6 +3,7 @@ package app.intervals.ui.gym
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import app.intervals.core.isWarmup
 import androidx.compose.foundation.background
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.platform.LocalDensity
@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,6 +52,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -95,7 +99,13 @@ fun GymScreen(vm: AppViewModel) {
     val groups by vm.groups.collectAsStateWithLifecycle()
     val today = LocalDate.now().toString()
     val pick = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let(vm::previewFitNotes) }
-    val shown = remember(exercises, query) { exercises.filter { it.name.contains(query.trim(), ignoreCase = true) } }
+    // each exercise's tags under its name, as in Add exercise (mockup intervals-tag-dots.html, 3)
+    val tagsOf = remember(groups) { exerciseTags(groups) }
+    // the search finds a tag too ("legs" lists the leg exercises)
+    val shown = remember(exercises, query, tagsOf) {
+        val q = query.trim()
+        exercises.filter { it.name.contains(q, ignoreCase = true) || tagsOf[it.id]?.any { (t, _) -> t.contains(q, ignoreCase = true) } == true }
+    }
     var selection by remember { mutableStateOf(emptySet<Long>()) }
     var askTags by remember { mutableStateOf(false) }
     val selecting = selection.isNotEmpty()
@@ -130,7 +140,7 @@ fun GymScreen(vm: AppViewModel) {
                 Text(if (query.isBlank()) "No exercises yet." else "No matching exercises.", color = p.muted)
             }
             items(shown, key = { it.id }) { ex ->
-                ExerciseRow(ex, null, lastUsed[ex.id], selected = ex.id in selection, onLongClick = { selection += ex.id }) {
+                ExerciseRow(ex, null, lastUsed[ex.id], selected = ex.id in selection, tags = tagsOf[ex.id].orEmpty(), onLongClick = { selection += ex.id }) {
                     if (selecting) selection = if (ex.id in selection) selection - ex.id else selection + ex.id
                     else vm.openGymLog(ex.id, today)
                 }
@@ -185,10 +195,21 @@ private fun DayPage(
             IconButton(onClick = { vm.openSettings() }) { Icon(AppIcons.Settings, "Settings", tint = p.text) }
         }
         val ordered = remember(sets) { sets.orEmpty().sortedBy { it.order } }
+        // hold an exercise, then Move sets…: the sets logged under the wrong exercise (mockup intervals-move-sets.html, C)
+        var moving by remember(day) { mutableStateOf<Long?>(null) }
+        moving?.let { id ->
+            val from = byId[id]
+            val its = ordered.filter { it.exerciseId == id }
+            if (from == null || its.isEmpty()) moving = null
+            else MoveSetsSheet(from, its, byId.values.toList(), day, onDismiss = { moving = null }) { ids, into, variant ->
+                vm.moveGymSets(ids, into, variant)
+                moving = null
+            }
+        }
         val stripColor = remember(sets, allGroups) { app.intervals.core.dayStrip(ordered, allGroups).associate { it.exerciseId to it.color } }
         LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             if (ordered.isNotEmpty()) item {
-                DayTimeline(ordered, byId, stripColor) { vm.openGymLog(it, day) }
+                DayTimeline(ordered, byId, stripColor, onMove = { moving = it }) { vm.openGymLog(it, day) }
             }
             if (sets?.isEmpty() == true) item {
                 Text("Nothing logged on this day.", color = p.muted, fontSize = 15.sp, modifier = Modifier.padding(top = 8.dp))
@@ -220,33 +241,50 @@ private fun dayTitle(day: String): String {
  * is on the right, yellow over 5 min. A strip in the exercise's tag color runs down the left. Tapping an exercise or a
  * set opens the exercise to log or edit.
  */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
-private fun DayTimeline(sets: List<GymSet>, byId: Map<Long, Exercise>, stripColor: Map<Long, Long>, onOpen: (Long) -> Unit) {
+private fun DayTimeline(sets: List<GymSet>, byId: Map<Long, Exercise>, stripColor: Map<Long, Long>, onMove: (Long) -> Unit, onOpen: (Long) -> Unit) {
     val p = LocalPalette.current
+    // the run whose menu is open (hold an exercise or one of its sets)
+    var menu by remember { mutableStateOf<Int?>(null) }
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
     val runs = remember(sets) {
         buildList<MutableList<GymSet>> { sets.forEach { s -> if (lastOrNull()?.last()?.exerciseId == s.exerciseId) last() += s else add(mutableListOf(s)) } }
     }
     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(p.surface).padding(vertical = 8.dp)) {
-        runs.forEach { run ->
-            val ex = byId[run.first().exerciseId] ?: return@forEach
+        runs.forEachIndexed { i, run ->
+            val ex = byId[run.first().exerciseId] ?: return@forEachIndexed
             val strip = stripColor[ex.id]?.let { Color(it) } ?: p.accent
             val banded = ex.specs.any { it.colors.isNotEmpty() }
             val rows = pairSides(run)
             // one band (or spec) on every set: said once in the summary, not on each row
-            val common = run.map { it.specsText(ex) }.distinct().singleOrNull()?.takeIf { it.isNotEmpty() }
+            val common = run.map { it.withoutColors(ex).specsText(ex) }.distinct().singleOrNull()?.takeIf { it.isNotEmpty() }
             // the loads get one width, so the reps line up in a column
             val loadWidth = with(density) { run.maxOf { measurer.measure(loadOf(it, ex, banded, common), TextStyle(fontSize = 13.sp)).size.width }.toDp() + 2.dp }
-            Row(
-                Modifier.fillMaxWidth().clickable(onClickLabel = "Log ${ex.name}") { onOpen(ex.id) }.padding(start = 14.dp, end = 14.dp, top = 8.dp, bottom = 2.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(ex.name, color = p.soft, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-                Text(runSummary(run, rows, ex, common), color = p.workText, fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
-                    maxLines = 1, modifier = Modifier.padding(start = 8.dp))
+            Box {
+                Row(
+                    Modifier.fillMaxWidth()
+                        .combinedClickable(onClickLabel = "Log ${ex.name}", onLongClickLabel = "More", onClick = { onOpen(ex.id) }, onLongClick = { menu = i })
+                        .padding(start = 14.dp, end = 14.dp, top = 8.dp, bottom = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(ex.name, color = p.soft, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                    Text(runSummary(run, rows, ex, common), color = p.workText, fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+                        maxLines = 1, modifier = Modifier.padding(start = 8.dp))
+                }
+                androidx.compose.material3.DropdownMenu(expanded = menu == i, onDismissRequest = { menu = null }, containerColor = p.sheet) {
+                    androidx.compose.material3.DropdownMenuItem(
+                        text = { Column { Text("Move sets…", color = p.accentText, fontWeight = FontWeight.Bold); Text("to another exercise; pick which", color = p.muted, fontSize = 12.sp) } },
+                        onClick = { menu = null; onMove(ex.id) },
+                    )
+                    androidx.compose.material3.DropdownMenuItem(text = { Text("Open ${ex.name}", color = p.text) }, onClick = { menu = null; onOpen(ex.id) })
+                }
             }
-            rows.forEach { r -> TimelineRow(r, ex, strip, banded, common, loadWidth) { onOpen(ex.id) } }
+            // the rests get one column on every row (empty where there is none), so the L / R halves line up
+            val restWidth = if (rows.any { r -> (r.minBy { it.order }.restSec ?: 0) > 0 })
+                with(density) { measurer.measure("rest 10:00", TextStyle(fontSize = 12.sp)).size.width.toDp() + 10.dp } else 0.dp
+            rows.forEach { r -> TimelineRow(r, ex, strip, banded, common, loadWidth, restWidth, onHold = { menu = i }) { onOpen(ex.id) } }
         }
     }
 }
@@ -264,7 +302,10 @@ internal fun pairSides(run: List<GymSet>): List<List<GymSet>> = buildList {
 }
 
 /** "4 rounds · black", "L 5 · R 7" (uneven sides), "9 × 1 · 4 bands", "6 sets · 35 reps". */
-private fun runSummary(run: List<GymSet>, rows: List<List<GymSet>>, ex: Exercise, common: String?): String {
+private fun runSummary(all: List<GymSet>, rows: List<List<GymSet>>, ex: Exercise, common: String?): String {
+    // warm-ups are left out of the count and only mentioned at the end
+    val run = all.filterNot { it.isWarmup }.ifEmpty { all }
+    val warm = (all.size - run.size).takeIf { it > 0 }?.let { "+ $it warm-up" }
     val left = run.count { it.side == Side.LEFT }
     val right = run.count { it.side == Side.RIGHT }
     val head = when {
@@ -280,24 +321,22 @@ private fun runSummary(run: List<GymSet>, rows: List<List<GymSet>>, ex: Exercise
         bands > 1 -> "$bands bands"
         else -> null
     }
-    return listOfNotNull(head, tail).joinToString(" · ")
+    return listOfNotNull(head, tail).joinToString(" · ") + (warm?.let { " $it" } ?: "")
 }
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
-private fun TimelineRow(row: List<GymSet>, ex: Exercise, strip: Color, banded: Boolean, common: String?, loadWidth: Dp, onOpen: () -> Unit) {
+private fun TimelineRow(row: List<GymSet>, ex: Exercise, strip: Color, banded: Boolean, common: String?, loadWidth: Dp, restWidth: Dp, onHold: () -> Unit, onOpen: () -> Unit) {
     val p = LocalPalette.current
     val first = row.first()
     Row(
-        Modifier.fillMaxWidth().height(IntrinsicSize.Min).clickable(onClick = onOpen).padding(horizontal = 14.dp),
+        Modifier.fillMaxWidth().height(IntrinsicSize.Min).combinedClickable(onLongClickLabel = "More", onClick = onOpen, onLongClick = onHold).padding(horizontal = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.width(5.dp).fillMaxHeight().background(strip))
         Spacer(Modifier.width(10.dp))
         Row(Modifier.weight(1f).padding(vertical = 5.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            val colors = first.specColors(ex)
-            if (colors.isNotEmpty()) colors.forEach { c ->
-                Box(Modifier.size(11.dp).clip(CircleShape).background(Color(c)).border(1.dp, p.soft, CircleShape))
-            } else if (banded) Box(Modifier.size(11.dp).border(1.dp, p.muted, CircleShape))
+            // each set shows its own band dots (in SetPart), not the first set's for the whole row
             if (first.side != null) {
                 // L on the left, R on the right, a line between; a set without its other side leaves that half empty
                 val l = row.firstOrNull { it.side == Side.LEFT }
@@ -308,18 +347,31 @@ private fun TimelineRow(row: List<GymSet>, ex: Exercise, strip: Color, banded: B
             } else SetPart(first, ex, banded, common, loadWidth, Modifier.weight(1f))
         }
         // the rest before the row: before the set done first
-        row.minBy { it.order }.restSec?.takeIf { it > 0 }?.let { r ->
-            Text("rest ${formatTime(r)}", color = if (r > 300) p.recordText else p.muted, fontSize = 12.sp, style = NumberStyle, modifier = Modifier.padding(start = 8.dp))
+        if (restWidth > 0.dp) {
+            val r = row.minBy { it.order }.restSec?.takeIf { it > 0 }
+            Text(r?.let { "rest ${formatTime(it)}" }.orEmpty(), color = if ((r ?: 0) > 300) p.recordText else p.muted, fontSize = 12.sp, style = NumberStyle,
+                textAlign = TextAlign.End, maxLines = 1, modifier = Modifier.width(restWidth))
         }
     }
 }
 
 /** The muted load of a set on the timeline ("15 kg", "purple", "no band"); the band said in the summary is left out. */
 private fun loadOf(s: GymSet, ex: Exercise, banded: Boolean, common: String?): String {
-    val specs = s.specsText(ex)
-    return (if (common != null && specs == common) s.loadText(ex).removePrefix(common).removePrefix(" · ") else s.loadText(ex))
-        .ifEmpty { if (banded && specs.isEmpty()) "no band" else "" }
+    // the bands are dots, not words ("black" was written while "red" was a dot)
+    val plain = s.withoutColors(ex)
+    val specs = plain.specsText(ex)
+    return if (common != null && specs == common) plain.loadText(ex).removePrefix(common).removePrefix(" · ") else plain.loadText(ex)
 }
+
+/** The set without its colored specs (bands), which are drawn as dots. */
+internal fun GymSet.withoutColors(ex: Exercise): GymSet {
+    val colored = ex.specs.filter { it.colors.isNotEmpty() }.map { it.name }.toSet()
+    // 0 kg is body weight: left out like the bands' names
+    return copy(specs = specs - colored, weightKg = weightKg?.takeIf { it != 0.0 })
+}
+
+/** A band's color as drawn on the dark screens: black becomes a dark grey, so it shows (as in the Journal bars). */
+internal fun bandDotColor(c: Long): Color = Color(c).let { if (it.luminance() < 0.03f) Color(0xFF3A3D44) else it }
 
 /** One set on a timeline row: side, load, the reps (or time) in bold, the note. */
 @Composable
@@ -327,9 +379,14 @@ private fun SetPart(s: GymSet, ex: Exercise, banded: Boolean, common: String?, l
     val p = LocalPalette.current
     Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         s.side?.let { Text(if (it == Side.LEFT) "L" else "R", color = p.accentText, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold) }
+        // this set's bands as dots; an empty ring for a set without one on a band exercise
+        val colors = s.specColors(ex)
+        if (colors.isNotEmpty()) Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+            colors.forEach { c -> Box(Modifier.size(11.dp).clip(CircleShape).background(bandDotColor(c)).border(1.dp, p.soft, CircleShape)) }
+        } else if (banded) Box(Modifier.size(11.dp).border(1.dp, p.muted, CircleShape))
         val load = loadOf(s, ex, banded, common)
         if (loadWidth > 0.dp) Text(load, color = p.muted, fontSize = 13.sp, maxLines = 1, softWrap = false, modifier = Modifier.width(loadWidth))
-        Text((if (s.weightKg != null && GymField.WEIGHT in ex.fields) "× " else "") + s.boxText(ex), color = p.text, fontSize = 16.sp, fontWeight = FontWeight.Bold, style = NumberStyle)
+        Text((if (s.weightKg != null && s.weightKg != 0.0 && GymField.WEIGHT in ex.fields) "× " else "") + s.boxText(ex), color = p.text, fontSize = 16.sp, fontWeight = FontWeight.Bold, style = NumberStyle)
         if (s.note.isNotBlank()) Text("“${s.note.trim()}”", color = p.muted, fontSize = 13.sp, fontStyle = FontStyle.Italic, maxLines = 1,
             overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
     }

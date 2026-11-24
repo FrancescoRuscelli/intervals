@@ -8,6 +8,8 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- gym rest clock: a buzz at the rest target -->
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- the rest clock as a Live Update: a chip in the status bar (Android 16+) -->
+    <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
     <!-- the buzz on time even with the app closed; a timer app may use exact alarms -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />

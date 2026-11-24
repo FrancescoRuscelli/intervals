@@ -1,0 +1,183 @@
+<title>Variant Groups</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: one card per screen (Edit exercise, the log, a group's dialog, History / Records), each the app's dark phone with
+   One Arm Pull Up as it would be with two variant groups: Range and Help. */
+:root {
+  --bg: #f4f2fa; --fg: #18151f; --muted: #5b5668; --line: #dfdbe9; --accent: #6d28d9; --card: #ffffff;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif;
+  --ph-bg: #000; --ph-surface: #1A1C21; --ph-sheet: #2A2C33; --ph-text: #F2F3F5; --ph-muted: #9AA0AA; --ph-soft: #C9CDD3; --ph-faint: #6E747E; --ph-line: #23262C;
+  --ph-accent: #7C3AED; --ph-accent-text: #C4B1FF; --ph-tint: #241A3A; --L: #FF8AB3; --R: #2DD4BF; --teal: #00BFA5; --gold: #FFC94D;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
+main { max-width: 1240px; margin: 0 auto; display: grid; gap: 14px; }
+h1 { font-family: var(--display); font-size: 1.8rem; margin: 0; text-wrap: balance; }
+.lede { color: var(--muted); margin: 0; max-width: 84ch; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+.opt { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; display: grid; gap: 8px; min-width: 0; }
+.head { display: flex; gap: 10px; align-items: baseline; }
+.tag { font-family: var(--display); font-weight: 700; color: var(--accent); font-size: 1.1rem; }
+.name { font-weight: 600; }
+.desc { color: var(--muted); font-size: .86rem; margin: 0; padding-left: 18px; }
+.desc li { margin: 2px 0; }
+
+.phone { background: var(--ph-bg); border-radius: 22px; padding: 12px; color: var(--ph-text); font-size: 14px; display: grid; gap: 10px; }
+.bar { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 700; }
+.bar .sp { flex: 1; } .bar .ic { color: var(--ph-muted); font-weight: 400; }
+.save { background: var(--ph-accent); color: #fff; font-size: 13px; border-radius: 16px; padding: 4px 14px; }
+.st { font-size: 15px; font-weight: 600; }
+.hint { font-size: 12px; color: var(--ph-muted); margin-top: -7px; }
+.pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill { border: 1px solid var(--ph-line); border-radius: 16px; padding: 5px 12px; font-size: 13.5px; color: var(--ph-soft); display: inline-flex; align-items: center; gap: 6px; }
+.pill.on { border-color: var(--ph-accent); background: var(--ph-tint); color: var(--ph-accent-text); font-weight: 700; }
+.pill.add { border-style: dashed; color: var(--ph-accent-text); }
+.dot { width: 9px; height: 9px; border-radius: 5px; display: inline-block; box-shadow: 0 0 0 1px #ffffff55; }
+.group { background: var(--ph-surface); border-radius: 14px; padding: 10px 12px; display: grid; gap: 8px; }
+.group .gh { display: flex; align-items: center; gap: 8px; }
+.group .gh b { flex: 1; font-size: 15.5px; }
+.group .gh span { color: var(--ph-muted); font-size: 12px; }
+.opt-row { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: center; padding: 6px 0; border-top: 1px solid var(--ph-line); }
+.opt-row b { font-weight: 600; }
+.opt-row small { grid-column: 1 / -1; color: var(--ph-muted); font-size: 11.5px; }
+.opt-row small.own { color: var(--ph-accent-text); }
+.opt-row span { color: var(--ph-muted); font-size: 12px; }
+.addg { border: 2px dashed var(--ph-line); border-radius: 14px; padding: 10px; text-align: center; color: var(--ph-accent-text); font-weight: 600; }
+.lbl { font-size: 11.5px; color: var(--ph-muted); letter-spacing: .5px; font-weight: 700; }
+.seg { display: flex; background: var(--ph-surface); border-radius: 12px; padding: 3px; }
+.seg span { flex: 1; text-align: center; padding: 6px 0; border-radius: 9px; font-weight: 700; color: var(--ph-muted); }
+.seg .l { background: #3A1428; color: var(--L); box-shadow: inset 0 0 0 1px var(--L); }
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tile { background: var(--ph-surface); border-radius: 14px; padding: 8px 10px; text-align: center; }
+.tile small { color: var(--ph-muted); font-size: 12px; }
+.tile b { display: block; font-family: var(--display); font-size: 28px; }
+.btn { background: var(--ph-accent); color: #fff; border-radius: 14px; text-align: center; padding: 13px; font-weight: 700; }
+.dialog { background: var(--ph-sheet); border-radius: 20px; padding: 14px; display: grid; gap: 10px; }
+.dialog .t { font-size: 17px; font-weight: 600; }
+.field { border-bottom: 2px solid var(--ph-accent); padding: 4px 0; font-size: 16px; }
+.sw { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.sw i { width: 36px; height: 20px; border-radius: 10px; background: var(--ph-line); position: relative; flex: none; }
+.sw i::after { content: ""; position: absolute; left: 3px; top: 3px; width: 14px; height: 14px; border-radius: 7px; background: var(--ph-muted); }
+.sw i.on { background: var(--ph-accent); } .sw i.on::after { left: 19px; background: #fff; }
+.sw small { display: block; color: var(--ph-muted); font-size: 11.5px; }
+.btns { display: flex; justify-content: flex-end; gap: 18px; color: var(--ph-accent-text); font-weight: 600; font-size: 14px; }
+.tabs { display: flex; gap: 16px; color: var(--ph-muted); font-size: 13px; font-weight: 600; border-bottom: 1px solid var(--ph-line); padding-bottom: 6px; justify-content: center; }
+.tabs .on { color: var(--ph-text); border-bottom: 2px solid var(--ph-accent); padding-bottom: 4px; }
+.day { background: var(--ph-surface); border-radius: 14px; padding: 10px 12px; display: grid; gap: 4px; }
+.day .dh { display: flex; justify-content: space-between; font-weight: 700; font-size: 13.5px; }
+.day .dh span { color: #FF8AB3; font-size: 12px; font-weight: 600; }
+.line { font-size: 12.5px; color: var(--ph-soft); }
+.rec { display: grid; grid-template-columns: 1fr auto; padding: 7px 0; border-top: 1px solid var(--ph-line); font-size: 13.5px; }
+.rec small { color: var(--gold); font-size: 12px; }
+</style>
+
+<main>
+  <h1>Variant groups</h1>
+  <p class="lede">One Arm Pull Up as you would set it up: two groups, picked one from each per set. Range: full · first half · 90° hold.
+    Help: none · band · deload. Your sets keep what they were: deloaded → full + deload (with their −25, −17.5…), resistance band →
+    full + band (with their colors), first half → first half + none, 90° hold → 90° hold + none. Numbers like a width in mm stay as
+    Measurements, below the groups.</p>
+  <div class="grid">
+
+    <section class="opt">
+      <div class="head"><span class="tag">1</span><span class="name">Edit exercise</span></div>
+      <ul class="desc">
+        <li>“Variants” holds the groups; each group is a card with its options and how many sets.</li>
+        <li>The first group can change what a set records (90° hold: weight · time).</li>
+        <li>“+ Add a group” for anything you want to combine: grip, band, tempo…</li>
+      </ul>
+      <div class="phone">
+        <div class="bar"><span class="ic">✕</span><span class="sp" style="font-size:15px">Edit exercise</span><span class="save">Save</span></div>
+        <div class="st">Each set records</div>
+        <div class="pills"><span class="pill on">Weight</span><span class="pill on">Reps</span><span class="pill">Time</span><span class="pill">Distance</span></div>
+        <div class="st" style="margin-top:4px">Variants</div>
+        <div class="hint">Pick one in each group for every set. Combine groups freely.</div>
+        <div class="group">
+          <div class="gh"><b>Range</b><span>✎</span></div>
+          <div class="opt-row"><b>full</b><span>229 sets</span><small>records: weight · reps</small></div>
+          <div class="opt-row"><b>first half</b><span>29 sets</span><small>records: weight · reps</small></div>
+          <div class="opt-row"><b>90° hold</b><span>34 sets</span><small class="own">records: weight · time ›</small></div>
+          <span class="pill add">+ option</span>
+        </div>
+        <div class="group">
+          <div class="gh"><b>Help</b><span>✎</span></div>
+          <div class="pills"><span class="pill">none · 70</span><span class="pill">band · 36</span><span class="pill">deload · 193</span><span class="pill add">+ option</span></div>
+        </div>
+        <div class="addg">+ Add a group</div>
+        <div class="st">Measurements</div>
+        <div class="hint">Numbers you set on each set, e.g. edge 20 mm.</div>
+        <span class="pill add" style="justify-self:start">+ Add a measurement</span>
+      </div>
+    </section>
+
+    <section class="opt">
+      <div class="head"><span class="tag">2</span><span class="name">Logging a set</span></div>
+      <ul class="desc">
+        <li>One row of chips per group, above the button; the choice stays from the last set.</li>
+        <li>Picking 90° hold swaps reps for the timer, as now.</li>
+        <li>The button says the combination: “Log set · first half · band”.</li>
+      </ul>
+      <div class="phone">
+        <div class="bar"><span class="ic">‹</span><span class="sp">One Arm Pull Up</span><span class="ic">✎</span></div>
+        <div class="tabs"><span class="on">Log</span><span>History</span><span>Graph</span><span>Records</span></div>
+        <div class="seg"><span class="l">L</span><span>R</span><span>Both</span></div>
+        <div class="tiles"><div class="tile"><small>Weight</small><b>0 kg</b></div><div class="tile"><small>Reps</small><b>3</b></div></div>
+        <div class="lbl">RANGE</div>
+        <div class="pills"><span class="pill">full</span><span class="pill on">first half</span><span class="pill">90° hold</span></div>
+        <div class="lbl">HELP</div>
+        <div class="pills"><span class="pill">none</span><span class="pill on"><span class="dot" style="background:#16181C"></span>band</span><span class="pill">deload</span></div>
+        <div class="pills" style="margin-top:-4px"><span class="pill on"><span class="dot" style="background:#16181C"></span>black</span><span class="pill"><span class="dot" style="background:#E53935"></span>red</span><span class="pill"><span class="dot" style="background:#43A047"></span>green</span><span class="pill">…</span></div>
+        <div class="btn">Log set · first half · band</div>
+      </div>
+    </section>
+
+    <section class="opt">
+      <div class="head"><span class="tag">3</span><span class="name">A group's dialog</span></div>
+      <ul class="desc">
+        <li>Name, options, and “pick several” (for bands: black + red).</li>
+        <li>An option can have a color (bands) and, in the first group, its own fields.</li>
+        <li>The band colors live inside “band”: Help → band → black / red…</li>
+      </ul>
+      <div class="phone">
+        <div class="dialog">
+          <div class="t">Group</div>
+          <div class="field">Help</div>
+          <div class="lbl">OPTIONS</div>
+          <div class="pills"><span class="pill">none</span><span class="pill">band ›</span><span class="pill">deload</span><span class="pill add">+ option</span></div>
+          <div class="sw"><div>Pick several<small>e.g. two bands at once</small></div><i></i></div>
+          <div class="lbl">BAND · ITS COLORS</div>
+          <div class="pills"><span class="pill"><span class="dot" style="background:#43A047"></span>green</span><span class="pill"><span class="dot" style="background:#8E44D8"></span>purple</span><span class="pill"><span class="dot" style="background:#16181C"></span>black</span><span class="pill"><span class="dot" style="background:#E53935"></span>red</span><span class="pill"><span class="dot" style="background:#FFC107"></span>yellow</span></div>
+          <div class="sw"><div>Several colors at once<small>black + red</small></div><i class="on"></i></div>
+          <div class="btns"><span>Delete group</span><span>Cancel</span><span>Done</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="opt">
+      <div class="head"><span class="tag">4</span><span class="name">History and Records</span></div>
+      <ul class="desc">
+        <li>A set reads its combination: “first half · band black · 3”.</li>
+        <li>Records: one chip per option of each group; picking two narrows to that combination.</li>
+        <li>Each combination keeps its own records, as now.</li>
+      </ul>
+      <div class="phone">
+        <div class="tabs"><span>Log</span><span>History</span><span>Graph</span><span class="on">Records</span></div>
+        <div class="pills"><span class="pill">All</span><span class="pill">full</span><span class="pill on">first half</span><span class="pill">90° hold</span></div>
+        <div class="pills" style="margin-top:-4px"><span class="pill">none</span><span class="pill on">band</span><span class="pill">deload</span></div>
+        <div class="day">
+          <div class="dh">first half · band<span>L / R</span></div>
+          <div class="rec"><span>Left · black · 3 reps</span><small>best now · 20 Nov</small></div>
+          <div class="rec"><span>Right · black · 3 reps</span><small>best now · 20 Nov</small></div>
+        </div>
+        <div class="day">
+          <div class="dh">Thu 20 Nov<span>L 2 · R 2</span></div>
+          <div class="line">L first half · band black · 3 &nbsp; R first half · band black · 3</div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>

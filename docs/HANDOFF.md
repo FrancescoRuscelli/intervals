@@ -18,6 +18,110 @@ This PC already had a full day of new work on top of `962b73a`, so instead its u
 
 **Back button (2026-11-24).** On Intervals or Gym with nothing open on top, Back goes to the Journal; only Back on the Journal leaves the app.
 
+**Move sets to another exercise (2026-11-24, [mockup](mockups/intervals-move-sets.html), C).** On the Gym day page, hold an exercise
+(its name or a set), then **Move sets…**: a sheet with that exercise's sets of the day, all ticked (tap one to keep it), the exercise to
+move them to (similar names first, search) and its variant. A yellow line says when the target lacks a field the sets have.
+The sets keep day, place, rest and note; the snackbar offers Undo (`moveSetsTo` / `putBackSets`, tested in `GymImportTest`).
+A whole exercise is still merged from Edit exercise › Merge another exercise into this.
+
+**Records: best now and beaten (2026-11-24, [mockup](mockups/intervals-record-marks.html), A).** A record's cup on the Journal and
+History bars is gold while it is still the best (per side), grey once a later day beat it. Tapping the bar in the Journal reads
+"PR, best now" or "was a PR until 7 Jul" (`recordMarksOn` in `GymGroups.kt`, tested on Pinch's real numbers).
+
+## Ideas from other apps (2026-11-24, [mockup](mockups/intervals-ideas-from-other-apps.html))
+
+Chosen: 1, 2, 3, 4, 5, 6, 9, 11, 12, 13. Not now: 7 (do this day again), 8 (finger load: climbing itself is not logged, so the
+number would be wrong exactly on climbing weeks), 10 (climbing log: grades too varied). A later idea for 8 + 10: a plain "Climb"
+entry with only minutes and easy / hard.
+
+- **1 Load hint.** Gym log: when the last two days (same side, variant; warm-ups out) had the same top weight, the reps held and no
+  set was tagged Failed, a teal "↑ Try 17 kg" under the tiles; tap = in the tile; gone after a set at that load (`nextLoadHint`).
+  Intervals: a kg value equal in the last two sessions, both completed with nothing let go → "try +1 kg" on the card, Setup
+  (tap to use) and Finished (`intervalLoadHints`, step `INTERVAL_LOAD_STEP` = 1 kg).
+- **2 Let go.** In the player, a Let go button between previous / next during work series (not rest / change / round rest); tap
+  again to take it back; the timer keeps going. Finished shows "hang 11 / 12" with dots; the Journal "hang 11/12 · let go in round 2".
+  `Session.letGo` + `workDone` (database v9, columns `letGo`, `workDone`; in backups).
+- **3 Progress.** `WorkoutProgressScreen`: a chip per logged number, periods, left pink / right teal, records gold / grey
+  (`valueSeries`, `valueRecords`). Opened from a Journal session ("Progress ›") or the list's selection bar (one workout selected).
+- **4 Rest notification.** Shows the next set ("set 4 · 90 × 5", "L 16 × 3"), +30 s, Stop; a tap opens that exercise. The rest is
+  kept in SharedPreferences (`RestAlarm.saved`), so a rest across an app restart still times and saves.
+- **5 Warm-up.** First quick tag; such sets are dashed outline bars and are left out of records, graphs, repMaxes, Most trained and
+  the set counts ("3 sets + 2 warm-up") (`isWarmup`).
+- **6 Records per variant and spec.** Cups, PR counts and recent records compare a set only with sets of the same variant and
+  specs (a missing single choice = the first choice) (`recordKey`). History / Graph / Records filter chips include "grip: thumb".
+- **9 Choices and values on the disc.** A series log field can be "A choice" (Grip: open / half crimp / full crimp), saved as
+  `LoggedValue.text` (database v9). The disc shows this side's values ("20 mm · half crimp · 10 kg").
+- **11 Landscape.** The player lays out the disc left, the rest right when the phone is on its side.
+- **12 Rest between rounds.** The next round's values with − / + (choices as chips) under the disc; each round is saved with the
+  values it was done with (`PlayerController.perRound`); a value changed on Finished applies to all rounds.
+- **13 Swipe to delete** a series in Edit workout, with Undo above the list for 6 s.
+
+The phone's database (v8) was opened with v9 from a copy before installing: 26 workouts and 2 sessions kept.
+
+**Tags in the Gym list (2026-11-24, [mockup](mockups/intervals-gym-list-tags.html), B).** The Gym tab's exercise list and Add exercise
+show each exercise's tags under its name: a dot in the tag's Journal color, then the name in grey ("● Legs   ● Pull"), cut with …
+when they don't fit (`exerciseTags` in `GymPickScreen.kt`). The Gym list's search also finds tags.
+
+**Merge keeps a variant (2026-11-24).** Merging into an exercise without variants lost what told the sets apart (Box Pike Push Up into
+Pike Push Up). Now the merge dialog offers "Keep them apart as a variant" (on when the names differ): the new variant is named from the
+missing words (`variantSuggestion`: "box"), the target's own sets get "normal"; into an exercise with variants, "+ box" is offered next
+to the existing ones. The Edit exercise screen adds the new variant to its own copy too, else Save afterwards removed it again (happened
+with Parallettes Pike Push Up: the 81 sets kept "parallettes", the list lost it; fixed by hand). The phone's Pike Push Up was fixed by hand: variants normal (200 sets) / box (56 sets, 10 Sep – 19 Nov).
+
+**Keyboard and Back (2026-11-24).** Opening a screen or switching tab clears focus and hides the keyboard (the Gym search kept it up
+under an exercise's log). With the keyboard up, Back only hides it: an App-level BackHandler keyed on `isImeVisible` is added last,
+so it comes before the screens' own Back.
+
+**Taps through screens (2026-11-24).** A screen on top of the tabs (an exercise's log, Settings…) let a tap on its empty space reach the
+tab underneath: missing the log screen's pencil opened the Gym tab's ⚙ Settings. App.kt now puts a touch-catching layer under every
+overlay.
+
+**Variants with their own fields (2026-11-24, [mockup](mockups/intervals-variant-fields.html), 1 + 2A + 3).** "What you write down" is now
+"Each set records". A variant can record other fields than the exercise (`Exercise.variantFields`, `fieldsOf` / `forVariant` / `forSet`):
+Edit exercise shows "records: …" under each variant, tap = a dialog with the chips and "Same as the exercise". Set texts, boxes and bars
+follow each set's variant; the log's tiles and timer follow the chosen variant; Graph and Records use the chosen variant's fields, and
+"All" only what every variant records (`commonFields`). Records are counted per variant with its own main graph (`mainMetric`). On a
+per-side exercise, sets without a side get their own records and graph line ("No side", `sidesOf` / `NoSide`). Merge: a new variant takes
+the merged exercise's fields when they differ, and its specifications (e.g. Bands) come along.
+On the phone (by hand, backup `before-hold.db`): One Arm Pull Up (made by the user from 4 merges) got 90° hold = weight + time,
+resistance band = reps, and the Bands spec back (28 sets had bands).
+
+**Variant groups (2026-11-24, [mockup](mockups/intervals-variant-groups.html)).** Everything picked per set is a group: the first is the
+variants (with a name, `Exercise.variantsName`, e.g. Range; it alone can change what a set records), the others are choice specs, shown
+the same way. A group can be shown only for one option of another (`Spec.onlyWhen` = "Help=band": the band colors only with band;
+`shownSpecs`). Edit exercise: Variants = the first group's name (tap to rename) and options, a card per other group (options, the groups
+inside it), "+ Add a group"; numbers are "Measurements". Log: a row of chips per group near the button, the band colors only with band,
+"Log set · first half · band"; values of hidden groups are not saved. The rows are tight (`GroupChips`): a small label, compact
+chips, and a group whose options all have colors (bands) is dots only, no names (ring = picked, "×2", hold for one more). Records keep every combination apart (`recordKey`).
+On the phone (by hand, backup `before-groups2.db`): One Arm Pull Up = Range full / first half / 90° hold (hold: weight + time) and Help
+none / band / deload with Bands under band: deloaded → full + deload (193), resistance band → full + band (36, 28 with their colors).
+
+**One Arm Pull Up without Help (2026-11-24, [mockup](mockups/intervals-range-bands.html), B).** Help (none / band / deload) repeated what
+the set already says: a negative weight is the deload, a picked band dot is the band. Removed by hand (backup `before-nohelp.db`): Range
+full / first half / 90° hold + Bands (always shown, nothing picked = no band); the 8 band sets with no color recorded got "band?" in
+their note. The log panel: the variants with no label over them, then a slim line "BANDS ● ● ● ● ●" (a group of colors is one line,
+its name at the left). In the logged sets the bands are small dots before the load, not "black+red" (`plainLoad`, `ColorDots`); the same on the Gym day
+page, each set its own dots (`withoutColors`), black drawn dark grey (`bandDotColor`). 0 kg (body weight) is not written in set rows,
+the last-set line under the variants, nor as "top" in the Journal line. The day page's rests are a fixed column, so L / R line up.
+The last set under each variant is shown as that variant records it (90° hold: its time).
+
+**Rest notification visible (2026-11-24).** It was on a low-importance channel ("rest"), which Android shows under Silent, with no
+status bar icon and not on the lock screen. Now channel "rest_clock", normal importance, no sound or vibration of its own (the buzz at
+the target is the app's vibration); the old channel is deleted. A rest restored at app start posts its notification again. The "Next"
+line leaves out 0 kg. On Android 16+ it is a Live Update ([mockup](mockups/intervals-rest-notification.html), B):
+`setRequestPromotedOngoing(true)` + POST_PROMOTED_NOTIFICATIONS, so the rest clock is a chip in the status bar (hidden by Android
+while Intervals itself is on screen) and the card is pinned first; Android does not color promoted cards. No progress bar (it
+would need updates every few seconds). Later (user asked): a teal `ProgressStyle` bar to the target, redrawn every 5 s by
+`RestAlarm.refresh` from the app scope while the rest runs (stops at the target or if the process dies).
+
+**Load hint can be swiped away (2026-11-24).** Swipe "↑ Try 32.5 kg" left or right: it stays away for that exercise, side, variant
+and weight (SharedPreferences "hints"); a later, different suggestion still shows.
+
+**After a set the values stay (2026-11-24).** The log used to load last time's set at the same place after every set (mockup
+intervals-next-features.html, 1A), so Chin Up jumped 0 → 10 → 15 → 20 kg by itself following 30 Apr. Now only the first set of the
+day starts from last time; after that the values stay as just logged. Per side: the next side takes its own last set today, else
+last time's. Going heavier is the "↑ Try" hint's job.
+
 ## Syncing work from both PCs
 
 Save a local Git checkpoint of uncommitted work before updating. Use the latest app as the base and carry forward the agreed behavior below wherever it is missing. Keep the latest screens, features, and database migrations. The previous working tree was saved on this PC at `8fadd24` on `safety/intervals-before-sync-20261123-123433`.

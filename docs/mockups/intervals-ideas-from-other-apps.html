@@ -1,0 +1,566 @@
+<title>Intervals Ideas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: one card per idea (number, name, where it comes from, what it does), each with the app's dark phone screen(s) */
+:root {
+  --bg: #f4f2fa; --fg: #18151f; --muted: #5b5668; --line: #dfdbe9; --accent: #6d28d9; --card: #ffffff;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif;
+  --ph-bg: #000; --ph-surface: #1A1C21; --ph-sheet: #16181C; --ph-text: #F2F3F5; --ph-muted: #9AA0AA; --ph-soft: #C9CDD3; --ph-faint: #6E747E; --ph-line: #23262C;
+  --ph-accent: #7C3AED; --ph-accent-text: #C4B1FF; --ph-tint: #241A3A; --pink: #E91E63; --work-tint: #3A1428; --work-text: #FF8AB3;
+  --teal: #00BFA5; --teal-text: #5EEAD4; --teal-tint: #0E2B27; --yellow: #FFC94D; --yellow-tint: #3A2E10; --danger: #FF6B6B;
+  --L: #FF8AB3; --R: #2DD4BF;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
+main { max-width: 1240px; margin: 0 auto; display: grid; gap: 16px; }
+h1 { font-family: var(--display); font-size: 1.8rem; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--display); font-size: 1.25rem; margin: 18px 0 0; }
+.lede { color: var(--muted); margin: 0; max-width: 84ch; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 16px; align-items: start; }
+.opt { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; display: grid; gap: 8px; min-width: 0; }
+.opt.wide { grid-column: 1 / -1; }
+.head { display: flex; gap: 10px; align-items: baseline; }
+.tag { font-family: var(--display); font-weight: 700; color: var(--accent); font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+.name { font-weight: 700; }
+.from { color: var(--muted); font-size: .8rem; margin: -4px 0 0; }
+.desc { color: var(--muted); font-size: .86rem; margin: 0; padding-left: 18px; }
+.desc li { margin: 2px 0; }
+.phones { display: flex; gap: 10px; flex-wrap: wrap; }
+.phones > .phone { flex: 1 1 280px; min-width: 0; }
+
+/* the phone */
+.phone { background: var(--ph-bg); border-radius: 22px; padding: 12px; color: var(--ph-text); font-size: 14px; display: flex; flex-direction: column; gap: 8px; position: relative; overflow: hidden; }
+.num { font-variant-numeric: tabular-nums; }
+.pbar { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 700; }
+.pbar .sp { flex: 1; } .pbar .ic { color: var(--ph-muted); font-weight: 400; }
+.tabs { display: flex; gap: 16px; color: var(--ph-muted); font-size: 13px; font-weight: 600; border-bottom: 1px solid var(--ph-line); padding-bottom: 6px; }
+.tabs .on { color: var(--ph-text); border-bottom: 2px solid var(--ph-accent); padding-bottom: 4px; }
+.cap { color: var(--ph-muted); font-size: 11.5px; letter-spacing: .6px; font-weight: 700; text-transform: uppercase; }
+.small { font-size: 12px; color: var(--ph-muted); }
+.card { background: var(--ph-surface); border: 1px solid var(--ph-line); border-radius: 12px; padding: 10px; display: grid; gap: 6px; }
+.row { display: flex; gap: 8px; align-items: center; }
+.row .sp { flex: 1; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { border: 1px solid var(--ph-line); border-radius: 16px; padding: 4px 11px; font-size: 13px; color: var(--ph-soft); }
+.chip.on { border-color: var(--ph-accent); background: var(--ph-tint); color: var(--ph-accent-text); font-weight: 700; }
+.chip.teal { border-color: var(--teal); background: var(--teal-tint); color: var(--teal-text); font-weight: 700; }
+.pill { border-radius: 10px; padding: 2px 8px; font-size: 12px; font-weight: 700; }
+.pill.teal { background: var(--teal-tint); color: var(--teal-text); }
+.pill.yellow { background: var(--yellow-tint); color: var(--yellow); }
+.seg { display: flex; background: var(--ph-surface); border-radius: 12px; padding: 3px; }
+.seg span { flex: 1; text-align: center; padding: 6px 0; border-radius: 9px; font-weight: 700; color: var(--ph-muted); font-size: 14px; }
+.seg .onL { background: var(--work-tint); color: var(--L); box-shadow: inset 0 0 0 1px var(--L); }
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tile { background: var(--ph-surface); border-radius: 14px; padding: 8px 10px; display: grid; gap: 2px; }
+.tile .tv { display: flex; align-items: center; justify-content: space-between; }
+.tile .tv b { font-family: var(--display); font-size: 30px; }
+.tile .tv i { font-style: normal; font-size: 22px; color: var(--ph-muted); width: 30px; height: 30px; border-radius: 15px; background: var(--ph-bg); display: grid; place-items: center; }
+.btn { height: 48px; border-radius: 14px; background: var(--ph-surface); display: grid; place-items: center; font-weight: 700; font-size: 15px; }
+.btn.go { background: var(--ph-accent); color: #fff; }
+.btn.out { background: transparent; box-shadow: inset 0 0 0 2px var(--danger); color: var(--danger); }
+.btns { display: flex; gap: 8px; } .btns > * { flex: 1; }
+.hint { border: 1px dashed var(--teal); background: var(--teal-tint); border-radius: 12px; padding: 8px 10px; display: grid; gap: 1px; }
+.hint b { color: var(--teal-text); }
+.hint small { color: var(--ph-soft); font-size: 12px; }
+.ln { font-size: 12px; color: var(--ph-muted); }
+.ln b { color: var(--ph-text); }
+.gold { color: var(--yellow); } .grey { color: var(--ph-faint); }
+.disc { display: grid; place-items: center; padding: 4px 0; }
+.disc svg { width: 200px; height: 200px; max-width: 100%; }
+.sq { min-width: 42px; height: 40px; padding: 0 6px; box-sizing: border-box; border: 1px solid var(--ph-line); border-radius: 10px; display: grid; place-items: center; font-size: 14px; background: var(--ph-bg); }
+.sq.ghost { border: 1px dashed var(--ph-faint); color: var(--ph-faint); }
+.sq.done { background: var(--work-tint); border-color: var(--pink); color: var(--work-text); }
+.sqs { display: flex; gap: 6px; flex-wrap: wrap; }
+.cup { display: inline-block; width: 11px; height: 11px; vertical-align: -1px; }
+.rec { display: grid; grid-template-columns: 54px 1fr auto; gap: 6px; align-items: center; font-size: 14px; padding: 6px 0; border-bottom: 1px solid var(--ph-line); }
+.rec:last-child { border-bottom: 0; }
+.rec .r { color: var(--ph-muted); font-size: 12px; }
+.rec.old b { color: var(--ph-faint); font-weight: 600; }
+.lock { background: linear-gradient(160deg, #1b1430, #050507 70%); }
+.clock { text-align: center; font-family: var(--display); font-size: 54px; font-weight: 500; line-height: 1; padding-top: 18px; }
+.date { text-align: center; color: var(--ph-soft); font-size: 13px; padding-bottom: 14px; }
+.notif { background: rgba(30,32,38,.92); border-radius: 18px; padding: 12px; display: grid; gap: 6px; }
+.prog { height: 6px; border-radius: 3px; background: var(--ph-line); overflow: hidden; }
+.prog i { display: block; height: 100%; background: var(--teal); }
+.menu { background: var(--ph-sheet); border: 1px solid var(--ph-line); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.6); padding: 4px 0; }
+.menu div { padding: 9px 14px; font-size: 14px; }
+.menu .hl { color: var(--ph-accent-text); font-weight: 700; background: rgba(124,58,237,.14); }
+.menu small { display: block; color: var(--ph-muted); font-weight: 400; font-size: 11.5px; }
+.dots { display: flex; gap: 4px; flex-wrap: wrap; }
+.dots i { width: 12px; height: 12px; border-radius: 6px; background: var(--pink); }
+.dots i.miss { background: transparent; box-shadow: inset 0 0 0 2px var(--danger); }
+.dots i.gap { width: 6px; background: transparent; }
+.bars { display: flex; align-items: flex-end; gap: 3px; min-height: 64px; }
+.b { width: 28px; display: flex; flex-direction: column; align-items: center; }
+.b .t { font-size: 10px; font-weight: 700; }
+.b .bb { width: 100%; background: var(--ph-accent); border: 1px solid var(--ph-line); border-radius: 3px 3px 0 0; box-sizing: border-box; display: flex; align-items: flex-end; justify-content: center; font-size: 9px; font-weight: 700; padding-bottom: 2px; }
+.b.wu .bb { background: transparent; border: 1px dashed var(--ph-faint); color: var(--ph-faint); }
+.b.wu .t { color: var(--ph-faint); }
+.grade { display: grid; grid-template-columns: 46px 1fr auto; gap: 8px; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--ph-line); }
+.grade:last-child { border-bottom: 0; }
+.grade b { font-family: var(--display); font-size: 17px; }
+.tk { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 7px; font-size: 13px; font-weight: 700; margin-right: 3px; }
+.tk.f { background: var(--yellow-tint); color: var(--yellow); }
+.tk.s { background: var(--work-tint); color: var(--work-text); }
+.tk.x { box-shadow: inset 0 0 0 1px var(--ph-faint); color: var(--ph-faint); }
+.wheel { display: flex; justify-content: space-between; align-items: center; background: var(--ph-surface); border-radius: 12px; padding: 8px 10px; font-family: var(--display); color: var(--ph-faint); }
+.wheel b { color: var(--ph-text); font-size: 24px; padding: 0 10px; border-radius: 8px; background: var(--ph-tint); }
+.land { aspect-ratio: 19.5 / 9; display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; padding: 10px 18px; }
+.land .disc svg { width: 150px; height: 150px; }
+.srow { display: flex; align-items: center; gap: 10px; background: var(--ph-surface); border-radius: 12px; padding: 10px; position: relative; }
+.srow .sw { width: 6px; align-self: stretch; border-radius: 3px; }
+.swipe { display: flex; border-radius: 12px; overflow: hidden; }
+.swipe .srow { border-radius: 12px 0 0 12px; transform: translateX(0); flex: 1; min-width: 0; }
+.swipe .del { background: #B3261E; color: #fff; font-weight: 700; display: grid; place-items: center; padding: 0 18px; font-size: 14px; }
+.snack { background: #2E3036; border-radius: 10px; padding: 10px 12px; display: flex; justify-content: space-between; font-size: 13.5px; }
+.snack b { color: var(--ph-accent-text); }
+.rest { background: var(--teal-tint); border-radius: 14px; padding: 12px; display: grid; gap: 8px; }
+.stepper { display: flex; align-items: center; gap: 8px; }
+.stepper i { font-style: normal; width: 34px; height: 34px; border-radius: 17px; background: var(--ph-bg); display: grid; place-items: center; font-size: 20px; color: var(--ph-soft); }
+.stepper b { font-family: var(--display); font-size: 22px; min-width: 52px; text-align: center; }
+.chart svg { width: 100%; height: auto; display: block; }
+</style>
+
+<main>
+  <h1>Ideas from other apps</h1>
+  <p class="lede">Every suggestion from the review of climbing, hangboard and gym apps, drawn on the app's real screens with your own data where it exists
+    (Pinch, Squat variants, the “max hang 20mm” workout). Numbers on the cards match the list in the chat. Nothing here is built yet: pick the ones you want.</p>
+
+  <h2>Best fits</h2>
+  <div class="grid">
+
+    <!-- 1 -->
+    <section class="opt">
+      <div class="head"><span class="tag">1</span><span class="name">Suggest the next load</span></div>
+      <p class="from">From Alpha Progression's double progression; “weight recommendations” is on the hangboard reviewers' wish list.</p>
+      <ul class="desc">
+        <li>All reps done at the same load on the last two days → a teal hint under the tiles. Tap it to put 17 kg in the tile.</li>
+        <li>Intervals: the workout card and Finished say “try +11 kg” when every round was completed twice at +10.</li>
+        <li>Just a hint: no targets, no warnings, gone once you log a set.</li>
+      </ul>
+      <div class="phones">
+        <div class="phone">
+          <div class="pbar">‹ Pinch <span class="sp"></span><span class="pill teal num">rest 2:41</span></div>
+          <div class="tabs"><span class="on">Log</span><span>History</span><span>Graph</span><span>Records</span></div>
+          <div class="chips"><span class="chip on">normal</span><span class="chip">thumb</span></div>
+          <div class="seg"><span class="onL">L</span><span>R</span><span>Both</span></div>
+          <div class="tiles">
+            <div class="tile"><span class="small">kg</span><div class="tv"><i>−</i><b class="num">16</b><i>+</i></div></div>
+            <div class="tile"><span class="small">reps</span><div class="tv"><i>−</i><b class="num">3</b><i>+</i></div></div>
+          </div>
+          <div class="hint"><span>↑ Try <b>17 kg</b> on the left</span><small>3 reps at 16 kg on 7 Jul and on 14 Jul. Tap to use.</small></div>
+          <div class="btn go">Log set · L</div>
+        </div>
+        <div class="phone">
+          <div class="cap">Intervals</div>
+          <div class="card">
+            <div class="row"><b>max hang 20mm</b><span class="sp"></span><span class="small num">14:12</span></div>
+            <div class="ln">Last: Tue · 2/2 · hang · Load L +10 · R +10 kg</div>
+            <div class="ln" style="color:var(--teal-text)">↑ Try +11 kg: all rounds done twice at +10</div>
+          </div>
+          <div class="cap" style="margin-top:6px">Finished · logged values</div>
+          <div class="card">
+            <div class="row"><span>Load L</span><span class="sp"></span><b class="num">+10 kg</b><span class="small">= last time</span></div>
+            <div class="row"><span>Load R</span><span class="sp"></span><b class="num">+10 kg</b><span class="small">= last time</span></div>
+            <div class="ln" style="color:var(--teal-text)">Next time: try +11 kg</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section class="opt">
+      <div class="head"><span class="tag">2</span><span class="name">“Let go” during a hang</span></div>
+      <p class="from">From Grips &amp; Grades and the Hangboard app, which log success or failure for every hang.</p>
+      <ul class="desc">
+        <li>During a work series, a Let go button under the disc. One tap marks that hang as failed; the timer keeps running.</li>
+        <li>Finished and the Journal then read “hangs 11/12” and say which one, instead of only “completed”.</li>
+        <li>Works with suggestion 1: a let-go hang means no “try more” next time.</li>
+      </ul>
+      <div class="phones">
+        <div class="phone">
+          <div class="row small"><span>Round 2/2</span><span class="sp"></span><span>hang 5/6</span></div>
+          <div class="disc" data-disc="pink|hang|0:04||"></div>
+          <div class="btn out">Let go</div>
+          <div class="small" style="text-align:center">Tap if you came off early. The timer keeps going.</div>
+        </div>
+        <div class="phone">
+          <div class="pbar">Finished</div>
+          <div class="card">
+            <div class="row"><b>Hangs</b><span class="sp"></span><b class="num">11 / 12</b></div>
+            <div class="dots"><i></i><i></i><i></i><i></i><i></i><i></i><i class="gap"></i><i></i><i></i><i></i><i></i><i class="miss"></i><i></i></div>
+            <div class="ln">Round 2, hang 5: let go at 0:05 of 0:07</div>
+          </div>
+          <div class="cap">Journal</div>
+          <div class="card"><div class="row"><b>max hang 20mm</b><span class="sp"></span><span class="small">18:05 · 14 min</span></div>
+            <div class="ln">hangs 11/12 · Load L +10 · R +10 kg</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section class="opt">
+      <div class="head"><span class="tag">3</span><span class="name">Progress for interval workouts</span></div>
+      <p class="from">From Gneiss and Crimpd, whose charts are what reviewers like most. A Progress screen was in the first mockups and never built.</p>
+      <ul class="desc">
+        <li>The gym Graph and Records, for a workout's logged values: one chip per field (Load, Edge), 3 M / 6 M / 1 Y / All.</li>
+        <li>Left pink, right teal, gold cup on the current best, grey on beaten ones. Tap a point = that day in the Journal.</li>
+        <li>Opened from the workout card's ⋮ menu and from a session in the Journal.</li>
+      </ul>
+      <div class="phone">
+        <div class="pbar">‹ max hang 20mm</div>
+        <div class="tabs"><span class="on">Progress</span><span>Sessions</span></div>
+        <div class="chips"><span class="chip on">Load kg</span><span class="chip">Edge mm</span><span class="sp" style="flex:1"></span><span class="chip">3 M</span><span class="chip on">6 M</span><span class="chip">All</span></div>
+        <div class="chart" id="progChart"></div>
+        <div class="row small"><span style="color:var(--L)">● Left</span><span style="color:var(--R)">● Right</span><span class="sp"></span><span>8 sessions</span></div>
+        <div class="cap">Records</div>
+        <div class="card" style="gap:0;padding:4px 10px">
+          <div class="rec"><span class="r">Left</span><b class="num">+12 kg · 2 × 7 s</b><span class="gold small">best now · 17 Nov</span></div>
+          <div class="rec"><span class="r">Right</span><b class="num">+11 kg · 2 × 7 s</b><span class="gold small">best now · 17 Nov</span></div>
+          <div class="rec old"><span class="r">Left</span><b class="num">+10 kg</b><span class="grey small">until 3 Nov</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section class="opt">
+      <div class="head"><span class="tag">4</span><span class="name">Gym rest clock on the lock screen</span></div>
+      <p class="from">From Hevy's live notification (Android too). Intervals already does this for the interval player.</p>
+      <ul class="desc">
+        <li>After a set, a notification shows the rest counting up, the target, the exercise and the next set.</li>
+        <li>It buzzes at the target and keeps counting, like the clock on the log screen. Tap = back to that exercise.</li>
+        <li>The rest lives in the notification's service, so it survives the app closing (fixes a known gap).</li>
+      </ul>
+      <div class="phone lock">
+        <div class="clock num">18:42</div>
+        <div class="date">Tuesday 24 November</div>
+        <div class="notif">
+          <div class="row small"><span style="color:var(--ph-accent-text);font-weight:700">● Intervals</span><span>· Gym</span><span class="sp"></span><span>now</span></div>
+          <div class="row"><b style="font-size:16px">Rest <span class="num">1:42</span></b><span class="small">of 3:00</span><span class="sp"></span><span class="pill teal">Pinch</span></div>
+          <div class="prog"><i style="width:57%"></i></div>
+          <div class="ln">Next: <b>L 16 kg × 3</b> · set 4 · 52 min in the gym</div>
+          <div class="btns"><div class="btn" style="height:38px;font-size:13px">+30 s target</div><div class="btn" style="height:38px;font-size:13px">Open</div></div>
+        </div>
+        <div style="flex:1;min-height:40px"></div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section class="opt">
+      <div class="head"><span class="tag">5</span><span class="name">Warm-up sets</span></div>
+      <p class="from">From Hevy and FitNotes 2, where warm-up sets don't count in stats or records.</p>
+      <ul class="desc">
+        <li>One more quick tag on a set: Warm-up (teal, first in the row).</li>
+        <li>Warm-up bars are drawn as dashed outlines and left out of records, set counts, volume and the “N sets” lines.</li>
+        <li>Optional per exercise: “first set of the day is a warm-up” — off by default.</li>
+      </ul>
+      <div class="phones">
+        <div class="phone">
+          <div class="pbar">Set 1 · Squat</div>
+          <div class="ln">normal · 60 kg × 8 · rested —</div>
+          <div class="chips"><span class="chip teal">Warm-up ✓</span><span class="chip">Max</span><span class="chip">Bad form</span><span class="chip">Failed</span><span class="chip">+½ rep</span></div>
+          <div class="card" style="color:var(--ph-muted)">Note…</div>
+        </div>
+        <div class="phone">
+          <div class="cap">Journal · Tue 17 Nov</div>
+          <div class="row"><b>Squat</b><span class="sp"></span><span class="small" style="color:var(--work-text)">3 sets · 15 reps</span></div>
+          <div class="bars" id="wuBars"></div>
+          <div class="ln">+ 2 warm-up · top 90 × 5 · warm-ups not in records</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section class="opt">
+      <div class="head"><span class="tag">6</span><span class="name">Records by variant and by spec</span></div>
+      <p class="from">Already in DESIGN.md as “not yet”. Gneiss tracks every hang by grip and edge for the same reason.</p>
+      <ul class="desc">
+        <li>Records, Graph and the cups count per variant (Squat deep / half / normal) and per choice spec (Pinch grip normal / thumb).</li>
+        <li>A 50 kg deep squat stops hiding a record at half depth; thumb pinch gets its own cups.</li>
+        <li>“All” stays as the overall best.</li>
+      </ul>
+      <div class="phones">
+        <div class="phone">
+          <div class="pbar">‹ Squat</div>
+          <div class="tabs"><span>Log</span><span>History</span><span>Graph</span><span class="on">Records</span></div>
+          <div class="chips"><span class="chip">All</span><span class="chip">deep</span><span class="chip">half</span><span class="chip on">normal</span></div>
+          <div class="card" style="gap:0;padding:4px 10px">
+            <div class="rec"><span class="r">1 rep</span><b class="num">110 kg</b><span class="gold small">best now</span></div>
+            <div class="rec"><span class="r">3 reps</span><b class="num">100 kg</b><span class="gold small">best now</span></div>
+            <div class="rec"><span class="r">5 reps</span><b class="num">90 kg</b><span class="gold small">best now</span></div>
+            <div class="rec old"><span class="r">5 reps</span><b class="num">87.5 kg</b><span class="grey small">until 3 Nov</span></div>
+          </div>
+        </div>
+        <div class="phone">
+          <div class="pbar">‹ Pinch</div>
+          <div class="tabs"><span>Log</span><span>History</span><span>Graph</span><span class="on">Records</span></div>
+          <div class="chips"><span class="chip">All</span><span class="chip on">grip: normal</span><span class="chip">grip: thumb</span></div>
+          <div class="card" style="gap:0;padding:4px 10px">
+            <div class="rec"><span class="r" style="color:var(--L)">Left</span><b class="num">16 kg × 1</b><span class="gold small">best now · 7 Jul</span></div>
+            <div class="rec"><span class="r" style="color:var(--R)">Right</span><b class="num">21 kg × 3</b><span class="gold small">best now · 7 Jul</span></div>
+            <div class="rec old"><span class="r" style="color:var(--L)">Left</span><b class="num">15 kg × 1</b><span class="grey small">until 7 Jul</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7 -->
+    <section class="opt">
+      <div class="head"><span class="tag">7</span><span class="name">Do this day again</span></div>
+      <p class="from">From Crimpd's “clone a log”, added in a recent update.</p>
+      <ul class="desc">
+        <li>Hold a past gym day in the Journal → Do this day again.</li>
+        <li>Today opens with the same exercises in the same order, last time's sets shown as dashed boxes to beat.</li>
+        <li>Logging fills them in; dashed boxes left over are simply not saved. Lighter than making a group.</li>
+      </ul>
+      <div class="phones">
+        <div class="phone">
+          <div class="cap">Journal · Tue 17 Nov</div>
+          <div class="card"><div class="row"><b>Gym · Legs</b><span class="sp"></span><span class="small">1 PR</span></div><div class="ln">Squat 5 · Bulgarian Squat 4 · Hack Squat 3</div></div>
+          <div class="menu">
+            <div class="hl">Do this day again<small>Today, same exercises, last sets to beat</small></div>
+            <div>Open in Gym</div>
+            <div>Note…</div>
+          </div>
+        </div>
+        <div class="phone">
+          <div class="pbar">Today <span class="sp"></span><span class="small">from Tue 17 Nov</span></div>
+          <div class="card">
+            <div class="row"><b>Squat</b><span class="sp"></span><span class="small" style="color:var(--work-text)">2 / 5</span></div>
+            <div class="sqs"><span class="sq done num">90×5</span><span class="sq done num">90×5</span><span class="sq ghost num">90×5</span><span class="sq ghost num">90×4</span><span class="sq ghost num">80×6</span></div>
+          </div>
+          <div class="card">
+            <div class="row"><b>Bulgarian Squat</b><span class="sp"></span><span class="small">0 / 4</span></div>
+            <div class="sqs"><span class="sq ghost num">30×8</span><span class="sq ghost num">30×8</span><span class="sq ghost num">30×8</span><span class="sq ghost num">30×6</span></div>
+          </div>
+          <div class="card"><div class="row"><b>Hack Squat</b><span class="sp"></span><span class="small">0 / 3</span></div></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <h2>Climbing-specific</h2>
+  <div class="grid">
+
+    <!-- 8 -->
+    <section class="opt">
+      <div class="head"><span class="tag">8</span><span class="name">Finger load this week</span></div>
+      <p class="from">From ClimbMax's overtraining flags and the finger-injury research (tracking load is the main prevention).</p>
+      <ul class="desc">
+        <li>A Stats card from what you already log: hang time × load of interval workouts, plus sets of exercises tagged Fingers.</li>
+        <li>Shown as this week against your usual week (the average of the 4 before). Yellow above 130 %.</li>
+        <li>No new logging, no pain score, no advice text: just the number and where it came from.</li>
+      </ul>
+      <div class="phone">
+        <div class="pbar">Stats <span class="sp"></span><span class="small">Week</span></div>
+        <div class="card">
+          <div class="row"><b>Finger load</b><span class="sp"></span><span class="pill yellow">high</span></div>
+          <div class="row" style="align-items:baseline"><b style="font-family:var(--display);font-size:34px;color:var(--yellow)" class="num">152%</b><span class="small">of your usual week</span></div>
+          <div class="chart" id="loadChart"></div>
+          <div class="row small"><span>12 weeks</span><span class="sp"></span><span>- - usual (last 4 weeks)</span></div>
+        </div>
+        <div class="cap">This week</div>
+        <div class="card" style="gap:4px">
+          <div class="row"><span>max hang 20mm ×2</span><span class="sp"></span><span class="num">48%</span></div>
+          <div class="row"><span>Pinch · 14 sets</span><span class="sp"></span><span class="num">31%</span></div>
+          <div class="row"><span>block pulls 85%</span><span class="sp"></span><span class="num">21%</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9 -->
+    <section class="opt">
+      <div class="head"><span class="tag">9</span><span class="name">Grip and edge on the disc</span></div>
+      <p class="from">From the hangboard reviewers' ideal app (grip shown during the hang) and Gneiss's grip / edge per hang.</p>
+      <ul class="desc">
+        <li>Logged values show under the series name on the disc: readable from the board.</li>
+        <li>Series log fields can be a choice, like gym specs: Grip open / half crimp / full crimp, picked once per series.</li>
+        <li>The choice is saved with each round and splits records like suggestion 6.</li>
+      </ul>
+      <div class="phones">
+        <div class="phone">
+          <div class="row small"><span>Round 1/2</span><span class="sp"></span><span>hang 2/6</span></div>
+          <div class="disc" data-disc="pink|hang|0:05|20 mm · half crimp|+10 kg"></div>
+        </div>
+        <div class="phone">
+          <div class="pbar">hang · Log</div>
+          <div class="card">
+            <div class="row"><b>Load</b><span class="small">kg · left and right apart</span><span class="sp"></span><span class="small">✎</span></div>
+          </div>
+          <div class="card">
+            <div class="row"><b>Edge</b><span class="small">mm</span><span class="sp"></span><b class="num">20</b></div>
+          </div>
+          <div class="card">
+            <div class="row"><b>Grip</b><span class="small">choice</span></div>
+            <div class="chips"><span class="chip">open</span><span class="chip on">half crimp</span><span class="chip">full crimp</span></div>
+          </div>
+          <div class="small">+ Add field · number or choice</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10 -->
+    <section class="opt">
+      <div class="head"><span class="tag">10</span><span class="name">Climbing session log</span></div>
+      <p class="from">From BetaFlow, SendLog and Boulder Log: grade plus flash / send / try, then best grade and flash rate.</p>
+      <ul class="desc">
+        <li>A third kind of Journal entry, Climb (board, boulder or lead), next to interval and gym days.</li>
+        <li>Quick log: grade wheel + Flash / Sent / Try. Each tap is one climb; tries on the same grade stack.</li>
+        <li>Stats: sends per week, best grade, flash rate. Only if you want your climbing in this app too.</li>
+      </ul>
+      <div class="phones">
+        <div class="phone">
+          <div class="cap">Journal · Thu 19 Nov</div>
+          <div class="card">
+            <div class="row"><b>Climb · board</b><span class="sp"></span><span class="small">18:30 · 1:20</span></div>
+            <div class="ln">9 climbs · 6 sent · best <b>7A</b> · 2 flashes</div>
+            <div>
+              <div class="grade"><b>6C</b><span><span class="tk f">⚡</span><span class="tk s">✓</span><span class="tk s">✓</span></span><span class="small">3</span></div>
+              <div class="grade"><b>7A</b><span><span class="tk f">⚡</span><span class="tk s">✓</span><span class="tk x">·</span><span class="tk x">·</span></span><span class="small">4</span></div>
+              <div class="grade"><b>7A+</b><span><span class="tk x">·</span><span class="tk x">·</span></span><span class="small">project</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="phone">
+          <div class="pbar">Log a climb</div>
+          <div class="chips"><span class="chip on">Board</span><span class="chip">Boulder</span><span class="chip">Lead</span></div>
+          <div class="wheel num"><span>6B+</span><span>6C</span><b>7A</b><span>7A+</span><span>7B</span></div>
+          <div class="btns"><div class="btn" style="color:var(--yellow)">⚡ Flash</div><div class="btn" style="color:var(--work-text)">✓ Sent</div><div class="btn">Try</div></div>
+          <div class="ln">Today: 9 climbs · last: 7A try</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <h2>From your own backlog</h2>
+  <div class="grid">
+
+    <!-- 11 -->
+    <section class="opt">
+      <div class="head"><span class="tag">11</span><span class="name">Landscape player</span></div>
+      <p class="from">DESIGN.md, player: “landscape layout for viewing from far away”.</p>
+      <ul class="desc">
+        <li>Phone on its side: the disc on the left as big as the height allows, round, next series and controls on the right.</li>
+      </ul>
+      <div class="phone land">
+        <div class="disc" data-disc="pink|hang|0:05||+10 kg"></div>
+        <div style="display:grid;gap:8px;min-width:0">
+          <div class="row small"><span>Round 1/2</span><span class="sp"></span><span>12:40 left</span></div>
+          <div class="card"><span class="small">Next</span><div class="row"><b>rest</b><span class="sp"></span><b class="num" style="color:var(--yellow)">0:03</b></div></div>
+          <div class="btns"><div class="btn">⏮</div><div class="btn go">❚❚</div><div class="btn">⏭</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12 -->
+    <section class="opt">
+      <div class="head"><span class="tag">12</span><span class="name">Change loads in the rest between rounds</span></div>
+      <p class="from">DESIGN.md, 4b: “countdown plus − / + for the logged fields of the next round”.</p>
+      <ul class="desc">
+        <li>The timer keeps running; the values go into the next round and Finished starts from them.</li>
+      </ul>
+      <div class="phone">
+        <div class="rest">
+          <div class="row"><b style="color:var(--teal-text)">Rest between rounds</b><span class="sp"></span><b class="num" style="font-family:var(--display);font-size:26px">3:41</b></div>
+          <div class="small">Next: round 2 of 2</div>
+        </div>
+        <div class="card">
+          <div class="row"><span style="color:var(--L);font-weight:700;width:52px">Load L</span><span class="sp"></span><div class="stepper"><i>−</i><b class="num">+10</b><i>+</i></div></div>
+          <div class="row"><span style="color:var(--R);font-weight:700;width:52px">Load R</span><span class="sp"></span><div class="stepper"><i>−</i><b class="num">+11</b><i>+</i></div></div>
+          <div class="row"><span style="width:52px">Edge</span><span class="sp"></span><div class="stepper"><i>−</i><b class="num">20</b><i>+</i></div></div>
+        </div>
+        <div class="btns"><div class="btn">❚❚</div><div class="btn">Skip rest</div></div>
+      </div>
+    </section>
+
+    <!-- 13 -->
+    <section class="opt">
+      <div class="head"><span class="tag">13</span><span class="name">Swipe to delete in the editor</span></div>
+      <p class="from">DESIGN.md, Edit workout: “swipe a series to delete”.</p>
+      <ul class="desc">
+        <li>Swipe a series left: red Delete behind it; let go past half = deleted, with Undo in the snackbar.</li>
+      </ul>
+      <div class="phone">
+        <div class="pbar">‹ max hang 20mm</div>
+        <div class="cap">Each round ×2</div>
+        <div class="srow"><span class="sw" style="background:var(--teal)"></span><b>warm-up</b><span class="sp" style="flex:1"></span><span class="num">0:05</span></div>
+        <div class="swipe">
+          <div class="srow" style="transform:translateX(-4px)"><span class="sw" style="background:var(--pink)"></span><b>hang</b><span style="flex:1"></span><span class="num">0:07</span></div>
+          <div class="del">Delete</div>
+        </div>
+        <div class="srow"><span class="sw" style="background:var(--yellow)"></span><b>rest</b><span style="flex:1"></span><span class="num">0:03</span></div>
+        <div style="flex:1;min-height:30px"></div>
+        <div class="snack"><span>“hang” deleted</span><b>Undo</b></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+const C = { pink: "#E91E63", teal: "#00BFA5", line: "#23262C", text: "#F2F3F5", muted: "#9AA0AA", L: "#FF8AB3", R: "#2DD4BF", gold: "#FFC94D", faint: "#6E747E", accent: "#7C3AED" };
+const cup = (x, y, fill) => `<path transform="translate(${x - 6},${y - 6}) scale(.5)" d="M7 3h10v3h3v2a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 14.9V18h3v3H8v-3h3v-3.1A5 5 0 0 1 8.3 12H8a4 4 0 0 1-4-4V6h3z" fill="${fill}"/>`;
+
+// the player disc: series ring (done grey, current thick), rounds ring, filled disc with the texts
+document.querySelectorAll("[data-disc]").forEach(el => {
+  const [col, name, time, sub, load] = el.dataset.disc.split("|");
+  const c = C[col] || col, R = 92, r2 = 78, arc = (rad, a0, a1) => {
+    const p = a => [100 + rad * Math.sin(a), 100 - rad * Math.cos(a)];
+    const [x0, y0] = p(a0), [x1, y1] = p(a1);
+    return `M${x0.toFixed(1)} ${y0.toFixed(1)}A${rad} ${rad} 0 ${a1 - a0 > Math.PI ? 1 : 0} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}`;
+  };
+  const segs = [], n = 12, gap = 0.06;
+  for (let i = 0; i < n; i++) {
+    const a0 = i / n * 2 * Math.PI + gap, a1 = (i + 1) / n * 2 * Math.PI - gap, cur = i === 4;
+    segs.push(`<path d="${arc(R, a0, a1)}" stroke="${i < 4 ? "#3A3D44" : i % 2 ? "#FFC107" : c}" stroke-width="${cur ? 9 : 5}" stroke-linecap="round" fill="none"/>`);
+  }
+  const y = sub ? 84 : 92;
+  el.innerHTML = `<svg viewBox="0 0 200 200" role="img" aria-label="${name} ${time}">${segs.join("")}
+    <path d="${arc(r2, 0.05, 2 * Math.PI * 0.5)}" stroke="#3A3D44" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <path d="${arc(r2, 2 * Math.PI * 0.5 + 0.05, 2 * Math.PI - 0.05)}" stroke="${C.accent}" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <circle cx="100" cy="100" r="70" fill="${c}"/>
+    <text x="100" y="${y - 22}" text-anchor="middle" fill="#fff" font-family="Inter, system-ui" font-weight="700" font-size="15">${name}</text>
+    <text x="100" y="${y + 16}" text-anchor="middle" fill="#fff" font-family="Space Grotesk, system-ui" font-weight="700" font-size="40">${time}</text>
+    ${sub ? `<text x="100" y="${y + 38}" text-anchor="middle" fill="#fff" font-family="Inter, system-ui" font-weight="600" font-size="12.5">${sub}</text>` : ""}
+    ${load ? `<text x="100" y="${(sub ? y + 56 : y + 38)}" text-anchor="middle" fill="#fff" font-family="Space Grotesk, system-ui" font-weight="700" font-size="15">${load}</text>` : ""}
+  </svg>`;
+});
+
+// 3: load per session, left and right, with record cups
+(() => {
+  const days = ["8 Sep", "22 Sep", "6 Oct", "20 Oct", "3 Nov", "10 Nov", "17 Nov", "24 Nov"];
+  const L = [8, 8, 9, 10, 10, 11, 12, 12], Rv = [8, 9, 9, 9, 10, 10, 11, 11];
+  const W = 300, H = 140, x0 = 28, x1 = 292, y0 = 12, y1 = 116, lo = 6, hi = 14;
+  const X = i => x0 + (x1 - x0) * i / (days.length - 1), Y = v => y1 - (y1 - y0) * (v - lo) / (hi - lo);
+  let g = "";
+  for (let v = 6; v <= 14; v += 2) g += `<line x1="${x0}" x2="${x1}" y1="${Y(v)}" y2="${Y(v)}" stroke="${C.line}"/><text x="${x0 - 6}" y="${Y(v) + 4}" text-anchor="end" font-size="10" fill="${C.muted}">+${v}</text>`;
+  [0, 3, 7].forEach(i => g += `<text x="${X(i)}" y="${H - 6}" text-anchor="middle" font-size="10" fill="${C.muted}">${days[i]}</text>`);
+  const line = (vals, col) => `<polyline points="${vals.map((v, i) => `${X(i)},${Y(v)}`).join(" ")}" fill="none" stroke="${col}" stroke-width="2.2"/>` + vals.map((v, i) => `<circle cx="${X(i)}" cy="${Y(v)}" r="3" fill="${col}"/>`).join("");
+  g += line(Rv, C.R) + line(L, C.L);
+  // cups: first time each record was set; gold = still the best
+  g += cup(X(3), Y(10) - 10, C.faint) + cup(X(5), Y(11) - 10, C.faint) + cup(X(6), Y(12) - 10, C.gold) + cup(X(6), Y(11) + 12, C.gold);
+  document.getElementById("progChart").innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Load per session, left and right">${g}</svg>`;
+})();
+
+// 5: warm-up bars dashed, work bars purple
+document.getElementById("wuBars").innerHTML = [[8, 60, 1], [5, 75, 1], [5, 90], [5, 90], [5, 90]].map(([r, kg, wu], i, a) => {
+  const h = 6 + 40 * r / 8, first = i === 0 || a[i - 1][1] !== kg;
+  return `<div class="b${wu ? " wu" : ""}"><span class="t">${r}</span><div class="bb" style="height:${Math.max(h, 18)}px">${first ? kg : ""}</div></div>`;
+}).join("");
+
+// 8: finger load per week with the usual-week line
+(() => {
+  const v = [70, 85, 90, 60, 95, 100, 88, 92, 98, 96, 94, 146];
+  const W = 300, H = 110, x0 = 4, y1 = 96, top = 8, max = 160, bw = 18, step = (W - 8) / v.length;
+  const Y = n => y1 - (y1 - top) * n / max;
+  let g = v.map((n, i) => `<rect x="${x0 + i * step + 2}" y="${Y(n)}" width="${bw}" height="${y1 - Y(n)}" rx="3" fill="${i === v.length - 1 ? C.gold : i >= v.length - 5 ? "#4C3A86" : "#2E2550"}"/>`).join("");
+  const usual = 96;
+  g += `<line x1="0" x2="${W}" y1="${Y(usual)}" y2="${Y(usual)}" stroke="${C.text}" stroke-dasharray="4 4" stroke-width="1.2"/>`;
+  g += `<text x="${W - 4}" y="${Y(usual) - 5}" text-anchor="end" font-size="10" fill="${C.muted}">usual</text>`;
+  g += `<text x="${x0 + (v.length - 1) * step + 11}" y="${H - 2}" text-anchor="middle" font-size="10" fill="${C.muted}">now</text>`;
+  document.getElementById("loadChart").innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Finger load per week, this week 152% of usual">${g}</svg>`;
+})();
+</script>

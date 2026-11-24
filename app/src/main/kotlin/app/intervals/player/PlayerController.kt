@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.setValue
 import app.intervals.core.AppSettings
 import app.intervals.core.Cue
@@ -31,9 +32,34 @@ class PlayerController(
     private val onChange: () -> Unit = {},
     /** Time for the player's opening animation before the workout clock starts (the warm-up is the get-ready). */
     private val openingMs: Long = 0L,
-    /** Set before the start, shown small on the disc during that series: series name -> "20 mm · 5 kg" (3B). */
-    val details: Map<String, String> = emptyMap(),
+    /** The values set before the start (3B); shown on the disc and changeable in the rests between rounds. */
+    setup: Map<FieldKey, Double> = emptyMap(),
 ) {
+    /** The workout's logged values, live: changed in the rests between rounds, they count from the next round. */
+    val keys: List<FieldKey> = fieldKeys(saved)
+    val values = mutableStateMapOf<FieldKey, Double>().apply { keys.forEach { put(it, setup[it] ?: 0.0) } }
+    /** The values each round was started with (mockup intervals-ideas-from-other-apps.html, 12). */
+    val perRound = mutableMapOf<Int, Map<FieldKey, Double>>()
+    /** Work series let go of early (mockup ideas, 2), by segment index. */
+    val letGo = mutableStateMapOf<Int, app.intervals.core.LetGo>()
+
+    /** What is shown small on the disc during [seg] (mockup ideas, 9): "20 mm · half crimp · 10 kg", this side's values only. */
+    fun detailFor(seg: app.intervals.core.Segment): String? =
+        keys.filter { it.series == seg.name && (it.side == null || it.side == seg.side) }
+            .map { it.text(values[it] ?: 0.0) }.filter { it.isNotEmpty() }
+            .joinToString(" · ").ifEmpty { null }
+
+    /** Marks the running work series as let go of (the timer keeps going); a second tap takes it back. */
+    fun toggleLetGo() {
+        if (starting || ended) return
+        val now = elapsedMs
+        val st = plan.stateAt(now) ?: return
+        if (!plan.isWork(st.segment)) return
+        if (letGo.remove(st.index) != null) return
+        val rep = plan.workCount(st)?.first ?: 1
+        letGo[st.index] = app.intervals.core.LetGo(st.segment.name, st.round, rep, st.segment.side, ((now / 1000) - st.segment.startSec).toInt())
+    }
+
     /** True while the player screen is visible: then the clock ticks at every whole second (the rings animate per frame on their own). */
     @Volatile var uiVisible = true
     private var lastIndex = -1
@@ -74,8 +100,14 @@ class PlayerController(
                 if (plan.isOver(now)) { finish(true); break }
                 tick = now
                 pausedAt?.let { pauseSeconds = ((SystemClock.elapsedRealtime() - it) / 1000).toInt() }
-                val idx = plan.stateAt(now)?.index ?: -1
-                if (idx != lastIndex) { lastIndex = idx; onChange() }
+                val stNow = plan.stateAt(now)
+                val idx = stNow?.index ?: -1
+                if (idx != lastIndex) {
+                    lastIndex = idx
+                    // a round takes the values it starts with; changes made in the rest before it count from here
+                    if (stNow != null && stNow.segment.kind != app.intervals.core.SegmentKind.ROUND_REST) perRound[stNow.round] = values.toMap()
+                    onChange()
+                }
                 delay(nextWakeMs(now))
             }
         }

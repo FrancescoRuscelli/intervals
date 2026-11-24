@@ -1,8 +1,14 @@
 package app.intervals.ui
 
+import app.intervals.core.intervalLoadHints
 import android.app.Application
 import android.database.SQLException
 import android.os.SystemClock
+import app.intervals.player.valueFor
+import kotlinx.coroutines.flow.first
+import app.intervals.core.Side
+import app.intervals.core.letter
+import app.intervals.core.summary
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -64,6 +70,8 @@ sealed interface Overlay {
     data class GymLog(val exerciseId: Long, val day: String, val tab: Int = 0) : Overlay
     /** Stats on its own screen, opened on the Journal's month (yyyy-MM). */
     data class Stats(val month: String) : Overlay
+    /** An interval workout's logged values over time (mockup intervals-ideas-from-other-apps.html, 3). */
+    data class WorkoutProgress(val workoutId: Long) : Overlay
     /** What a Stats tile or row counts, as a list: [kind] sessions, gymDays, exercises or records, days in [from, to). */
     data class StatsList(val kind: String, val from: String, val to: String, val name: String? = null) : Overlay
     data class GymPick(val day: String) : Overlay
@@ -84,7 +92,7 @@ data class ActiveGymGroup(val id: Long, val startedAt: Long, val startTime: Loca
 
 data class GymDayRoute(val day: String, val returnToJournal: Boolean)
 
-data class GymRest(val day: String, val startedAt: Long, val targetSec: Int, val visible: Boolean = true)
+data class GymRest(val day: String, val startedAt: Long, val targetSec: Int, val visible: Boolean = true, val exerciseId: Long = 0)
 
 /** The workout being edited: [id] null for a new one. */
 data class Draft(val id: Long?, val workout: Workout, val original: Workout) {
@@ -114,17 +122,22 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     var journalFocusDay by mutableStateOf<String?>(null)
 
     fun openJournalDay(day: String) {
-        overlays.removeAll { it is Overlay.Stats || it is Overlay.StatsList }
+        overlays.removeAll { it is Overlay.Stats || it is Overlay.StatsList || it is Overlay.WorkoutProgress }
         journalFocusDay = day
         selectTab(Tab.JOURNAL)
     }
 
     fun openSettings() { overlays += Overlay.Settings }
+
+    fun openWorkoutProgress(workoutId: Long) { overlays += Overlay.WorkoutProgress(workoutId) }
     val overlays = mutableStateListOf<Overlay>()
     var draft by mutableStateOf<Draft?>(null)
         private set
     /** One-line message shown at the bottom (snackbar). */
     var message by mutableStateOf<String?>(null)
+
+    /** Set together with [message] when the snackbar should offer Undo. */
+    var undo: (() -> Unit)? = null
 
     fun back(): Boolean {
         if (overlays.isEmpty()) return false
@@ -190,6 +203,16 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     val lastByWorkout: StateFlow<Map<Long, Session>> =
         repo.sessionsBetween(0, Long.MAX_VALUE)
             .map { list -> list.filter { it.workoutId != null }.groupBy { it.workoutId!! }.mapValues { (_, s) -> s.maxBy { it.startedAt } } }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
+    /** Loads to try next time on each workout (mockup intervals-ideas-from-other-apps.html, 1), from its last two sessions. */
+    val loadHints: StateFlow<Map<Long, List<LoggedValue>>> =
+        repo.sessionsBetween(0, Long.MAX_VALUE)
+            .map { list ->
+                list.filter { it.workoutId != null }.groupBy { it.workoutId!! }
+                    .mapValues { (_, s) -> intervalLoadHints(s.sortedByDescending { it.startedAt }) }
+                    .filterValues { it.isNotEmpty() }
+            }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
     fun sessions(fromMillis: Long, toMillis: Long) = repo.sessionsBetween(fromMillis, toMillis)
@@ -271,6 +294,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         else if (ia.finished != null && Overlay.Finished !in overlays) overlays += Overlay.Finished
         viewModelScope.launch { repo.upgradeGym() }
         viewModelScope.launch { RestAlarm.stops.collect { gymRest = gymRest?.copy(visible = false) } }
+        viewModelScope.launch { RestAlarm.targets.collect { t -> gymRest = gymRest?.copy(targetSec = t) } }
     }
 
     fun player(id: Long) {
@@ -281,6 +305,9 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     suspend fun lastValues(workoutId: Long) = repo.lastValues(workoutId)
+
+    /** Every session of a workout, newest first (Progress, load hints). */
+    fun sessionsOf(workoutId: Long) = repo.sessionsOf(workoutId)
 
     /** Starts after the setup screen with [setup] as this session's values. */
     fun startWithSetup(id: Long, setup: Map<app.intervals.player.FieldKey, Double>) {
@@ -297,16 +324,28 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         lateinit var c: PlayerController
         c = PlayerController(saved, s, sounds, ia.appScope, onEnd = { completed, elapsed, rounds, startedAt ->
             ia.appScope.launch {
-                // the values set before the start are this session's; else last time's
-                val last = if (setup.isNotEmpty()) setup.map { (k, v) -> LoggedValue(k.series, k.field, k.unit, 1, k.side, v) } else repo.lastValues(saved.id)
-                ia.finished = FinishedInfo(saved, completed, elapsed, rounds, startedAt, last)
+                // the values the run ended with (set before the start, changed between rounds); the last session's to compare
+                val last = repo.lastValues(saved.id)
+                val now = c.values.toMap()
+                val letGo = c.letGo.values.sortedWith(compareBy({ it.round }, { it.rep }))
+                val workDone = c.plan.workStarted(elapsed)
+                // the loads to try next time: this run (if clean) and the session before both at the same kg
+                val previous = repo.sessionsOf(saved.id).first()
+                val thisRun = app.intervals.core.Session(workoutName = saved.workout.name, startedAt = startedAt, durationSec = 0,
+                    roundsDone = rounds, roundsTotal = saved.workout.rounds, completed = completed, letGo = letGo,
+                    values = now.map { (k, v) -> k.logged(1, v) })
+                val hints = app.intervals.core.intervalLoadHints(listOf(thisRun) + previous)
+                    .mapNotNull { h -> c.keys.firstOrNull { it.matches(h) }?.let { it to h.value } }.toMap()
+                val segs = c.plan.timeline.segments
+                val letGoAt = c.letGo.keys.map { idx -> segs.take(idx).count { c.plan.isWork(it) } }.toSet()
+                ia.finished = FinishedInfo(saved, completed, elapsed, rounds, startedAt, last, now, c.perRound.toMap(), letGo, workDone, hints, letGoAt)
                 ia.player?.close()
                 ia.player = null
                 PlayerService.stop(ia)
                 overlays.remove(Overlay.Player)
                 if (Overlay.Finished !in overlays) overlays += Overlay.Finished
             }
-        }, onChange = { PlayerService.update(ia, c) }, openingMs = 1000L, details = app.intervals.player.setupDetails(setup))
+        }, onChange = { PlayerService.update(ia, c) }, openingMs = 1000L, setup = setup)
         ia.player = c
         overlays += Overlay.Player
         PlayerService.start(ia)
@@ -316,14 +355,16 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun saveSession(note: String, values: Map<FieldKey, Double>, repeat: Boolean) = viewModelScope.launch {
         val f = finished ?: return@launch
         val rounds = f.roundsDone.coerceAtLeast(1)
+        // each round keeps the values it was done with, unless the value was changed on Finished (then all rounds take it)
         val logged = values.flatMap { (k, v) ->
-            (1..rounds).map { r -> LoggedValue(k.series, k.field, k.unit, r, k.side, v) }
+            val edited = f.now[k] != v
+            (1..rounds).map { r -> k.logged(r, if (edited) v else f.perRound[r]?.get(k) ?: v) }
         }
         repo.addSession(
             Session(
                 workoutId = f.saved.id, workoutName = f.saved.workout.name, startedAt = f.startedAt,
                 durationSec = (f.elapsedMs / 1000).toInt(), roundsDone = f.roundsDone, roundsTotal = f.saved.workout.rounds,
-                completed = f.completed, note = note.trim(), values = logged,
+                completed = f.completed, note = note.trim(), values = logged, letGo = f.letGo, workDone = f.workDone,
             ),
         )
         ia.finished = null
@@ -380,6 +421,15 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun openGymLog(exerciseId: Long, day: String, tab: Int = 0) { overlays += Overlay.GymLog(exerciseId, day, tab) }
 
+    /** From the rest notification: that exercise's log, unless it is already on top or a workout runs. */
+    fun openRestExercise(exerciseId: Long, day: String) {
+        val top = overlays.lastOrNull()
+        if (top == Overlay.Player || top == Overlay.Finished) return
+        if (top is Overlay.GymLog && top.exerciseId == exerciseId && top.day == day) return
+        overlays.removeAll { it is Overlay.GymLog && it.exerciseId == exerciseId && it.day == day }
+        openGymLog(exerciseId, day)
+    }
+
     fun openStats(month: java.time.YearMonth) { overlays += Overlay.Stats(month.toString()) }
 
     fun openStatsList(kind: String, from: java.time.LocalDate, to: java.time.LocalDate, name: String? = null) {
@@ -404,8 +454,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         message = "Deleted “${ex.name}” and its sets"
     }
 
-    fun mergeExercise(from: Exercise, into: Exercise, asVariant: String? = null) = viewModelScope.launch {
-        repo.mergeExercises(from.id, into.id, asVariant)
+    fun mergeExercise(from: Exercise, into: Exercise, asVariant: String? = null, ownVariant: String? = null) = viewModelScope.launch {
+        repo.mergeExercises(from.id, into.id, asVariant, ownVariant)
         overlays.removeAll { it is Overlay.GymLog && it.exerciseId == from.id }
         message = "“${from.name}” merged into “${into.name}”"
     }
@@ -496,8 +546,24 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     var gymRest by mutableStateOf<GymRest?>(null)
         private set
     private val logMutex = Mutex()
+    // the notification's bar to the target: redrawn every 5 s while the rest runs and the app is alive (it lives in the app's scope)
+    private var restBar: kotlinx.coroutines.Job? = null
+
+    init {
+        // a rest still running from before the app was closed (mockup intervals-ideas-from-other-apps.html, 4)
+        RestAlarm.saved(getApplication())?.let { r ->
+            val age = SystemClock.elapsedRealtime() - r.startedAt
+            if (r.day == LocalDate.now().toString() && age < 3 * 3600_000L && gymRest == null) {
+                gymRest = GymRest(r.day, r.startedAt, r.targetSec, true, r.exerciseId)
+                // and its notification again (gone after an update or when its channel changed)
+                RestAlarm.start(getApplication(), r.title, r.startedAt, r.targetSec, r.next, r.exerciseId, r.day)
+                tickRestBar()
+            }
+        }
+    }
 
     fun dismissGymRest() {
+        restBar?.cancel()
         gymRest = gymRest?.copy(visible = false)
         RestAlarm.cancel(getApplication())
     }
@@ -508,21 +574,43 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         val day = sets.firstOrNull()?.day ?: return@launch
         val today = day == LocalDate.now().toString()
         val run = activeGroups[day]
-        // shortcut: the clock lives in memory, so a rest across an app restart is not saved
+        // the rest is also kept by RestAlarm, so one across an app restart is still saved
         logMutex.withLock {
             val rest = gymRest?.takeIf { today && it.day == day }
                 ?.let { (now - it.startedAt) / 1000 }?.takeIf { it in 0 until 3 * 3600L }?.toInt()
             repo.addSets(sets.mapIndexed { i, s -> s.copy(restSec = if (i == 0) rest else null) })
-            val name = exercises.value.firstOrNull { it.id == sets.first().exerciseId }?.name.orEmpty()
-            if (today) startGymRest(GymRest(day, now, targetSec, visible = run == activeGroups[day]), name)
+            val ex = exercises.value.firstOrNull { it.id == sets.first().exerciseId }
+            if (today) startGymRest(GymRest(day, now, targetSec, visible = run == activeGroups[day], exerciseId = ex?.id ?: 0), ex?.name.orEmpty(),
+                ex?.let { nextSetText(it, day, sets) }.orEmpty())
         }
     }
 
     /** The rest clock in the app, and outside it the notification and the buzz (RestAlarm). */
-    private fun startGymRest(rest: GymRest, exercise: String) {
+    private fun startGymRest(rest: GymRest, exercise: String, next: String = "") {
         gymRest = rest
         val app = getApplication<Application>()
-        if (rest.visible) RestAlarm.start(app, exercise, rest.startedAt, rest.targetSec) else RestAlarm.cancel(app)
+        if (rest.visible) { RestAlarm.start(app, exercise, rest.startedAt, rest.targetSec, next, rest.exerciseId, rest.day); tickRestBar() } else RestAlarm.cancel(app)
+    }
+
+    private fun tickRestBar() {
+        restBar?.cancel()
+        restBar = ia.appScope.launch {
+            while (true) {
+                kotlinx.coroutines.delay(5_000)
+                if (!RestAlarm.refresh(ia)) break
+            }
+        }
+    }
+
+    /** "set 4 · 90 × 5", "L 16 × 3": what the log screen will offer next (for the rest notification). */
+    private suspend fun nextSetText(ex: Exercise, day: String, logged: List<GymSet>): String {
+        val today = repo.exerciseDay(ex.id, day).first()
+        val last = repo.lastSets(ex.id, day)
+        val side = if (ex.perSide && logged.size == 1) when (logged.first().side) { Side.LEFT -> Side.RIGHT; Side.RIGHT -> Side.LEFT; null -> null } else null
+        // as the log shows it: no 0 kg (body weight), the bands by name only here (a notification has no dots)
+        val next = app.intervals.core.startValues(today, last, side)?.let { it.copy(weightKg = it.weightKg?.takeIf { w -> w != 0.0 }) } ?: return ""
+        val plain = ex.copy(specs = emptyList())
+        return if (side != null) "${side.letter} ${next.summary(plain)}" else "set ${today.size + 1} · ${next.summary(plain)}"
     }
 
     fun updateGymSet(set: GymSet) = viewModelScope.launch { repo.updateSet(set) }
@@ -535,6 +623,13 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     private var deletedSets: List<app.intervals.data.GymSetEntity> = emptyList()
 
     fun deleteGymSets(ids: List<Long>) = viewModelScope.launch { deletedSets = repo.deleteSets(ids) }
+
+    /** Moves sets logged under the wrong exercise (mockup intervals-move-sets.html, C); the snackbar offers Undo. */
+    fun moveGymSets(ids: List<Long>, into: Exercise, variant: String?) = viewModelScope.launch {
+        val before = repo.moveSetsTo(ids, into.id, variant)
+        undo = { viewModelScope.launch { repo.putBackSets(before) } }
+        message = "Moved ${ids.size} set${if (ids.size == 1) "" else "s"} to ${into.name}" + (variant?.let { " · $it" } ?: "")
+    }
 
     fun undoDeleteGymSets() = viewModelScope.launch {
         repo.restoreSets(deletedSets)

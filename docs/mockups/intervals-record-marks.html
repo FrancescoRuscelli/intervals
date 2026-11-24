@@ -1,0 +1,79 @@
+<title>Record Cups</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: one card per option, each a phone with Pinch's History days (left hand), the current record against the beaten ones */
+:root {
+  --bg: #f4f2fa; --fg: #18151f; --muted: #5b5668; --line: #dfdbe9; --accent: #6d28d9; --card: #ffffff;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif;
+  --ph-bg: #000; --ph-surface: #1A1C21; --ph-text: #F2F3F5; --ph-muted: #9AA0AA; --ph-faint: #6E747E; --ph-line: #23262C;
+  --bar: #7C3AED; --gold: #FFC94D; --work: #FF8AB3;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
+main { max-width: 1240px; margin: 0 auto; display: grid; gap: 14px; }
+h1 { font-family: var(--display); font-size: 1.8rem; margin: 0; text-wrap: balance; }
+.lede { color: var(--muted); margin: 0; max-width: 84ch; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+.opt { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; display: grid; gap: 8px; min-width: 0; }
+.head { display: flex; gap: 10px; align-items: baseline; }
+.tag { font-family: var(--display); font-weight: 700; color: var(--accent); font-size: 1.1rem; }
+.name { font-weight: 600; }
+.desc { color: var(--muted); font-size: .86rem; margin: 0; }
+.phone { background: var(--ph-bg); border-radius: 22px; padding: 12px; color: var(--ph-text); font-size: 14px; display: grid; gap: 12px; }
+.day { display: grid; gap: 4px; }
+.dh { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; }
+.dh span:last-child { color: var(--work); font-size: 12px; }
+.bars { display: flex; align-items: flex-end; gap: 3px; min-height: 70px; }
+.b { width: 30px; display: flex; flex-direction: column; align-items: center; }
+.b .top { font-size: 10px; font-weight: 700; }
+.b .bar { width: 100%; background: var(--bar); border: 1px solid var(--ph-line); border-radius: 3px 3px 0 0; position: relative; box-sizing: border-box; }
+.b .bar i { position: absolute; left: 0; right: 0; font-style: normal; text-align: center; font-size: 8px; font-weight: 700; color: #fff; }
+.b .bar i.s { top: 2px; } .b .bar i.k { bottom: 2px; font-size: 9px; }
+.mark { height: 13px; display: grid; place-items: center; }
+.mark svg { width: 11px; height: 11px; }
+.line { font-size: 11px; color: var(--ph-muted); }
+.line b { color: var(--gold); font-weight: 700; }
+.pill { font-size: 9px; font-weight: 800; padding: 0 4px; border-radius: 4px; background: var(--gold); color: #1a1300; line-height: 13px; }
+</style>
+
+<main>
+  <h1>Current record and beaten ones</h1>
+  <p class="lede">Pinch as History shows it, your real sets. Left hand: 13.75 kg on 5 Apr was a record, beaten by 15 kg on 21 Apr, beaten by 16 kg on 7 Jul, the best now. Right hand: 21 kg on 7 Jul, the best now. Tapping a bar with a cup says what it was.</p>
+  <div class="grid" id="grid"></div>
+</main>
+
+<script>
+// real sets: [kg, reps, side, record kind]  kind: "old" = was a record, beaten later; "now" = the current best
+const DAYS = [
+  ["Tue 7 Jul", "L 2 · R 5", [[15,3,"L"],[15,5,"R"],[17,5,"R"],[19,3,"R"],[21,3,"R","now"],[20,3,"R"],[16,1,"L","now"]],
+    ["#5 of 7 · <b>R 21 × 3 · PR, best now</b>"]],
+  ["Tue 21 Apr", "6 sets · 18 reps", [[14,3,"L"],[14,3,"L"],[14,6,"L"],[15,1,"L","old"],[15,1,"L"],[14,4,"L"]],
+    ["#4 of 6 · L 15 × 1 · was a PR until 7 Jul"]],
+  ["Sun 5 Apr", "4 sets · 8 reps", [[12.5,3,"L"],[13.75,1,"L","old"],[13.75,2,"L"],[13.75,2,"L"]],
+    ["#2 of 4 · L 13.75 × 1 · was a PR until 21 Apr"]],
+];
+const cup = (fill, stroke) => `<svg viewBox="0 0 24 24"><path d="M7 3h10v3h3v2a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 14.9V18h3v3H8v-3h3v-3.1A5 5 0 0 1 8.3 12H8a4 4 0 0 1-4-4V6h3z" fill="${fill}" stroke="${stroke}" stroke-width="${fill === "none" ? 2 : 0}"/></svg>`;
+const OPTS = [
+  ["A", "Gold now, grey before", "The current best keeps the gold cup; a beaten record gets the same cup in grey.",
+    k => k === "now" ? cup("var(--gold)", "none") : k === "old" ? cup("var(--ph-faint)", "none") : "",
+    ],
+  ["B", "Gold now, outline before", "A beaten record is an empty gold outline: still a cup, clearly not the current one.",
+    k => k === "now" ? cup("var(--gold)", "none") : k === "old" ? cup("none", "var(--gold)") : "",
+    ],
+  ["C", "PR now, cup before", "The current best gets a gold PR tag; the old ones keep the plain cup.",
+    k => k === "now" ? `<span class="pill">PR</span>` : k === "old" ? cup("var(--ph-faint)", "none") : "",
+    ],
+];
+document.getElementById("grid").innerHTML = OPTS.map(([tag, name, desc, mark]) => `<section class="opt">
+  <div class="head"><span class="tag">${tag}</span><span class="name">${name}</span></div><p class="desc">${desc}</p>
+  <div class="phone">${DAYS.map(([d, sum, sets, lines]) => `<div class="day"><div class="dh"><span>${d}</span><span>${sum}</span></div>
+    <div class="bars">${sets.map(([kg, r, sd, k], i) => {
+      const h = Math.max(6 + 40 * r / 6, 27), first = i === 0 || sets[i - 1][0] !== kg;
+      return `<div class="b"><span class="mark">${mark(k)}</span><span class="top">${r}</span><div class="bar" style="height:${h}px"><i class="s">${sd}</i>${first ? `<i class="k">${kg}</i>` : ""}</div></div>`;
+    }).join("")}</div>
+    ${lines.map(l => `<div class="line">${l}</div>`).join("")}</div>`).join("")}</div></section>`).join("");
+</script>

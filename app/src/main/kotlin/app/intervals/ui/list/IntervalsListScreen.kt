@@ -91,6 +91,7 @@ fun IntervalsListScreen(vm: AppViewModel) {
     val p = LocalPalette.current
     val all by vm.workouts.collectAsStateWithLifecycle()
     val lastRuns by vm.lastByWorkout.collectAsStateWithLifecycle()
+    val hints by vm.loadHints.collectAsStateWithLifecycle()
     var query by rememberSaveable { mutableStateOf("") }
     var tag by rememberSaveable { mutableStateOf<String?>(null) }
     var selected by remember { mutableStateOf(setOf<Long>()) }
@@ -172,6 +173,7 @@ fun IntervalsListScreen(vm: AppViewModel) {
                     WorkoutCard(
                         w,
                         last = lastRuns[w.id],
+                        hints = hints[w.id].orEmpty(),
                         selecting = selecting,
                         selected = w.id in selected,
                         // tap = start; the button on the right = edit
@@ -191,6 +193,14 @@ fun IntervalsListScreen(vm: AppViewModel) {
                 ) {
                     BigButton("Tag…", p.accent, p.onAccent, { askTags = true }, Modifier.weight(1.2f))
                     BigButton("Duplicate", p.tint, p.accentText, { vm.duplicateMany(selected); selected = emptySet() }, Modifier.weight(1f))
+                    // one workout: its logged values over time (mockup intervals-ideas-from-other-apps.html, 3)
+                    selected.singleOrNull()?.let { id ->
+                        Box(
+                            Modifier.size(54.dp).clip(RoundedCornerShape(14.dp)).background(p.tint)
+                                .clickable(onClickLabel = "Progress") { selected = emptySet(); vm.openWorkoutProgress(id) },
+                            contentAlignment = Alignment.Center,
+                        ) { Icon(AppIcons.Stats, "Progress", tint = p.accentText) }
+                    }
                     Box(
                         Modifier.size(54.dp).clip(RoundedCornerShape(14.dp)).background(p.tint).clickable { askDelete = true },
                         contentAlignment = Alignment.Center,
@@ -400,6 +410,7 @@ private fun TagChip(label: String, on: Boolean, onClick: () -> Unit) {
 private fun WorkoutCard(
     saved: SavedWorkout,
     last: Session?,
+    hints: List<app.intervals.core.LoggedValue>,
     selecting: Boolean,
     selected: Boolean,
     onOpen: () -> Unit,
@@ -432,6 +443,14 @@ private fun WorkoutCard(
                 }
                 Text(lastLine(last), color = p.soft, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
+            // a load to try (mockup intervals-ideas-from-other-apps.html, 1)
+            if (hints.isNotEmpty()) Text(
+                "↑ Try " + hints.joinToString(" · ") { h ->
+                    h.field + when (h.side) { app.intervals.core.Side.LEFT -> " L"; app.intervals.core.Side.RIGHT -> " R"; null -> "" } +
+                        " " + app.intervals.player.fmtValue(h.value) + if (h.unit.isEmpty()) "" else " ${h.unit}"
+                } + ": all rounds done twice at the same load",
+                color = p.restText, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
+            )
         }
         if (!selecting) {
             Spacer(Modifier.width(14.dp))

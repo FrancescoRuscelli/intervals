@@ -1,0 +1,107 @@
+<title>Rest Notification</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: one card per option; each shows the phone in three places: status bar inside another app, the pulled-down shade,
+   the lock screen. Real rest: One Arm Pull Up, 1:42 of 3:00, next R full · 3. */
+:root {
+  --bg: #f4f2fa; --fg: #18151f; --muted: #5b5668; --line: #dfdbe9; --accent: #6d28d9; --card: #ffffff;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif;
+  --sys: #111318; --sys-card: #2B2E35; --sys-text: #ECEEF3; --sys-muted: #A5ABB6; --teal: #00BFA5; --teal-dark: #00897B; --pink: #E91E63;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
+main { max-width: 1240px; margin: 0 auto; display: grid; gap: 14px; }
+h1 { font-family: var(--display); font-size: 1.8rem; margin: 0; text-wrap: balance; }
+.lede { color: var(--muted); margin: 0; max-width: 84ch; }
+.opt { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; display: grid; gap: 8px; min-width: 0; }
+.head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.tag { font-family: var(--display); font-weight: 700; color: var(--accent); font-size: 1.1rem; }
+.name { font-weight: 600; }
+.rec { font-size: .72rem; font-weight: 700; color: var(--accent); border: 1px solid var(--accent); border-radius: 8px; padding: 0 6px; }
+.desc { color: var(--muted); font-size: .86rem; margin: 0; padding-left: 18px; }
+.desc li { margin: 2px 0; }
+.trio { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
+.cap { font-size: .75rem; color: var(--muted); text-align: center; }
+
+.phone { background: var(--sys); border-radius: 22px; padding: 8px 10px 12px; color: var(--sys-text); font-size: 13px; display: grid; gap: 8px; min-height: 300px; align-content: start; }
+.sb { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 2px 4px; }
+.sb .sp { flex: 1; }
+.sb .ic { color: var(--sys-muted); font-size: 11px; }
+.chip { display: inline-flex; align-items: center; gap: 5px; border-radius: 12px; padding: 2px 9px; font-weight: 700; font-size: 12px; }
+.chip.plain { background: #3A3E47; color: var(--sys-text); }
+.chip.teal { background: var(--teal); color: #04221E; }
+.appbg { background: #0B141A; border-radius: 12px; padding: 10px; display: grid; gap: 6px; min-height: 180px; }
+.bubble { background: #1F2C33; border-radius: 10px; padding: 6px 9px; font-size: 12px; color: #D6DEE3; max-width: 75%; }
+.bubble.me { background: #005C4B; justify-self: end; }
+.notif { background: var(--sys-card); border-radius: 18px; padding: 10px 12px; display: grid; gap: 5px; }
+.notif.teal { background: var(--teal-dark); }
+.notif .top { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--sys-muted); }
+.notif.teal .top, .notif.teal .line { color: #D7FFF8; }
+.notif .ico { width: 16px; height: 16px; border-radius: 8px; background: var(--teal); display: grid; place-items: center; font-size: 9px; color: #04221E; font-weight: 900; }
+.notif.teal .ico { background: #fff; color: var(--teal-dark); }
+.notif .title { display: flex; align-items: baseline; gap: 8px; font-size: 14.5px; font-weight: 700; }
+.notif .title .clock { font-family: var(--display); font-size: 18px; }
+.notif .line { font-size: 12px; color: var(--sys-muted); }
+.notif .acts { display: flex; gap: 16px; font-size: 12.5px; font-weight: 700; color: #8AB4F8; padding-top: 2px; }
+.notif.teal .acts { color: #fff; }
+.prog { height: 5px; border-radius: 3px; background: #ffffff22; overflow: hidden; }
+.prog i { display: block; height: 100%; width: 57%; background: var(--teal); }
+.notif.teal .prog i { background: #fff; }
+.shadehead { display: flex; justify-content: space-between; font-size: 22px; font-family: var(--display); padding: 6px 4px 2px; }
+.qs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.qs span { height: 34px; border-radius: 17px; background: #2E3138; }
+.other { background: var(--sys-card); border-radius: 18px; padding: 10px 12px; font-size: 12px; color: var(--sys-muted); opacity: .8; }
+.lockclock { text-align: center; font-family: var(--display); font-size: 46px; font-weight: 500; line-height: 1; padding-top: 14px; }
+.lockdate { text-align: center; font-size: 12px; color: var(--sys-muted); padding-bottom: 8px; }
+.lock { background: linear-gradient(170deg, #1d1832, #08080c 70%); }
+.silent { font-size: 11px; color: var(--sys-muted); padding: 2px 4px; }
+</style>
+
+<main>
+  <h1>The rest notification</h1>
+  <p class="lede">Your real rest: One Arm Pull Up, 1:42 of 3:00, next R full · 3. Each option in three places: the status bar while you are in
+    another app (WhatsApp), the shade pulled down, the lock screen. Today's is the first row, for comparison.</p>
+  <div id="opts" style="display:grid;gap:16px"></div>
+</main>
+
+<script>
+const card = (cls, extra = "") => `<div class="notif ${cls}">
+  <div class="top"><span class="ico">⏱</span>Intervals · Gym rest · now</div>
+  <div class="title">Resting · One Arm Pull Up <span class="clock">1:42</span></div>
+  ${extra}
+  <div class="line">Buzz at 3:00 · Next: R full · 3</div>
+  <div class="acts"><span>+30 s</span><span>Stop</span></div></div>`;
+const app = `<div class="appbg"><div class="bubble">Allenamento?</div><div class="bubble me">Sì, sto riposando</div><div class="bubble">ok 👍</div></div>`;
+const other = '<div class="other">WhatsApp · 2 new messages</div>';
+const qs = '<div class="qs"><span></span><span></span><span></span><span></span></div>';
+
+const OPTS = [
+  ["Now", "Normal notification (installed)", false, [
+    "Grey card like any other; only the small icon is teal. Nothing in the status bar but a small icon.",
+    "It is at the top only while it is the newest notification."],
+    `<div class="sb">19:12<span class="ic">⏱ ✈ 💬</span><span class="sp"></span>5G ▮</div>${app}`,
+    `<div class="shadehead"><span>19:12</span></div>${qs}${other}${card("")}`,
+    `<div class="lockclock">19:12</div><div class="lockdate">Tuesday 24 November</div>${other}${card("")}`],
+  ["A", "Teal card", false, [
+    "The rest runs as a foreground service (like the interval player), which is what lets Android color the whole card teal.",
+    "Pinned at the top of the shade and on the lock screen. The status bar still has only the small icon."],
+    `<div class="sb">19:12<span class="ic">⏱ ✈ 💬</span><span class="sp"></span>5G ▮</div>${app}`,
+    `<div class="shadehead"><span>19:12</span></div>${qs}${card("teal", '<div class="prog"><i></i></div>')}${other}`,
+    `<div class="lockclock">19:12</div><div class="lockdate">Tuesday 24 November</div>${card("teal", '<div class="prog"><i></i></div>')}${other}`],
+  ["B", "Live Update: a chip in the status bar", true, [
+    "Android 16–17 Live Updates (as timers and rides use): the rest clock is a chip in the status bar, counting, also inside other apps; tap it = the exercise.",
+    "The card is pinned first in the shade and on the lock screen, with a teal progress bar to the target. Android keeps the card itself grey."],
+    `<div class="sb">19:12 <span class="chip plain">⏱ 1:42</span><span class="sp"></span>5G ▮</div>${app}`,
+    `<div class="shadehead"><span>19:12</span></div>${qs}${card("", '<div class="prog"><i></i></div>')}${other}`,
+    `<div class="lockclock">19:12</div><div class="lockdate">Tuesday 24 November</div>${card("", '<div class="prog"><i></i></div>')}${other}`],
+];
+const caps = ["status bar, in WhatsApp", "shade pulled down", "lock screen"];
+document.getElementById("opts").innerHTML = OPTS.map(([tag, name, rec, desc, a, b, c]) => `<section class="opt">
+  <div class="head"><span class="tag">${tag}</span><span class="name">${name}</span>${rec ? '<span class="rec">recommended</span>' : ""}</div>
+  <ul class="desc">${desc.map(d => `<li>${d}</li>`).join("")}</ul>
+  <div class="trio">${[a, b, c].map((x, i) => `<div><div class="phone${i === 2 ? " lock" : ""}">${x}</div><div class="cap">${caps[i]}</div></div>`).join("")}</div></section>`).join("");
+</script>

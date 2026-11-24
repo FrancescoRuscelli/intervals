@@ -40,6 +40,10 @@ data class SessionEntity(
     val roundsTotal: Int,
     val completed: Boolean,
     val note: String,
+    /** The work series let go of early, as JSON (database v9); "" = none. */
+    @androidx.room.ColumnInfo(defaultValue = "") val letGo: String = "",
+    /** Work series played; 0 = not known (database v9). */
+    @androidx.room.ColumnInfo(defaultValue = "0") val workDone: Int = 0,
 )
 
 @Entity(
@@ -57,6 +61,8 @@ data class LoggedValueEntity(
     /** "LEFT", "RIGHT" or null for both sides. */
     val side: String?,
     val value: Double,
+    /** The choice of a choice field (database v9). */
+    @androidx.room.ColumnInfo(defaultValue = "NULL") val text: String? = null,
 )
 
 /** One row (id 1) with all the settings as JSON. */

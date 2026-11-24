@@ -3,7 +3,6 @@ package app.intervals.ui.gym
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import app.intervals.core.boxText
-import app.intervals.core.recordSetsOn
 import app.intervals.core.dayBars
 import androidx.compose.runtime.remember
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -63,6 +62,8 @@ import app.intervals.core.formatKg
 import app.intervals.core.formatTime
 import app.intervals.core.historyDays
 import app.intervals.core.metricSeries
+import app.intervals.core.onSide
+import app.intervals.core.isWarmup
 import app.intervals.core.metricsFor
 import app.intervals.core.repMaxes
 import app.intervals.core.specsText
@@ -91,13 +92,13 @@ fun ExerciseHistory(ex: Exercise, all: List<GymSet>, workoutSec: Map<String, Int
         item {
             Text(
                 if (days.isEmpty()) "Nothing logged yet."
-                else "${days.size} days · ${all.size} sets · since ${shortDay(days.last().first)}",
+                else "${days.size} days · ${all.count { !it.isWarmup }} sets · since ${shortDay(days.last().first)}",
                 color = p.muted, fontSize = 13.sp,
             )
         }
         itemsIndexed(days, key = { _, d -> d.first }) { i, (day, daySets) ->
             val sets = daySets.sortedBy { it.order }
-            val records = remember(day, all) { recordSetsOn(day, all, listOf(ex)).map { it.id }.toSet() }
+            val records = remember(day, all) { app.intervals.core.recordMarksOn(day, all, listOf(ex)) }
             val previous = days.getOrNull(i + 1)?.second
             Column(
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(p.surface).clickable { onOpenDay(day) }.padding(14.dp),
@@ -114,7 +115,7 @@ fun ExerciseHistory(ex: Exercise, all: List<GymSet>, workoutSec: Map<String, Int
                         )
                     }
                 }
-                app.intervals.ui.journal.DayBars(dayBars(sets, ex, records), null, null, rests = sets.map { it.restSec })
+                app.intervals.ui.journal.DayBars(dayBars(sets, ex, records.keys, records.filterValues { it != null }.keys), null, null, rests = sets.map { it.restSec })
                 val here = sets.drop(1).sumOf { it.restSec ?: 0 }
                 val workout = workoutSec[day] ?: 0
                 if (here > 0 || workout > 0) Text(
@@ -130,7 +131,14 @@ fun ExerciseHistory(ex: Exercise, all: List<GymSet>, workoutSec: Map<String, Int
 }
 
 /** "11 sets · 53 reps · top 40 × 3"; per side "4 rounds" or "L 5 · R 7". */
-private fun historySummary(sets: List<GymSet>, ex: Exercise): String {
+private fun historySummary(all: List<GymSet>, ex: Exercise): String {
+    // warm-ups are not counted, only mentioned (mockup intervals-ideas-from-other-apps.html, 5)
+    val sets = all.filterNot { it.isWarmup }
+    val warm = (all.size - sets.size).takeIf { it > 0 }?.let { " + $it warm-up" } ?: ""
+    return historyCount(sets, ex) + warm
+}
+
+private fun historyCount(sets: List<GymSet>, ex: Exercise): String {
     val left = sets.count { it.side == Side.LEFT }
     val right = sets.count { it.side == Side.RIGHT }
     if (left + right > 0) return if (left == right) "$left round${if (left == 1) "" else "s"}" else "L $left · R $right"
@@ -167,9 +175,11 @@ fun ExerciseGraph(ex: Exercise, all: List<GymSet>) {
     val range = Range.valueOf(rangeName)
     val from = range.months?.let { LocalDate.now().minusMonths(it).toString() }
     val sets = if (from == null) all else all.filter { it.day >= from }
-    val lines: List<Pair<String, List<MetricPoint>>> =
-        if (ex.perSide) listOf("Left" to metricSeries(metric, sets, Side.LEFT), "Right" to metricSeries(metric, sets, Side.RIGHT))
-        else listOf("" to metricSeries(metric, sets))
+    // per side: left, right, and the sets logged without a side (e.g. holds merged in) as their own line
+    val sideKeys = app.intervals.core.sidesOf(ex, sets)
+    val lines: List<Pair<String, List<MetricPoint>>> = sideKeys.map { sd ->
+        sideLabel(sd) to metricSeries(metric, sets.onSide(sd))
+    }.filter { !ex.perSide || it.second.isNotEmpty() }
     val fmt: (Double) -> String = when (metric) {
         GymMetric.MAX_TIME, GymMetric.REST -> { v -> formatTime(v.toInt()) }
         GymMetric.TOTAL_REPS, GymMetric.MAX_REPS -> { v -> v.toInt().toString() }
@@ -193,9 +203,10 @@ fun ExerciseGraph(ex: Exercise, all: List<GymSet>) {
                 Text(if (pts.isEmpty()) "Nothing in this period." else "One day only: the graph needs at least two.", color = p.muted, fontSize = 14.sp,
                     modifier = Modifier.padding(vertical = 40.dp))
             } else {
-                LineChart(lines.map { it.second }, if (ex.perSide) listOf(p.pink, p.teal) else listOf(p.pink), fmt) { tapped = it }
+                val lineColor = { label: String -> when (label) { "Left" -> p.pink; "Right" -> p.teal; "No side" -> p.soft; else -> p.pink } }
+                LineChart(lines.map { it.second }, lines.map { lineColor(it.first) }, fmt) { tapped = it }
                 Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                    if (ex.perSide) { Legend(p.pink, "Left"); Legend(p.teal, "Right") } else Legend(p.pink, "per day")
+                    if (ex.perSide) lines.forEach { Legend(lineColor(it.first), it.first) } else Legend(p.pink, "per day")
                     if (metric != GymMetric.REST) Legend(p.recordText, "record")
                     if (!ex.perSide) Legend(p.muted, "trend")
                 }
@@ -220,7 +231,7 @@ private fun GymMetric.lowerIsBetterUi() = false
 private fun round1(v: Double) = Math.round(v * 10) / 10.0
 
 @Composable
-private fun LineChart(series: List<List<MetricPoint>>, colors: List<Color>, fmt: (Double) -> String, onTap: (String) -> Unit) {
+internal fun LineChart(series: List<List<MetricPoint>>, colors: List<Color>, fmt: (Double) -> String, onTap: (String) -> Unit) {
     val p = LocalPalette.current
     val days = series.flatten().map { it.day }.distinct().sorted()
     val values = series.flatten().map { it.value }
@@ -282,7 +293,7 @@ private fun LineChart(series: List<List<MetricPoint>>, colors: List<Color>, fmt:
 }
 
 @Composable
-private fun Legend(c: Color, label: String) {
+internal fun Legend(c: Color, label: String) {
     val p = LocalPalette.current
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(10.dp).clip(CircleShape).background(c))
@@ -292,7 +303,7 @@ private fun Legend(c: Color, label: String) {
 }
 
 @Composable
-private fun Chip(label: String, on: Boolean, onClick: () -> Unit) {
+internal fun Chip(label: String, on: Boolean, onClick: () -> Unit) {
     val p = LocalPalette.current
     Box(
         Modifier.height(34.dp).clip(RoundedCornerShape(17.dp)).background(if (on) p.tint else p.surface)
@@ -309,13 +320,14 @@ fun ExerciseRecords(ex: Exercise, all: List<GymSet>) {
     val p = LocalPalette.current
     val hasW = GymField.WEIGHT in ex.fields
     val hasR = GymField.REPS in ex.fields
-    val sides: List<Side?> = if (ex.perSide) listOf(Side.LEFT, Side.RIGHT) else listOf(null)
+    // left, right, and the sets without a side (e.g. holds merged in), each with its own records
+    val sides = app.intervals.core.sidesOf(ex, all)
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         if (all.isEmpty()) item { Text("No records yet: log some sets.", color = p.muted, fontSize = 14.sp) }
         sides.forEach { side ->
-            val sets = all.filter { side == null || it.side == side }
+            val sets = all.onSide(side).filterNot { it.isWarmup }
             if (sets.isEmpty()) return@forEach
-            val title = when (side) { Side.LEFT -> " · left"; Side.RIGHT -> " · right"; null -> "" }
+            val title = if (side == null) "" else " · " + sideLabel(side).lowercase()
             if (hasW && hasR) item {
                 Card("Real records$title", "heaviest for each number of reps") {
                     val rms = repMaxes(sets)
@@ -385,3 +397,5 @@ private fun Card(title: String, sub: String?, content: @Composable () -> Unit) {
 private fun longDay(day: String): String =
     LocalDate.parse(day).format(DateTimeFormatter.ofPattern(
         if (LocalDate.parse(day).year == LocalDate.now().year) "EEEE d MMMM" else "EEEE d MMMM yyyy", Locale.ENGLISH))
+
+private fun sideLabel(side: Any?): String = when (side) { Side.LEFT -> "Left"; Side.RIGHT -> "Right"; null -> ""; else -> "No side" }

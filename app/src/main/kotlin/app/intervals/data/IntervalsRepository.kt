@@ -116,6 +116,9 @@ class IntervalsRepository(
 
     suspend fun deleteSession(sessionId: Long) = sessionDao.delete(sessionId)
 
+    /** Every session of a workout, newest first. */
+    fun sessionsOf(workoutId: Long): Flow<List<Session>> = sessionDao.observeForWorkout(workoutId).map { list -> list.map { it.toSession() } }
+
     /** Values to start the next session of this workout from: the last round of the last session that logged any. */
     suspend fun lastValues(workoutId: Long): List<LoggedValue> =
         sessionDao.lastWithValues(workoutId)?.toSession()?.lastValues().orEmpty()
@@ -179,6 +182,19 @@ class IntervalsRepository(
         val rows = ids.chunked(999).flatMap { gymDao.setsById(it) }
         ids.chunked(999).forEach { gymDao.deleteSets(it) }
         rows
+    }
+
+    /** Moves the sets [ids] to exercise [into] as [variant]; returns the rows as they were, for Undo. */
+    suspend fun moveSetsTo(ids: List<Long>, into: Long, variant: String?): List<GymSetEntity> = db.withTransaction {
+        val rows = ids.chunked(999).flatMap { gymDao.setsById(it) }
+        ids.chunked(999).forEach { gymDao.moveSetsTo(it, into, variant) }
+        rows
+    }
+
+    /** Undo of a move: the rows go back exactly as they were. */
+    suspend fun putBackSets(rows: List<GymSetEntity>) = db.withTransaction {
+        rows.map { it.id }.chunked(999).forEach { gymDao.deleteSets(it) }
+        rows.forEach { gymDao.insertSet(it) }
     }
 
     /** Puts deleted rows back with their ids and positions (Undo). */
@@ -265,12 +281,35 @@ class IntervalsRepository(
     }
 
     /** Moves every set of [from] into [into] and deletes [from]; with [asVariant] its sets become that variant of [into]. */
-    suspend fun mergeExercises(from: Long, into: Long, asVariant: String? = null) = db.withTransaction {
+    /**
+     * Moves [from]'s sets into [into] and deletes [from]. With [asVariant] its sets become that variant; a variant [into] doesn't
+     * have yet is added, and when [into] had none its own sets become [ownVariant] (e.g. Box Pike Push Up into Pike Push Up:
+     * variants normal / box).
+     */
+    suspend fun mergeExercises(from: Long, into: Long, asVariant: String? = null, ownVariant: String? = null) = db.withTransaction {
         require(from != into) { "cannot merge an exercise into itself" }
         if (asVariant != null) {
+            val all = gymDao.getExercises().map { it.toExercise() }
+            val target = all.firstOrNull { it.id == into }
+            val source = all.firstOrNull { it.id == from }
+            if (target != null && asVariant !in target.variants) {
+                val own = target.variants.ifEmpty { listOfNotNull(ownVariant?.takeIf { it.isNotBlank() && !it.equals(asVariant, ignoreCase = true) }) }
+                // the new variant records what the merged exercise did, when that differs (a hold: weight + time)
+                val fields = source?.fields?.filter { it != app.intervals.core.GymField.BANDS }?.takeIf { it.isNotEmpty() && it != target.fields }
+                gymDao.updateExercise(target.copy(variants = own + asVariant,
+                    variantFields = if (fields != null) target.variantFields + (asVariant to fields) else target.variantFields).toEntity())
+            }
             // the target's own sets keep what they were (its first variant) before the new ones arrive
             gymDao.getExercises().firstOrNull { it.id == into }?.toExercise()?.variants?.firstOrNull()?.let { gymDao.fillVariant(into, it) }
             gymDao.setVariant(from, asVariant)
+        }
+        // specifications the merged exercise had (e.g. Bands) come along, so its sets' values still show
+        val all2 = gymDao.getExercises().map { it.toExercise() }
+        val src = all2.firstOrNull { it.id == from }
+        val dst = all2.firstOrNull { it.id == into }
+        if (src != null && dst != null) {
+            val missing = src.specs.filter { sp -> dst.specs.none { it.name.equals(sp.name, ignoreCase = true) } }
+            if (missing.isNotEmpty()) gymDao.updateExercise(dst.copy(specs = dst.specs + missing).toEntity())
         }
         gymDao.moveSets(from, into)
         gymDao.deleteExercise(from)
@@ -373,10 +412,14 @@ private fun WorkoutEntity.toSaved() =
     SavedWorkout(id, position, BackupJson.decodeWorkout(json), createdAt, updatedAt)
 
 private fun Session.toEntity(id: Long) =
-    SessionEntity(id, workoutId, workoutName, startedAt, durationSec, roundsDone, roundsTotal, completed, note)
+    SessionEntity(id, workoutId, workoutName, startedAt, durationSec, roundsDone, roundsTotal, completed, note,
+        if (letGo.isEmpty()) "" else letGoJson.encodeToString(letGoList, letGo), workDone)
+
+private val letGoJson = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
+private val letGoList = kotlinx.serialization.builtins.ListSerializer(app.intervals.core.LetGo.serializer())
 
 private fun LoggedValue.toEntity(sessionId: Long) =
-    LoggedValueEntity(0, sessionId, series, field, unit, round, side?.name, value)
+    LoggedValueEntity(0, sessionId, series, field, unit, round, side?.name, value, text)
 
 private fun SessionWithValues.toSession() = Session(
     id = session.id,
@@ -389,8 +432,10 @@ private fun SessionWithValues.toSession() = Session(
     completed = session.completed,
     note = session.note,
     values = values.sortedBy { it.id }.map {
-        LoggedValue(it.series, it.field, it.unit, it.round, it.side?.let(Side::valueOf), it.value)
+        LoggedValue(it.series, it.field, it.unit, it.round, it.side?.let(Side::valueOf), it.value, it.text)
     },
+    letGo = session.letGo.takeIf { it.isNotEmpty() }?.let { runCatching { letGoJson.decodeFromString(letGoList, it) }.getOrNull() }.orEmpty(),
+    workDone = session.workDone,
 )
 
 private fun Exercise.toEntity() = ExerciseEntity(id, name, BackupJson.encodeExercise(this))

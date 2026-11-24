@@ -192,4 +192,23 @@ class RepositoryTest {
         assertEquals(5, all[0].workout.rounds)
         assertEquals(9, all[1].workout.rounds)
     }
+
+    @Test
+    fun sessionKeepsLetGoAndChoices() = runTest {
+        val id = repo.addWorkout(workout("max hang"))
+        val s = Session(
+            workoutId = id, workoutName = "max hang", startedAt = 5_000, durationSec = 600, roundsDone = 3, roundsTotal = 3, completed = true,
+            values = listOf(LoggedValue("hang", "Load", "kg", 1, Side.LEFT, 10.0), LoggedValue("hang", "Grip", "", 1, null, 1.0, "half crimp")),
+            letGo = listOf(app.intervals.core.LetGo("hang", 2, 3, Side.RIGHT, 5)), workDone = 18,
+        )
+        repo.addSession(s)
+        val back = repo.sessionsOf(id).first().single()
+        assertEquals(s.letGo, back.letGo)
+        assertEquals(18, back.workDone)
+        assertEquals("half crimp", back.values.first { it.field == "Grip" }.text)
+        // and through a backup
+        val text = repo.exportBackup()
+        repo.restoreBackup(text)
+        assertEquals(s.letGo, repo.sessionsOf(repo.workouts.first().first().id).first().single().letGo)
+    }
 }
