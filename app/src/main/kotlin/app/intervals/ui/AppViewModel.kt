@@ -56,11 +56,20 @@ sealed interface Overlay {
     data object Finished : Overlay
     data object GymImport : Overlay
     data object Settings : Overlay
-    data class GymLog(val exerciseId: Long, val day: String) : Overlay
+    /** + New: the presets (Fingers…) or an empty workout. */
+    data object NewWorkout : Overlay
+    /** Before a workout that logs values (edge, load…): set them, then start (3B). */
+    data class Setup(val workoutId: Long) : Overlay
+    /** [tab]: 0 Log, 1 History, 2 Graph, 3 Records. */
+    data class GymLog(val exerciseId: Long, val day: String, val tab: Int = 0) : Overlay
+    /** Stats on its own screen, opened on the Journal's month (yyyy-MM). */
+    data class Stats(val month: String) : Overlay
+    /** What a Stats tile or row counts, as a list: [kind] sessions, gymDays, exercises or records, days in [from, to). */
+    data class StatsList(val kind: String, val from: String, val to: String, val name: String? = null) : Overlay
     data class GymPick(val day: String) : Overlay
     data class EditExercise(val exerciseId: Long) : Overlay
     /** [groupId] null = a new tag or workout group. */
-    data class EditGroup(val groupId: Long?, val isTag: Boolean = false) : Overlay
+    data class EditGroup(val groupId: Long?, val isTag: Boolean = false, val items: List<Long> = emptyList()) : Overlay
     data class GymFinish(
         val day: String, val group: GymGroup, val start: LocalTime, val end: LocalTime, val elapsedSec: Int,
     ) : Overlay
@@ -105,6 +114,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     var journalFocusDay by mutableStateOf<String?>(null)
 
     fun openJournalDay(day: String) {
+        overlays.removeAll { it is Overlay.Stats || it is Overlay.StatsList }
         journalFocusDay = day
         selectTab(Tab.JOURNAL)
     }
@@ -128,10 +138,14 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     // ---- list ----
 
-    fun newWorkout() {
-        // starts empty: you add the series you want
-        val w = Workout(name = "", blocks = emptyList())
-        draft = Draft(null, w, w)
+    /** + New: first the presets to start from (mockup intervals-next-features.html, 3A). */
+    fun newWorkout() { overlays += Overlay.NewWorkout }
+
+    /** Opens the editor on a new workout: empty, or a copy of a preset to save as yours. */
+    fun newWorkoutFrom(template: Workout?) {
+        overlays.remove(Overlay.NewWorkout)
+        val w = template ?: Workout(name = "", blocks = emptyList())
+        draft = Draft(null, w, Workout(name = "", blocks = emptyList()))
         overlays += Overlay.EditWorkout
     }
 
@@ -261,10 +275,21 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun player(id: Long) {
         val saved = workouts.value?.firstOrNull { it.id == id } ?: return
-        startPlayer(saved)
+        // a workout that logs values asks them first, prefilled from last time
+        if (app.intervals.player.fieldKeys(saved).isNotEmpty()) { if (ia.player == null) overlays += Overlay.Setup(id) }
+        else startPlayer(saved)
     }
 
-    private fun startPlayer(saved: SavedWorkout) {
+    suspend fun lastValues(workoutId: Long) = repo.lastValues(workoutId)
+
+    /** Starts after the setup screen with [setup] as this session's values. */
+    fun startWithSetup(id: Long, setup: Map<app.intervals.player.FieldKey, Double>) {
+        val saved = workouts.value?.firstOrNull { it.id == id } ?: return
+        overlays.removeAll { it is Overlay.Setup }
+        startPlayer(saved, setup)
+    }
+
+    private fun startPlayer(saved: SavedWorkout, setup: Map<app.intervals.player.FieldKey, Double> = emptyMap()) {
         if (ia.player != null) return
         if (saved.workout.blocks.isEmpty()) { message = "Add a series first"; return }
         val s = settings.value
@@ -272,7 +297,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         lateinit var c: PlayerController
         c = PlayerController(saved, s, sounds, ia.appScope, onEnd = { completed, elapsed, rounds, startedAt ->
             ia.appScope.launch {
-                val last = repo.lastValues(saved.id)
+                // the values set before the start are this session's; else last time's
+                val last = if (setup.isNotEmpty()) setup.map { (k, v) -> LoggedValue(k.series, k.field, k.unit, 1, k.side, v) } else repo.lastValues(saved.id)
                 ia.finished = FinishedInfo(saved, completed, elapsed, rounds, startedAt, last)
                 ia.player?.close()
                 ia.player = null
@@ -280,7 +306,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 overlays.remove(Overlay.Player)
                 if (Overlay.Finished !in overlays) overlays += Overlay.Finished
             }
-        }, onChange = { PlayerService.update(ia, c) }, openingMs = 1000L)
+        }, onChange = { PlayerService.update(ia, c) }, openingMs = 1000L, details = app.intervals.player.setupDetails(setup))
         ia.player = c
         overlays += Overlay.Player
         PlayerService.start(ia)
@@ -303,7 +329,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         ia.finished = null
         overlays.remove(Overlay.Finished)
         message = "Saved to the journal"
-        if (repeat) startPlayer(f.saved)
+        if (repeat) startPlayer(f.saved, values)
     }
 
     /** Finished, but not kept: nothing goes in the journal. */
@@ -352,7 +378,13 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun exerciseDay(exerciseId: Long, day: String): Flow<List<GymSet>> = repo.exerciseDay(exerciseId, day)
 
-    fun openGymLog(exerciseId: Long, day: String) { overlays += Overlay.GymLog(exerciseId, day) }
+    fun openGymLog(exerciseId: Long, day: String, tab: Int = 0) { overlays += Overlay.GymLog(exerciseId, day, tab) }
+
+    fun openStats(month: java.time.YearMonth) { overlays += Overlay.Stats(month.toString()) }
+
+    fun openStatsList(kind: String, from: java.time.LocalDate, to: java.time.LocalDate, name: String? = null) {
+        overlays += Overlay.StatsList(kind, from.toString(), to.toString(), name)
+    }
 
     fun editExercise(id: Long) { overlays += Overlay.EditExercise(id) }
 
@@ -370,6 +402,12 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         repo.deleteExercise(ex.id)
         overlays.removeAll { (it is Overlay.EditExercise && it.exerciseId == ex.id) || (it is Overlay.GymLog && it.exerciseId == ex.id) }
         message = "Deleted “${ex.name}” and its sets"
+    }
+
+    fun mergeExercise(from: Exercise, into: Exercise, asVariant: String? = null) = viewModelScope.launch {
+        repo.mergeExercises(from.id, into.id, asVariant)
+        overlays.removeAll { it is Overlay.GymLog && it.exerciseId == from.id }
+        message = "“${from.name}” merged into “${into.name}”"
     }
 
     fun variantCounts(exerciseId: Long) = repo.variantCounts(exerciseId)
@@ -432,7 +470,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun editGroup(groupId: Long?, isTag: Boolean = false) { overlays += Overlay.EditGroup(groupId, isTag) }
+    fun editGroup(groupId: Long?, isTag: Boolean = false, items: List<Long> = emptyList()) { overlays += Overlay.EditGroup(groupId, isTag, items) }
 
     fun retagExercises(ids: Set<Long>, add: Set<String>, remove: Set<String>) = viewModelScope.launch {
         try {

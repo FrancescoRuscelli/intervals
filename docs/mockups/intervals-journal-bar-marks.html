@@ -1,0 +1,235 @@
+<title>Journal Bar Marks</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: three questions (notes, records, bands on L/R), each a row of option cards showing a Journal exercise as on the phone */
+:root {
+  --bg: #f4f2fa; --fg: #18151f; --muted: #5b5668; --line: #dfdbe9; --accent: #6d28d9; --card: #ffffff;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif;
+  --ph-bg: #000000; --ph-surface: #1A1C21; --ph-text: #F2F3F5; --ph-muted: #9AA0AA; --ph-line: #2B2E35; --ph-accent-text: #C4B1FF;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
+main { max-width: 1180px; margin: 0 auto; display: grid; gap: 14px; }
+h1 { font-family: var(--display); font-size: 1.8rem; margin: 0; }
+h2 { font-family: var(--display); font-size: 1.3rem; margin: 22px 0 0; }
+.lede { color: var(--muted); margin: 0; max-width: 74ch; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.opt { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.head { display: flex; gap: 10px; align-items: baseline; }
+.tag { font-family: var(--display); font-weight: 700; color: var(--accent); font-size: 1.1rem; }
+.name { font-weight: 600; }
+.desc { color: var(--muted); font-size: .86rem; margin: 0; }
+.hint { font-size: .8rem; color: var(--muted); }
+
+.phone { background: var(--ph-bg); border-radius: 14px; padding: 8px; }
+.day { background: var(--ph-surface); border-radius: 14px; padding: 10px 12px; display: grid; gap: 10px; color: var(--ph-text); }
+.ex { display: grid; gap: 6px; }
+.exhead { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; min-width: 0; }
+.exname { font-size: 14px; font-weight: 600; white-space: nowrap; }
+.exline { font-size: 11px; color: var(--ph-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.exline.on { color: var(--ph-accent-text); }
+.bars { display: flex; gap: 3px; align-items: flex-end; }
+.col { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+.col:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.top { font-size: 10px; font-weight: 700; line-height: 1.3; position: relative; }
+.bar { border-radius: 3px 3px 0 0; display: flex; flex-direction: column; overflow: hidden; position: relative; box-sizing: border-box; width: 100%; }
+.fill { flex: 1; }
+.in { position: absolute; left: 0; right: 0; bottom: 2px; text-align: center; font-size: 9px; font-weight: 700; line-height: 1; white-space: nowrap; }
+.dot { width: 4px; height: 4px; border-radius: 50%; background: var(--ph-text); margin-bottom: 2px; }
+.notch { position: absolute; top: 0; right: 0; width: 0; height: 0; border-top: 7px solid var(--ph-text); border-left: 7px solid transparent; z-index: 2; }
+.prtag { font-size: 7px; font-weight: 800; color: #1A1200; background: #FFC107; border-radius: 3px; padding: 0 2px; line-height: 1.4; margin-bottom: 1px; }
+.notes { font-size: 12px; color: var(--ph-muted); font-style: italic; }
+</style>
+
+<main>
+  <h1>Journal bars: notes, records and bands</h1>
+  <p class="lede">Three things to settle on the Journal's gym bars. Yellow is the record color everywhere else in the app (PR badges, record points on the graphs), so notes stop using it. Tap a bar to see the line above change; tap it again to let go. The weight inside the bar is option D, already installed.</p>
+
+  <h2>1 · Notes: a mark on the bar, the text when you tap it</h2>
+  <p class="lede">Today: the reps turn yellow and every note is also listed in italics at the bottom of the card. In all of these the list goes away (the day note stays) and the note shows in the exercise's line when you tap the bar.</p>
+  <div class="grid" id="notes"></div>
+
+  <h2>2 · Records: yellow on the set that made it</h2>
+  <p class="lede">Overhead Press, where the 40 × 3 is a new record.</p>
+  <div class="grid" id="prs"></div>
+
+  <h2>4 · Band colors: make a band bar look like a band</h2>
+  <p class="lede">Band colors clash with the bar colors: the purple band is almost the plain purple bar, black vanishes on the card, green is close to R. The same day in each option: Overhead Press (no band), Finger Pinch (L / R, no band), Band Pull Apart (purple band, the last set green + purple) and the one-arm pull-up (black band, L / R). Notes are the folded corner, the record is the cup.</p>
+  <div class="grid" id="bandcolors"></div>
+
+  <h2>5 · Muscle Up: the set without a band</h2>
+  <p class="lede">Your Muscle Up of 20 November, as installed now (option 5): the set without a band (the 5th) is plain purple, and the purple-band sets are almost the same. Ways to make "no band" stand out in an exercise done with bands.</p>
+  <div class="grid" id="mu"></div>
+
+  <h2>Installed: 5 + N2 + P4</h2>
+  <p class="lede">The folded corner for notes and the golden cup for records, with band option 5 (purple bars, L / R written in the bar, band bars outlined).</p>
+  <div class="grid" id="chosen"></div>
+
+  <h2>3 · Bands on a left / right exercise</h2>
+  <p class="lede">Resistance Band One Arm Pull Up with the black band, alternating L and R. Today the band fills the bar and the side is a thin cap, so a black band disappears on the dark card.</p>
+  <div class="grid" id="bands"></div>
+</main>
+
+<script>
+const PINK = "#E91E63", TEAL = "#00BFA5", ACCENT = "#7C3AED", YELLOW = "#FFC107", BLACK = "#111111", LINE = "#2B2E35";
+const fmt = kg => kg == null ? "" : (kg % 1 ? kg.toFixed(1) : String(kg));
+const lum = h => { const v = [1,3,5].map(i => parseInt(h.slice(i,i+2),16)/255).map(x => x <= .03928 ? x/12.92 : ((x+.055)/1.055)**2.4); return .2126*v[0]+.7152*v[1]+.0722*v[2]; };
+
+const ohp = { name: "Overhead Press", sets: [
+  { kg: 20, reps: 6 }, { kg: 25, reps: 5 }, { kg: 35, reps: 5, note: "elbow a bit sore" }, { kg: 40, reps: 3, pr: true }, { kg: 35, reps: 4 } ] };
+const rb = { name: "Resistance Band One Arm Pull Up", sets: [
+  { reps: 1, side: "L", band: BLACK, note: "slow negative" }, { reps: 1, side: "R", band: BLACK }, { reps: 3, side: "L", band: BLACK },
+  { reps: 3, side: "R", band: BLACK }, { reps: 3, side: "L", band: BLACK }, { reps: 3, side: "R", band: BLACK }, { reps: 2, side: "L", band: BLACK }, { reps: 2, side: "R", band: BLACK } ] };
+
+const CUP = `<svg width="11" height="10" viewBox="0 0 24 22" style="display:block;margin-bottom:1px" aria-label="record"><path fill="#FFC107" d="M6 1h12v2h4v3c0 3-2 5-4.6 5.4A6 6 0 0 1 13 15v3h4v3H7v-3h4v-3a6 6 0 0 1-4.4-3.6C4 11 2 9 2 6V3h4V1zm0 4H4v1c0 1.7.9 2.9 2.2 3.3A6 6 0 0 1 6 8V5zm12 0v3c0 .5 0 .9-.2 1.3C19.1 8.9 20 7.7 20 6V5h-2z"/></svg>`;
+const BPURPLE = "#8E44D8", BGREEN = "#43A047";
+const bpa = { name: "Band Pull Apart", sets: [
+  { reps: 15, band: BPURPLE }, { reps: 15, band: BPURPLE }, { reps: 12, band: BPURPLE, note: "shoulders burning" }, { reps: 10, band: [BGREEN, BPURPLE] } ] };
+const pinch = { name: "Finger Pinch", sets: [
+  { kg: 12, reps: 8, side: "L" }, { kg: 12, reps: 8, side: "R" }, { kg: 14, reps: 6, side: "L", pr: true }, { kg: 14, reps: 6, side: "R" } ] };
+const sideColor = s => s === "L" ? PINK : s === "R" ? TEAL : null;
+const bname = c => ({ [BLACK]: "black", [BPURPLE]: "purple", [BGREEN]: "green", "#E53935": "red", "#FFC107": "yellow" })[c];
+const summary = (e, s) => (s.kg != null ? fmt(s.kg) + " × " : s.band ? [].concat(s.band).map(bname).join(" + ") + " · " : "") + s.reps + (s.side ? " " + s.side : "");
+
+// o: { note: "yellow"|"dot"|"notch"|"none", pr: "none"|"outline"|"reps"|"tag", band: "now"|"foot"|"outline"|"dots" }
+function render(e, o, uid) {
+  const max = Math.max(...e.sets.map(s => s.reps));
+  const hasKg = e.sets.some(s => s.kg != null);
+  const w = hasKg ? 30 : 24;
+  let prev = null;
+  const cols = e.sets.map((s, i) => {
+    const letters = o.band === "purpleLR" || o.band === "greyLR";
+    const side = letters ? null : sideColor(s.side);
+    const plain = o.band === "greyLR" ? "#5F6470" : ACCENT;
+    const kg = s.kg != null && s.kg !== prev ? fmt(s.kg) : null; prev = s.kg;
+    let h = 6 + 40 * s.reps / max; if (kg) h = Math.max(h, 16);
+    // the bar's fill, by band option
+    let fill, extra = "", border = `1px solid ${LINE}`;
+    if (s.band && o.band === "now") fill = `<div style="height:3px;background:${side}"></div><div class="fill" style="background:${s.band}"></div>`;
+    else if (s.band && o.band === "foot") { fill = `<div class="fill" style="background:${side}"></div><div style="height:7px;background:${s.band};border-top:1px solid rgba(255,255,255,.55)"></div>`; }
+    else if (s.band && o.band === "outline") { fill = `<div style="height:3px;background:${side}"></div><div class="fill" style="background:#2E2F35"></div>`; border = `1px solid #8A8F99`; }
+    else if (s.band && (o.band === "ring" || o.band === "greyring" || o.band === "stripes" || o.band === "grey")) {
+      const bands = [].concat(s.band);
+      const shade = c => (o.band === "ring" || o.band === "greyring") && c === BLACK ? "#3A3D44" : c;
+      const pat = o.band === "stripes" ? ";background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.32) 0 2px,transparent 2px 6px)" : "";
+      fill = (side ? `<div style="height:3px;background:${side}"></div>` : "") + bands.map(c => `<div class="fill" style="background-color:${shade(c)}${pat}"></div>`).join("");
+      if (o.band === "ring" || o.band === "greyring") border = `1.5px solid #C9CDD3`;
+    }
+    else if (letters) {
+      if (s.band) { fill = [].concat(s.band).map(c => `<div class="fill" style="background:${c === BLACK ? "#3A3D44" : c}"></div>`).join(""); border = `1.5px solid #C9CDD3`; }
+      else fill = `<div class="fill" style="background:${plain}"></div>`;
+    }
+    else if (!s.band && (o.band === "grey" || o.band === "greyring")) fill = `<div class="fill" style="background:${side || "#5F6470"}"></div>`;
+    else if (s.band && o.band === "dots") fill = `<div class="fill" style="background:${side}"></div>`;
+    else fill = `<div class="fill" style="background:${side || ACCENT}"></div>`;
+    if (o.pr === "outline" && s.pr) border = `2px solid ${YELLOW}`;
+    const ink = lum(s.band && ["now","ring","greyring","stripes","grey"].includes(o.band) ? [].concat(s.band).slice(-1)[0] : (!s.band && (o.band === "grey" || o.band === "greyring") && !side ? "#5F6470" : (side || ACCENT))) > .35 ? "#0B0C0E" : "#FFFFFF";
+    const barColor = letters ? (s.band ? (c => c === BLACK ? "#3A3D44" : c)([].concat(s.band).slice(-1)[0]) : plain) : null;
+    const ink2 = barColor ? (lum(barColor) > .35 ? "#0B0C0E" : "#FFFFFF") : null;
+    const firstColor = letters && s.band ? ([].concat(s.band)[0] === BLACK ? "#3A3D44" : [].concat(s.band)[0]) : barColor;
+    const sideTxt = letters && s.side ? `<span class="in" style="top:2px;bottom:auto;color:${lum(firstColor) > .35 ? "#0B0C0E" : "#FFFFFF"}">${s.side}</span>` : "";
+    if (letters && s.side) h = Math.max(h, kg ? 26 : 14);
+    const repsColor = (o.note === "yellow" && s.note) || (o.pr === "reps" && s.pr) ? YELLOW : "var(--ph-text)";
+    const above = (o.note === "dot" && s.note ? `<div class="dot"></div>` : "") +
+      (o.pr === "tag" && s.pr ? `<div class="prtag">PR</div>` : "") +
+      (o.pr === "cup" && s.pr ? CUP : "") +
+      (o.band === "dots" && s.band ? `<div style="width:8px;height:8px;border-radius:50%;background:${s.band};border:1.5px solid #C9CDD3;margin-bottom:2px"></div>` : "");
+    const notch = o.note === "notch" && s.note ? `<div class="notch"></div>` : "";
+    return `<div class="col" tabindex="0" role="button" data-i="${i}" style="width:${w}px">${above}<span class="top" style="color:${repsColor}">${s.reps}</span>` +
+      `<div class="bar" style="height:${h.toFixed(0)}px;border:${border}">${fill}${notch}${sideTxt}${kg ? `<span class="in" style="color:${ink2 || ink}">${kg}</span>` : ""}</div></div>`;
+  }).join("");
+  const n = e.sets.length;
+  const base = `${n} sets`;
+  const list = o.note === "yellow" ? e.sets.filter(s => s.note).map(s => `<div class="notes">“${s.note}”</div>`).join("") : "";
+  return `<div class="ex" data-uid="${uid}"><div class="exhead"><span class="exname">${e.name}</span><span class="exline" data-base="${base}">${base}</span></div><div class="bars">${cols}</div>${list}</div>`;
+}
+
+const registry = {};
+function card(rootId, id, name, desc, e, o) {
+  const uid = rootId + id; registry[uid] = { e, o };
+  return `<section class="opt"><div class="head"><span class="tag">${id}</span><span class="name">${name}</span></div><p class="desc">${desc}</p>
+    <div class="phone"><div class="day">${render(e, o, uid)}</div></div><span class="hint">Tap a bar.</span></section>`;
+}
+
+document.getElementById("notes").innerHTML = [
+  card("notes", "N0", "Now", "Yellow reps, and the notes listed under the exercise.", ohp, { note: "yellow", pr: "none", band: "now" }),
+  card("notes", "N1", "A small dot above the reps", "A white dot over the reps of a set with a note; tap for the text.", ohp, { note: "dot", pr: "none", band: "now" }),
+  card("notes", "N2", "A folded corner", "The bar's top-right corner folded, like a page with a note; tap for the text.", ohp, { note: "notch", pr: "none", band: "now" }),
+].join("");
+document.getElementById("prs").innerHTML = [
+  card("prs", "P1", "Yellow outline", "The record set's bar drawn with a yellow border.", ohp, { note: "dot", pr: "outline", band: "now" }),
+  card("prs", "P2", "Yellow reps", "The reps above the record set in yellow (free now that notes are not yellow).", ohp, { note: "dot", pr: "reps", band: "now" }),
+  card("prs", "P3", "A small PR tag", "A tiny yellow PR tag above the reps, as on the records list.", ohp, { note: "dot", pr: "tag", band: "now" }),
+  card("prs", "P4", "A small golden cup", "A tiny gold trophy above the reps of the record set, instead of the PR tag.", ohp, { note: "notch", pr: "cup", band: "now" }),
+].join("");
+document.getElementById("bands").innerHTML = [
+  card("bands", "B0", "Now", "The band fills the bar, the side is the cap: black disappears.", rb, { note: "dot", pr: "none", band: "now" }),
+  card("bands", "B1", "Side fills, band at the foot", "The bar is pink or green like every L / R exercise; the band is a strip at its foot with a light edge, so even black shows.", rb, { note: "dot", pr: "none", band: "foot" }),
+  card("bands", "B2", "Dark bands outlined", "As now, but a dark band is drawn dark grey with a light outline.", rb, { note: "dot", pr: "none", band: "outline" }),
+  card("bands", "B3", "Side fills, band as a dot", "Pink or green bar; the band is a small colored dot above the reps, with a light ring.", rb, { note: "dot", pr: "none", band: "dots" }),
+].join("");
+
+const day4 = (id, o) => { const exs = [ohp, pinch, bpa, rb]; return `<div class="day">${exs.map((e, k) => { registry[id + k] = { e }; return render(e, o, id + k); }).join("")}</div>`; };
+document.getElementById("bandcolors").innerHTML = [
+  ["1", "Outline on band bars", "Every bar with a band gets a light outline; black is drawn dark grey. A purple-band bar has a ring, a plain bar does not.", "ring"],
+  ["2", "Elastic stripes", "Band bars get thin diagonal stripes over the band color, like a rubber band. Plain bars stay solid, so purple band ≠ plain purple, and black shows by its light stripes.", "stripes"],
+  ["3", "Plain bars grey", "Bars without a band are neutral grey (L / R stay pink and green); colors in the bars only ever mean a band.", "grey"],
+  ["3 + 1", "Plain bars grey, band bars outlined", "Bars without a band are grey (L / R stay pink and green); bars with a band are the band color with a light outline, black drawn dark grey.", "greyring"],
+  ["5", "Purple, L / R written in the bar", "No pink and green: every plain bar is purple, a per-side set has L or R written at the top inside it. Band bars are the band color with a light outline.", "purpleLR"],
+  ["6", "Grey, L / R written in the bar", "Like 5, but plain bars are grey, so colors only ever mean a band.", "greyLR"],
+].map(([id, name, desc, band]) => `<section class="opt"><div class="head"><span class="tag">${id}</span><span class="name">${name}</span></div><p class="desc">${desc}</p>
+  <div class="phone">${day4("bc" + id.replace(/\W/g, "") + "_", { note: "notch", pr: "cup", band })}</div><span class="hint">Tap a bar.</span></section>`).join("");
+
+document.getElementById("chosen").innerHTML = [
+  `<section class="opt"><div class="head"><span class="tag">5 + N2 + P4</span></div><div class="phone"><div class="day">${(registry.chosenOHP = { e: ohp }, render(ohp, { note: "notch", pr: "cup", band: "purpleLR" }, "chosenOHP"))}${(registry.chosenRB = { e: rb }, render(rb, { note: "notch", pr: "cup", band: "purpleLR" }, "chosenRB"))}</div></div><span class="hint">Tap a bar.</span></section>`,
+].join("");
+
+
+// section 5: Muscle Up 20 Nov, bands per set (null = none)
+const MU = ["#8E44D8", "#16181C", "#E53935", "#FFC107", null, "#8E44D8", "#8E44D8", "#16181C", "#E53935"];
+const MUN = { "#8E44D8": "purple", "#16181C": "black", "#E53935": "red", "#FFC107": "yellow" };
+function mu(mode) {
+  const cols = MU.map((c, i) => {
+    const shown = c === "#16181C" ? "#3A3D44" : c;
+    let bg = shown, border = "1.5px solid #9AA0AA", inner = "", style = "";
+    if (!c) {
+      if (mode === "now") { bg = ACCENT; border = `1px solid ${LINE}`; }
+      else if (mode === "hollow") { bg = "transparent"; border = "1.5px dashed #9AA0AA"; }
+      else if (mode === "grey") { bg = "#5F6470"; border = `1px solid ${LINE}`; }
+      else if (mode === "white") { bg = "#E9EAEE"; border = `1px solid ${LINE}`; }
+    } else if (mode === "stripes") style = ";background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.32) 0 2px,transparent 2px 6px)";
+    if (!c && mode === "stripes") { bg = ACCENT; border = `1px solid ${LINE}`; }
+    return `<div class="col" tabindex="0" role="button" data-i="${i}" style="width:24px"><span class="top">1</span><div class="bar" style="height:46px;border:${border};background-color:${bg}${style}">${inner}</div></div>`;
+  }).join("");
+  return `<div class="ex" data-uid="mu_${mode}"><div class="exhead"><span class="exname">Muscle Up</span><span class="exline" data-base="9 sets">9 sets</span></div><div class="bars">${cols}</div></div>`;
+}
+const muSets = { name: "Muscle Up", sets: MU.map(c => ({ reps: 1, band: c || undefined })) };
+document.getElementById("mu").innerHTML = [
+  ["Now", "Installed: no band = plain purple, next to the purple band.", "now"],
+  ["A", "No band = empty bar", "The set without a band is only a dashed outline: nothing helped you. The band sets stay filled.", "hollow"],
+  ["B", "No band = grey", "In an exercise done with bands, the set without one is grey (elsewhere bars stay purple).", "grey"],
+  ["C", "No band = white", "The set without a band is white: the brightest bar, it stands out most.", "white"],
+  ["D", "Band bars striped", "Band bars get elastic stripes; the set without a band stays plain purple and solid.", "stripes"],
+].map(([id, name, desc, mode]) => { registry["mu_" + mode] = { e: { name: "Muscle Up", sets: MU.map(c => ({ reps: 1, band: c ? (c === "#16181C" ? BLACK : c) : undefined })) } };
+  return `<section class="opt"><div class="head"><span class="tag">${id}</span><span class="name">${desc ? name : ""}</span></div><p class="desc">${desc || name}</p><div class="phone"><div class="day">${mu(mode)}</div></div></section>`; }).join("");
+
+// tap a bar: outline it and show "#n of N · note" in the line (or the place in the day when there is no note)
+document.addEventListener("click", ev => pick(ev.target.closest(".col")));
+document.addEventListener("keydown", ev => { if ((ev.key === "Enter" || ev.key === " ") && ev.target.classList?.contains("col")) { ev.preventDefault(); pick(ev.target); } });
+function pick(col) {
+  if (!col) return;
+  const ex = col.closest(".ex"); const { e } = registry[ex.dataset.uid];
+  const i = +col.dataset.i; const line = ex.querySelector(".exline");
+  const was = col.classList.contains("picked");
+  ex.querySelectorAll(".col").forEach(c => { c.classList.remove("picked"); c.querySelector(".bar").style.outline = ""; });
+  if (was) { line.textContent = line.dataset.base; line.classList.remove("on"); return; }
+  col.classList.add("picked"); col.querySelector(".bar").style.outline = "2px solid #F2F3F5";
+  const s = e.sets[i];
+  line.textContent = `#${i + 1} of ${e.sets.length} · ` + (s.note ? `“${s.note}”` : summary(e, s)) + (s.pr ? " · PR" : "");
+  line.classList.add("on");
+}
+</script>

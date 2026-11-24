@@ -58,6 +58,8 @@ fun App(vm: AppViewModel) {
             ) askNotif.launch(android.Manifest.permission.POST_NOTIFICATIONS)
         }
         BackHandler(enabled = vm.overlays.isNotEmpty() && vm.overlays.last() != Overlay.Player && vm.overlays.last() != Overlay.Finished) { vm.back() }
+        // Back on Intervals or Gym goes to the Journal; only Back on the Journal leaves the app
+        BackHandler(enabled = vm.overlays.isEmpty() && vm.tab != Tab.JOURNAL) { vm.selectTab(Tab.JOURNAL) }
 
         Box(Modifier.fillMaxSize().background(p.bg)) {
             Scaffold(
@@ -81,7 +83,11 @@ fun App(vm: AppViewModel) {
                 Overlay.EditWorkout -> EditWorkoutScreen(vm)
                 is Overlay.EditSeries -> EditSeriesScreen(vm, top)
                 Overlay.Player -> vm.player?.let { app.intervals.player.PlayerScreen(it, settings.keepScreenOn, settings.spinLevel, settings.showCounters) { it.stop() } }
-                is Overlay.GymLog -> app.intervals.ui.gym.GymLogScreen(vm, top.exerciseId, top.day)
+                is Overlay.GymLog -> app.intervals.ui.gym.GymLogScreen(vm, top.exerciseId, top.day, top.tab)
+                is Overlay.Setup -> app.intervals.player.SetupScreen(vm, top.workoutId)
+                Overlay.NewWorkout -> app.intervals.ui.list.NewWorkoutScreen(vm)
+                is Overlay.Stats -> app.intervals.ui.stats.StatsScreen(vm, top.month)
+                is Overlay.StatsList -> app.intervals.ui.stats.StatsListScreen(vm, top)
                 Overlay.Settings -> androidx.compose.foundation.layout.Column(
                     Modifier.fillMaxSize().background(p.bg).statusBarsPadding().navigationBarsPadding(),
                 ) {
@@ -92,7 +98,7 @@ fun App(vm: AppViewModel) {
                 }
                 is Overlay.GymPick -> app.intervals.ui.gym.GymPickScreen(vm, top.day)
                 is Overlay.EditExercise -> app.intervals.ui.gym.EditExerciseScreen(vm, top.exerciseId)
-                is Overlay.EditGroup -> app.intervals.ui.gym.EditGroupScreen(vm, top.groupId, top.isTag)
+                is Overlay.EditGroup -> app.intervals.ui.gym.EditGroupScreen(vm, top.groupId, top.isTag, top.items)
                 is Overlay.GymFinish -> app.intervals.ui.gym.GymFinishScreen(vm, top)
                 Overlay.GymImport -> vm.gymImport?.let { app.intervals.ui.gym.GymImportScreen(it, { vm.cancelGymImport() }, { vm.confirmGymImport() }) }
                 Overlay.Finished -> vm.finished?.let { app.intervals.player.FinishedScreen(it, onDiscard = { vm.discardSession() }) { note, values, repeat -> vm.saveSession(note, values, repeat) } }

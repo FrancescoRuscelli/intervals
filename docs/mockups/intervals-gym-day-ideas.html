@@ -1,0 +1,163 @@
+<title>Gym Day Layouts</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: one phone per option, all showing the real Fri 20 Nov (Muscle Up, the band one-arm pull-up L/R, weighted Pull Up) */
+:root {
+  --bg: #f4f2fa; --fg: #18151f; --muted: #5b5668; --line: #dfdbe9; --accent: #6d28d9; --card: #ffffff;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif;
+  --ph-bg: #000; --ph-surface: #1A1C21; --ph-text: #F2F3F5; --ph-muted: #9AA0AA; --ph-soft: #C9CDD3; --ph-line: #2B2E35;
+  --ph-accent: #7C3AED; --ph-accent-text: #C4B1FF; --ph-work: #FF8AB3; --ph-yellow: #FFC107;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
+main { max-width: 1240px; margin: 0 auto; display: grid; gap: 14px; }
+h1 { font-family: var(--display); font-size: 1.8rem; margin: 0; }
+.lede { color: var(--muted); margin: 0; max-width: 78ch; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 16px; align-items: start; }
+.opt { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; display: grid; gap: 8px; min-width: 0; }
+.head { display: flex; gap: 10px; align-items: baseline; }
+.tag { font-family: var(--display); font-weight: 700; color: var(--accent); font-size: 1.1rem; }
+.name { font-weight: 600; }
+.desc { color: var(--muted); font-size: .86rem; margin: 0; }
+
+.phone { background: var(--ph-bg); border-radius: 18px; padding: 12px 10px 14px; color: var(--ph-text); font-size: 14px; display: grid; gap: 10px; }
+.top h3 { margin: 0; font-size: 24px; font-weight: 700; line-height: 1.2; }
+.top .sub { color: var(--ph-muted); font-size: 12px; }
+.card { background: var(--ph-surface); border-radius: 14px; padding: 12px; display: grid; gap: 6px; }
+.ch { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.cn { font-weight: 600; font-size: 15px; }
+.cc { color: var(--ph-work); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.muted { color: var(--ph-muted); font-size: 11.5px; }
+.num { font-variant-numeric: tabular-nums; }
+table { color: var(--ph-text); font-size: 15px; border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th { color: var(--ph-muted); font-weight: 400; font-size: 11px; text-align: left; padding: 2px 0; }
+td { padding: 3px 0; font-size: 15px; }
+td.lab { color: var(--ph-soft); width: 46px; }
+td.x { text-align: right; color: var(--ph-work); font-weight: 700; font-size: 13px; }
+.note { color: var(--ph-muted); font-style: italic; font-size: 12px; }
+.chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.chip { border: 1px solid var(--ph-line); background: #23252B; border-radius: 9px; padding: 3px 7px; font-size: 13px; font-weight: 600; display: inline-flex; gap: 5px; align-items: center; position: relative; font-variant-numeric: tabular-nums; }
+.chip .k { color: var(--ph-muted); font-weight: 400; font-size: 11px; }
+.chip.noted::after { content: ""; position: absolute; top: 0; right: 0; border-top: 6px solid var(--ph-text); border-left: 6px solid transparent; border-top-right-radius: 8px; }
+.band { width: 9px; height: 9px; border-radius: 50%; border: 1px solid #C9CDD3; flex: none; }
+.band.none { background: transparent; border-style: dashed; }
+.side { font-size: 10px; font-weight: 800; color: var(--ph-accent-text); }
+.bars { display: flex; gap: 3px; align-items: flex-end; }
+.bcol { display: flex; flex-direction: column; align-items: center; width: 22px; }
+.bcol span { font-size: 10px; font-weight: 700; }
+.bar { width: 100%; border-radius: 3px 3px 0 0; position: relative; box-sizing: border-box; }
+.striped { background-image: repeating-linear-gradient(135deg, rgba(255,255,255,.32) 0 2px, transparent 2px 6px); border: 1.5px solid #9AA0AA; }
+.lr { display: grid; grid-template-columns: 34px 1fr 1fr; gap: 2px 8px; font-variant-numeric: tabular-nums; align-items: center; }
+.lr .h { color: var(--ph-muted); font-size: 11px; }
+.lr .L, .lr .R { font-size: 15px; font-weight: 600; }
+.line { font-size: 14px; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.line b { font-variant-numeric: tabular-nums; }
+.tl { display: grid; grid-template-columns: 6px 1fr auto; gap: 0 10px; }
+.tl .strip { background: #5B8DEF; border-radius: 3px; }
+.tl .row { display: flex; gap: 8px; align-items: center; padding: 3px 0; font-variant-numeric: tabular-nums; }
+.tl .rest { color: var(--ph-muted); font-size: 11px; text-align: right; padding: 3px 0; font-variant-numeric: tabular-nums; }
+.tl .exh { grid-column: 2 / 4; font-weight: 600; font-size: 13px; color: var(--ph-soft); padding: 6px 0 2px; }
+.longrest { color: var(--ph-yellow) !important; }
+.up { color: #4ADE80; font-size: 11.5px; }
+.down { color: var(--ph-work); font-size: 11.5px; }
+</style>
+
+<main>
+  <h1>The gym day screen: other ways to show it</h1>
+  <p class="lede">What opens when you tap a gym day in the Journal. All options show your real Friday 20 November: Muscle Up with a different band each set, the band one-arm pull-up alternating L / R with notes, and Pull Up with 15 kg. Tapping an exercise still opens it to log or edit sets.</p>
+  <div class="grid" id="opts"></div>
+</main>
+
+<script>
+const B = { purple: "#8E44D8", black: "#3A3D44", red: "#E53935", yellow: "#FFC107" };
+const mu = ["purple","black","red","yellow",null,"purple","purple","black","red"].map((b, i) => ({ reps: 1, band: b, rest: [null,16,8,5,28,524,1,43,3][i] }));
+const rb = [[1,"L","half rep",26],[1,"R","",2],[3,"L","last rep half",116],[3,"R","",null],[3,"L","last half rep",293],[3,"R","last half rep",null],[2,"L","",429],[2,"R","",null]]
+  .map(([reps, side, note, rest]) => ({ reps, side, note, band: "black", rest }));
+const pu = [5,6,7,7,5,5].map((r, i) => ({ kg: 15, reps: r, rest: [164,458,348,405,552,533][i] }));
+const mmss = s => s == null ? "" : `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+const dot = b => b ? `<span class="band" style="background:${B[b]}"></span>` : `<span class="band none"></span>`;
+const header = `<div class="top"><h3>Fri 20 Nov</h3><div class="sub">23 sets · 3 exercises · Pull</div></div>`;
+const card = (name, count, body, extra = "") => `<div class="card"><div class="ch"><span class="cn">${name}</span><span class="cc">${count}</span></div>${body}${extra}</div>`;
+
+// NOW: the installed table
+function now() {
+  const t = (cols, rows) => `<table><tr><th>Set</th>${cols.map(c => `<th>${c}</th>`).join("")}<th></th></tr>${rows.join("")}</table>`;
+  const r = (lab, vals, x = "", note = "") => `<tr><td class="lab">${lab}</td>${vals.map(v => `<td>${v}</td>`).join("")}<td class="x">${x}</td></tr>` + (note ? `<tr><td></td><td colspan="3" class="note">${note}</td></tr>` : "");
+  return header +
+    card("Muscle Up", "9 sets", t(["reps"], [["1"],["2"],["3"],["4"],["5"],["6–7","×2"],["8"],["9"]].map(([l, x]) => r(l, ["1"], x || ""))), `<div class="muted">the bands do not show: eight rows that all read 1</div>`) +
+    card("Resistance Band One Arm Pull Up", "8 sets", t(["reps"], rb.map(s => r(s.side, [s.reps], "", s.note)))) +
+    card("Pull Up", "6 sets", t(["kg", "reps"], [["1",5],["2",6],["3–4",7,"×2"],["5–6",5,"×2"]].map(([l, reps, x]) => r(l, [15, reps], x || ""))), `<div class="muted">last time 5 sets · 30 × 5</div>`);
+}
+
+// A: chips in the order done
+function chips() {
+  const c = (inner, noted) => `<span class="chip${noted ? " noted" : ""}">${inner}</span>`;
+  return header +
+    card("Muscle Up", "9 sets", `<div class="chips">${mu.map(s => c(dot(s.band) + s.reps)).join("")}</div>`) +
+    card("Resistance Band One Arm Pull Up", "8 sets", `<div class="chips">${rb.map(s => c(`<span class="side">${s.side}</span>${s.reps}`, s.note)).join("")}</div><div class="muted">${dot("black")} black band on all sets</div>`) +
+    card("Pull Up", "6 sets", `<div class="chips">${c(`<span class="k">15 kg</span>5`)}${pu.slice(1).map(s => c(s.reps)).join("")}</div><div class="muted">last time 5 sets · 30 × 5 <span class="down">· −15 kg, +2 reps</span></div>`);
+}
+
+// B: the Journal's bars, bigger, with the details of the tapped set
+function bars() {
+  const bar = (s, max, striped, label) => `<div class="bcol"><span>${s.reps}</span><div class="bar${striped ? " striped" : ""}" style="height:${10 + 50 * s.reps / max}px;background-color:${striped ? B[s.band] : "#7C3AED"}">${label || ""}</div></div>`;
+  const lab = t => `<span style="position:absolute;top:2px;left:0;right:0;text-align:center;font-size:8px;font-weight:800">${t}</span>`;
+  return header +
+    card("Muscle Up", "9 sets", `<div class="bars">${mu.map(s => bar(s, 1, !!s.band)).join("")}</div><div class="muted">Tap a bar: "#5 of 9 · no band · 1 · rest 0:28"</div>`) +
+    card("Resistance Band One Arm Pull Up", "8 sets", `<div class="bars">${rb.map(s => bar(s, 3, true, lab(s.side))).join("")}</div><div class="note">#3 of 8 · black · 3 L · “last rep half”</div>`) +
+    card("Pull Up", "6 sets", `<div class="bars">${pu.map(s => bar(s, 7, false)).join("")}</div><div class="muted">15 kg · 35 reps · best 7 · last time 30 × 5</div>`);
+}
+
+// C: sentences: by load on one line, L / R side by side
+function sentences() {
+  const groups = []; mu.forEach(s => { const g = groups[groups.length - 1]; if (g && g.band === s.band) g.n++; else groups.push({ band: s.band, n: 1 }); });
+  const lr = []; for (let i = 0; i < rb.length; i += 2) lr.push([rb[i], rb[i + 1]]);
+  const cell = s => `<span class="${s.side}">${s.reps}${s.note ? `<span class="note"> “${s.note}”</span>` : ""}</span>`;
+  return header +
+    card("Muscle Up", "9 × 1", `<div class="line">${groups.map(g => `<span style="display:inline-flex;gap:4px;align-items:center">${dot(g.band)}<b>${g.n > 1 ? "1 × " + g.n : "1"}</b></span>`).join("")}</div><div class="muted">bands: purple 3 · black 2 · red 2 · yellow 1 · none 1</div>`) +
+    card("Resistance Band One Arm Pull Up", "4 rounds · black", `<div class="lr"><span class="h"></span><span class="h">L</span><span class="h">R</span>${lr.map((p, i) => `<span class="h">${i + 1}</span>${cell(p[0])}${cell(p[1])}`).join("")}</div><div class="muted">L 9 reps · R 9 reps</div>`) +
+    card("Pull Up", "6 sets · 35 reps", `<div class="line"><span class="muted">15 kg</span><b>5 · 6 · 7 · 7 · 5 · 5</b></div><div class="muted">last time 30 kg · 5 · 5 · 5 · 5 · 5</div>`);
+}
+
+// D: the day as a timeline, with the rests
+function timeline() {
+  const rows = [];
+  const ex = (name, sets, desc) => { rows.push(`<div class="exh">${name}</div>`); sets.forEach(s => rows.push(`<div class="strip"></div><div class="row">${desc(s)}</div><div class="rest ${s.rest > 300 ? "longrest" : ""}">${s.rest ? "rest " + mmss(s.rest) : ""}</div>`)); };
+  ex("Muscle Up", mu, s => `${dot(s.band)}<b>1</b><span class="muted">${s.band || "no band"}</span>`);
+  ex("Resistance Band One Arm Pull Up", rb, s => `${dot("black")}<span class="side">${s.side}</span><b>${s.reps}</b>${s.note ? `<span class="note">“${s.note}”</span>` : ""}`);
+  ex("Pull Up", pu, s => `<span class="muted">15 kg</span><b>× ${s.reps}</b>`);
+  return header + `<div class="card"><div class="tl">${rows.join("")}</div><div class="muted">longest rest 9:12 (yellow over 5 min)</div></div>`;
+}
+
+// E: D's timeline, with C's pink summary on each exercise and the L / R sets paired on one row
+function timelinePaired() {
+  const rows = [];
+  const restCell = r => `<div class="rest ${r > 300 ? "longrest" : ""}">${r ? "rest " + mmss(r) : ""}</div>`;
+  const ex = (name, sum) => rows.push(`<div class="exh" style="display:flex;justify-content:space-between;gap:8px"><span>${name}</span><span class="cc">${sum}</span></div>`);
+  ex("Muscle Up", "9 × 1 · 4 bands");
+  mu.forEach(s => rows.push(`<div class="strip"></div><div class="row">${dot(s.band)}<b>1</b><span class="muted">${s.band || "no band"}</span></div>` + restCell(s.rest)));
+  ex("Resistance Band One Arm Pull Up", "4 rounds · black");
+  const half = s => `<span style="display:inline-flex;gap:6px;align-items:center;min-width:0"><span class="side">${s.side}</span><b>${s.reps}</b>${s.note ? `<span class="note" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">“${s.note}”</span>` : ""}</span>`;
+  for (let i = 0; i < rb.length; i += 2) {
+    const [l, r] = [rb[i], rb[i + 1]];
+    rows.push(`<div class="strip"></div><div class="row" style="display:grid;grid-template-columns:12px 1fr 1fr;gap:8px">${dot("black")}${half(l)}${half(r)}</div>` + restCell(l.rest));
+  }
+  ex("Pull Up", "6 sets · 35 reps");
+  pu.forEach(s => rows.push(`<div class="strip"></div><div class="row"><span class="muted">15 kg</span><b>× ${s.reps}</b></div>` + restCell(s.rest)));
+  return header + `<div class="card"><div class="tl">${rows.join("")}</div><div class="muted">longest rest 9:12 (yellow over 5 min)</div></div>`;
+}
+
+const options = [
+  ["Now", "Installed: a table per exercise", "Set / kg / reps columns, equal sets in a row folded (×2), notes under the row. Bands are not shown at all, so Muscle Up is eight rows that all read 1; the L / R sets take eight rows.", now],
+  ["A", "Chips in the order done", "Each set a chip: band dot, L / R, reps; the kg written once where it changes. Notes are the folded corner (tap for the text), like the Journal. Short, and the bands show.", chips],
+  ["B", "The Journal's bars, bigger", "Same picture as the Journal card, so the two screens match; a tapped bar gives its details (band, note, rest). A summary line under each exercise.", bars],
+  ["C", "Sentences, L / R side by side", "Each exercise in one or two lines: same bands folded (purple, black, red…), the weight said once, and L / R sets paired in two columns so you compare the sides.", sentences],
+  ["E", "D + pink summary + L / R paired", "The timeline of D, with C's pink summary on the right of each exercise, and the L / R sets of one round on one row (L left, R right) with the rest before the round.", timelinePaired],
+  ["D", "The day as a timeline", "Every set in the order done with its rest on the right; long rests (over 5 min) in yellow. Shows the pacing of the day, but it is the longest.", timeline],
+];
+document.getElementById("opts").innerHTML = options.map(([id, name, desc, f]) => `<section class="opt"><div class="head"><span class="tag">${id}</span><span class="name">${name}</span></div><p class="desc">${desc}</p><div class="phone">${f()}</div></section>`).join("");
+</script>

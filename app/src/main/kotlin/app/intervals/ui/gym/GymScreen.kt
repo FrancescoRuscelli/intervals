@@ -4,6 +4,22 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
+import app.intervals.core.specColors
+import app.intervals.core.specsText
+import app.intervals.core.loadText
+import app.intervals.core.boxText
+import app.intervals.core.Side
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -168,9 +184,11 @@ private fun DayPage(
             }
             IconButton(onClick = { vm.openSettings() }) { Icon(AppIcons.Settings, "Settings", tint = p.text) }
         }
+        val ordered = remember(sets) { sets.orEmpty().sortedBy { it.order } }
+        val stripColor = remember(sets, allGroups) { app.intervals.core.dayStrip(ordered, allGroups).associate { it.exerciseId to it.color } }
         LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            items(loggedById.entries.toList(), key = { it.key }) { (id, exSets) ->
-                byId[id]?.let { ExerciseCard(vm, it, exSets, day) }
+            if (ordered.isNotEmpty()) item {
+                DayTimeline(ordered, byId, stripColor) { vm.openGymLog(it, day) }
             }
             if (sets?.isEmpty() == true) item {
                 Text("Nothing logged on this day.", color = p.muted, fontSize = 15.sp, modifier = Modifier.padding(top = 8.dp))
@@ -196,80 +214,123 @@ private fun dayTitle(day: String): String {
     }
 }
 
-/** The columns of the table, in the order shown. */
-private fun columns(ex: Exercise): List<GymField> =
-    listOf(GymField.WEIGHT, GymField.REPS, GymField.TIME, GymField.DISTANCE).filter { it in ex.fields }
+/**
+ * The day as a timeline (mockup intervals-gym-day-ideas.html, E): every set in the order done, under its exercise's
+ * name with a pink summary on the right; the L and R sets of a round share one row. The rest before a set (or a round)
+ * is on the right, yellow over 5 min. A strip in the exercise's tag color runs down the left. Tapping an exercise or a
+ * set opens the exercise to log or edit.
+ */
+@Composable
+private fun DayTimeline(sets: List<GymSet>, byId: Map<Long, Exercise>, stripColor: Map<Long, Long>, onOpen: (Long) -> Unit) {
+    val p = LocalPalette.current
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val runs = remember(sets) {
+        buildList<MutableList<GymSet>> { sets.forEach { s -> if (lastOrNull()?.last()?.exerciseId == s.exerciseId) last() += s else add(mutableListOf(s)) } }
+    }
+    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(p.surface).padding(vertical = 8.dp)) {
+        runs.forEach { run ->
+            val ex = byId[run.first().exerciseId] ?: return@forEach
+            val strip = stripColor[ex.id]?.let { Color(it) } ?: p.accent
+            val banded = ex.specs.any { it.colors.isNotEmpty() }
+            val rows = pairSides(run)
+            // one band (or spec) on every set: said once in the summary, not on each row
+            val common = run.map { it.specsText(ex) }.distinct().singleOrNull()?.takeIf { it.isNotEmpty() }
+            // the loads get one width, so the reps line up in a column
+            val loadWidth = with(density) { run.maxOf { measurer.measure(loadOf(it, ex, banded, common), TextStyle(fontSize = 13.sp)).size.width }.toDp() + 2.dp }
+            Row(
+                Modifier.fillMaxWidth().clickable(onClickLabel = "Log ${ex.name}") { onOpen(ex.id) }.padding(start = 14.dp, end = 14.dp, top = 8.dp, bottom = 2.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(ex.name, color = p.soft, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                Text(runSummary(run, rows, ex, common), color = p.workText, fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+                    maxLines = 1, modifier = Modifier.padding(start = 8.dp))
+            }
+            rows.forEach { r -> TimelineRow(r, ex, strip, banded, common, loadWidth) { onOpen(ex.id) } }
+        }
+    }
+}
 
-private fun header(f: GymField, ex: Exercise) = when (f) {
-    GymField.WEIGHT -> "kg"
-    GymField.BANDS -> "bands"
-    GymField.REPS -> "reps"
-    GymField.TIME -> "time"
-    GymField.DISTANCE -> "distance"
+/** The sets of a run as rows: an L set and the R set right after it (or R then L) share a row. */
+internal fun pairSides(run: List<GymSet>): List<List<GymSet>> = buildList {
+    var i = 0
+    while (i < run.size) {
+        val s = run[i]
+        val next = run.getOrNull(i + 1)
+        // a round: an L and an R right after each other, in either order; L always on the left
+        if (s.side != null && next?.side != null && next.side != s.side) { add(if (s.side == Side.LEFT) listOf(s, next) else listOf(next, s)); i += 2 }
+        else { add(listOf(s)); i++ }
+    }
+}
+
+/** "4 rounds · black", "L 5 · R 7" (uneven sides), "9 × 1 · 4 bands", "6 sets · 35 reps". */
+private fun runSummary(run: List<GymSet>, rows: List<List<GymSet>>, ex: Exercise, common: String?): String {
+    val left = run.count { it.side == Side.LEFT }
+    val right = run.count { it.side == Side.RIGHT }
+    val head = when {
+        rows.all { it.size == 2 } -> "${rows.size} round${if (rows.size == 1) "" else "s"}"
+        left + right > 0 -> "L $left · R $right"
+        run.size > 1 && run.map { it.boxText(ex) }.distinct().size == 1 -> "${run.size} × ${run.first().boxText(ex)}"
+        GymField.REPS in ex.fields -> "${run.size} set${if (run.size == 1) "" else "s"} · ${run.sumOf { it.reps ?: 0 }} reps"
+        else -> "${run.size} set${if (run.size == 1) "" else "s"}"
+    }
+    val bands = run.map { it.specColors(ex) }.filter { it.isNotEmpty() }.distinct().size
+    val tail = when {
+        common != null -> common
+        bands > 1 -> "$bands bands"
+        else -> null
+    }
+    return listOfNotNull(head, tail).joinToString(" · ")
 }
 
 @Composable
-private fun ExerciseCard(vm: AppViewModel, ex: Exercise, sets: List<GymSet>, day: String) {
+private fun TimelineRow(row: List<GymSet>, ex: Exercise, strip: Color, banded: Boolean, common: String?, loadWidth: Dp, onOpen: () -> Unit) {
     val p = LocalPalette.current
-    val cols = columns(ex)
-    val rows = remember(sets) { dayRows(sets) }
-    val last by produceState<List<GymSet>?>(null, ex.id, day) { value = vm.lastSets(ex.id, day) }
-    Column(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(p.surface)
-            .clickable(onClickLabel = "Log ${ex.name}") { vm.openGymLog(ex.id, day) }.padding(14.dp),
+    val first = row.first()
+    Row(
+        Modifier.fillMaxWidth().height(IntrinsicSize.Min).clickable(onClick = onOpen).padding(horizontal = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(ex.name, color = p.text, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-            Text(
-                if (sets.size == 1) "1 set" else "${sets.size} sets",
-                color = p.workText, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
-            )
+        Box(Modifier.width(5.dp).fillMaxHeight().background(strip))
+        Spacer(Modifier.width(10.dp))
+        Row(Modifier.weight(1f).padding(vertical = 5.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            val colors = first.specColors(ex)
+            if (colors.isNotEmpty()) colors.forEach { c ->
+                Box(Modifier.size(11.dp).clip(CircleShape).background(Color(c)).border(1.dp, p.soft, CircleShape))
+            } else if (banded) Box(Modifier.size(11.dp).border(1.dp, p.muted, CircleShape))
+            if (first.side != null) {
+                // L on the left, R on the right, a line between; a set without its other side leaves that half empty
+                val l = row.firstOrNull { it.side == Side.LEFT }
+                val r = row.firstOrNull { it.side == Side.RIGHT }
+                Box(Modifier.weight(1f)) { l?.let { SetPart(it, ex, banded, common, loadWidth, Modifier) } }
+                Box(Modifier.width(1.dp).height(18.dp).background(p.line))
+                Box(Modifier.weight(1f).padding(start = 4.dp)) { r?.let { SetPart(it, ex, banded, common, loadWidth, Modifier) } }
+            } else SetPart(first, ex, banded, common, loadWidth, Modifier.weight(1f))
         }
-        Spacer(Modifier.height(8.dp))
-        Row(Modifier.fillMaxWidth()) {
-            Text("Set", color = p.muted, fontSize = 12.sp, modifier = Modifier.width(56.dp))
-            cols.forEach { Text(header(it, ex), color = p.muted, fontSize = 12.sp, modifier = Modifier.weight(1f)) }
-            Spacer(Modifier.width(40.dp))
-        }
-        rows.forEach { SetRowView(it, ex, cols) }
-        last?.let { l ->
-            val top = topSet(l, ex)
-            Text(
-                if (top == null) "first time" else "last time ${l.size} sets · ${top.summary(ex)}",
-                color = p.muted, fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp),
-            )
+        // the rest before the row: before the set done first
+        row.minBy { it.order }.restSec?.takeIf { it > 0 }?.let { r ->
+            Text("rest ${formatTime(r)}", color = if (r > 300) p.recordText else p.muted, fontSize = 12.sp, style = NumberStyle, modifier = Modifier.padding(start = 8.dp))
         }
     }
 }
 
+/** The muted load of a set on the timeline ("15 kg", "purple", "no band"); the band said in the summary is left out. */
+private fun loadOf(s: GymSet, ex: Exercise, banded: Boolean, common: String?): String {
+    val specs = s.specsText(ex)
+    return (if (common != null && specs == common) s.loadText(ex).removePrefix(common).removePrefix(" · ") else s.loadText(ex))
+        .ifEmpty { if (banded && specs.isEmpty()) "no band" else "" }
+}
+
+/** One set on a timeline row: side, load, the reps (or time) in bold, the note. */
 @Composable
-private fun SetRowView(row: SetRow, ex: Exercise, cols: List<GymField>) {
+private fun SetPart(s: GymSet, ex: Exercise, banded: Boolean, common: String?, loadWidth: Dp, modifier: Modifier) {
     val p = LocalPalette.current
-    val s = row.set
-    Column(Modifier.fillMaxWidth().padding(vertical = 5.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(row.label, color = p.labelColor(row.label, p.soft), fontSize = 15.sp, style = NumberStyle, modifier = Modifier.width(56.dp))
-            cols.forEach { f ->
-                Box(Modifier.weight(1f)) {
-                    when (f) {
-                        else -> Text(cell(f, s, ex), color = p.text, fontSize = 17.sp, style = NumberStyle)
-                    }
-                }
-            }
-            Box(Modifier.width(40.dp), contentAlignment = Alignment.CenterEnd) {
-                if (row.count > 1) Text("×${row.count}", color = p.workText, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            }
-        }
-        if (s.note.isNotEmpty()) {
-            Text(s.note, color = p.muted, fontSize = 13.sp, fontStyle = FontStyle.Italic, modifier = Modifier.padding(start = 56.dp))
-        }
+    Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        s.side?.let { Text(if (it == Side.LEFT) "L" else "R", color = p.accentText, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold) }
+        val load = loadOf(s, ex, banded, common)
+        if (loadWidth > 0.dp) Text(load, color = p.muted, fontSize = 13.sp, maxLines = 1, softWrap = false, modifier = Modifier.width(loadWidth))
+        Text((if (s.weightKg != null && GymField.WEIGHT in ex.fields) "× " else "") + s.boxText(ex), color = p.text, fontSize = 16.sp, fontWeight = FontWeight.Bold, style = NumberStyle)
+        if (s.note.isNotBlank()) Text("“${s.note.trim()}”", color = p.muted, fontSize = 13.sp, fontStyle = FontStyle.Italic, maxLines = 1,
+            overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
     }
-}
-
-private fun cell(f: GymField, s: GymSet, ex: Exercise): String = when (f) {
-    GymField.WEIGHT -> s.weightKg?.let(::formatKg) ?: "–"
-    GymField.REPS -> s.reps?.toString() ?: "–"
-    GymField.TIME -> s.timeSec?.let(::formatTime) ?: "–"
-    GymField.DISTANCE -> s.distance?.let(::formatKg) ?: "–"
-    GymField.BANDS -> ""
 }

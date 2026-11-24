@@ -291,6 +291,8 @@ private fun Disc(
                         Icon(AppIcons.series(seg.icon), null, tint = ink, modifier = Modifier.size(28.dp))
                         Text(label(st), color = ink, fontSize = 22.sp, fontWeight = FontWeight.SemiBold)
                         Text(mmss(st.secLeft), color = ink, style = NumberStyle, fontSize = (discDp.value * 0.17f).sp, fontWeight = FontWeight.Bold)
+                        // what was set before the start for this series, e.g. "20 mm · 5 kg"
+                        c.details[seg.name]?.let { Text(it, color = ink, fontSize = 14.sp, fontWeight = FontWeight.SemiBold) }
                     }
                 }
             }

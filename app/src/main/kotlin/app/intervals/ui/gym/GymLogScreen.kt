@@ -2,6 +2,16 @@ package app.intervals.ui.gym
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import app.intervals.core.loadText
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -38,7 +48,6 @@ import androidx.compose.foundation.layout.widthIn
 import app.intervals.core.loadBlocks
 import app.intervals.core.boxText
 import app.intervals.core.loadText
-import androidx.compose.ui.text.style.TextAlign
 import app.intervals.core.variantOf
 import app.intervals.core.lastOfVariant
 import androidx.compose.foundation.horizontalScroll
@@ -116,7 +125,7 @@ private fun Values.into(s: GymSet, ex: Exercise) = s.copy(
 
 /** Log sets of one exercise on one day (mockup G2): tiles with − / +, Log set, rest clock counting up, the sets done. */
 @Composable
-fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
+fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String, initialTab: Int = 0) {
     val p = LocalPalette.current
     val exercises by vm.exercises.collectAsStateWithLifecycle()
     val ex = exercises.firstOrNull { it.id == exerciseId } ?: return
@@ -138,7 +147,7 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
     var timerFrom by remember(exerciseId) { mutableStateOf<Long?>(null) }
     var measured by remember(exerciseId) { mutableStateOf(false) }
     var typingSpec by remember { mutableStateOf<app.intervals.core.Spec?>(null) }
-    var tab by androidx.compose.runtime.saveable.rememberSaveable(exerciseId) { mutableStateOf(0) }
+    var tab by androidx.compose.runtime.saveable.rememberSaveable(exerciseId) { mutableStateOf(initialTab) }
     val logScroll = rememberLazyListState()
 
     // start from today's last set, else from last time; the side after the last one done
@@ -151,6 +160,17 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
             Side.RIGHT -> SideChoice.LEFT
             null -> SideChoice.RIGHT
         }
+    }
+    // after each set logged, the next one starts from last time's set at that place
+    var seen by remember { mutableStateOf<Int?>(null) }
+    LaunchedEffect(sets?.size) {
+        val today = sets ?: return@LaunchedEffect
+        val last = lastTime ?: return@LaunchedEffect
+        val before = seen
+        seen = today.size
+        if (before == null || today.size <= before || selectedIds.isNotEmpty()) return@LaunchedEffect
+        val s = when (side) { SideChoice.LEFT -> Side.LEFT; SideChoice.RIGHT -> Side.RIGHT; else -> null }
+        startValues(today, last, s)?.let { values = it.toValues() }
     }
     // each side starts from its own last set: switching to L brings back the last L values, R the last R
     LaunchedEffect(side) {
@@ -283,7 +303,12 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
         }
         val shown = if (variantFilter == null) allSets else allSets.filter { it.variantOf(ex) == variantFilter }
         when (tab) {
-            1 -> Box(Modifier.weight(1f)) { ExerciseHistory(ex, shown) { d -> vm.openGymLog(exerciseId, d) } }
+            1 -> Box(Modifier.weight(1f)) {
+                // the whole workout of each day: first to last set, from the rests of all its sets
+                val everything by remember { vm.gymSetsBetween("0000-01-01", "9999-12-31") }.collectAsStateWithLifecycle(emptyList())
+                val workoutSec = remember(everything) { everything.groupBy { it.day }.mapValues { (_, s) -> s.sumOf { it.restSec ?: 0 } } }
+                ExerciseHistory(ex, shown, workoutSec) { d -> vm.openGymLog(exerciseId, d) }
+            }
             2 -> Box(Modifier.weight(1f)) { ExerciseGraph(ex, shown) }
             3 -> Box(Modifier.weight(1f)) { ExerciseRecords(ex, shown) }
         }
@@ -342,12 +367,7 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String) {
             }
             if (list.isNotEmpty()) item {
                 val hold = { set: GymSet -> if (set.id !in selectedIds) select(selectedIds + set.id) }
-                // per side: one row per round, L beside R (mockup intervals-side-set-actions.html, A)
-                if (ex.perSide && list.all { it.side != null }) SideRounds(list, ex, selectedIds, selecting, ::tapSet, hold) { round ->
-                    val ids = round.map { it.id }.toSet()
-                    select(if (selectedIds.containsAll(ids)) selectedIds - ids else selectedIds + ids)
-                }
-                else SetBlocks(list, ex, selectedIds, selecting, ::tapSet, hold)
+                SetBlocks(list, ex, selectedIds, selecting, ::tapSet, hold)
             }
         }
         // the buttons fixed at the bottom, under the thumb (mockup intervals-set-screen-ideas.html, B1)
@@ -447,7 +467,12 @@ private fun StepTile(
     }
 }
 
-/** Each chip edits or selects one logged set within its chronological load block. */
+/**
+ * The logged sets (mockup intervals-log-sets-ideas.html). Per-side exercises (U): one row per round, L on the left and
+ * R on the right with a line between; a set without its other side leaves that half empty; the counts of each side
+ * above. Other exercises (W1): a block per load in the order done, the load in a fixed-width column so the squares
+ * line up, the rest before each set under its square (yellow over 5 min). A note is a folded corner on the square.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SetBlocks(
@@ -455,106 +480,117 @@ private fun SetBlocks(
     onTap: (GymSet) -> Unit, onHold: (GymSet) -> Unit,
 ) {
     val p = LocalPalette.current
-    val blocks = remember(sets, ex) { loadBlocks(sets, ex) }
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        blocks.forEach { block ->
-            val first = block.sets.first()
-            FlowRow(
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val square: @Composable (GymSet, Boolean) -> Unit = { set, withRest -> SetSquare(set, ex, set.id in markedIds, selecting, withRest, onTap, onHold) }
+    if (sets.any { it.side != null }) {
+        val rows = remember(sets) { pairSides(sets) }
+        val left = sets.count { it.side == Side.LEFT }
+        val right = sets.count { it.side == Side.RIGHT }
+        val labelWidth = with(density) {
+            sets.maxOf { measurer.measure(it.loadText(ex), TextStyle(fontSize = 13.sp)).size.width }.toDp() + 2.dp
+        }.coerceAtMost(110.dp)
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text("L $left · R $right" + if (rows.all { it.size == 2 }) " · ${rows.size} round${if (rows.size == 1) "" else "s"}" else "",
+                color = p.muted, fontSize = 12.sp)
+            Column(
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(p.surface)
-                    .border(1.dp, p.line, RoundedCornerShape(12.dp)).padding(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-                itemVerticalAlignment = Alignment.CenterVertically,
+                    .border(1.dp, p.line, RoundedCornerShape(12.dp)).padding(horizontal = 8.dp, vertical = 4.dp),
             ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(block.label, color = p.text, fontSize = 15.sp, style = NumberStyle, maxLines = 2, modifier = Modifier.weight(1f, fill = false))
-                    first.variantOf(ex)?.let { Text(it, color = p.muted, fontSize = 13.sp, modifier = Modifier.weight(1f, fill = false)) }
-                    first.side?.let { side ->
-                        Text(side.letter, color = p.text, fontSize = 12.sp, fontWeight = FontWeight.Bold,
-                            modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(p.sideTint(side)).padding(horizontal = 7.dp, vertical = 3.dp))
+                rows.forEachIndexed { i, row ->
+                    Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text("${i + 1}", color = p.muted, fontSize = 11.sp, style = NumberStyle, modifier = Modifier.width(18.dp))
+                        listOf(Side.LEFT, Side.RIGHT).forEachIndexed { k, side ->
+                            if (k == 1) Box(Modifier.padding(horizontal = 6.dp).width(1.dp).height(32.dp).background(p.line))
+                            Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                row.firstOrNull { it.side == side }?.let { set ->
+                                    Text(side.letter, color = p.text, fontSize = 12.sp, fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(p.sideTint(side)).padding(horizontal = 7.dp, vertical = 3.dp))
+                                    val load = set.loadText(ex)
+                                    if (load.isNotEmpty()) Text(load, color = p.soft, fontSize = 13.sp, maxLines = 2, modifier = Modifier.width(labelWidth))
+                                    square(set, false)
+                                }
+                            }
+                        }
+                        val rest = row.minBy { it.order }.restSec?.takeIf { it > 0 }
+                        Text(rest?.let(::formatTime).orEmpty(), color = if ((rest ?: 0) > 300) p.recordText else p.muted, fontSize = 10.sp,
+                            style = NumberStyle, textAlign = TextAlign.End, modifier = Modifier.width(36.dp))
                     }
                 }
-                block.sets.forEach { set ->
-                    val marked = set.id in markedIds
-                    val action = if (!selecting) "Edit" else if (marked) "Deselect" else "Select"
-                    Box(
-                        Modifier.heightIn(min = 44.dp).widthIn(min = 44.dp).clip(RoundedCornerShape(10.dp))
-                            .background(if (marked) p.workTint else p.bg)
-                            .border(1.dp, if (marked || set.note.isNotEmpty()) p.pink else p.line, RoundedCornerShape(10.dp))
-                            .semantics { if (selecting) selected = marked }
-                            .combinedClickable(
-                                onClickLabel = "$action set ${set.summary(ex)}${set.side?.let { ", " + it.name.lowercase() }.orEmpty()}",
-                                onLongClickLabel = "Select set",
-                                hapticFeedbackEnabled = true,
-                                onClick = { onTap(set) }, onLongClick = { onHold(set) },
-                            )
-                            .padding(horizontal = 8.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(set.boxText(ex), color = if (marked) p.workText else p.text, fontSize = 16.sp, style = NumberStyle)
-                    }
+            }
+        }
+        return
+    }
+    val blocks = remember(sets, ex) { loadBlocks(sets, ex) }
+    val label = { b: app.intervals.core.LoadBlock -> b.label + (b.sets.first().variantOf(ex)?.let { " $it" } ?: "") }
+    val labelWidth = with(density) {
+        blocks.maxOf { measurer.measure(label(it), TextStyle(fontSize = 15.sp)).size.width }.toDp() + 2.dp
+    }.coerceAtMost(130.dp)
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        blocks.forEach { block ->
+            val variant = block.sets.first().variantOf(ex)
+            Row(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(p.surface)
+                    .border(1.dp, p.line, RoundedCornerShape(12.dp)).padding(8.dp),
+                verticalAlignment = Alignment.Top,
+            ) {
+                Box(Modifier.width(labelWidth).heightIn(min = 44.dp), contentAlignment = Alignment.CenterStart) {
+                    Text(
+                        buildAnnotatedString {
+                            append(block.label)
+                            variant?.let { withStyle(SpanStyle(color = p.muted, fontSize = 13.sp)) { append(" $it") } }
+                        },
+                        color = p.text, fontSize = 15.sp, style = NumberStyle, maxLines = 2,
+                    )
+                }
+                Spacer(Modifier.width(8.dp))
+                FlowRow(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    block.sets.forEach { square(it, true) }
                 }
             }
         }
     }
 }
 
-/** The sets of a per-side exercise as rounds: L on the left, R on the right, the note under the reps; ⋯ picks the whole round. */
+/** One set's 44 dp square: tap to edit (or to add / remove while selecting), hold to select; the rest under it. */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
-private fun SideRounds(
-    sets: List<GymSet>, ex: Exercise, markedIds: Set<Long>, selecting: Boolean,
-    onTap: (GymSet) -> Unit, onHold: (GymSet) -> Unit, onRound: (List<GymSet>) -> Unit,
+private fun SetSquare(
+    set: GymSet, ex: Exercise, marked: Boolean, selecting: Boolean, withRest: Boolean,
+    onTap: (GymSet) -> Unit, onHold: (GymSet) -> Unit,
 ) {
     val p = LocalPalette.current
-    val rounds = remember(sets) { app.intervals.core.sideRounds(sets) }
-    val head = { s: GymSet -> listOfNotNull(s.variantOf(ex), s.loadText(ex).ifEmpty { null }).joinToString(" · ") }
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        var shown: String? = null
-        rounds.forEachIndexed { i, round ->
-            // the load once above its rounds; a round whose two sides differ shows it in each half
-            val same = round.sets.map(head).distinct().singleOrNull()
-            if (same != null && same != shown && same.isNotEmpty()) {
-                Text(same, color = p.text, fontSize = 15.sp, style = NumberStyle, modifier = Modifier.padding(top = if (i == 0) 0.dp else 4.dp))
-            }
-            if (same != null) shown = same
-            val whole = round.sets.all { it.id in markedIds }
-            Row(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(p.surface)
-                    .border(if (whole) 2.dp else 1.dp, if (whole) p.pink else p.line, RoundedCornerShape(12.dp)).padding(start = 8.dp, top = 6.dp, bottom = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text("${i + 1}", color = p.faint, fontSize = 11.sp, modifier = Modifier.width(16.dp))
-                listOf(Side.LEFT to round.left, Side.RIGHT to round.right).forEach { (sd, set) ->
-                    if (set == null) Spacer(Modifier.weight(1f)) else {
-                        val marked = set.id in markedIds
-                        val action = if (!selecting) "Edit" else if (marked) "Deselect" else "Select"
-                        val shape = RoundedCornerShape(10.dp)
-                        Column(
-                            Modifier.weight(1f).heightIn(min = 44.dp).clip(shape).background(if (marked) p.workTint else p.sideTint(sd))
-                                .border(if (marked) 2.dp else 0.dp, if (marked) p.pink else Color.Transparent, shape)
-                                .semantics { if (selecting) selected = marked }
-                                .combinedClickable(
-                                    onClickLabel = "$action set ${set.summary(ex)}, ${sd.name.lowercase()}",
-                                    onLongClickLabel = "Select set", hapticFeedbackEnabled = true,
-                                    onClick = { onTap(set) }, onLongClick = { onHold(set) },
-                                )
-                                .padding(horizontal = 8.dp, vertical = 4.dp),
-                            verticalArrangement = Arrangement.Center,
-                        ) {
-                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Text(sd.letter, color = p.muted, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                Text(set.boxText(ex), color = if (marked) p.workText else p.text, fontSize = 16.sp, style = NumberStyle, maxLines = 1)
-                                if (same == null) Text(head(set), color = p.muted, fontSize = 11.sp, maxLines = 1)
-                            }
-                            if (set.note.isNotBlank()) Text(set.note, color = p.pink, fontSize = 11.sp, maxLines = 1,
-                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
-                        }
+    val action = if (!selecting) "Edit" else if (marked) "Deselect" else "Select"
+    val noteMark = p.text
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            Modifier.heightIn(min = 44.dp).widthIn(min = 44.dp).clip(RoundedCornerShape(10.dp))
+                .background(if (marked) p.workTint else p.bg)
+                .border(1.dp, if (marked) p.pink else p.line, RoundedCornerShape(10.dp))
+                .drawWithContent {
+                    drawContent()
+                    // a note: the top-right corner folded, as on the Journal's bars
+                    if (set.note.isNotEmpty()) {
+                        val c = 9.dp.toPx()
+                        drawPath(Path().apply { moveTo(size.width - c, 0f); lineTo(size.width, 0f); lineTo(size.width, c); close() }, noteMark)
                     }
                 }
-                IconButton(onClick = { onRound(round.sets) }) {
-                    Icon(AppIcons.More, if (whole) "Deselect round ${i + 1}" else "Select round ${i + 1}", tint = p.muted)
-                }
-            }
+                .semantics { if (selecting) selected = marked }
+                .combinedClickable(
+                    onClickLabel = "$action set ${set.summary(ex)}${set.side?.let { ", " + it.name.lowercase() }.orEmpty()}" +
+                        if (set.note.isNotEmpty()) ", note ${set.note}" else "",
+                    onLongClickLabel = "Select set",
+                    hapticFeedbackEnabled = true,
+                    onClick = { onTap(set) }, onLongClick = { onHold(set) },
+                )
+                .padding(horizontal = 8.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(set.boxText(ex), color = if (marked) p.workText else p.text, fontSize = 16.sp, style = NumberStyle)
+        }
+        if (withRest) {
+            val rest = set.restSec?.takeIf { it > 0 }
+            Text(rest?.let(::formatTime) ?: " ", color = if ((rest ?: 0) > 300) p.recordText else p.muted, fontSize = 10.sp, style = NumberStyle)
         }
     }
 }

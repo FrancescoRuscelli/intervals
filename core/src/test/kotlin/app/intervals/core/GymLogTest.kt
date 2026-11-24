@@ -11,6 +11,8 @@ class GymLogTest {
         assertEquals(80.0, startValues(listOf(set(60.0), set(80.0)), listOf(set(40.0)))?.weightKg)
         assertEquals(40.0, startValues(emptyList(), listOf(set(40.0), set(90.0)))?.weightKg)
         assertEquals(null, startValues(emptyList(), emptyList()))
+        // 2 sets done today: last time's 3rd is next
+        assertEquals(30.0, startValues(listOf(set(20.0), set(25.0)), listOf(set(20.0), set(25.0), set(30.0), set(35.0)))?.weightKg)
     }
 
     @Test

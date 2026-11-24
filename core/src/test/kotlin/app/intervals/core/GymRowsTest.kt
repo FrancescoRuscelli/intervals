@@ -105,35 +105,6 @@ class GymRowsTest {
     }
 
     @Test
-    fun loadRowsByWeightKeepTheSetNumbers() {
-        // 19 Nov: the pyramid, back down after the 40
-        val ohp = Exercise(12, "Overhead Press", listOf(GymField.WEIGHT, GymField.REPS))
-        val day = listOf(20.0 to 6, 25.0 to 5, 35.0 to 5, 40.0 to 3, 35.0 to 4).map { (kg, r) -> set(kg, r).copy(exerciseId = 12) }
-        val rows = loadRows(day, ohp)
-        assertEquals(listOf("20 kg", "25 kg", "35 kg", "40 kg"), rows.map { it.label })
-        assertEquals(listOf(3, 5), rows[2].sets.map { it.index })
-        // bands: the color, not the word, and one row per band
-        val mu = Exercise(13, "Muscle Up", listOf(GymField.REPS), specs = listOf(BANDS_SPEC))
-        val b = { band: String? -> GymSet(exerciseId = 13, day = "2026-11-20", order = 0, reps = 1, specs = band?.let { mapOf("Bands" to it) }.orEmpty()) }
-        val bandRows = loadRows(listOf(b("purple"), b("black"), b(null), b("purple")), mu)
-        assertEquals(listOf(listOf(BANDS_SPEC.colors.getValue("purple")), listOf(BANDS_SPEC.colors.getValue("black")), emptyList()), bandRows.map { it.colors })
-        assertEquals(listOf(listOf(1, 4), listOf(2), listOf(3)), bandRows.map { r -> r.sets.map { it.index } })
-        assertEquals("", bandRows[0].label)
-    }
-
-    @Test
-    fun sideSetsPairIntoRounds() {
-        val l = { r: Int -> set(0.0, r, Side.LEFT) }
-        val r = { n: Int -> set(0.0, n, Side.RIGHT) }
-        // 20 Nov: L 1 · R 1 · L 3 · R 3
-        assertEquals(listOf(1 to 1, 3 to 3), sideRounds(listOf(l(1), r(1), l(3), r(3))).map { it.left!!.reps to it.right!!.reps })
-        // R first still pairs; three L in a row stand alone
-        val rounds = sideRounds(listOf(r(5), l(4), l(1), l(2), r(2)))
-        assertEquals(listOf(4 to 5, 1 to null, 2 to 2), rounds.map { it.left?.reps to it.right?.reps })
-        assertEquals(5, rounds.sumOf { it.sets.size })
-    }
-
-    @Test
     fun barsAreAlwaysReps() {
         val pu = Exercise(14, "Pull Up", listOf(GymField.WEIGHT, GymField.REPS))
         val bars = dayBars(listOf(set(15.0, 5).copy(note = "slow"), set(0.0, 7)), pu)

@@ -1,0 +1,141 @@
+<title>L / R Rounds Compare</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: one row per real day, the other PC's rounds (A) beside this PC's U rounds, as phones on the app's dark palette */
+:root {
+  --bg: #f4f2fa; --fg: #18151f; --muted: #5b5668; --line: #dfdbe9; --accent: #6d28d9; --card: #ffffff;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif;
+  --ph-bg: #000; --ph-surface: #1A1C21; --ph-text: #F2F3F5; --ph-muted: #9AA0AA; --ph-soft: #C9CDD3; --ph-faint: #6E747E; --ph-line: #23262C;
+  --pink: #E91E63; --teal: #00BFA5; --l-tint: rgba(233,30,99,.16); --r-tint: rgba(0,191,165,.16); --yellow: #FFC94D;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
+main { max-width: 980px; margin: 0 auto; display: grid; gap: 18px; }
+h1 { font-family: var(--display); font-size: 1.8rem; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--display); font-size: 1.15rem; margin: 0; }
+.lede { color: var(--muted); margin: 0; max-width: 80ch; }
+.key { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+.key div { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; min-width: 0; }
+.key b { font-family: var(--display); color: var(--accent); }
+.key ul { margin: 6px 0 0; padding-left: 18px; color: var(--muted); font-size: .88rem; }
+.day { display: grid; gap: 8px; }
+.day p { margin: 0; color: var(--muted); font-size: .88rem; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; align-items: start; }
+.col { display: grid; gap: 6px; min-width: 0; }
+.col > span { font-family: var(--display); font-weight: 700; color: var(--accent); font-size: .95rem; }
+.phone { background: var(--ph-bg); border-radius: 20px; padding: 14px 12px; color: var(--ph-text); font-size: 14px; display: grid; gap: 6px; }
+.cap { color: var(--ph-muted); font-size: 12px; letter-spacing: .6px; font-weight: 600; }
+.num { font-variant-numeric: tabular-nums; }
+/* A: SideRounds */
+.a-head { font-size: 15px; padding-top: 4px; }
+.a-round { display: flex; align-items: center; gap: 6px; background: var(--ph-surface); border: 1px solid var(--ph-line); border-radius: 12px; padding: 6px 0 6px 8px; }
+.a-n { width: 16px; color: var(--ph-faint); font-size: 11px; }
+.a-cell { flex: 1; min-height: 44px; border-radius: 10px; padding: 4px 8px; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+.a-cell.L { background: var(--l-tint); } .a-cell.R { background: var(--r-tint); } .a-cell.empty { background: none; }
+.a-top { display: flex; gap: 6px; align-items: baseline; }
+.a-top i { font-style: normal; color: var(--ph-muted); font-size: 11px; font-weight: 700; }
+.a-top b { font-size: 16px; font-weight: 400; }
+.a-top small { color: var(--ph-muted); font-size: 11px; white-space: nowrap; }
+.a-note { color: var(--pink); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.a-more { width: 40px; text-align: center; color: var(--ph-muted); font-size: 18px; }
+/* U: SetBlocks per side */
+.u-sum { color: var(--ph-muted); font-size: 12px; }
+.u-card { background: var(--ph-surface); border: 1px solid var(--ph-line); border-radius: 12px; padding: 4px 8px; }
+.u-row { display: flex; align-items: center; padding: 3px 0; }
+.u-n { width: 18px; color: var(--ph-muted); font-size: 11px; }
+.u-half { flex: 1; display: flex; align-items: center; gap: 6px; min-width: 0; }
+.u-div { width: 1px; height: 32px; background: var(--ph-line); margin: 0 6px; }
+.u-chip { font-size: 12px; font-weight: 700; border-radius: 6px; padding: 3px 7px; }
+.u-chip.L { background: var(--l-tint); } .u-chip.R { background: var(--r-tint); }
+.u-load { color: var(--ph-soft); font-size: 13px; line-height: 1.2; }
+.sq { position: relative; min-width: 44px; height: 44px; padding: 0 8px; box-sizing: border-box; border: 1px solid var(--ph-line); border-radius: 10px; background: var(--ph-bg);
+  display: grid; place-items: center; font-size: 16px; overflow: hidden; }
+.sq.note::after { content: ""; position: absolute; top: 0; right: 0; border-style: solid; border-width: 0 9px 9px 0; border-color: transparent var(--ph-text) transparent transparent; }
+.u-rest { width: 36px; text-align: right; color: var(--ph-muted); font-size: 10px; }
+.u-rest.long { color: var(--yellow); }
+</style>
+
+<main>
+  <h1>L / R sets: rounds A or U</h1>
+  <p class="lede">Your real sets from three days, drawn the way each version draws them on the Log tab. A is the one built on the other PC (it is what per-side exercises show right now). U is the one built here from the log sets mockup.</p>
+  <div class="key">
+    <div><b>A · the other PC</b><ul>
+      <li>A card per round, L and R each a big tinted cell.</li>
+      <li>The note is written under the reps, in pink.</li>
+      <li>The load once above its rounds; ⋯ selects the whole round.</li>
+      <li>No rests.</li></ul></div>
+    <div><b>U · this PC</b><ul>
+      <li>One card, a line per round, a divider between L and R.</li>
+      <li>"L 4 · R 4 · 4 rounds" on top; the load beside each square.</li>
+      <li>A note is the folded corner (tap the set to read it), like the Journal bars.</li>
+      <li>The rest before each round on the right, yellow over 5 min.</li></ul></div>
+  </div>
+  <div id="days"></div>
+</main>
+
+<script>
+// real sets from the phone: [side, box, load, note, rest]
+const DAYS = [
+  { title: "Resistance Band One Arm Pull Up · 20 Nov", why: "Even rounds, black band, three notes.", sets: [
+    ["L","1","black","half rep",26],["R","1","black","",2],["L","3","black","last rep half",116],["R","3","black","",null],
+    ["L","3","black","last half rep",293],["R","3","black","last half rep",null],["L","2","black","",429],["R","2","black","",null]] },
+  { title: "Finger Pinch · 18 Nov", why: "The weight goes up, then R alone three times: uneven sides (L 5 · R 7), a long load text.", sets: [
+    ["L","1","10 kg · 0:10","",51],["R","1","10 kg · 0:10","",3],["L","1","10 kg · 0:10","",1],["R","1","10 kg · 0:10","",0],
+    ["L","1","12 kg · 0:10","",9],["R","1","12 kg · 0:10","",0],["L","1","14 kg · 0:05","",10],["R","1","14 kg · 0:10","",5],
+    ["R","1","16 kg · 0:08","",24],["R","1","16 kg · 0:07","",230],["R","1","16 kg · 0:05","",24],["L","1","14 kg · 0:05","",5]] },
+  { title: "Block Pulls · 8 Sep", why: "All of the left first, then all of the right: hardly any rounds.", sets: [
+    ["L","10","20 kg"],["L","5","25 kg"],["L","5","30 kg"],["L","5","35 kg"],["L","5","40 kg"],
+    ["R","10","20 kg"],["R","5","25 kg"],["R","5","30 kg"],["R","5","35 kg"],["R","5","40 kg"],
+    ["L","5","40 kg"],["L","5","40 kg"],["L","4","40 kg"],["L","5","30 kg"]] },
+];
+const S = s => ({ side: s[0], box: s[1], load: s[2], note: s[3] || "", rest: s[4] ?? null });
+const fmt = t => `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`;
+const esc = t => t.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+
+// both versions pair an L and an R done one right after the other, L always on the left
+function rounds(sets) {
+  const out = [];
+  for (let i = 0; i < sets.length;) {
+    const a = sets[i], b = sets[i + 1];
+    if (b && a.side !== b.side) { out.push({ L: a.side === "L" ? a : b, R: a.side === "R" ? a : b, first: a }); i += 2; }
+    else { out.push({ L: a.side === "L" ? a : null, R: a.side === "R" ? a : null, first: a }); i += 1; }
+  }
+  return out;
+}
+
+function drawA(sets) {
+  let html = `<div class="cap">SETS · ${sets.length}</div>`, shown = null;
+  rounds(sets).forEach((r, i) => {
+    const heads = [...new Set([r.L, r.R].filter(Boolean).map(s => s.load))];
+    const same = heads.length === 1 ? heads[0] : null;
+    if (same && same !== shown) html += `<div class="a-head num">${esc(same)}</div>`;
+    if (same) shown = same;
+    const cell = (sd, s) => !s ? `<div class="a-cell empty"></div>` :
+      `<div class="a-cell ${sd}"><div class="a-top"><i>${sd}</i><b class="num">${s.box}</b>${same ? "" : `<small>${esc(s.load)}</small>`}</div>${s.note ? `<div class="a-note">${esc(s.note)}</div>` : ""}</div>`;
+    html += `<div class="a-round"><span class="a-n">${i + 1}</span>${cell("L", r.L)}${cell("R", r.R)}<span class="a-more">⋯</span></div>`;
+  });
+  return html;
+}
+
+function drawU(sets) {
+  const rs = rounds(sets), l = sets.filter(s => s.side === "L").length, r = sets.length - l;
+  const all = rs.every(x => x.L && x.R);
+  const half = (sd, s) => `<div class="u-half">${s ? `<span class="u-chip ${sd}">${sd}</span><span class="u-load num">${esc(s.load)}</span><span class="sq num${s.note ? " note" : ""}">${s.box}</span>` : ""}</div>`;
+  return `<div class="cap">SETS · ${sets.length}</div><div class="u-sum">L ${l} · R ${r}${all ? ` · ${rs.length} rounds` : ""}</div><div class="u-card">` +
+    rs.map((x, i) => {
+      const rest = x.first.rest;
+      return `<div class="u-row"><span class="u-n num">${i + 1}</span>${half("L", x.L)}<span class="u-div"></span>${half("R", x.R)}<span class="u-rest num${rest > 300 ? " long" : ""}">${rest ? fmt(rest) : ""}</span></div>`;
+    }).join("") + `</div>`;
+}
+
+document.getElementById("days").innerHTML = DAYS.map(d => {
+  const sets = d.sets.map(S);
+  return `<section class="day"><h2>${d.title}</h2><p>${d.why}</p><div class="pair">
+    <div class="col"><span>A · the other PC</span><div class="phone">${drawA(sets)}</div></div>
+    <div class="col"><span>U · this PC</span><div class="phone">${drawU(sets)}</div></div></div></section>`;
+}).join("");
+</script>

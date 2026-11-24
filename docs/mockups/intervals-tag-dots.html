@@ -1,0 +1,81 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Tag Dots</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: one phone per option, the same exercise list with 0 to 5 tags each */
+:root {
+  --bg: #f4f2fa; --fg: #18151f; --muted: #5b5668; --line: #dfdbe9; --accent: #6d28d9; --card: #ffffff;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif;
+  --ph-bg: #000; --ph-surface: #1A1C21; --ph-text: #F2F3F5; --ph-muted: #9AA0AA; --ph-soft: #C9CDD3; --ph-line: #2B2E35;
+  --ph-accent: #7C3AED; --ph-accent-text: #C4B1FF; --ph-tint: #2A2140;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
+main { max-width: 1240px; margin: 0 auto; display: grid; gap: 14px; }
+h1 { font-family: var(--display); font-size: 1.8rem; margin: 0; }
+.lede { color: var(--muted); margin: 0; max-width: 80ch; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+.opt { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; display: grid; gap: 8px; min-width: 0; }
+.head { display: flex; gap: 10px; align-items: baseline; }
+.tag { font-family: var(--display); font-weight: 700; color: var(--accent); font-size: 1.1rem; }
+.name { font-weight: 600; }
+.desc { color: var(--muted); font-size: .86rem; margin: 0; }
+.phone { background: var(--ph-bg); border-radius: 20px; padding: 10px; color: var(--ph-text); display: grid; gap: 2px; }
+.chips { display: flex; gap: 6px; overflow: hidden; padding: 0 2px 8px; }
+.chip { flex: none; border: 1px solid var(--ph-line); background: var(--ph-surface); border-radius: 16px; padding: 4px 10px; font-size: 12.5px; font-weight: 600; color: var(--ph-soft); display: inline-flex; gap: 5px; align-items: center; }
+.chip.on { background: var(--ph-tint); border-color: var(--ph-accent); color: var(--ph-accent-text); }
+.row { display: flex; align-items: center; gap: 10px; padding: 10px 8px; border-radius: 12px; }
+.lead { width: 14px; display: flex; justify-content: center; flex: none; }
+.nm { flex: 1; font-size: 15px; min-width: 0; }
+.nm small { display: block; color: var(--ph-muted); font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.when { color: var(--ph-muted); font-size: 12px; white-space: nowrap; }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.bar { width: 4px; height: 26px; border-radius: 2px; display: flex; flex-direction: column; overflow: hidden; }
+.bar i { flex: 1; }
+.names { color: var(--ph-muted); font-size: 11.5px; max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right; }
+.more { color: var(--ph-muted); font-size: 10.5px; font-weight: 700; margin-left: 4px; }
+</style>
+
+<main>
+  <h1>Tag colors on exercises with many tags</h1>
+  <p class="lede">The Add exercise list (option A), with exercises that have 0, 1, 2, 3 and 5 tags; the "All" chip is on. Real tag colors: Legs green, Pull blue, Push orange, Fingers tan, Arms grey. The tags of each exercise below are made up, to show the extremes.</p>
+  <div class="grid" id="opts"></div>
+</main>
+
+<script>
+const C = { Legs: "#8BC34A", Pull: "#5B8DEF", Push: "#FF8A50", Fingers: "#C8A97E", Arms: "#90A4AE" };
+const EX = [
+  ["Pull Up", ["Pull"], "20 Nov"],
+  ["Muscle Up", ["Pull", "Push"], "20 Nov"],
+  ["Finger Pinch", ["Fingers", "Arms"], "18 Nov"],
+  ["Block Pulls", ["Fingers", "Pull", "Arms"], "3 Nov"],
+  ["Turkish Get Up", ["Legs", "Pull", "Push", "Fingers", "Arms"], "—"],
+  ["Plank", [], "2 Oct"],
+].map(([n, t, w]) => [n, Object.keys(C).filter(k => t.includes(k)), w]); // tags in your tag order
+const chips = `<div class="chips"><span class="chip">Recent</span><span class="chip on">All 66</span>${Object.entries(C).map(([t, c]) => `<span class="chip"><span class="dot" style="background:${c};width:8px;height:8px"></span>${t}</span>`).join("")}</div>`;
+const pie = tags => tags.length ? `<span class="dot" style="width:12px;height:12px;background:conic-gradient(${tags.map((t, i) => `${C[t]} ${i / tags.length * 360}deg ${(i + 1) / tags.length * 360}deg`).join(",")})"></span>` : "";
+
+const options = [
+  ["1", "One dot: the first tag", "Always one dot, the color of the exercise's first tag in your tag order. The other tags only show through the chips.",
+    e => [`<span class="lead">${e[1].length ? `<span class="dot" style="background:${C[e[1][0]]}"></span>` : ""}</span>`, ""]],
+  ["1+", "One dot and a count", "As 1, with a small +1, +2… when there are more tags, so you know there is more.",
+    e => [`<span class="lead">${e[1].length ? `<span class="dot" style="background:${C[e[1][0]]}"></span>` : ""}</span>`, e[1].length > 1 ? `<span class="more">+${e[1].length - 1}</span>` : ""]],
+  ["2", "One dot split in slices", "A pie with one slice per tag, the size of one dot (a bit bigger, 12 px). Fine with 2, hard to read with 4–5.",
+    e => [`<span class="lead">${pie(e[1])}</span>`, ""]],
+  ["2b", "A thin bar split in colors", "A 4 px bar on the left of the row, split in the tags' colors, like the Journal day strip. Taller than a dot, so 3–5 still show.",
+    e => [`<span class="lead">${e[1].length ? `<span class="bar">${e[1].map(t => `<i style="background:${C[t]}"></i>`).join("")}</span>` : ""}</span>`, ""]],
+  ["3", "Tag names under the name", "No colors on the rows: the tags written in small grey under the exercise name, cut with … when too many.",
+    e => ["", ""], true],
+];
+document.getElementById("opts").innerHTML = options.map(([id, name, desc, f, names]) =>
+  `<section class="opt"><div class="head"><span class="tag">${id}</span><span class="name">${name}</span></div><p class="desc">${desc}</p><div class="phone">${chips}${EX.map(e => {
+    const [lead, after] = f(e);
+    return `<div class="row">${lead}<span class="nm">${e[0]}${after}${names && e[1].length ? `<small>${e[1].join(" · ")}</small>` : ""}</span><span class="when">${e[2]}</span></div>`;
+  }).join("")}</div></section>`).join("");
+</script>

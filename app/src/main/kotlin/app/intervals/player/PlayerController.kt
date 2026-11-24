@@ -31,6 +31,8 @@ class PlayerController(
     private val onChange: () -> Unit = {},
     /** Time for the player's opening animation before the workout clock starts (the warm-up is the get-ready). */
     private val openingMs: Long = 0L,
+    /** Set before the start, shown small on the disc during that series: series name -> "20 mm · 5 kg" (3B). */
+    val details: Map<String, String> = emptyMap(),
 ) {
     /** True while the player screen is visible: then the clock ticks at every whole second (the rings animate per frame on their own). */
     @Volatile var uiVisible = true

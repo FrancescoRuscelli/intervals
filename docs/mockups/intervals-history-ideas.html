@@ -1,0 +1,157 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Exercise History Layouts</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: one option per card; each is the History tab of two real exercises (last four sessions) */
+:root {
+  --bg: #f4f2fa; --fg: #18151f; --muted: #5b5668; --line: #dfdbe9; --accent: #6d28d9; --card: #ffffff;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif;
+  --ph-bg: #000; --ph-surface: #1A1C21; --ph-text: #F2F3F5; --ph-muted: #9AA0AA; --ph-soft: #C9CDD3; --ph-line: #2B2E35;
+  --ph-accent: #7C3AED; --ph-accent-text: #C4B1FF; --ph-work: #FF8AB3; --ph-yellow: #FFC107; --ph-green: #4ADE80;
+  --pinkTint: #3A1428; --tealTint: #0B3A33;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
+main { max-width: 1240px; margin: 0 auto; display: grid; gap: 14px; }
+h1 { font-family: var(--display); font-size: 1.8rem; margin: 0; }
+h2 { font-family: var(--display); font-size: 1.25rem; margin: 18px 0 0; }
+.lede { color: var(--muted); margin: 0; max-width: 78ch; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 16px; align-items: start; }
+.opt { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; display: grid; gap: 8px; min-width: 0; }
+.head { display: flex; gap: 10px; align-items: baseline; }
+.tag { font-family: var(--display); font-weight: 700; color: var(--accent); font-size: 1.1rem; }
+.name { font-weight: 600; }
+.desc { color: var(--muted); font-size: .86rem; margin: 0; }
+
+.phone { background: var(--ph-bg); border-radius: 18px; padding: 12px; color: var(--ph-text); font-size: 14px; display: grid; gap: 10px; }
+.total { color: var(--ph-muted); font-size: 12px; }
+.day { background: var(--ph-surface); border-radius: 14px; padding: 10px 12px; display: grid; gap: 6px; }
+.dh { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.dn { font-weight: 700; font-size: 14px; white-space: nowrap; }
+.sum { color: var(--ph-work); font-size: 11.5px; font-weight: 600; text-align: right; }
+.cmp { font-size: 11px; font-weight: 700; }
+.up { color: var(--ph-green); } .down { color: var(--ph-work); } .same { color: var(--ph-muted); }
+.wrow { display: flex; gap: 8px; align-items: flex-start; }
+.wl { width: 62px; flex: none; height: 32px; display: flex; align-items: center; font-size: 13px; font-variant-numeric: tabular-nums; }
+.sqs { display: flex; flex-wrap: wrap; gap: 5px; }
+.cell { display: inline-flex; flex-direction: column; align-items: center; }
+.sq { min-width: 32px; height: 32px; box-sizing: border-box; border-radius: 8px; background: var(--ph-bg); border: 1px solid var(--ph-line); display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-variant-numeric: tabular-nums; position: relative; padding: 0 6px; }
+.sq.noted::after { content: ""; position: absolute; top: 0; right: 0; border-top: 7px solid var(--ph-text); border-left: 7px solid transparent; border-top-right-radius: 7px; }
+.rest { font-size: 9.5px; color: var(--ph-muted); font-variant-numeric: tabular-nums; }
+.rest.long { color: var(--ph-yellow); }
+.side { font-size: 11px; font-weight: 800; border-radius: 5px; padding: 1px 6px; }
+.side.L { background: var(--pinkTint); } .side.R { background: var(--tealTint); }
+.rounds { display: grid; grid-template-columns: 14px 1fr 1px 1fr 34px; gap: 4px 8px; align-items: center; }
+.rounds .n { color: var(--ph-muted); font-size: 10px; }
+.sep { background: var(--ph-line); height: 24px; }
+.half { display: flex; gap: 6px; align-items: center; min-width: 0; }
+.dot { width: 10px; height: 10px; border-radius: 50%; border: 1px solid var(--ph-soft); display: inline-block; flex: none; }
+.dot.none { background: transparent; border-style: dashed; border-color: var(--ph-muted); }
+.bars { display: flex; gap: 3px; align-items: flex-end; }
+.bcol { display: flex; flex-direction: column; align-items: center; width: 26px; }
+.bcol span.t { font-size: 10px; font-weight: 700; }
+.bar { width: 100%; border-radius: 3px 3px 0 0; position: relative; box-sizing: border-box; background: #7C3AED; border: 1px solid var(--ph-line); }
+.bar.striped { background-image: repeating-linear-gradient(135deg, rgba(255,255,255,.32) 0 2px, transparent 2px 6px); border: 1.5px solid #9AA0AA; }
+.bar .in { position: absolute; left: 0; right: 0; bottom: 2px; text-align: center; font-size: 8.5px; font-weight: 700; }
+.bar .lr { position: absolute; left: 0; right: 0; top: 2px; text-align: center; font-size: 8px; font-weight: 800; }
+.bar.noted::after { content: ""; position: absolute; top: 0; right: 0; border-top: 7px solid var(--ph-text); border-left: 7px solid transparent; }
+.line { font-size: 13.5px; font-variant-numeric: tabular-nums; display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.line .k { color: var(--ph-muted); font-size: 12px; }
+.note { color: var(--ph-muted); font-style: italic; font-size: 11.5px; }
+</style>
+
+<main>
+  <h1>History: like the other screens</h1>
+  <p class="lede">The History tab of an exercise, newest first, each day tappable to open it in the log. Real data: Overhead Press (19 Nov, 13 Nov, 6 Nov, 26 Oct) and the band one-arm pull-up (20 Nov with L / R and notes; the older days were logged without sides and with mixed bands). Today it is a table of rows like "35 × 5 ×3" with the rest at the side.</p>
+  <h2>Overhead Press</h2>
+  <div class="grid" id="ohp"></div>
+  <h2>Resistance Band One Arm Pull Up</h2>
+  <div class="grid" id="rb"></div>
+</main>
+
+<script>
+const BC = { purple: "#8E44D8", black: "#3A3D44", red: "#E53935" };
+const OHP = {"2026-11-19":[[null,20,6,"","",null],[null,25,5,"","",398],[null,30,5,"","",95],[null,35,5,"","",180],[null,37.5,5,"","",210],[null,40,3,"","",387],[null,37.5,5,"","",348],[null,37.5,5,"","",596],[null,35,5,"","",678],[null,35,5,"","",309],[null,35,4,"","",478]],"2026-11-13":[[null,20,5],[null,20,5],[null,25,5],[null,30,5],[null,35,5],[null,40,4],[null,40,3],[null,37.5,4],[null,35,6],[null,35,5],[null,35,5]],"2026-11-06":[[null,20,5],[null,30,5],[null,35,5],[null,37.5,4],[null,35,4],[null,35,4],[null,35,5],[null,35,3],[null,35,4],[null,35,4]],"2026-10-26":[[null,20,5],[null,20,5],[null,30,5],[null,35,5],[null,37.5,4],[null,37.5,4],[null,37.5,3],[null,35,5],[null,35,5],[null,35,5]]};
+const RB = {"2026-11-20":[["L",null,1,"black","half rep",26],["R",null,1,"black","",2],["L",null,3,"black","last rep half",116],["R",null,3,"black","",null],["L",null,3,"black","last half rep",293],["R",null,3,"black","last half rep",null],["L",null,2,"black","",429],["R",null,2,"black","",null]],"2026-11-15":[[null,null,3,"black"],[null,null,3,""],[null,null,3,""]],"2026-11-08":[[null,null,1,"purple"],[null,null,3,"black"],[null,null,3,"black"],[null,null,3,"black"],[null,null,2,"black"],[null,null,5,"black+red"]],"2026-11-02":[[null,null,5,"black+red"],[null,null,5,""],[null,null,3,"black"],[null,null,3,""],[null,null,3,""]]};
+const fk = k => k % 1 ? k.toFixed(1) : String(k);
+const mmss = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+const dayName = d => new Date(d + "T12:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+const S = x => ({ side: x[0], kg: x[1], reps: x[2], band: x[3] || "", note: x[4] || "", rest: x[5] ?? null });
+const days = data => Object.entries(data).map(([d, sets]) => [d, sets.map(S)]);
+const reps = sets => sets.reduce((a, s) => a + s.reps, 0);
+const topOf = sets => sets.filter(s => s.kg != null).reduce((a, s) => !a || s.kg > a.kg || (s.kg === a.kg && s.reps > a.reps) ? s : a, null);
+function summary(sets, ex) {
+  const L = sets.filter(s => s.side === "L").length, R = sets.filter(s => s.side === "R").length;
+  if (L + R) return L === R ? `${L} rounds · ${reps(sets.filter(s => s.side === "L"))} L · ${reps(sets.filter(s => s.side === "R"))} R` : `L ${L} · R ${R}`;
+  const t = topOf(sets);
+  return `${sets.length} sets · ${reps(sets)} reps` + (t ? ` · top ${fk(t.kg)} × ${t.reps}` : "");
+}
+function cmp(sets, prev) {
+  if (!prev) return "";
+  const vol = ss => ss.reduce((a, s) => a + (s.kg || 1) * s.reps, 0);
+  const a = vol(sets), b = vol(prev);
+  const pct = Math.round((a - b) / b * 100);
+  return pct > 0 ? `<span class="cmp up">▲ ${pct}%</span>` : pct < 0 ? `<span class="cmp down">▼ ${-pct}%</span>` : `<span class="cmp same">=</span>`;
+}
+const dots = b => b ? b.split("+").map(c => `<span class="dot" style="background:${BC[c]}"></span>`).join("") : `<span class="dot none"></span>`;
+const sq = s => `<span class="sq ${s.note ? "noted" : ""}">${s.reps}</span>`;
+const restT = r => r ? `<span class="rest ${r > 300 ? "long" : ""}">${mmss(r)}</span>` : "";
+
+// H1: the Log tab's blocks (W1 / U), smaller and read-only
+function blocks(sets, banded) {
+  if (sets.some(s => s.side)) {
+    const rows = []; let i = 0;
+    while (i < sets.length) { const a = sets[i], b = sets[i + 1];
+      if (b && b.side && a.side !== b.side) { rows.push(a.side === "L" ? [a, b, a] : [b, a, a]); i += 2; } else { rows.push(a.side === "L" ? [a, null, a] : [null, a, a]); i++; } }
+    const half = (x, side) => x ? `<div class="half"><span class="side ${side}">${side}</span>${sq(x)}</div>` : `<div class="half"></div>`;
+    return `<div class="rounds">${rows.map((r, k) => `<span class="n">${k + 1}</span>${half(r[0], "L")}<span class="sep"></span>${half(r[1], "R")}${restT(r[2].rest) || "<span></span>"}`).join("")}</div>`;
+  }
+  const out = [];
+  sets.forEach(s => { const key = s.kg != null ? fk(s.kg) + " kg" : (s.band || "no band"); const b = out[out.length - 1]; if (b && b.key === key) b.sets.push(s); else out.push({ key, band: s.band, sets: [s] }); });
+  return out.map(b => `<div class="wrow"><span class="wl">${banded ? `<span style="display:inline-flex;gap:4px;align-items:center">${dots(b.band)}<span style="font-size:12px;color:var(--ph-soft)">${b.band ? b.band.replace("+", " + ") : "none"}</span></span>` : b.key}</span><span class="sqs">${b.sets.map(s => `<span class="cell">${sq(s)}${restT(s.rest)}</span>`).join("")}</span></div>`).join("");
+}
+// H2: the Journal's bars
+function bars(sets) {
+  const max = Math.max(...sets.map(s => s.reps)); let prev = null;
+  return `<div class="bars">${sets.map(s => {
+    const kg = s.kg != null && s.kg !== prev ? fk(s.kg) : null; prev = s.kg;
+    let h = 8 + 38 * s.reps / max; if (kg) h = Math.max(h, 16); if (s.side) h = Math.max(h, 14);
+    const bands = s.band ? s.band.split("+") : [];
+    const bg = bands.length ? `background-color:${BC[bands[bands.length - 1]]}` : "";
+    const anyRest = sets.some(x => x.rest);
+    return `<div class="bcol"><span class="t">${s.reps}</span><div class="bar ${bands.length ? "striped" : ""} ${s.note ? "noted" : ""}" style="height:${h}px;${bg}">${s.side ? `<span class="lr">${s.side}</span>` : ""}${kg ? `<span class="in">${kg}</span>` : ""}</div>${anyRest ? `<span class="rest ${s.rest > 300 ? "long" : ""}" style="font-size:8.5px;letter-spacing:-.02em;height:12px">${s.rest ? mmss(s.rest) : ""}</span>` : ""}</div>`; }).join("")}</div>`;
+}
+// H3: one line, said once per weight
+function sentence(sets) {
+  const out = [];
+  sets.forEach(s => { const key = s.kg != null ? fk(s.kg) : (s.side ? "" : (s.band || "none")); const b = out[out.length - 1]; if (b && b.key === key && !s.side) b.reps.push(s.reps); else out.push({ key, side: s.side, band: s.band, reps: [s.reps], note: s.note }); });
+  return `<div class="line">${out.map(g => `<span>${g.side ? `<span class="side ${g.side}">${g.side}</span> ` : g.kg !== null && /^\d/.test(g.key) ? `<span class="k">${g.key}</span> ` : `${dots(g.band)} `}<b>${g.reps.join(" ")}</b></span>`).join("")}</div>`;
+}
+
+const WORKOUT = { "2026-11-19": 9482, "2026-11-20": 3954 };
+const fmtDur = t => t >= 3600 ? `${Math.floor(t / 3600)} h ${String(Math.round(t % 3600 / 60)).padStart(2, "0")}` : `${Math.round(t / 60)} min`;
+function render(data, f, banded) {
+  const ds = days(data);
+  const all = ds.reduce((a, [, s]) => a + s.length, 0);
+  return `<div class="total">last ${ds.length} days · ${all} sets</div>` + ds.map(([d, sets], i) => {
+    const prev = ds[i + 1] ? ds[i + 1][1] : null;
+    const here = sets.slice(1).reduce((a, x) => a + (x.rest || 0), 0);
+    const workout = WORKOUT[d];
+    const time = f === bars && (here || workout) ? `<div class="total" style="display:flex;gap:10px">${here ? `<span>⏱ ${fmtDur(here)} on this exercise</span>` : ""}${workout ? `<span>workout ${fmtDur(workout)}</span>` : ""}</div>` : (f === bars ? `<div class="total">no times (logged before the rest clock)</div>` : "");
+    return `<div class="day"><div class="dh"><span class="dn">${dayName(d)}</span><span class="sum">${summary(sets)} ${cmp(sets, prev)}</span></div>${f(sets, banded)}${time}</div>`; }).join("");
+}
+
+const options = [
+  ["H1", "Like the Log tab", "Each day a card with the date and a pink summary; the sets as in the Log tab: a row per weight with the squares lined up (smaller, read-only) and the rests, L | R rounds for per-side days. ▲ / ▼ is the volume against the session before.", blocks],
+  ["H2", "Like the Journal", "Each day the Journal's bars: one bar per set, kg inside where it changes, bands striped, notes folded, L / R written in. Under each bar the rest before it (yellow over 5 min); under the bars the time on this exercise (first to last set) and the whole workout of that day (first to last set of the day). Days logged before the rest clock have no times.", bars],
+  ["H3", "One line per day", "The weight said once and the reps after it: \"35 kg 5 5 4\". A pyramid fits in two lines; good to scan many weeks.", sentence],
+];
+for (const [id, data, banded] of [["ohp", OHP, false], ["rb", RB, true]])
+  document.getElementById(id).innerHTML = options.map(([oid, name, desc, f]) => `<section class="opt"><div class="head"><span class="tag">${oid}</span><span class="name">${name}</span></div><p class="desc">${desc}</p><div class="phone">${render(data, f, banded)}</div></section>`).join("");
+</script>

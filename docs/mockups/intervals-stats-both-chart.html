@@ -1,0 +1,125 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Stats Both Chart</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: one card per option, each the chart Stats shows under "Both", on your real November */
+:root {
+  --bg: #f4f2fa; --fg: #18151f; --muted: #5b5668; --line: #dfdbe9; --accent: #6d28d9; --card: #ffffff;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif;
+  --ph-bg: #000; --ph-surface: #1A1C21; --ph-text: #F2F3F5; --ph-muted: #9AA0AA; --ph-line: #2B2E35;
+  --iv: #E91E63; --gym: #5B8DEF; --both: #A78BFA;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
+main { max-width: 1240px; margin: 0 auto; display: grid; gap: 14px; }
+h1 { font-family: var(--display); font-size: 1.8rem; margin: 0; }
+.lede { color: var(--muted); margin: 0; max-width: 82ch; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; align-items: start; }
+.opt { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; display: grid; gap: 8px; min-width: 0; }
+.head { display: flex; gap: 10px; align-items: baseline; }
+.tag { font-family: var(--display); font-weight: 700; color: var(--accent); font-size: 1.1rem; }
+.name { font-weight: 600; }
+.desc { color: var(--muted); font-size: .86rem; margin: 0; }
+.phone { background: var(--ph-bg); border-radius: 18px; padding: 10px; color: var(--ph-text); }
+.card { background: var(--ph-surface); border-radius: 16px; padding: 12px; display: grid; gap: 6px; }
+.ch { display: flex; justify-content: space-between; align-items: baseline; }
+.ch b { font-size: 14.5px; }
+.ch small { color: var(--ph-muted); font-size: 11.5px; }
+.bars { display: flex; align-items: flex-end; gap: 2px; height: 130px; border-bottom: 1px solid var(--ph-line); }
+.col { flex: 1; display: flex; flex-direction: column-reverse; height: 100%; cursor: pointer; }
+.col i { display: block; border-radius: 2px 2px 0 0; }
+.col:hover { background: #ffffff08; }
+.est { background-image: repeating-linear-gradient(135deg, rgba(255,255,255,.28) 0 2px, transparent 2px 5px); }
+.labels { display: flex; color: var(--ph-muted); font-size: 10px; }
+.labels span { flex: 1; text-align: center; }
+.legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 11.5px; color: var(--ph-muted); }
+.legend span { display: inline-flex; gap: 5px; align-items: center; }
+.sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.read { font-size: 12px; color: #C4B1FF; min-height: 18px; }
+.wk { display: flex; align-items: flex-end; gap: 14px; height: 130px; border-bottom: 1px solid var(--ph-line); padding: 0 10px; }
+.wk .col { flex: 1; }
+</style>
+
+<main>
+  <h1>Stats under "Both": what to chart</h1>
+  <p class="lede">Your real November (Mon 2 – Mon 23). Interval sessions: 19 and 20 Nov, 11:35 each. Gym: 13 days, but only 18, 19 and 20 Nov were logged with the rest clock (6 min, 2 h 38, 1 h 06); the earlier ones have no time. Tap or hover a bar: the line under the chart says what it holds.</p>
+  <div class="grid" id="opts"></div>
+</main>
+
+<script>
+const IV = { 19: 695, 20: 695 };
+const GYM = { 18: 362, 19: 9482, 20: 3954 };
+const SETS = { 2: 16, 3: 7, 4: 21, 6: 16, 8: 11, 9: 12, 11: 21, 13: 18, 15: 8, 17: 22, 18: 12, 19: 23, 20: 23 };
+const perSet = Object.keys(GYM).reduce((a, d) => a + GYM[d], 0) / Object.keys(GYM).reduce((a, d) => a + SETS[d], 0); // ≈ 4 min
+const days = Array.from({ length: 23 }, (_, i) => i + 1);
+const m = s => Math.round(s / 60);
+const hm = s => s >= 3600 ? `${Math.floor(s / 3600)} h ${String(Math.round(s % 3600 / 60)).padStart(2, "0")}` : `${m(s)} min`;
+const labels = days.map(d => `<span>${(d - 1) % 7 === 1 ? d : ""}</span>`).join("");
+
+function minutes(estimate) {
+  const val = d => ({ iv: IV[d] || 0, gym: GYM[d] || 0, est: estimate && SETS[d] && !GYM[d] ? SETS[d] * perSet : 0 });
+  const max = Math.max(...days.map(d => { const v = val(d); return v.iv + v.gym + v.est; }));
+  const H = s => (s / max * 100) + "%";
+  return `<div class="card"><div class="ch"><b>Minutes per day</b><small>intervals + gym</small></div>
+    <div class="bars">${days.map(d => { const v = val(d);
+      const read = `${d} Nov: ` + [v.iv && `intervals ${hm(v.iv)}`, v.gym && `gym ${hm(v.gym)}`, v.est && `gym ≈ ${hm(v.est)} (estimated from ${SETS[d]} sets)`, SETS[d] && !v.gym && !v.est && `gym ${SETS[d]} sets, no time logged`].filter(Boolean).join(" · ") || `${d} Nov: nothing`;
+      return `<div class="col" data-read="${read}"><i style="height:${H(v.iv)};background:var(--iv)"></i><i style="height:${H(v.gym)};background:var(--gym)"></i><i class="est" style="height:${H(v.est)};background-color:#3B5A9A"></i></div>`; }).join("")}</div>
+    <div class="labels">${labels}</div>
+    <div class="legend"><span><i class="sw" style="background:var(--iv)"></i>intervals</span><span><i class="sw" style="background:var(--gym)"></i>gym (rest clock)</span>${estimate ? `<span><i class="sw est" style="background-color:#3B5A9A"></i>gym, estimated</span>` : ""}</div>
+    <div class="read">tap a bar</div></div>`;
+}
+function counts() {
+  const max = 2;
+  return `<div class="card"><div class="ch"><b>Training per day</b><small>13 days · 4.0 / week</small></div>
+    <div class="bars">${days.map(d => { const iv = IV[d] ? 1 : 0, g = SETS[d] ? 1 : 0;
+      return `<div class="col" data-read="${d} Nov: ${[iv && "1 interval session", g && `gym, ${SETS[d]} sets`].filter(Boolean).join(" · ") || "nothing"}"><i style="height:${g / max * 100}%;background:var(--gym)"></i><i style="height:${iv / max * 100}%;background:var(--iv)"></i></div>`; }).join("")}</div>
+    <div class="labels">${labels}</div>
+    <div class="legend"><span><i class="sw" style="background:var(--iv)"></i>interval sessions</span><span><i class="sw" style="background:var(--gym)"></i>gym day</span></div>
+    <div class="read">tap a bar</div></div>`;
+}
+function weekView() {
+  const W = [["Mon", 17], ["Tue", 18], ["Wed", 19], ["Thu", 20], ["Fri", 21], ["Sat", 22], ["Sun", 23]];
+  return `<div class="card"><div class="ch"><b>Training per day</b><small>4 days · 4.0 / week</small></div>
+    <div class="wk">${W.map(([n, d]) => { const iv = IV[d] ? 1 : 0, g = SETS[d] ? 1 : 0;
+      return `<div class="col" data-read="${n} ${d} Nov: ${[iv && "interval session", g && `gym, ${SETS[d]} sets`].filter(Boolean).join(" · ") || "nothing"}"><i style="height:${g * 50}%;background:var(--gym)"></i><i style="height:${iv * 50}%;background:var(--iv)"></i></div>`; }).join("")}</div>
+    <div class="labels" style="padding:0 10px">${W.map(([n]) => `<span>${n}</span>`).join("")}</div>
+    <div class="legend"><span><i class="sw" style="background:var(--gym)"></i>gym day</span><span><i class="sw" style="background:var(--iv)"></i>interval sessions</span></div>
+    <div class="read">tap a bar</div></div>`;
+}
+function yearView() {
+  const G = [20, 24, 28, 19, 18, 16, 16, 8, 15, 16, 13, 0], I = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0];
+  const max = Math.max(...G.map((g, i) => g + I[i]));
+  return `<div class="card"><div class="ch"><b>Days trained per month</b><small>193 days · 4.1 / week</small></div>
+    <div class="bars">${G.map((g, i) => `<div class="col" data-read="${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][i]}: ${g} gym days, ${I[i]} interval days (tap opens the month)"><i style="height:${g / max * 100}%;background:var(--gym)"></i><i style="height:${I[i] / max * 100}%;background:var(--iv)"></i></div>`).join("")}</div>
+    <div class="labels">${"JFMAMJJASOND".split("").map(x => `<span>${x}</span>`).join("")}</div>
+    <div class="legend"><span><i class="sw" style="background:var(--gym)"></i>gym days</span><span><i class="sw" style="background:var(--iv)"></i>interval days</span></div>
+    <div class="read">tap a bar</div></div>`;
+}
+function weeks() {
+  const W = [["27 Oct", [2], []], ["3 Nov", [3, 4, 6, 8], []], ["10 Nov", [9, 11, 13, 15], []], ["17 Nov", [17, 18, 19, 20], [19, 20]], ["24 Nov", [], []]];
+  return `<div class="card"><div class="ch"><b>Days trained per week</b><small>gym · intervals · both</small></div>
+    <div class="wk">${W.map(([w, g, iv]) => { const both = g.filter(d => iv.includes(d)).length, go = g.length - both, io = iv.length - both;
+      return `<div class="col" data-read="week of ${w}: ${g.length + io} days (${go} gym only, ${io} intervals only, ${both} both)"><i style="height:${go / 7 * 100}%;background:var(--gym)"></i><i style="height:${both / 7 * 100}%;background:var(--both)"></i><i style="height:${io / 7 * 100}%;background:var(--iv)"></i></div>`; }).join("")}</div>
+    <div class="labels" style="padding:0 10px">${W.map(([w]) => `<span>${w}</span>`).join("")}</div>
+    <div class="legend"><span><i class="sw" style="background:var(--gym)"></i>gym only</span><span><i class="sw" style="background:var(--both)"></i>both</span><span><i class="sw" style="background:var(--iv)"></i>intervals only</span></div>
+    <div class="read">tap a bar</div></div>`;
+}
+const options = [
+  ["1", "Minutes, stacked", "Each day: interval minutes (pink) and gym minutes from the rest clock (blue). Honest, but on your November most gym days are empty: they were logged before the rest clock.", () => minutes(false)],
+  ["1b", "Minutes, with an estimate for the old days", "As 1; days without a rest clock get an estimate, sets × your average minutes per set (≈ 4 min, from the days that have times), drawn striped so it reads as a guess.", () => minutes(true)],
+  ["2", "Count per day (chosen)", "Each day: one block for interval sessions, one for a gym day. Always complete, but a 6-minute day looks like a 2-hour one. On the right, the hint: days trained and the average per week (November up to today: 13 days in 23 days = 4.0 / week).", counts],
+  ["2 · Week", "Chosen: the week view", "Week of 17 Nov: the 7 days, Mon to Sun. The hint counts only up to today.", weekView],
+  ["2 · Year", "Chosen: the year view", "2026: per month the gym days (blue) and the interval days (pink), stacked; 193 days trained up to today, 4.1 a week. A month opens in Stats.", yearView],
+  ["3", "Days trained per week", "One bar per week, the days split into gym only, both, intervals only. Says how regular you are, not how much.", weeks],
+];
+document.getElementById("opts").innerHTML = options.map(([id, name, desc, f]) => `<section class="opt"><div class="head"><span class="tag">${id}</span><span class="name">${name}</span></div><p class="desc">${desc}</p><div class="phone">${f()}</div></section>`).join("");
+const show = c => { const r = c.closest(".card").querySelector(".read"); r.textContent = c.dataset.read; };
+document.addEventListener("click", e => { const c = e.target.closest(".col"); if (c) show(c); });
+document.addEventListener("mouseover", e => { const c = e.target.closest(".col"); if (c) show(c); });
+</script>

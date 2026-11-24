@@ -1,0 +1,148 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Add Exercise Picker</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: one phone per option, each the "Add exercise" picker with your real tags; hold a row to select several */
+:root {
+  --bg: #f4f2fa; --fg: #18151f; --muted: #5b5668; --line: #dfdbe9; --accent: #6d28d9; --card: #ffffff;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif;
+  --ph-bg: #000; --ph-surface: #1A1C21; --ph-text: #F2F3F5; --ph-muted: #9AA0AA; --ph-soft: #C9CDD3; --ph-line: #2B2E35;
+  --ph-accent: #7C3AED; --ph-accent-text: #C4B1FF; --ph-tint: #2A2140; --ph-work: #FF8AB3; --ph-pink: #E91E63; --ph-worktint: #3A1428;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
+main { max-width: 1240px; margin: 0 auto; display: grid; gap: 14px; }
+h1 { font-family: var(--display); font-size: 1.8rem; margin: 0; }
+.lede { color: var(--muted); margin: 0; max-width: 80ch; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 16px; align-items: start; }
+.opt { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; display: grid; gap: 8px; min-width: 0; }
+.head { display: flex; gap: 10px; align-items: baseline; }
+.tag { font-family: var(--display); font-weight: 700; color: var(--accent); font-size: 1.1rem; }
+.name { font-weight: 600; }
+.desc { color: var(--muted); font-size: .86rem; margin: 0; }
+button { font: inherit; }
+.phone { background: var(--ph-bg); border-radius: 22px; padding: 10px 12px 14px; color: var(--ph-text); font-size: 14px; height: 640px; overflow: auto; display: flex; flex-direction: column; gap: 8px; position: relative; }
+.phone > * { flex-shrink: 0; }
+.top { display: flex; gap: 8px; align-items: center; min-height: 44px; }
+.x { width: 32px; text-align: center; font-size: 18px; color: var(--ph-text); background: none; border: 0; cursor: pointer; }
+.search { flex: 1; border: 1px solid var(--ph-line); border-radius: 12px; padding: 9px 12px; color: var(--ph-muted); font-size: 14px; }
+.new { background: var(--ph-tint); color: var(--ph-accent-text); border-radius: 12px; padding: 9px 12px; font-weight: 600; font-size: 13px; white-space: nowrap; }
+.sel { display: flex; gap: 6px; align-items: center; background: var(--ph-worktint); border-radius: 14px; padding: 6px 8px; min-height: 44px; }
+.sel b { color: var(--ph-work); font-size: 16px; flex: 1; }
+.sel button { background: none; border: 0; color: var(--ph-work); font-weight: 700; font-size: 13.5px; padding: 6px 6px; cursor: pointer; }
+.sec { display: flex; align-items: center; gap: 6px; color: var(--ph-muted); font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 10px 4px 2px; }
+.sec .act { margin-left: auto; color: var(--ph-accent-text); font-size: 12.5px; letter-spacing: 0; text-transform: none; font-weight: 600; }
+.row { display: flex; align-items: center; gap: 10px; padding: 10px 8px; border-radius: 12px; cursor: pointer; user-select: none; }
+.row.on { background: var(--ph-tint); }
+.row .nm { flex: 1; font-size: 15px; }
+.row .when { color: var(--ph-muted); font-size: 12px; white-space: nowrap; }
+.lr { color: var(--ph-accent-text); background: var(--ph-tint); border-radius: 6px; padding: 1px 6px; font-size: 10.5px; font-weight: 800; margin-left: 6px; }
+.tdot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.check { width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid var(--ph-muted); flex: none; display: grid; place-items: center; font-size: 12px; font-weight: 800; }
+.row.on .check { background: var(--ph-accent); border-color: var(--ph-accent); color: #fff; }
+.fold { color: var(--ph-muted); width: 14px; }
+.chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.chip { flex: none; border: 1px solid var(--ph-line); background: var(--ph-surface); border-radius: 16px; padding: 5px 11px; font-size: 13px; font-weight: 600; color: var(--ph-soft); cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+.chip.on { background: var(--ph-tint); border-color: var(--ph-accent); color: var(--ph-accent-text); }
+.chip .n { color: var(--ph-muted); font-weight: 400; font-size: 11.5px; }
+.wk { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+.wnew { flex: none; border: 1.5px dashed var(--ph-line); border-radius: 14px; padding: 8px 12px; color: var(--ph-accent-text); font-weight: 600; font-size: 13px; }
+.empty { color: var(--ph-muted); font-size: 12.5px; padding: 2px 4px; }
+.hint { position: sticky; bottom: 0; margin-top: auto; background: linear-gradient(transparent, #000 30%); padding-top: 14px; color: var(--ph-muted); font-size: 11.5px; text-align: center; }
+</style>
+
+<main>
+  <h1>Add exercise: tidier, and selecting several</h1>
+  <p class="lede">The screen behind <b>+ Add exercise</b> (Gym, or a Journal day's ⋯ menu). Your real tags and counts (Legs 10, Pull 12, Push 18, Fingers 13, Arms 11; the lists show a sample), only to find exercises: making and editing tags stays in the Gym exercise list. Tap an exercise to log it, as now. <b>Hold one to select</b>, then tap more: the pink bar offers <b>Workout</b> (a new workout with them, in the order picked). Try it: hold (or right-click) a row.</p>
+  <div class="grid" id="opts"></div>
+</main>
+
+<script>
+const TAGS = [["Legs","#8BC34A"],["Pull","#5B8DEF"],["Push","#FF8A50"],["Fingers","#C8A97E"],["Arms","#90A4AE"]];
+const EX = [
+  ["Pull Up","Pull","20 Nov"],["Resistance Band One Arm Pull Up","Pull","20 Nov",1],["Muscle Up","Pull","20 Nov"],["Overhead Press","Push","19 Nov"],
+  ["Box Pike Push Up","Push","19 Nov"],["Lateral dumbbell raise","Arms","19 Nov"],["Seated External Shoulder Rotation","Arms","19 Nov"],["Finger Pinch","Fingers","18 Nov",1],
+  ["Deadlift","Legs","17 Nov"],["Squat","Legs","17 Nov"],["Bulgarian Bar Squat","Legs","11 Nov"],["Dips","Push","9 Nov"],["Block Pulls","Fingers","3 Nov"],
+  ["Seated Dumbbell Press","Push","18 Oct"],["Rolling Handle","Fingers","14 Oct"],["Pinch","Fingers","14 Oct"],["Wrist Curl","Arms","3 Oct"],["Chin Up","Pull","30 Apr"],
+  ["Handstand","Push","31 Jul"],["Ring Dip","Push","15 Jul"],["Thumb Pinch","Fingers","29 Jul"],["Ring Chin Up","Pull","11 May"],
+].map(([name, tag, when, side]) => ({ name, tag, when, side: !!side }));
+const REAL = { Legs: 10, Pull: 12, Push: 18, Fingers: 13, Arms: 11 };
+const color = t => (TAGS.find(x => x[0] === t) || [0, "#6B7280"])[1];
+const recent = EX.slice(0, 12);
+
+function row(e, st, opt) {
+  const k = st.sel.indexOf(e.name);
+  const selecting = st.sel.length > 0;
+  return `<div class="row ${k >= 0 ? "on" : ""}" data-n="${e.name}">` +
+    (selecting ? `<span class="check">${k >= 0 ? k + 1 : ""}</span>` : (opt.dots ? `<span class="tdot" style="background:${color(e.tag)}"></span>` : "")) +
+    `<span class="nm">${e.name}${e.side ? `<span class="lr">L·R</span>` : ""}</span><span class="when">${e.when}</span></div>`;
+}
+function bar(st) {
+  if (st.sel.length) return `<div class="sel"><button class="x" data-act="clear" aria-label="Cancel selection" style="color:var(--ph-work)">✕</button><b>${st.sel.length} selected</b><button>Workout</button></div>`;
+  return `<div class="top"><button class="x" aria-label="Close">✕</button><span class="search">Search</span><span class="new">+ New</span></div>`;
+}
+
+function now(st) {
+  return bar(st) +
+    `<div class="sec">Start a workout<span class="act">+ New workout</span></div>` +
+    `<div class="sec">Exercises<span class="act">+ New tag</span></div>` +
+    `<div class="sec"><span class="fold">▾</span>Recent · 12</div>` + recent.map(e => row(e, st, {})).join("") +
+    TAGS.map(([t]) => `<div class="sec"><span class="fold">▸</span>${t} · ${REAL[t]}<span class="act">✎</span></div>`).join("") +
+    `<div class="sec"><span class="fold">▸</span>Everything else A–Z · 44</div>`;
+}
+function chips(st) {
+  const f = st.filter || "Recent";
+  const list = f === "Recent" ? recent : f === "All" ? [...EX].sort((a, b) => a.name.localeCompare(b.name)) : EX.filter(e => e.tag === f);
+  const chip = (label, n, c) => `<span class="chip ${f === label ? "on" : ""}" data-f="${label}">${c ? `<span class="tdot" style="background:${c}"></span>` : ""}${label}${n != null ? ` <span class="n">${n}</span>` : ""}</span>`;
+  return bar(st) +
+    (st.sel.length ? "" : `<div class="sec">Workouts<span class="act">+ New</span></div><div class="empty">None yet: select exercises and tap Workout, or + New.</div><div class="sec">Exercises</div>`) +
+    `<div class="chips">${chip("Recent", null)}${chip("All", 66)}${TAGS.map(([t, c]) => chip(t, REAL[t], c)).join("")}</div>` +
+    list.map(e => row(e, st, { dots: true })).join("") + `<div class="hint">Hold an exercise to select several</div>`;
+}
+function grouped(st) {
+  return bar(st) +
+    `<div class="sec">Workouts<span class="act">+ New</span></div><div class="empty">None yet: select exercises and tap Workout, or + New.</div>` +
+    `<div class="sec">Recent</div>` + recent.slice(0, 6).map(e => row(e, st, { dots: true })).join("") +
+    TAGS.map(([t, c]) => `<div class="sec" style="color:${c}"><span class="tdot" style="background:${c}"></span>${t} · ${REAL[t]}</div>` +
+      EX.filter(e => e.tag === t).map(e => row(e, st, {})).join("")).join("") +
+    `<div class="sec">No tag · 44</div><div class="empty">…</div><div class="hint">Hold an exercise to select several</div>`;
+}
+
+const options = [
+  ["Now", "Installed", "Search and + New; \"Start a workout\" and \"Exercises\" headers with their own + links (+ New tag, and ✎ on each tag, which belong in the exercise list); folding sections for Recent, each tag and A–Z; no selection.", now],
+  ["A", "Tag chips as filters (revised)", "Workouts on top as in B; then one row of chips: Recent, All, then your tags in their Journal colors; tap one to see only those. Each exercise has a dot in its tag's color, the same as the chip and the Journal. Hold to select several, then Workout.", chips],
+  ["B", "One list grouped by tag", "No folding: Workouts first, a short Recent, then each tag as a colored header with its exercises, then the untagged ones. Search filters. Hold to select several, then Workout.", grouped],
+];
+const state = {};
+function draw() {
+  document.getElementById("opts").innerHTML = options.map(([id, name, desc, f]) => {
+    const st = state[id] ||= { sel: [], filter: null };
+    return `<section class="opt"><div class="head"><span class="tag">${id}</span><span class="name">${name}</span></div><p class="desc">${desc}</p><div class="phone" data-o="${id}">${f(st)}</div></section>`;
+  }).join("");
+}
+let pressT = null;
+const optsEl = document.getElementById("opts");
+function toggle(ph, n, hold) {
+  if (ph.dataset.o === "Now") return;
+  const st = state[ph.dataset.o];
+  if (hold || st.sel.length) { const k = st.sel.indexOf(n); if (k >= 0) st.sel.splice(k, 1); else st.sel.push(n); draw(); }
+}
+optsEl.addEventListener("pointerdown", ev => { const r = ev.target.closest(".row"); if (!r) return; const ph = r.closest(".phone");
+  pressT = setTimeout(() => { pressT = "held"; toggle(ph, r.dataset.n, true); }, 450); });
+optsEl.addEventListener("pointerup", () => { if (pressT !== "held") clearTimeout(pressT); });
+optsEl.addEventListener("contextmenu", ev => { const r = ev.target.closest(".row"); if (!r) return; ev.preventDefault(); toggle(r.closest(".phone"), r.dataset.n, true); });
+optsEl.addEventListener("click", ev => {
+  const ph = ev.target.closest(".phone"); if (!ph) return; const st = state[ph.dataset.o];
+  const r = ev.target.closest(".row"), a = ev.target.closest("[data-act]"), f = ev.target.closest("[data-f]");
+  if (r) { if (pressT === "held") { pressT = null; return; } toggle(ph, r.dataset.n, false); return; }
+  if (f) { st.filter = f.dataset.f; draw(); return; }
+  if (a && a.dataset.act === "clear") { st.sel = []; draw(); }
+});
+draw();
+</script>

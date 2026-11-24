@@ -219,6 +219,13 @@ interface GymDao {
     @Query("DELETE FROM exercises WHERE id = :id")
     suspend fun deleteExercise(id: Long)
 
+    /** Moves every set of [from] to [into] (merge). */
+    @Query("UPDATE gym_sets SET exerciseId = :into WHERE exerciseId = :from")
+    suspend fun moveSets(from: Long, into: Long)
+
+    @Query("UPDATE gym_sets SET variant = :variant WHERE exerciseId = :exerciseId")
+    suspend fun setVariant(exerciseId: Long, variant: String)
+
     @Query("UPDATE gym_sets SET variant = :new WHERE exerciseId = :exerciseId AND variant = :old")
     suspend fun renameVariant(exerciseId: Long, old: String, new: String)
 

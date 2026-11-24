@@ -2,6 +2,11 @@ package app.intervals.ui.gym
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import app.intervals.core.boxText
+import app.intervals.core.recordSetsOn
+import app.intervals.core.dayBars
+import androidx.compose.runtime.remember
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -73,9 +78,13 @@ import java.util.Locale
 
 // ---------- History ----------
 
-/** Every training day of the exercise, newest first; tap a day to open it in the log. */
+/**
+ * Every training day of the exercise, newest first; tap a day to open it in the log (mockup intervals-history-ideas.html,
+ * H2): the Journal's bars, the rest before each set under its bar, a pink summary with ▲ / ▼ for the volume against the
+ * session before, and the time on this exercise (first to last set) and the whole workout of that day.
+ */
 @Composable
-fun ExerciseHistory(ex: Exercise, all: List<GymSet>, onOpenDay: (String) -> Unit) {
+fun ExerciseHistory(ex: Exercise, all: List<GymSet>, workoutSec: Map<String, Int> = emptyMap(), onOpenDay: (String) -> Unit) {
     val p = LocalPalette.current
     val days = historyDays(all)
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -86,37 +95,60 @@ fun ExerciseHistory(ex: Exercise, all: List<GymSet>, onOpenDay: (String) -> Unit
                 color = p.muted, fontSize = 13.sp,
             )
         }
-        items(days, key = { it.first }) { (day, sets) ->
-            val top = topSet(sets, ex)
+        itemsIndexed(days, key = { _, d -> d.first }) { i, (day, daySets) ->
+            val sets = daySets.sortedBy { it.order }
+            val records = remember(day, all) { recordSetsOn(day, all, listOf(ex)).map { it.id }.toSet() }
+            val previous = days.getOrNull(i + 1)?.second
             Column(
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(p.surface).clickable { onOpenDay(day) }.padding(14.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(longDay(day), color = p.text, fontSize = 15.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                    Text(
-                        "${sets.size} set${if (sets.size == 1) "" else "s"}" + (top?.let { " · top " + it.summary(ex) } ?: ""),
-                        color = p.muted, fontSize = 12.sp,
-                    )
-                }
-                dayRows(sets).forEach { row ->
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(row.label, color = p.labelColor(row.label, p.muted), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.width(44.dp))
-                        Text(row.set.summary(ex), color = p.text, style = NumberStyle, fontSize = 15.sp, modifier = Modifier.weight(1f))
-                        if (row.count > 1) {
-                            Box(Modifier.clip(RoundedCornerShape(10.dp)).background(p.workTint).padding(horizontal = 7.dp, vertical = 2.dp)) {
-                                Text("×${row.count}", color = p.workText, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                            }
-                        }
-                        // the real rest before these sets, on the side of their row
-                        row.restText?.let { Text(it, color = p.muted, fontSize = 12.sp, textAlign = TextAlign.End, modifier = Modifier.width(76.dp)) }
+                    Text(historySummary(sets, ex), color = p.workText, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                    previous?.let { volumeChange(sets, it) }?.let { pct ->
+                        Text(
+                            when { pct > 0 -> " ▲ $pct%"; pct < 0 -> " ▼ ${-pct}%"; else -> " =" },
+                            color = when { pct > 0 -> Color(0xFF4ADE80); pct < 0 -> p.workText; else -> p.muted },
+                            fontSize = 12.sp, fontWeight = FontWeight.Bold,
+                        )
                     }
-                    if (row.set.note.isNotBlank()) Text(row.set.note, color = p.muted, fontSize = 12.sp, fontStyle = FontStyle.Italic, modifier = Modifier.padding(start = 44.dp))
                 }
+                app.intervals.ui.journal.DayBars(dayBars(sets, ex, records), null, null, rests = sets.map { it.restSec })
+                val here = sets.drop(1).sumOf { it.restSec ?: 0 }
+                val workout = workoutSec[day] ?: 0
+                if (here > 0 || workout > 0) Text(
+                    listOfNotNull(
+                        here.takeIf { it > 0 }?.let { "⏱ ${duration(it)} on this exercise" },
+                        workout.takeIf { it > 0 }?.let { "workout ${duration(it)}" },
+                    ).joinToString("   "),
+                    color = p.muted, fontSize = 12.sp,
+                )
             }
         }
     }
 }
+
+/** "11 sets · 53 reps · top 40 × 3"; per side "4 rounds" or "L 5 · R 7". */
+private fun historySummary(sets: List<GymSet>, ex: Exercise): String {
+    val left = sets.count { it.side == Side.LEFT }
+    val right = sets.count { it.side == Side.RIGHT }
+    if (left + right > 0) return if (left == right) "$left round${if (left == 1) "" else "s"}" else "L $left · R $right"
+    val top = topSet(sets, ex)?.takeIf { GymField.WEIGHT in ex.fields && (it.weightKg ?: 0.0) != 0.0 }
+    return "${sets.size} set${if (sets.size == 1) "" else "s"}" +
+        (if (GymField.REPS in ex.fields) " · ${sets.sumOf { it.reps ?: 0 }} reps" else "") +
+        (top?.let { " · top " + formatKg(it.weightKg!!) + " × " + it.boxText(ex) } ?: "")
+}
+
+/** The volume (kg × reps, or reps without a weight) against the session before, in percent; null when it can't be said. */
+private fun volumeChange(sets: List<GymSet>, before: List<GymSet>): Int? {
+    fun vol(ss: List<GymSet>) = ss.sumOf { (it.weightKg?.takeIf { w -> w > 0 } ?: 1.0) * (it.reps ?: 0) }
+    val b = vol(before)
+    return if (b <= 0.0) null else Math.round((vol(sets) - b) / b * 100).toInt()
+}
+
+/** "38 min", "1 h 05". */
+private fun duration(sec: Int): String = if (sec >= 3600) "${sec / 3600} h ${"%02d".format(sec % 3600 / 60)}" else "${(sec + 30) / 60} min"
 
 // ---------- Graph ----------
 

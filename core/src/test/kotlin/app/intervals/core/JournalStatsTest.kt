@@ -48,4 +48,16 @@ class JournalStatsTest {
         )
         assertEquals("hang · Load L 12.5 · R 8 kg · Edge 20 mm", s("hang", "2026-11-16", 18, 600, values = v).valuesLine())
     }
+
+    @Test
+    fun valuesChangeSaysWhatMovedAndWhatStayed() {
+        fun session(load: Double, edge: Double, at: Long) = Session(workoutName = "Repeaters 7/3", startedAt = at, durationSec = 60, roundsDone = 1,
+            roundsTotal = 1, completed = true, values = listOf(LoggedValue("Hang", "Edge", "mm", 1, null, edge), LoggedValue("Hang", "Load", "kg", 1, null, load)))
+        assertEquals("Load +2.5 kg · same Edge" to 1, valuesChange(session(5.0, 20.0, 2), session(2.5, 20.0, 1)))
+        assertEquals(null, valuesChange(session(5.0, 20.0, 2), session(5.0, 20.0, 1)))
+        assertEquals(null, valuesChange(session(5.0, 20.0, 2), null))
+        assertEquals(-1, valuesChange(session(0.0, 15.0, 2), session(5.0, 20.0, 1))?.second)
+        // the presets are valid workouts
+        assertEquals(3, PRESETS.count { it.section == "Fingers" })
+    }
 }

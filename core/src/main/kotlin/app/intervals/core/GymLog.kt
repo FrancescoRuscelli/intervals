@@ -7,12 +7,15 @@ enum class SideChoice { LEFT, RIGHT, BOTH }
 val QUICK_TAGS = listOf("Max", "Bad form", "Assisted", "Failed", "+½ rep")
 
 /**
- * The values the log screen starts from: the last set done today, else the first set of last time.
- * With a [side], that side's sets come first: L starts from the last L, R from the last R.
+ * The values the log screen starts from (mockup intervals-next-features.html, 1A): last time's set at the same place
+ * (with 3 sets done today, last time's 4th), else the last set done today. With a [side], only that side's sets count:
+ * the 2nd L today starts from last time's 2nd L.
  */
-fun startValues(today: List<GymSet>, lastTime: List<GymSet>, side: Side? = null): GymSet? =
-    side?.let { s -> today.lastOrNull { it.side == s } ?: lastTime.firstOrNull { it.side == s } }
-        ?: today.lastOrNull() ?: lastTime.firstOrNull()
+fun startValues(today: List<GymSet>, lastTime: List<GymSet>, side: Side? = null): GymSet? {
+    val t = if (side == null) today else today.filter { it.side == side }
+    val l = if (side == null) lastTime else lastTime.filter { it.side == side }
+    return l.getOrNull(t.size) ?: t.lastOrNull() ?: if (side != null) startValues(today, lastTime) else null
+}
 
 /** The last set done in [variant], today's included; on [side] when there is one there. Null = never done. */
 fun lastOfVariant(all: List<GymSet>, ex: Exercise, variant: String, side: Side? = null): GymSet? {

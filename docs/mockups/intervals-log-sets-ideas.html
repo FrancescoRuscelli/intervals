@@ -1,0 +1,207 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Logged Sets Layouts</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: one option per card; each shows the sets list of the Log tab for two real exercises of Fri 20 Nov */
+:root {
+  --bg: #f4f2fa; --fg: #18151f; --muted: #5b5668; --line: #dfdbe9; --accent: #6d28d9; --card: #ffffff;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif;
+  --ph-bg: #000; --ph-surface: #1A1C21; --ph-text: #F2F3F5; --ph-muted: #9AA0AA; --ph-soft: #C9CDD3; --ph-line: #2B2E35;
+  --ph-accent-text: #C4B1FF; --ph-work: #FF8AB3; --ph-pink: #E91E63; --ph-yellow: #FFC107; --ph-green: #4ADE80;
+  --pinkTint: #3A1428; --tealTint: #0B3A33;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
+main { max-width: 1240px; margin: 0 auto; display: grid; gap: 14px; }
+h1 { font-family: var(--display); font-size: 1.8rem; margin: 0; }
+.lede { color: var(--muted); margin: 0; max-width: 78ch; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; align-items: start; }
+.opt { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; display: grid; gap: 8px; min-width: 0; }
+.head { display: flex; gap: 10px; align-items: baseline; }
+.tag { font-family: var(--display); font-weight: 700; color: var(--accent); font-size: 1.1rem; }
+.name { font-weight: 600; }
+.desc { color: var(--muted); font-size: .86rem; margin: 0; }
+
+.phone { background: var(--ph-bg); border-radius: 18px; padding: 12px; color: var(--ph-text); font-size: 14px; display: grid; gap: 8px; }
+.exn { font-weight: 700; font-size: 16px; margin-top: 4px; }
+.cap { color: var(--ph-muted); font-size: 11px; font-weight: 600; letter-spacing: .05em; }
+.block { background: var(--ph-surface); border: 1px solid var(--ph-line); border-radius: 12px; padding: 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.lab { font-size: 15px; font-variant-numeric: tabular-nums; display: inline-flex; gap: 6px; align-items: center; }
+.side { font-size: 12px; font-weight: 800; border-radius: 6px; padding: 2px 7px; }
+.side.L { background: var(--pinkTint); } .side.R { background: var(--tealTint); }
+.sq { min-width: 44px; height: 44px; box-sizing: border-box; border-radius: 10px; background: var(--ph-bg); border: 1px solid var(--ph-line); display: inline-flex; align-items: center; justify-content: center; font-size: 16px; font-variant-numeric: tabular-nums; position: relative; padding: 0 8px; }
+.sq.pinkb { border-color: var(--ph-pink); }
+.sq.noted::after { content: ""; position: absolute; top: 0; right: 0; border-top: 9px solid var(--ph-text); border-left: 9px solid transparent; border-top-right-radius: 9px; }
+.cell { display: inline-flex; flex-direction: column; align-items: center; gap: 1px; }
+.rest { font-size: 10px; color: var(--ph-muted); font-variant-numeric: tabular-nums; }
+.rest.long { color: var(--ph-yellow); }
+.dot { width: 11px; height: 11px; border-radius: 50%; border: 1px solid var(--ph-soft); display: inline-block; }
+.cup { font-size: 11px; position: absolute; top: -9px; left: 50%; transform: translateX(-50%); }
+.rounds { background: var(--ph-surface); border: 1px solid var(--ph-line); border-radius: 12px; padding: 6px 8px; display: grid; grid-template-columns: 18px 1fr 1px 1fr 40px; gap: 6px 8px; align-items: center; }
+.rounds .n { color: var(--ph-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.rounds .sep { background: var(--ph-line); height: 30px; }
+.half { display: flex; gap: 6px; align-items: center; min-width: 0; }
+.note { color: var(--ph-muted); font-style: italic; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.vs { background: var(--ph-surface); border: 1px solid var(--ph-line); border-radius: 12px; padding: 6px 8px; display: grid; grid-template-columns: 22px 1fr 1fr; gap: 6px 10px; align-items: center; }
+.vs .h { color: var(--ph-muted); font-size: 11px; }
+.ghost { color: var(--ph-muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.up { color: var(--ph-green); font-size: 11px; font-weight: 700; }
+.down { color: var(--ph-work); font-size: 11px; font-weight: 700; }
+.pending { border-style: dashed; color: var(--ph-muted); }
+</style>
+
+<main>
+  <h1>The Log tab: the list of logged sets</h1>
+  <p class="lede">The sets under the − / + inputs while you log. Real sets from Fri 20 Nov: the band one-arm pull-up (black band, L / R, notes) and Pull Up (15 kg; last time, Sun 15 Nov, a pyramid 20 → 30 kg). The squares stay 44 dp: tap to edit, hold to select.</p>
+  <div class="grid" id="opts"></div>
+
+  <h2 style="font-family:var(--display);margin:22px 0 0">2 · Weights that change: Overhead Press and Squat</h2>
+  <p class="lede">Overhead Press of Thu 19 Nov (a pyramid up to 40 and back) and Squat of Tue 17 Nov (deep and normal), with their sessions before (Fri 13, Wed 11).</p>
+  <div class="grid" id="weights"></div>
+
+  <h2 style="font-family:var(--display);margin:22px 0 0">2b · Along the lines of W1</h2>
+  <p class="lede">Still a block per weight in the order done, but lighter: the same Overhead Press and Squat.</p>
+  <div class="grid" id="w1s"></div>
+
+  <h2 style="font-family:var(--display);margin:22px 0 0">3 · Uneven sides: Finger Pinch, 5 L and 7 R</h2>
+  <p class="lede">Finger Pinch of Wed 18 Nov, in the order done: L R L R L R L R R R R L. Sides are counted on their own; a set with no partner keeps its column, the other side stays empty.</p>
+  <div class="grid" id="uneven"></div>
+</main>
+
+<script>
+const rb = [[1,"L","half rep",26],[1,"R","",2],[3,"L","last rep half",116],[3,"R","",null],[3,"L","last half rep",293],[3,"R","last half rep",null],[2,"L","",429],[2,"R","",null]]
+  .map(([reps, side, note, rest]) => ({ reps, side, note, rest }));
+const pu = [5,6,7,7,5,5].map((r, i) => ({ kg: 15, reps: r, rest: [164,458,348,405,552,533][i], pr: false }));
+const last = [[20,5],[25,3],[30,2],[25,3],[25,3]];
+const mmss = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+const black = `<span class="dot" style="background:#3A3D44"></span>`;
+const cap = n => `<div class="cap">SETS · ${n} · TAP TO EDIT · HOLD TO SELECT</div>`;
+const sq = (t, cls = "") => `<span class="sq ${cls}">${t}</span>`;
+const rest = r => r ? `<span class="rest ${r > 300 ? "long" : ""}">${mmss(r)}</span>` : `<span class="rest">&nbsp;</span>`;
+
+function now() {
+  return `<div class="exn">Resistance Band One Arm Pull Up</div>${cap(8)}` +
+    rb.map(s => `<div class="block"><span class="lab">black <span class="side ${s.side}">${s.side}</span></span>${sq(s.reps, s.note ? "pinkb" : "")}</div>`).join("") +
+    `<div class="exn">Pull Up</div>${cap(6)}<div class="block"><span class="lab">15 kg</span>${pu.map(s => sq(s.reps)).join("")}</div>`;
+}
+function polished() {
+  return `<div class="exn">Resistance Band One Arm Pull Up</div>${cap(8)}` +
+    `<div class="block"><span class="lab">${black} black</span>${rb.map(s => `<span class="cell">${sq(`<span style="font-size:10px;font-weight:800;color:var(--ph-accent-text);margin-right:4px">${s.side}</span>${s.reps}`, s.note ? "noted" : "")}${rest(s.rest)}</span>`).join("")}</div>` +
+    `<div class="exn">Pull Up</div>${cap(6)}<div class="block"><span class="lab">15 kg</span>${pu.map(s => `<span class="cell">${sq(s.reps)}${rest(s.rest)}</span>`).join("")}</div>`;
+}
+function rounds() {
+  const half = s => `<div class="half"><span class="side ${s.side}">${s.side}</span>${sq(s.reps, s.note ? "noted" : "")}${s.note ? `<span class="note">“${s.note}”</span>` : ""}</div>`;
+  let r = "";
+  for (let i = 0; i < rb.length; i += 2) {
+    const ro = rb[i].rest;
+    r += `<span class="n">${i / 2 + 1}</span>${half(rb[i])}<span class="sep"></span>${half(rb[i + 1])}${ro ? `<span class="rest ${ro > 300 ? "long" : ""}" style="text-align:right">${mmss(ro)}</span>` : "<span></span>"}`;
+  }
+  return `<div class="exn">Resistance Band One Arm Pull Up</div>${cap(8)}<div class="cap" style="display:flex;gap:6px;align-items:center;letter-spacing:0">${black} black band · 4 rounds</div><div class="rounds">${r}</div>` +
+    `<div class="exn">Pull Up</div>${cap(6)}<div class="block"><span class="lab">15 kg</span>${pu.map(s => `<span class="cell">${sq(s.reps)}${rest(s.rest)}</span>`).join("")}</div>`;
+}
+function versus() {
+  const n = Math.max(pu.length, last.length) + 1;
+  let rows = `<span></span><span class="h">today</span><span class="h">last time · Sun 15</span>`;
+  for (let i = 0; i < n; i++) {
+    const t = pu[i], l = last[i];
+    const today = t ? `<span style="display:flex;gap:8px;align-items:center"><span class="ghost" style="color:var(--ph-soft)">15</span>${sq(t.reps)}${l ? (t.kg * t.reps > l[0] * l[1] ? `<span class="up">▲</span>` : `<span class="down">▼</span>`) : ""}</span>`
+      : `<span style="display:flex;gap:8px;align-items:center">${sq("+", "pending")}<span class="ghost">next</span></span>`;
+    rows += `<span class="n" style="color:var(--ph-muted);font-size:11px">${i + 1}</span>${today}<span class="ghost">${l ? `${l[0]} kg × ${l[1]}` : "—"}</span>`;
+  }
+  return `<div class="exn">Pull Up</div>${cap(6)}<div class="vs">${rows}</div><div class="cap" style="letter-spacing:0">today 15 kg · 35 reps · last time 20–30 kg · 16 reps</div>`;
+}
+
+const options = [
+  ["Now", "Installed: a block per load", "Sets in a row with the same load share a block. L and R alternate, so the band pull-up is eight blocks of one square each, every one saying “black”. A note is a pink border, the same pink as a selected set.", now],
+  ["A", "Same blocks, cleaner", "One block per load again, but L / R is a small letter inside the square, so alternating sides stay in one block. Notes are the folded corner, the rest before each set is written under its square (yellow over 5 min), the band is a dot.", polished],
+  ["B", "Rounds: L | R on one row", "For per-side exercises, one row per round: L on the left, R on the right, a line between, the note beside it, the rest before the round on the right. Other exercises keep A's block.", rounds],
+  ["C", "Today next to last time", "Set by set, today's squares beside last time's sets (faint), with ▲ / ▼ by volume (kg × reps); the next row waits for the set you are about to do, so you see what to beat.", versus],
+];
+document.getElementById("opts").innerHTML = options.map(([id, name, desc, f]) => `<section class="opt"><div class="head"><span class="tag">${id}</span><span class="name">${name}</span></div><p class="desc">${desc}</p><div class="phone">${f()}</div></section>`).join("");
+
+// section 2
+const ohp = [[20,6,null],[25,5,398],[30,5,95],[35,5,180],[37.5,5,210],[40,3,387],[37.5,5,348],[37.5,5,596],[35,5,678],[35,5,309],[35,4,478]];
+const ohpLast = [[20,5],[20,5],[25,5],[30,5],[35,5],[40,4],[40,3],[37.5,4],[35,6],[35,5],[35,5]];
+const sq17 = [[40,5,"deep"],[60,5,"deep"],[70,5,"deep"],[80,3,"deep"],[90,5,"normal"],[90,5,"normal"],[90,5,"normal"],[90,5,"normal"],[90,5,"normal"],[70,5,"deep","pause at bottom"],[70,3,"deep"],[60,3,"deep"],[60,5,"deep"],[60,1,"deep"]];
+const sqLast = [[40,5,"deep"],[60,5,"deep"],[70,5,"deep"],[80,5,"deep"],[90,5,"normal"],[90,5,"normal"],[90,5,"normal"],[90,5,"normal"],[90,5,"normal"],[80,2,"deep"],[80,4,"deep"],[80,5,"deep"],[60,5,"deep"]];
+const fk = k => k % 1 ? k.toFixed(1) : String(k);
+function blocksOf(sets, withRest) {
+  const out = [];
+  sets.forEach(x => { const key = fk(x[0]) + " kg" + (x[2] && typeof x[2] === "string" ? " " + x[2] : ""); const b = out[out.length - 1];
+    if (b && b.key === key) b.sets.push(x); else out.push({ key, sets: [x] }); });
+  return out.map(b => `<div class="block" style="flex-wrap:nowrap;align-items:flex-start"><span class="lab" style="min-width:96px;height:44px">${b.key.replace(/ (deep|normal)/, ' <span style="color:var(--ph-muted);font-size:13px">$1</span>')}</span><span style="display:flex;flex-wrap:wrap;gap:6px">${b.sets.map(x => `<span class="cell">${sq(x[1], x[3] ? "noted" : "")}${withRest ? rest(typeof x[2] === "number" ? x[2] : null) : ""}</span>`).join("")}</span></div>`).join("");
+}
+function rowsVs(sets, lastSets, lastDay) {
+  let r = `<span></span><span class="h">today</span><span class="h">${lastDay}</span>`;
+  const n = Math.max(sets.length, lastSets.length);
+  for (let i = 0; i < n; i++) {
+    const t = sets[i], l = lastSets[i];
+    const v = x => x ? x[0] * x[1] : 0;
+    const arrow = t && l ? (v(t) > v(l) ? `<span class="up">▲</span>` : v(t) < v(l) ? `<span class="down">▼</span>` : `<span class="ghost">=</span>`) : "";
+    const variant = t && typeof t[2] === "string" ? `<span class="ghost" style="font-size:11px">${t[2]}</span>` : "";
+    r += `<span class="n" style="color:var(--ph-muted);font-size:11px">${i + 1}</span>` +
+      (t ? `<span style="display:flex;gap:8px;align-items:center"><span style="min-width:30px;text-align:right;font-variant-numeric:tabular-nums">${fk(t[0])}</span>${sq(t[1], t[3] ? "noted" : "")}${arrow}${variant}</span>` : `<span class="ghost">—</span>`) +
+      `<span class="ghost">${l ? `${fk(l[0])} × ${l[1]}${typeof l[2] === "string" ? " " + l[2][0] : ""}` : "—"}</span>`;
+  }
+  return `<div class="vs">${r}</div>`;
+}
+document.getElementById("weights").innerHTML = [
+  ["W1", "Blocks per load, with rests", "A's block for every weight: 8 blocks for the pyramid. Same weight in a row share a block (37.5 × 2, 35 × 3). The weight has a fixed width, so the squares line up in one column.",
+    () => `<div class="exn">Overhead Press</div>${cap(11)}${blocksOf(ohp, true)}<div class="exn">Squat</div>${cap(14)}${blocksOf(sq17, false)}`],
+  ["W2", "One row per set, last time beside it", "Each set a row: kg, the reps square, ▲ / ▼ against the same set last time. A pyramid reads top to bottom; you see where you are against last time.",
+    () => `<div class="exn">Overhead Press</div>${cap(11)}${rowsVs(ohp.map(x => [x[0], x[1]]), ohpLast, "last time · Fri 13")}<div class="exn">Squat</div>${cap(14)}${rowsVs(sq17, sqLast, "last time · Wed 11")}`],
+].map(([id, name, desc, f]) => `<section class="opt"><div class="head"><span class="tag">${id}</span><span class="name">${name}</span></div><p class="desc">${desc}</p><div class="phone">${f()}</div></section>`).join("");
+
+
+// section 2b: W1 variants
+function groupsOf(sets) {
+  const out = [];
+  sets.forEach(x => { const v = typeof x[2] === "string" ? x[2] : ""; const b = out[out.length - 1];
+    if (b && b.kg === x[0] && b.v === v) b.sets.push(x); else out.push({ kg: x[0], v, sets: [x] }); });
+  return out;
+}
+const restOf = x => typeof x[2] === "number" ? x[2] : (typeof x[4] === "number" ? x[4] : null);
+function w1rows(sets, withRest, lastSets) {
+  const lastG = lastSets ? groupsOf(lastSets) : null;
+  return `<div class="block" style="display:grid;grid-template-columns:auto 1fr${lastSets ? " auto" : ""};gap:6px 10px;align-items:center">` +
+    groupsOf(sets).map(g => {
+      const l = lastG && lastG.find(h => h.kg === g.kg && h.v === g.v);
+      return `<span class="lab" style="justify-content:flex-end;min-width:44px">${fk(g.kg)}${g.v ? ` <span style="color:var(--ph-muted);font-size:12px">${g.v}</span>` : ""}</span>` +
+        `<span style="display:flex;gap:6px;flex-wrap:wrap">${g.sets.map(x => `<span class="cell">${sq(x[1], x[3] && typeof x[3] === "string" ? "noted" : "")}${withRest ? rest(restOf(x)) : ""}</span>`).join("")}</span>` +
+        (lastSets ? `<span class="ghost" style="font-size:11.5px;text-align:right">${(r => r.length ? r.join(" ") : "—")(lastSets.filter(y => y[0] === g.kg && (typeof y[2] === "string" ? y[2] : "") === g.v).map(y => y[1]))}</span>` : "");
+    }).join("") + `</div>`;
+}
+function w1flow(sets) {
+  return `<div style="display:flex;flex-wrap:wrap;gap:6px">` + groupsOf(sets).map(g =>
+    `<div class="block" style="padding:6px;gap:5px"><span class="lab" style="font-size:13px">${fk(g.kg)}${g.v ? ` <span style="color:var(--ph-muted);font-size:11px">${g.v[0]}</span>` : ""}</span>${g.sets.map(x => sq(x[1], x[3] && typeof x[3] === "string" ? "noted" : "")).join("")}</div>`).join("") + `</div>`;
+}
+const sqR = sq17.map(x => [x[0], x[1], x[2], x[3]]);
+document.getElementById("w1s").innerHTML = [
+  ["W1a", "One card, a row per weight", "All the blocks in one card, the weight in a right-aligned column so the squares start at the same place; the rest under each square. Half the height of W1.",
+    () => `<div class="exn">Overhead Press</div>${cap(11)}${w1rows(ohp, true)}<div class="exn">Squat</div>${cap(14)}${w1rows(sqR, false)}`],
+  ["W1b", "W1a + last time on the right", "Same rows; on the right, faint, all the reps you did at that weight last time (same variant). Easy to see 40: 4 3 last time against 3 today.",
+    () => `<div class="exn">Overhead Press</div>${cap(11)}${w1rows(ohp, false, ohpLast)}<div class="exn">Squat</div>${cap(14)}${w1rows(sqR, false, sqLast)}`],
+  ["W1c", "Blocks side by side", "The blocks wrap next to each other like words, so a pyramid fits in three or four lines. Most compact; the rests are left out.",
+    () => `<div class="exn">Overhead Press</div>${cap(11)}${w1flow(ohp)}<div class="exn">Squat</div>${cap(14)}${w1flow(sqR)}`],
+].map(([id, name, desc, f]) => `<section class="opt"><div class="head"><span class="tag">${id}</span><span class="name">${name}</span></div><p class="desc">${desc}</p><div class="phone">${f()}</div></section>`).join("");
+
+// section 3
+const fp = [["L",10,10,51],["R",10,10,3],["L",10,10,1],["R",10,10,0],["L",12,10,9],["R",12,10,0],["L",14,5,10],["R",14,10,5],["R",16,8,24],["R",16,7,230],["R",16,5,24],["L",14,5,5]];
+function unevenRows() {
+  const rows = []; let i = 0;
+  while (i < fp.length) { const a = fp[i], b = fp[i + 1];
+    if (b && a[0] !== b[0]) { rows.push(a[0] === "L" ? [a, b] : [b, a]); i += 2; } else { rows.push(a[0] === "L" ? [a, null] : [null, a]); i++; } }
+  const half = x => x ? `<div class="half"><span class="side ${x[0]}">${x[0]}</span><span class="ghost" style="color:var(--ph-soft)">${x[1]} kg · 0:${String(x[2]).padStart(2, "0")}</span>${sq(1)}</div>` : `<div class="half"><span class="ghost">—</span></div>`;
+  return `<div class="exn">Finger Pinch</div>${cap(12)}<div class="cap" style="letter-spacing:0">L 5 · R 7 · 5 rounds + 2 R alone</div><div class="rounds">` +
+    rows.map((r, k) => `<span class="n">${k + 1}</span>${half(r[0])}<span class="sep"></span>${half(r[1])}<span></span>`).join("") + `</div>`;
+}
+document.getElementById("uneven").innerHTML = [
+  ["U", "Rounds, with gaps", "The L and R right after each other share a row; an extra set sits alone in its column. The line above counts each side: L 5 · R 7. The same counts go in the day screen's pink summary.", unevenRows],
+].map(([id, name, desc, f]) => `<section class="opt"><div class="head"><span class="tag">${id}</span><span class="name">${name}</span></div><p class="desc">${desc}</p><div class="phone">${f()}</div></section>`).join("");
+</script>

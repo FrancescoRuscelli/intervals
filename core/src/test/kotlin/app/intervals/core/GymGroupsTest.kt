@@ -59,5 +59,10 @@ class GymGroupsTest {
         val history = day("2026-11-10", 1) + day("2026-11-17", 1).map { it.copy(weightKg = 20.0) }
         assertEquals(1, recordsOn("2026-11-17", history, listOf(sq)))
         assertEquals(0, recordsOn("2026-11-10", history, listOf(sq)))
+        // the set that made it, so the Journal can put the cup on its bar
+        val numbered = history.mapIndexed { i, s -> s.copy(id = i + 1L) }
+        val made = recordSetsOn("2026-11-17", numbered, listOf(sq))
+        assertEquals(listOf("2026-11-17"), made.map { it.day })
+        assertEquals(listOf(true), dayBars(numbered.filter { it.day == "2026-11-17" }, sq, made.map { it.id }.toSet()).map { it.record }.distinct().filter { it })
     }
 }

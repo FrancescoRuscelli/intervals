@@ -31,6 +31,10 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Path
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -63,7 +67,6 @@ import androidx.compose.ui.unit.sp
 import app.intervals.core.Exercise
 import app.intervals.core.GymGroup
 import app.intervals.core.GymSet
-import app.intervals.core.JournalSets
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
@@ -102,30 +105,13 @@ import java.util.Locale
 @Composable
 fun JournalScreen(vm: AppViewModel) {
     val p = LocalPalette.current
-    var stats by rememberSaveable { mutableStateOf(false) }
-    val calendarState = rememberSaveableStateHolder()
-    LaunchedEffect(vm.journalFocusDay) {
-        if (vm.journalFocusDay != null) stats = false
-    }
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("Journal", color = p.text, fontSize = 26.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
             IconButton(onClick = { vm.openSettings() }) { Icon(AppIcons.Settings, "Settings", tint = p.text) }
         }
-        Row(Modifier.padding(horizontal = 12.dp, vertical = 2.dp).fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp)).background(p.surface).selectableGroup().padding(3.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            listOf("Calendar", "Stats").forEachIndexed { i, label ->
-                val on = (i == 1) == stats
-                Box(
-                    Modifier.weight(1f).height(36.dp).clip(RoundedCornerShape(9.dp)).background(if (on) p.accent else Color.Transparent)
-                        .selectable(on, role = Role.Tab) { stats = i == 1 },
-                    contentAlignment = Alignment.Center,
-                ) { Text(label, color = if (on) p.onAccent else p.muted, fontSize = 14.sp, fontWeight = FontWeight.SemiBold) }
-            }
-        }
-        if (stats) app.intervals.ui.stats.StatsScreen(vm, showTitle = false)
-        else calendarState.SaveableStateProvider("calendar") { JournalCalendar(vm) }
+        // Stats is its own screen now, opened from the month line (mockup intervals-stats-screen.html)
+        JournalCalendar(vm)
     }
 }
 
@@ -249,7 +235,7 @@ private fun JournalCalendar(vm: AppViewModel) {
                     modifier = Modifier.fillMaxWidth().focusRequester(searchFocus),
                 )
             }
-            MonthTotals(totals[month])
+            MonthTotals(totals[month]) { vm.openStats(month) }
             HorizontalPager(pager, key = { it }, verticalAlignment = Alignment.Top,
                 flingBehavior = PagerDefaults.flingBehavior(pager, pagerSnapDistance = PagerSnapDistance.atMost(1))) { page ->
                 Calendar(firstMonth.plusMonths(page.toLong()), today, selectedDay, byDay, strips, matching.orEmpty(), matching != null, pick)
@@ -262,12 +248,13 @@ private fun JournalCalendar(vm: AppViewModel) {
             val sets = setsByDay[d].orEmpty()
             val records = remember(d, allSets, exercises) {
                 val ids = sets.map { it.exerciseId }.toSet()
-                if (ids.isEmpty()) 0 else app.intervals.core.recordsOn(d.toString(), allSets.orEmpty().filter { it.exerciseId in ids }, exercises.filter { it.id in ids })
+                if (ids.isEmpty()) emptySet() else app.intervals.core.recordSetsOn(d.toString(), allSets.orEmpty().filter { it.exerciseId in ids }, exercises.filter { it.id in ids }).map { it.id }.toSet()
             }
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 16.dp)) {
                 DayEntry(
                     vm, d, today, sets, byDay[d].orEmpty().sortedBy { it.startedAt }, notes[d.toString()].orEmpty(),
                     exercises, allGroups, records, zone, closeFilter, onNote = { editing = it }, onDelete = { deleting = it },
+                    previous = { s -> allSessions.orEmpty().filter { it.workoutName == s.workoutName && it.startedAt < s.startedAt && it.values.isNotEmpty() }.maxByOrNull { it.startedAt } },
                 )
             }
         }
@@ -298,8 +285,8 @@ private fun JournalCalendar(vm: AppViewModel) {
 @Composable
 private fun DayEntry(
     vm: AppViewModel, d: LocalDate, today: LocalDate, sets: List<GymSet>, sessions: List<Session>, note: String,
-    exercises: List<Exercise>, groups: List<GymGroup>, records: Int, zone: ZoneId, closeFilter: () -> Unit,
-    onNote: (Session) -> Unit, onDelete: (Session) -> Unit,
+    exercises: List<Exercise>, groups: List<GymGroup>, records: Set<Long>, zone: ZoneId, closeFilter: () -> Unit,
+    onNote: (Session) -> Unit, onDelete: (Session) -> Unit, previous: (Session) -> Session? = { null },
 ) {
     val p = LocalPalette.current
     val day = d.toString()
@@ -328,8 +315,7 @@ private fun DayEntry(
             }
         }
         if (sets.isNotEmpty() || note.isNotBlank()) {
-            val mode = vm.settings.collectAsState().value.journalSets
-            GymDayCard(sets, exercises.associateBy { it.id }, groups, records, note = note, mode = mode) { vm.openGymDay(day) }
+            GymDayCard(sets, exercises.associateBy { it.id }, groups, records, note = note) { vm.openGymDay(day) }
             Spacer(Modifier.height(6.dp))
         }
         if (sessions.isEmpty() && sets.isEmpty() && note.isBlank()) {
@@ -339,16 +325,22 @@ private fun DayEntry(
             )
         }
         sessions.forEach { s ->
-            SessionCard(s, zone, onNote = { onNote(s) }, onLongPress = { onDelete(s) })
+            SessionCard(s, zone, previous(s), onNote = { onNote(s) }, onLongPress = { onDelete(s) })
             Spacer(Modifier.height(6.dp))
         }
     }
 }
 
 @Composable
-private fun MonthTotals(t: Triple<Int, Int, Int>?) {
+private fun MonthTotals(t: Triple<Int, Int, Int>?, onStats: () -> Unit) {
     val p = LocalPalette.current
     val (sessions, days, sets) = t ?: Triple(0, 0, 0)
+    // the month line is the way into Stats: tap anywhere on it
+    Row(
+        Modifier.fillMaxWidth().padding(bottom = 2.dp).clip(RoundedCornerShape(12.dp)).background(p.surface)
+            .clickable(onClickLabel = "Open Stats", onClick = onStats).padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
     Text(
         buildAnnotatedString {
             val totals = listOf(
@@ -362,8 +354,10 @@ private fun MonthTotals(t: Triple<Int, Int, Int>?) {
                 append(" $label")
             }
         },
-        color = p.muted, fontSize = 12.sp, modifier = Modifier.padding(start = 4.dp, bottom = 2.dp),
+        color = p.muted, fontSize = 12.sp, modifier = Modifier.weight(1f),
     )
+    Text("Stats ›", color = p.accentText, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 8.dp))
+    }
 }
 
 /** The month, Monday first. */
@@ -426,7 +420,7 @@ private fun DayCell(d: LocalDate?, today: LocalDate, selected: LocalDate?, sessi
 }
 
 @Composable
-private fun SessionCard(s: Session, zone: ZoneId, onNote: () -> Unit, onLongPress: () -> Unit) {
+private fun SessionCard(s: Session, zone: ZoneId, before: Session?, onNote: () -> Unit, onLongPress: () -> Unit) {
     val p = LocalPalette.current
     val time = Instant.ofEpochMilli(s.startedAt).atZone(zone).toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm"))
     Row(
@@ -445,6 +439,14 @@ private fun SessionCard(s: Session, zone: ZoneId, onNote: () -> Unit, onLongPres
                 color = if (s.completed) p.soft else p.yellow, fontSize = 13.sp,
             )
             s.valuesLine()?.let { Text(it, color = p.soft, fontSize = 13.sp) }
+            // against the previous session of this workout (mockup intervals-next-features.html, 3C)
+            if (s.values.isNotEmpty()) app.intervals.core.valuesChange(s, before)?.let { (text, dir) ->
+                val day = before?.let { java.time.Instant.ofEpochMilli(it.startedAt).atZone(zone).toLocalDate().format(DateTimeFormatter.ofPattern("EEE d MMM", Locale.ENGLISH)) }
+                Text(
+                    (when (dir) { 1 -> "▲ "; -1 -> "▼ "; else -> "" }) + text + (day?.let { " ($it)" } ?: ""),
+                    color = when (dir) { 1 -> Color(0xFF4ADE80); -1 -> p.workText; else -> p.muted }, fontSize = 12.sp,
+                )
+            }
             Text(
                 if (s.note.isBlank()) "+ note" else "“${s.note}”",
                 color = if (s.note.isBlank()) p.accentText else p.muted, fontSize = 13.sp,
@@ -454,17 +456,18 @@ private fun SessionCard(s: Session, zone: ZoneId, onNote: () -> Unit, onLongPres
     }
 }
 
-/** The gym sets of a day as one card: each exercise as bars and / or its table by load ([mode]), then the notes. Tap = open in Gym. */
+/** The gym sets of a day as one card: each exercise as bars, then the notes. Tap = open in Gym. */
 @Composable
 private fun GymDayCard(
     sets: List<app.intervals.core.GymSet>, exercises: Map<Long, app.intervals.core.Exercise>,
-    groups: List<app.intervals.core.GymGroup>, records: Int, note: String = "", mode: JournalSets = JournalSets.BOTH, onOpen: () -> Unit,
+    groups: List<app.intervals.core.GymGroup>, records: Set<Long>, note: String = "", onOpen: () -> Unit,
 ) {
     val p = LocalPalette.current
     val byExercise = sets.sortedBy { it.order }.groupBy { it.exerciseId }
     val strip = app.intervals.core.dayStrip(sets, groups)
     val dayGroups = app.intervals.core.dayGroups(sets, groups)
     val bar = strip.map { Color(it.color) }.distinct().ifEmpty { listOf(p.accent) }
+    val prs = sets.filter { it.id in records }.map { it.exerciseId }.distinct().size
     Row(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(p.surface).clickable(onClick = onOpen).padding(10.dp),
     ) {
@@ -477,7 +480,7 @@ private fun GymDayCard(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Gym" + if (dayGroups.isEmpty()) "" else " · " + dayGroups.joinToString(" · ") { it.name },
                     color = p.text, fontSize = 15.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                Text("${sets.size} set${if (sets.size == 1) "" else "s"}" + if (records > 0) " · $records PR" else "", color = p.muted, fontSize = 12.sp)
+                Text("${sets.size} set${if (sets.size == 1) "" else "s"}" + if (prs > 0) " · $prs PR" else "", color = p.muted, fontSize = 12.sp)
             }
             // the day strip, labeled: one piece per exercise, sized by sets
             if (strip.isNotEmpty()) Row(Modifier.fillMaxWidth().height(22.dp).clip(RoundedCornerShape(6.dp)), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -491,106 +494,113 @@ private fun GymDayCard(
             }
             byExercise.forEach { (id, exSets) ->
                 val ex = exercises[id] ?: return@forEach
-                ExerciseOfDay(ex, exSets, mode)
+                ExerciseOfDay(ex, exSets, records)
             }
-            (listOf(note) + sets.map { it.note }).filter { it.isNotBlank() }.distinct().forEach {
-                Text("“$it”", color = p.muted, fontSize = 13.sp, fontStyle = FontStyle.Italic)
-            }
+            // the day note; a set's note shows when its bar is tapped
+            if (note.isNotBlank()) Text("“$note”", color = p.muted, fontSize = 13.sp, fontStyle = FontStyle.Italic)
         }
     }
 }
 
-/** One exercise of the day (mockup intervals-journal-day-ideas.html): its name and sets, then the bars (C2) and / or the table by load (A2). */
+/** One exercise of the day (mockup intervals-journal-day-ideas.html): its name and sets, then the bars (C2). */
 @Composable
-private fun ExerciseOfDay(ex: Exercise, sets: List<GymSet>, mode: JournalSets) {
+private fun ExerciseOfDay(ex: Exercise, sets: List<GymSet>, records: Set<Long>) {
     val p = LocalPalette.current
-    // mockup intervals-set-number.html, F and I: holding a box shows every set's number; tapping a bar or a box picks that set in both
-    var held by remember { mutableStateOf<Int?>(null) }
+    // tapping a bar picks that set: the line above says where it sits in the day
     var picked by remember(sets) { mutableStateOf<Int?>(null) }
     val pick = { n: Int -> picked = if (picked == n) null else n }
     Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 4.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(ex.name, color = p.text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-            val n = held ?: picked
-            val line = if (n != null) setPlace(sets, n, ex) else {
+            val n = picked
+            val line = if (n != null) setLine(sets, n, ex, records) else {
                 val top = app.intervals.core.topSet(sets, ex)?.takeIf { app.intervals.core.GymField.WEIGHT in ex.fields }
                 "${sets.size} set${if (sets.size == 1) "" else "s"}" + (top?.let { " · top " + it.summary(ex) } ?: "")
             }
             Text(line, color = if (n != null) p.accentText else p.muted, fontSize = 11.sp, maxLines = 1)
         }
-        if (mode != JournalSets.TABLE) DayBars(app.intervals.core.dayBars(sets, ex), held ?: picked, pick)
-        if (mode != JournalSets.BARS) LoadTable(app.intervals.core.loadRows(sets, ex), held != null, held ?: picked, pick) { held = it }
+        DayBars(app.intervals.core.dayBars(sets, ex, records), picked, pick)
     }
+}
+
+/** The line for a tapped set [n] (1-based): "#3 of 5 · “elbow a bit sore”" when it has a note, else its place; " · PR" on a record. */
+private fun setLine(sets: List<GymSet>, n: Int, ex: Exercise, records: Set<Long>): String {
+    val s = sets[n - 1]
+    val text = if (s.note.isNotBlank()) "#$n of ${sets.size} · ${s.summary(ex)} · “${s.note.trim()}”" else setPlace(sets, n, ex)
+    return text + if (s.id in records) " · PR" else ""
 }
 
 /** "#4 of 11 · after 30 × 5 · before 37.5 × 5": where set [n] (1-based, day order) sits in the day. */
 private fun setPlace(sets: List<GymSet>, n: Int, ex: Exercise): String =
     "#$n of ${sets.size}" + (sets.getOrNull(n - 2)?.let { " · after " + it.summary(ex) } ?: "") + (sets.getOrNull(n)?.let { " · before " + it.summary(ex) } ?: "")
 
-/** A bar per set in the order done, always as high as its reps; the band colors fill it, the side is a cap (L pink, R green), the kg are under it. */
+/**
+ * A bar per set in the order done, always as high as its reps (mockup intervals-journal-bar-marks.html, 5 + N2 + P4).
+ * Plain bars are purple; a per-side set has L or R written at the top inside it. With bands the bar is the band colors,
+ * striped like elastic, with a light outline (black drawn dark grey, so it shows on the dark card). The kg sit inside at the foot, only on the
+ * first bar of each weight. A set with a note has its top-right corner folded; a record has a gold cup over its reps.
+ */
 @Composable
-private fun DayBars(bars: List<app.intervals.core.DayBar>, picked: Int?, onPick: (Int) -> Unit) {
+internal fun DayBars(bars: List<app.intervals.core.DayBar>, picked: Int?, onPick: ((Int) -> Unit)?, rests: List<Int?>? = null) {
     val p = LocalPalette.current
     val max = bars.maxOfOrNull { it.value }?.coerceAtLeast(1.0) ?: return
-    // no fixed height: the row is as tall as its tallest bar, so every bar stands on the same base line
+    val barWidth = if (bars.any { it.under.isNotEmpty() }) 30.dp else 24.dp
+    val ink = { c: Color -> if (c.luminance() > 0.35f) Color(0xFF0B0C0E) else Color.White }
+    val shown = { c: Long -> Color(c).let { if (it.luminance() < 0.03f) Color(0xFF3A3D44) else it } }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.Bottom) {
         bars.forEachIndexed { i, b ->
             val on = picked == i + 1
-            val sideColor = when (b.side) { app.intervals.core.Side.LEFT -> p.pink; app.intervals.core.Side.RIGHT -> p.teal; null -> null }
-            Column(Modifier.weight(1f, fill = false).width(24.dp).clickable { onPick(i + 1) }, horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(b.top, color = if (b.note) p.yellow else p.text, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
+            val fills = b.colors.map(shown).ifEmpty { listOf(p.accent) }
+            val side = when (b.side) { app.intervals.core.Side.LEFT -> "L"; app.intervals.core.Side.RIGHT -> "R"; null -> null }
+            val kg = b.under.takeIf { it.isNotEmpty() && it != bars.getOrNull(i - 1)?.under }
+            Column(Modifier.weight(1f, fill = false).width(barWidth).then(if (onPick != null) Modifier.clickable { onPick(i + 1) } else Modifier), horizontalAlignment = Alignment.CenterHorizontally) {
+                if (b.record) Icon(AppIcons.Cup, "Record", tint = p.yellow, modifier = Modifier.padding(bottom = 1.dp).size(11.dp))
+                Text(b.top, color = p.text, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
                 val shape = RoundedCornerShape(topStart = 3.dp, topEnd = 3.dp)
-                Column(Modifier.fillMaxWidth().height((6 + 40 * b.value / max).dp).clip(shape).border(if (on) 2.dp else 1.dp, if (on) p.text else p.line, shape)) {
-                    // the side colors the whole bar; with bands the bar is the band and the side is a cap on top
-                    if (b.colors.isEmpty()) Box(Modifier.fillMaxWidth().weight(1f).background(sideColor ?: p.accent))
-                    else {
-                        sideColor?.let { Box(Modifier.fillMaxWidth().height(3.dp).background(it)) }
-                        b.colors.forEach { Box(Modifier.fillMaxWidth().weight(1f).background(Color(it))) }
-                    }
+                val height = maxOf(6 + 40 * b.value / max, if (side != null) (if (kg != null) 26.0 else 14.0) else if (kg != null) 16.0 else 0.0)
+                val border = when {
+                    on -> 2.dp to p.text
+                    b.colors.isNotEmpty() -> 1.5.dp to p.muted
+                    else -> 1.dp to p.line
                 }
-                Text(b.under, color = p.muted, fontSize = 9.sp, maxLines = 1, softWrap = false)
-            }
-        }
-    }
-}
-
-/** The sets by load, lightest first: the load (or its band colors) on the left, the reps in boxes with their number in the day's order. */
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
-@Composable
-private fun LoadTable(rows: List<app.intervals.core.LoadRow>, numbers: Boolean, picked: Int?, onPick: (Int) -> Unit, onHold: (Int?) -> Unit) {
-    val p = LocalPalette.current
-    rows.forEach { r ->
-        Row(verticalAlignment = Alignment.Top) {
-            Row(Modifier.width(70.dp).padding(top = 3.dp, end = 8.dp), horizontalArrangement = Arrangement.spacedBy(2.dp, Alignment.End), verticalAlignment = Alignment.CenterVertically) {
-                r.colors.forEach { Box(Modifier.size(11.dp).clip(CircleShape).background(Color(it)).border(1.dp, Color(0x55FFFFFF), CircleShape)) }
-                if (r.label.isNotEmpty() || r.colors.isEmpty()) {
-                    Text(r.label.ifEmpty { "–" }, color = p.muted, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, textAlign = TextAlign.End)
-                }
-            }
-            androidx.compose.foundation.layout.FlowRow(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(5.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                r.sets.forEach { (n, s) ->
-                    val tint = when (s.side) {
-                        app.intervals.core.Side.LEFT -> p.pink.copy(alpha = 0.25f)
-                        app.intervals.core.Side.RIGHT -> p.teal.copy(alpha = 0.25f)
-                        null -> p.bg
+                val noteMark = p.text
+                Box(
+                    Modifier.fillMaxWidth().height(height.dp).clip(shape).border(border.first, border.second, shape)
+                        .drawWithContent {
+                            drawContent()
+                            if (b.note) {
+                                val c = 7.dp.toPx()
+                                drawPath(Path().apply { moveTo(size.width - c, 0f); lineTo(size.width, 0f); lineTo(size.width, c); close() }, noteMark)
+                            }
+                        },
+                ) {
+                    Column(Modifier.fillMaxSize()) {
+                        fills.forEach { Box(Modifier.fillMaxWidth().weight(1f).background(it)) }
                     }
-                    // the box and, attached under it in the same frame, a tab with the set's number in the day (mockup intervals-set-number.html, B);
-                    // the tab is yellow when the set has a note
-                    val noted = s.note.isNotBlank()
-                    val shape = RoundedCornerShape(6.dp)
-                    val on = picked == n
-                    Column(Modifier.width(IntrinsicSize.Max).widthIn(min = 26.dp).clip(shape).border(if (on) 2.dp else 1.dp, if (on) p.text else p.line, shape)
-                        .pointerInput(n) {
-                            detectTapGestures(onPress = { tryAwaitRelease(); onHold(null) }, onLongPress = { onHold(n) }, onTap = { onPick(n) })
-                        }) {
-                        Box(Modifier.fillMaxWidth().height(22.dp).background(tint).padding(horizontal = 5.dp), contentAlignment = Alignment.Center) {
-                            Text(s.reps?.toString() ?: s.timeSec?.let { app.intervals.core.formatTime(it) } ?: "✓", color = p.text, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    // a band bar is striped like elastic (mockup section 5, D), so the purple band is not a plain bar
+                    if (b.colors.isNotEmpty()) Box(Modifier.matchParentSize().drawBehind {
+                        val gap = 6.dp.toPx()
+                        var x = -size.height
+                        while (x < size.width) {
+                            drawLine(Color.White.copy(alpha = 0.32f), Offset(x, size.height), Offset(x + size.height, 0f), strokeWidth = 2.dp.toPx())
+                            x += gap
                         }
-                        // the tab only while a box is held (F), or always on a set with a note
-                        if (numbers) Text("#$n", color = if (noted) Color(0xFF1A1400) else p.accentText, fontSize = 8.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center,
-                            lineHeight = 11.sp, modifier = Modifier.fillMaxWidth().background(if (noted) p.yellow else p.tint))
-                        else if (noted) Box(Modifier.fillMaxWidth().height(3.dp).background(p.yellow))
-                    }
+                    })
+                    if (side != null) Text(
+                        side, color = ink(fills.first()), fontSize = 8.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false,
+                        modifier = Modifier.align(Alignment.TopCenter).padding(top = 2.dp),
+                    )
+                    if (kg != null) Text(
+                        kg, color = ink(fills.last()), fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false, letterSpacing = (-0.2).sp,
+                        modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 2.dp),
+                    )
+                }
+                // History: the rest before the set under its bar, yellow over 5 min
+                if (rests != null) {
+                    val r = rests.getOrNull(i)?.takeIf { it > 0 }
+                    Text(r?.let { app.intervals.core.formatTime(it) } ?: " ", color = if ((r ?: 0) > 300) p.recordText else p.muted,
+                        fontSize = 8.sp, letterSpacing = (-0.2).sp, maxLines = 1, softWrap = false)
                 }
             }
         }

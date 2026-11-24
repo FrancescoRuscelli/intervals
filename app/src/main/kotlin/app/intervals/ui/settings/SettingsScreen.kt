@@ -13,6 +13,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.Role
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -43,7 +47,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.intervals.core.AppSettings
 import app.intervals.core.DiscAnimation
 import app.intervals.core.ThemeMode
-import app.intervals.core.JournalSets
 import app.intervals.ui.AppViewModel
 import app.intervals.ui.LocalPalette
 import app.intervals.ui.editor.Labeled
@@ -108,20 +111,27 @@ fun SettingsScreen(vm: AppViewModel) {
             SwitchRow("Series and round numbers", "Small 3/6 and 2/4 on the rings of the player", s.showCounters) { v -> set { it.copy(showCounters = v) } }
             SwitchRow("Keep the screen on", "Only while a workout runs", s.keepScreenOn) { v -> set { it.copy(keepScreenOn = v) } }
             SwitchRow("Lock the controls", "Avoid taps by mistake; hold to unlock", s.lockControls) { v -> set { it.copy(lockControls = v) } }
-            Text("Gym sets in the Journal", color = p.text, fontSize = 15.sp, modifier = Modifier.padding(top = 10.dp))
-            Text("Bars: a bar per set, as high as its reps · Table: by load, with the set number", color = p.muted, fontSize = 12.sp, modifier = Modifier.padding(bottom = 8.dp))
-            Segmented(listOf("Bars", "Table", "Both"), s.journalSets.ordinal) { i -> set { it.copy(journalSets = JournalSets.entries[i]) } }
-            Spacer(Modifier.height(6.dp))
             SwitchRow("Gym log buttons at the bottom", "Trial: off puts them after the numbers, as before", s.logButtonsAtBottom) { v -> set { it.copy(logButtonsAtBottom = v) } }
         }
 
-        Group("Your data") {
-            ActionRow("Import from Hybrid Interval Timer", "The .csv backup of the old app") { pickCsv.launch(arrayOf("text/*", "*/*")) }
-            ActionRow("Import from FitNotes", "The .fitnotes backup (keeps your comments); replaces the gym log") { pickFitNotes.launch(arrayOf("*/*")) }
-            ActionRow("Back up to a file", "Workouts, journal, gym and settings, as one .json file") {
+        Group("Back up and restore") {
+            ActionRow("Back up to a file", "Save all Intervals data as a .json file") {
                 saveBackup.launch("intervals-backup-${LocalDate.now()}.json")
             }
-            ActionRow("Restore from a file", "Replaces everything in the app") { pickRestore.launch(arrayOf("application/json", "*/*")) }
+            HorizontalDivider(color = p.line)
+            ActionRow("Restore from a file", "Replaces all Intervals data") {
+                pickRestore.launch(arrayOf("application/json", "*/*"))
+            }
+        }
+
+        Group("Import from another app") {
+            ActionRow("FitNotes", "Import a .fitnotes file. Replaces the gym log.") {
+                pickFitNotes.launch(arrayOf("*/*"))
+            }
+            HorizontalDivider(color = p.line)
+            ActionRow("Hybrid Interval Timer", "Import workouts from a .csv file") {
+                pickCsv.launch(arrayOf("text/*", "*/*"))
+            }
         }
 
         Text("Intervals 0.1", color = p.faint, fontSize = 12.sp, textAlign = TextAlign.Center,
@@ -132,7 +142,7 @@ fun SettingsScreen(vm: AppViewModel) {
         AlertDialog(
             onDismissRequest = { pendingRestore = null },
             title = { Text("Restore this backup?") },
-            text = { Text("Everything in the app (workouts, journal, settings) is replaced by the file. If the file can't be read, nothing changes.") },
+            text = { Text("This replaces your workouts, journal, gym log and settings with the data in this backup. If the file can't be read, nothing changes.") },
             confirmButton = { TextButton(onClick = { pendingRestore = null; vm.restoreBackup(text) }) { Text("Restore", color = p.dangerText) } },
             dismissButton = { TextButton(onClick = { pendingRestore = null }) { Text("Cancel") } },
         )
@@ -158,9 +168,13 @@ private fun SwitchRow(label: String, sub: String?, on: Boolean, onChange: (Boole
 @Composable
 private fun ActionRow(label: String, sub: String, onClick: () -> Unit) {
     val p = LocalPalette.current
-    Row(Modifier.fillMaxWidth().height(60.dp).clickable(onClick = onClick), verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 60.dp).clickable(role = Role.Button, onClick = onClick).padding(vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
         Labeled(label, sub, Modifier.weight(1f))
-        Text("›", color = p.accentText, fontSize = 22.sp)
+        Text("›", color = p.accentText, fontSize = 22.sp, modifier = Modifier.clearAndSetSemantics {})
     }
 }
 

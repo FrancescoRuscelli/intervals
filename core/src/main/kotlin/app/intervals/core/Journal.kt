@@ -51,3 +51,28 @@ data class Session(
 fun Session.lastValues(): List<LoggedValue> =
     values.groupBy { Triple(it.series, it.field, it.side) }
         .map { (_, v) -> v.maxBy { it.round } }
+
+/**
+ * What changed in the logged values since [before] (the previous session of the same workout), mockup
+ * intervals-next-features.html 3C: "Load +2.5 kg · same Edge", and +1 / −1 / 0 for up, down or mixed. Null when
+ * there is nothing to compare or nothing changed.
+ */
+fun valuesChange(now: Session, before: Session?): Pair<String, Int>? {
+    if (before == null) return null
+    val a = now.lastValues().associateBy { Triple(it.series, it.field, it.side) }
+    val b = before.lastValues().associateBy { Triple(it.series, it.field, it.side) }
+    val common = a.keys.intersect(b.keys)
+    if (common.isEmpty()) return null
+    val changed = common.filter { a.getValue(it).value != b.getValue(it).value }
+    if (changed.isEmpty()) return null
+    fun num(v: Double) = if (v == kotlin.math.floor(v)) v.toLong().toString() else "%.2f".format(v).trimEnd('0').trimEnd('.')
+    val parts = changed.map { k ->
+        val d = a.getValue(k).value - b.getValue(k).value
+        val unit = a.getValue(k).unit
+        "${k.second} ${if (d > 0) "+" else "−"}${num(kotlin.math.abs(d))}${if (unit.isEmpty()) "" else " $unit"}"
+    }
+    val same = (common - changed.toSet()).map { it.second }.distinct().map { "same $it" }
+    val ups = changed.count { a.getValue(it).value > b.getValue(it).value }
+    val dir = when (ups) { changed.size -> 1; 0 -> -1; else -> 0 }
+    return (parts + same).joinToString(" · ") to dir
+}

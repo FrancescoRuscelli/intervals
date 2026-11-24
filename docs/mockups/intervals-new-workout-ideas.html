@@ -1,0 +1,139 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>New Workout Screen</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: one phone per option: the "New workout" screen, and its exercise picker where several can be ticked at once */
+:root {
+  --bg: #f4f2fa; --fg: #18151f; --muted: #5b5668; --line: #dfdbe9; --accent: #6d28d9; --card: #ffffff;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif;
+  --ph-bg: #000; --ph-surface: #1A1C21; --ph-text: #F2F3F5; --ph-muted: #9AA0AA; --ph-soft: #C9CDD3; --ph-line: #2B2E35;
+  --ph-accent: #7C3AED; --ph-accent-text: #C4B1FF; --ph-tint: #2A2140; --ph-pink: #E91E63;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
+main { max-width: 1240px; margin: 0 auto; display: grid; gap: 14px; }
+h1 { font-family: var(--display); font-size: 1.8rem; margin: 0; }
+.lede { color: var(--muted); margin: 0; max-width: 80ch; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 16px; align-items: start; }
+.opt { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; display: grid; gap: 8px; min-width: 0; }
+.head { display: flex; gap: 10px; align-items: baseline; }
+.tag { font-family: var(--display); font-weight: 700; color: var(--accent); font-size: 1.1rem; }
+.name { font-weight: 600; }
+.desc { color: var(--muted); font-size: .86rem; margin: 0; }
+button { font: inherit; cursor: pointer; }
+
+.phone { background: var(--ph-bg); border-radius: 22px; padding: 10px 12px 14px; color: var(--ph-text); font-size: 14px; height: 660px; overflow: auto; display: flex; flex-direction: column; gap: 10px; position: relative; }
+.phone > *, .split > * { flex-shrink: 0; }
+.bar { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+.bar .t { flex: 1; font-weight: 600; font-size: 15px; }
+.x { background: none; border: 0; color: var(--ph-text); font-size: 18px; width: 32px; }
+.save { background: var(--ph-accent); color: #fff; border: 0; border-radius: 20px; padding: 8px 18px; font-weight: 600; }
+.save.off { background: var(--ph-tint); color: #6B6F78; }
+.seg { display: flex; gap: 8px; }
+.seg span { border: 1px solid var(--ph-line); background: var(--ph-surface); border-radius: 12px; padding: 6px 14px; font-weight: 600; color: var(--ph-soft); }
+.seg span.on { border-color: var(--ph-accent); background: var(--ph-tint); color: var(--ph-accent-text); }
+.lab { color: var(--ph-muted); font-size: 12px; }
+.nm { font-size: 24px; font-weight: 700; border-bottom: 2px solid var(--ph-accent); padding: 2px 0 4px; }
+.colors { display: flex; gap: 8px; }
+.colors i { flex: 1; height: 28px; border-radius: 9px; }
+.colors.dots i { flex: none; width: 22px; height: 22px; border-radius: 50%; }
+.colors i.on { outline: 3px solid var(--ph-text); outline-offset: -3px; }
+.item { background: var(--ph-surface); border-radius: 14px; padding: 8px 6px 8px 10px; display: flex; gap: 10px; align-items: center; }
+.num { width: 26px; height: 26px; border-radius: 50%; background: var(--ph-tint); color: var(--ph-accent-text); font-weight: 700; font-size: 13px; display: grid; place-items: center; flex: none; }
+.item .n { flex: 1; min-width: 0; }
+.item .n b { display: block; font-weight: 600; font-size: 14.5px; }
+.item .n small { color: var(--ph-muted); font-size: 11.5px; }
+.ic { color: var(--ph-muted); font-size: 14px; width: 28px; text-align: center; }
+.plan { border: 1px solid var(--ph-line); border-radius: 10px; padding: 3px 9px; font-size: 12px; color: var(--ph-soft); white-space: nowrap; }
+.grip { color: var(--ph-muted); font-size: 16px; letter-spacing: -2px; width: 18px; text-align: center; }
+.add { border: 2px dashed var(--ph-line); border-radius: 14px; padding: 12px; text-align: center; color: var(--ph-accent-text); font-weight: 600; background: none; width: 100%; }
+.del { color: #FF6B6B; font-weight: 600; font-size: 14px; padding: 6px 4px; }
+.dlg { background: #23252B; border-radius: 18px; padding: 14px; display: grid; gap: 8px; margin-top: 4px; }
+.dlg h4 { margin: 0; font-size: 16px; }
+.dlg .r { padding: 8px 0; border-bottom: 1px solid #2E3037; }
+.search { border: 1px solid var(--ph-line); border-radius: 12px; padding: 9px 12px; color: var(--ph-muted); }
+.chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.chip { flex: none; border: 1px solid var(--ph-line); background: var(--ph-surface); border-radius: 16px; padding: 5px 11px; font-size: 13px; font-weight: 600; color: var(--ph-soft); display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+.chip.on { background: var(--ph-tint); border-color: var(--ph-accent); color: var(--ph-accent-text); }
+.dot { width: 8px; height: 8px; border-radius: 50%; }
+.prow { display: flex; align-items: center; gap: 10px; padding: 9px 8px; border-radius: 12px; cursor: pointer; user-select: none; }
+.prow.on { background: var(--ph-tint); }
+.prow .pn { flex: 1; font-size: 14.5px; }
+.prow .when { color: var(--ph-muted); font-size: 12px; }
+.box { width: 22px; height: 22px; border-radius: 7px; border: 1.5px solid var(--ph-muted); display: grid; place-items: center; font-size: 12px; font-weight: 800; flex: none; }
+.prow.on .box { background: var(--ph-accent); border-color: var(--ph-accent); color: #fff; }
+.foot { position: sticky; bottom: 0; margin-top: auto; padding-top: 10px; background: linear-gradient(transparent, #000 35%); }
+.addn { width: 100%; background: var(--ph-accent); color: #fff; border: 0; border-radius: 16px; padding: 13px; font-weight: 700; font-size: 15px; }
+.addn.off { background: var(--ph-tint); color: #6B6F78; }
+.split { display: grid; gap: 10px; }
+.mini { color: var(--ph-muted); font-size: 11.5px; text-align: center; }
+</style>
+
+<main>
+  <h1>New workout: cleaner, and pick several exercises at once</h1>
+  <p class="lede">The screen behind <b>+ New workout</b> (and ✎ on a workout). No Tag / Workout switch any more: tags are made in the Gym exercise list, as now. Adding exercises opens a picker where you <b>tick several</b>; the order you tick them is the order of the workout (the number on the box). Try ticking in the pickers.</p>
+  <div class="grid" id="opts"></div>
+</main>
+
+<script>
+const TAGS = [["Legs","#F59E0B"],["Pull","#5B8DEF"],["Push","#F97316"],["Fingers","#C8A97E"],["Arms","#22C55E"]];
+const EX = [["Pull Up","Pull","20 Nov"],["Resistance Band One Arm Pull Up","Pull","20 Nov"],["Muscle Up","Pull","20 Nov"],["Overhead Press","Push","19 Nov"],
+  ["Box Pike Push Up","Push","19 Nov"],["Lateral dumbbell raise","Arms","19 Nov"],["Finger Pinch","Fingers","18 Nov"],["Deadlift","Legs","17 Nov"],["Squat","Legs","17 Nov"],
+  ["Bulgarian Bar Squat","Legs","11 Nov"],["Dips","Push","9 Nov"],["Block Pulls","Fingers","3 Nov"],["Chin Up","Pull","30 Apr"],["Ring Chin Up","Pull","11 May"]]
+  .map(([n, t, w]) => ({ n, t, w }));
+const COLORS = ["#7C3AED","#E91E63","#00BFA5","#F59E0B","#5B8DEF","#22C55E"];
+const st = { A: { picked: ["Pull Up", "Muscle Up"], f: "Recent" }, B: { picked: ["Pull Up", "Muscle Up"], f: "Pull" } };
+
+function now() {
+  return `<div class="bar"><button class="x">✕</button><span class="t">Workout group</span><button class="save off">Save</button></div>
+    <div class="seg"><span>Tag</span><span class="on">Workout</span></div>
+    <div class="lab">Name</div><div class="nm">New workout</div>
+    <div class="lab">0 exercises · a plan is optional</div>
+    <div class="lab">Color in Quick Start</div><div class="colors">${COLORS.map((c, i) => `<i style="background:${c}" class="${i ? "" : "on"}"></i>`).join("")}</div>
+    <button class="add">+ Add exercise</button>
+    <div class="dlg"><h4>Add exercise</h4><div class="search">Search</div>${EX.slice(0, 6).map(e => `<div class="r">${e.n}</div>`).join("")}<div class="mini">one at a time: the dialog closes after each tap</div></div>`;
+}
+
+function workoutList(names) {
+  return names.map((n, i) => `<div class="item"><span class="grip">⋮⋮</span><span class="num">${i + 1}</span><span class="n"><b>${n}</b><small>${i === 0 ? "plan: 5 sets (example)" : "no plan"}</small></span><span class="plan">${i === 0 ? "5 sets" : "+ plan"}</span><span class="ic">✕</span></div>`).join("");
+}
+function editor(o, title) {
+  const s = st[o];
+  return `<div class="bar"><button class="x">✕</button><span class="t">${title}</span><button class="save ${s.picked.length ? "" : "off"}">Save</button></div>
+    <div class="nm">Pull day</div>
+    <div class="colors dots">${COLORS.map((c, i) => `<i style="background:${c}" class="${i === 4 ? "on" : ""}"></i>`).join("")}<span class="lab" style="margin-left:auto;align-self:center">color in Start a workout</span></div>
+    <div class="lab">${s.picked.length} exercise${s.picked.length === 1 ? "" : "s"} · drag ⋮⋮ to reorder · tap a plan to set sets</div>
+    ${workoutList(s.picked)}`;
+}
+function picker(o, withTags) {
+  const s = st[o];
+  const list = s.f === "Recent" ? EX : EX.filter(e => e.t === s.f);
+  const chip = (label, c) => `<span class="chip ${s.f === label ? "on" : ""}" data-o="${o}" data-f="${label}">${c ? `<span class="dot" style="background:${c}"></span>` : ""}${label}</span>`;
+  return `<div class="search">Search</div>` +
+    (withTags ? `<div class="chips">${chip("Recent")}${TAGS.map(([t, c]) => chip(t, c)).join("")}</div>` : "") +
+    list.map(e => { const k = s.picked.indexOf(e.n); return `<div class="prow ${k >= 0 ? "on" : ""}" data-o="${o}" data-n="${e.n}"><span class="box">${k >= 0 ? k + 1 : ""}</span><span class="pn">${e.n}</span><span class="when">${e.w}</span></div>`; }).join("");
+}
+
+const options = [
+  ["Now", "Installed", "A Tag / Workout switch on top (tags belong in the exercise list), \"Workout group\" as the title, wide color bars, and + Add exercise opens a dialog that takes one exercise and closes.", () => now()],
+  ["A", "Editor, then a full-screen picker", "The editor: name, small color dots, the exercises with a drag handle, a plan chip and ✕. + Add exercises opens a full picker (search, Recent and your tags as chips); tick several, the numbers show the order, \"Add 3\" puts them in.",
+    () => editor("A", "New workout") + `<button class="add">+ Add exercises</button>` + `<div class="lab" style="margin-top:8px">↓ the picker it opens</div><div class="split">${picker("A", true)}</div><div class="foot"><button class="addn">Add ${st.A.picked.length}</button></div>`],
+  ["B", "Picker inline under the list", "Everything on one screen: the workout on top, the exercises below to tick (with the tag chips). Ticking adds to the end of the workout right away, unticking removes; no extra step.",
+    () => editor("B", "New workout") + `<div class="lab" style="margin-top:6px">Add exercises</div>` + picker("B", true)],
+];
+function draw() {
+  document.getElementById("opts").innerHTML = options.map(([id, name, desc, f]) => `<section class="opt"><div class="head"><span class="tag">${id}</span><span class="name">${name}</span></div><p class="desc">${desc}</p><div class="phone">${f()}</div></section>`).join("");
+}
+document.getElementById("opts").addEventListener("click", ev => {
+  const r = ev.target.closest(".prow"), c = ev.target.closest(".chip[data-f]");
+  if (r) { const s = st[r.dataset.o], k = s.picked.indexOf(r.dataset.n); if (k >= 0) s.picked.splice(k, 1); else s.picked.push(r.dataset.n); draw(); }
+  if (c) { st[c.dataset.o].f = c.dataset.f; draw(); }
+});
+draw();
+</script>

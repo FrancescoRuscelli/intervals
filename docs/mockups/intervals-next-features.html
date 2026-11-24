@@ -1,0 +1,171 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Next Features</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: three sections (last time in the inputs, sets per tag per week, hangboard presets), each a row of phones */
+:root {
+  --bg: #f4f2fa; --fg: #18151f; --muted: #5b5668; --line: #dfdbe9; --accent: #6d28d9; --card: #ffffff;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif;
+  --ph-bg: #000; --ph-surface: #1A1C21; --ph-text: #F2F3F5; --ph-muted: #9AA0AA; --ph-soft: #C9CDD3; --ph-line: #2B2E35;
+  --ph-accent: #7C3AED; --ph-accent-text: #C4B1FF; --ph-tint: #2A2140; --pink: #E91E63; --green: #4ADE80; --yellow: #FFC107;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
+main { max-width: 1240px; margin: 0 auto; display: grid; gap: 14px; }
+h1 { font-family: var(--display); font-size: 1.8rem; margin: 0; }
+h2 { font-family: var(--display); font-size: 1.3rem; margin: 22px 0 0; }
+.lede { color: var(--muted); margin: 0; max-width: 82ch; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; align-items: start; }
+.opt { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; display: grid; gap: 8px; min-width: 0; }
+.head { display: flex; gap: 10px; align-items: baseline; }
+.tag { font-family: var(--display); font-weight: 700; color: var(--accent); font-size: 1.1rem; }
+.name { font-weight: 600; }
+.desc { color: var(--muted); font-size: .86rem; margin: 0; }
+.phone { background: var(--ph-bg); border-radius: 20px; padding: 12px; color: var(--ph-text); font-size: 14px; display: flex; flex-direction: column; gap: 10px; }
+.t { font-size: 18px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+.t small { color: var(--ph-muted); font-size: 12px; font-weight: 400; }
+.tiles2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.step { background: var(--ph-surface); border-radius: 16px; padding: 10px; display: grid; gap: 4px; text-align: center; }
+.step .lab { color: var(--ph-muted); font-size: 11px; letter-spacing: .05em; text-transform: uppercase; }
+.step .row { display: flex; align-items: center; justify-content: space-between; }
+.step .pm { width: 34px; height: 34px; border-radius: 50%; background: var(--ph-tint); color: var(--ph-accent-text); display: grid; place-items: center; font-weight: 700; }
+.step .v { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.step .v.ghost { color: #5E6370; }
+.step .hint { font-size: 11.5px; color: var(--ph-muted); }
+.step .hint b { color: var(--ph-soft); }
+.btns { display: flex; gap: 8px; }
+.btn { flex: 1; text-align: center; border-radius: 14px; padding: 12px 0; font-weight: 700; }
+.btn.main { background: var(--ph-accent); color: #fff; }
+.btn.alt { background: var(--ph-tint); color: var(--ph-accent-text); }
+.lastline { background: var(--ph-surface); border-radius: 12px; padding: 8px 10px; font-size: 12.5px; color: var(--ph-muted); display: flex; justify-content: space-between; }
+.lastline b { color: var(--ph-text); }
+.sq { display: inline-flex; min-width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--ph-line); background: #000; align-items: center; justify-content: center; font-size: 13px; margin-right: 4px; font-variant-numeric: tabular-nums; }
+.sq.ghost { border-style: dashed; color: #5E6370; }
+.card { background: var(--ph-surface); border-radius: 16px; padding: 12px; display: grid; gap: 8px; }
+.ch { display: flex; justify-content: space-between; align-items: baseline; }
+.ch b { font-size: 14.5px; } .ch small { color: var(--ph-muted); font-size: 11.5px; }
+.tr { display: grid; grid-template-columns: 62px 1fr 44px; gap: 8px; align-items: center; font-size: 13px; }
+.tr .bar { height: 12px; border-radius: 4px; background: var(--ph-line); position: relative; }
+.tr .bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; }
+.tr .bar s { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ph-soft); }
+.tr .n { text-align: right; font-variant-numeric: tabular-nums; }
+.tr .n small { display: block; font-size: 10.5px; }
+.up { color: var(--green); } .down { color: var(--pink); }
+.mini { display: grid; grid-template-columns: 62px 1fr; gap: 8px; align-items: end; font-size: 13px; }
+.mini .b { display: flex; gap: 3px; align-items: flex-end; height: 34px; }
+.mini .b i { flex: 1; border-radius: 3px 3px 0 0; }
+.legend { color: var(--ph-muted); font-size: 11px; }
+.tpl { background: var(--ph-surface); border-radius: 14px; padding: 10px 12px; display: grid; gap: 2px; }
+.tpl b { font-size: 14.5px; } .tpl small { color: var(--ph-muted); font-size: 12px; }
+.tpl .viz { display: flex; gap: 2px; height: 12px; margin-top: 6px; }
+.tpl .viz i { border-radius: 2px; }
+.fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.field { background: var(--ph-surface); border-radius: 12px; padding: 8px 10px; }
+.field small { color: var(--ph-muted); font-size: 11px; display: block; }
+.field b { font-size: 18px; font-variant-numeric: tabular-nums; }
+.disc { width: 150px; height: 150px; border-radius: 50%; background: var(--pink); margin: 6px auto; display: grid; place-items: center; text-align: center; color: #fff; }
+.disc b { font-size: 30px; display: block; } .disc small { font-size: 12px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { border: 1px solid var(--ph-line); background: var(--ph-surface); border-radius: 14px; padding: 4px 10px; font-size: 12.5px; font-weight: 600; color: var(--ph-soft); }
+.chip.on { border-color: var(--ph-accent); background: var(--ph-tint); color: var(--ph-accent-text); }
+</style>
+
+<main>
+  <h1>Three next features</h1>
+  <p class="lede">The three I suggested first, on your real data where I have it: last time inside the log inputs (Overhead Press of Thu 19 Nov), sets per tag per week (the last four weeks), and hangboard presets for the Intervals tab.</p>
+
+  <h2>1 · Last time inside the log inputs</h2>
+  <p class="lede">You are about to log set 4 of Overhead Press. Last time (Thu 19 Nov) set 4 was 35 × 5.</p>
+  <div class="grid">
+    <section class="opt"><div class="head"><span class="tag">1A</span><span class="name">Start from last time</span></div>
+      <p class="desc">The − / + start already at last time's set 4: 35 kg, 5 reps. Just tap Log, or nudge first. A small line says where the numbers come from.</p>
+      <div class="phone">
+        <div class="t">Overhead Press <small>set 4</small></div>
+        <div class="tiles2">
+          <div class="step"><span class="lab">kg</span><div class="row"><span class="pm">−</span><span class="v">35</span><span class="pm">+</span></div></div>
+          <div class="step"><span class="lab">reps</span><div class="row"><span class="pm">−</span><span class="v">5</span><span class="pm">+</span></div></div>
+        </div>
+        <div class="lastline"><span>from last time · set 4 of Thu 19</span><span><b>35 × 5</b></span></div>
+        <div class="btns"><span class="btn main">Log set</span></div>
+      </div></section>
+    <section class="opt"><div class="head"><span class="tag">1B</span><span class="name">Your numbers, last time as a hint</span></div>
+      <p class="desc">The inputs keep what you just did (30 × 5, as now); under each one, last time's value for this set. Tap the hint to take it.</p>
+      <div class="phone">
+        <div class="t">Overhead Press <small>set 4</small></div>
+        <div class="tiles2">
+          <div class="step"><span class="lab">kg</span><div class="row"><span class="pm">−</span><span class="v">30</span><span class="pm">+</span></div><span class="hint">last time <b>35</b> ↑</span></div>
+          <div class="step"><span class="lab">reps</span><div class="row"><span class="pm">−</span><span class="v">5</span><span class="pm">+</span></div><span class="hint">last time <b>5</b></span></div>
+        </div>
+        <div class="btns"><span class="btn main">Log set</span></div>
+      </div></section>
+    <section class="opt"><div class="head"><span class="tag">1C</span><span class="name">The next set waiting in the list</span></div>
+      <p class="desc">In the list of logged sets, last time's next set sits dashed after today's. Tap it to log it as it is; hold to change it first.</p>
+      <div class="phone">
+        <div class="t">Overhead Press <small>today</small></div>
+        <div class="card"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="width:52px;font-size:13px">20 kg</span><span class="sq">6</span></div>
+          <div style="display:flex;align-items:center;gap:8px"><span style="width:52px;font-size:13px">25 kg</span><span class="sq">5</span></div>
+          <div style="display:flex;align-items:center;gap:8px"><span style="width:52px;font-size:13px">30 kg</span><span class="sq">5</span></div>
+          <div style="display:flex;align-items:center;gap:8px"><span style="width:52px;font-size:13px;color:#5E6370">35 kg</span><span class="sq ghost">5</span><span class="legend">next, as on Thu 19 · tap to log</span></div></div>
+      </div></section>
+  </div>
+
+  <h2>2 · Sets per tag per week</h2>
+  <p class="lede">Your last four weeks (Mon 26 Oct to Sun 22 Nov). Week of 16 Nov: Pull 23, Legs 22, Push 17, Fingers 12, untagged 6.</p>
+  <div class="grid" id="tags"></div>
+
+  <h2>3 · Hangboard presets</h2>
+  <p class="lede">In Intervals, + New offers ready-made finger workouts; the edge and the added weight are asked before you start and saved with the session.</p>
+  <div class="grid">
+    <section class="opt"><div class="head"><span class="tag">3A</span><span class="name">Pick a preset</span></div>
+      <p class="desc">+ New opens with presets on top (or start empty, as now). Each shows its shape; you can change everything after.</p>
+      <div class="phone">
+        <div class="t">New workout</div>
+        <div class="tpl"><b>Repeaters 7/3</b><small>6 hangs of 7 s, 3 s rest · 6 sets · 3 min between</small><div class="viz"><i style='flex:7;background:var(--pink)'></i><i style='flex:3;background:#333'></i><i style='flex:7;background:var(--pink)'></i><i style='flex:3;background:#333'></i><i style='flex:7;background:var(--pink)'></i><i style='flex:3;background:#333'></i><i style='flex:7;background:var(--pink)'></i><i style='flex:3;background:#333'></i><i style='flex:7;background:var(--pink)'></i><i style='flex:3;background:#333'></i><i style='flex:7;background:var(--pink)'></i><i style='flex:3;background:#333'></i></div></div>
+        <div class="tpl"><b>Max hangs 10 s</b><small>10 s hang · 3 min rest · 5 sets</small><div class="viz"><i style="flex:10;background:var(--pink)"></i><i style="flex:60;background:#333"></i></div></div>
+        <div class="tpl"><b>Density hangs</b><small>20–40 s hang · 1 min rest · 4 sets</small><div class="viz"><i style="flex:30;background:var(--pink)"></i><i style="flex:60;background:#333"></i></div></div>
+        <div class="tpl"><b>Static submax hold</b><small>your own, from the list</small></div>
+        <div class="btns"><span class="btn alt">Start empty</span></div>
+      </div></section>
+    <section class="opt"><div class="head"><span class="tag">3B</span><span class="name">Edge and weight, then go</span></div>
+      <p class="desc">Before the warm-up: edge (mm) and added or removed weight, prefilled from last time. Shown small on the disc while hanging.</p>
+      <div class="phone">
+        <div class="t">Repeaters 7/3</div>
+        <div class="fields"><div class="field"><small>edge</small><b>20 mm</b></div><div class="field"><small>weight</small><b>+5 kg</b></div></div>
+        <div class="chips"><span class="chip">half crimp</span><span class="chip on">open hand</span><span class="chip">3-finger drag</span></div>
+        <div class="disc"><div><b>0:05</b><small>HANG · 20 mm · +5 kg</small></div></div>
+        <div class="btns"><span class="btn main">Start</span></div>
+      </div></section>
+    <section class="opt"><div class="head"><span class="tag">3C</span><span class="name">In the Journal</span></div>
+      <p class="desc">The session keeps its edge and weight, so you see progress: "20 mm +5 kg" after "20 mm +2.5 kg" the week before.</p>
+      <div class="phone">
+        <div class="card"><div class="ch"><b>Repeaters 7/3</b><small>18:40 · 22:00</small></div>
+          <div style="font-size:13px;color:var(--ph-soft)">Completed · 6 sets · 20 mm · open hand · <b style="color:var(--ph-text)">+5 kg</b></div>
+          <div style="font-size:12px;color:var(--green)">▲ +2.5 kg on the same edge (Tue 10 Nov)</div></div>
+      </div></section>
+  </div>
+</main>
+
+<script>
+const W = [["26 Oct", { Legs: 15, Push: 25 }], ["2 Nov", { Fingers: 7, Legs: 21, Pull: 27, Push: 16 }], ["9 Nov", { Legs: 21, Pull: 8, Push: 30 }], ["16 Nov", { Fingers: 12, Legs: 22, Pull: 23, Push: 17, Untagged: 6 }]];
+const C = { Pull: "#5B8DEF", Legs: "#8BC34A", Push: "#FF8A50", Fingers: "#C8A97E", Arms: "#90A4AE", Untagged: "#6B7280" };
+const tags = ["Pull", "Legs", "Push", "Fingers", "Untagged"];
+const cur = W[3][1], prev = W.slice(0, 3);
+const avg = t => prev.reduce((a, [, w]) => a + (w[t] || 0), 0) / 3;
+const max = 32;
+const barsA = tags.map(t => { const v = cur[t] || 0, a = avg(t), d = v - a;
+  return `<div class="tr"><span>${t}</span><span class="bar"><i style="width:${v / max * 100}%;background:${C[t]}"></i><s style="left:${a / max * 100}%"></s></span><span class="n">${v}<small class="${d >= 0 ? "up" : "down"}">${d >= 0 ? "+" : ""}${Math.round(d)}</small></span></div>`; }).join("");
+const barsB = tags.map(t => `<div class="mini"><span>${t}</span><span class="b">${W.map(([, w], i) => `<i style="height:${(w[t] || 0) / max * 100}%;background:${C[t]};opacity:${i === 3 ? 1 : .45}"></i>`).join("")}</span></div>`).join("");
+document.getElementById("tags").innerHTML = `
+  <section class="opt"><div class="head"><span class="tag">2A</span><span class="name">This week against your average</span></div>
+    <p class="desc">One bar per tag for this week; the white tick is your average of the 3 weeks before, the small number how far off you are. Shows at a glance that Push is low this week and Fingers is up.</p>
+    <div class="phone"><div class="card"><div class="ch"><b>Sets per tag</b><small>week of 16 Nov · tick = 3-week avg</small></div>${barsA}</div></div></section>
+  <section class="opt"><div class="head"><span class="tag">2B</span><span class="name">Four weeks side by side</span></div>
+    <p class="desc">Each tag a tiny 4-week chart, this week solid. Shows the trend: Pull came back after a light week, Push swings.</p>
+    <div class="phone"><div class="card"><div class="ch"><b>Sets per tag</b><small>last 4 weeks</small></div>${barsB}<div class="legend">26 Oct · 2 Nov · 9 Nov · 16 Nov</div></div></div></section>`;
+</script>

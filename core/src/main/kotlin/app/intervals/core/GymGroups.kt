@@ -73,6 +73,12 @@ fun dayGroups(sets: List<GymSet>, groups: List<GymGroup>): List<GymGroup> =
         .entries.sortedByDescending { it.value.size }.mapNotNull { it.key }
 
 /** Records set on [day]: exercises whose main graph beat every earlier day ([all] = their full history). */
+/** The sets of [day] that made a record (as [recordSets]), for every exercise in [exercises]. */
+fun recordSetsOn(day: String, all: List<GymSet>, exercises: List<Exercise>): List<GymSet> {
+    val byEx = all.filter { it.day <= day }.groupBy { it.exerciseId }
+    return exercises.flatMap { ex -> byEx[ex.id]?.let { recordSets(ex, day, it) }.orEmpty() }
+}
+
 fun recordsOn(day: String, all: List<GymSet>, exercises: List<Exercise>): Int {
     val byEx = all.filter { it.day <= day }.groupBy { it.exerciseId }
     return exercises.count { ex ->

@@ -1,0 +1,105 @@
+<title>Journal Bar Weights</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: one card per option, each a Journal gym day as on the phone (same four exercises), so the space under the bars can be compared */
+:root {
+  --bg: #f4f2fa; --fg: #18151f; --muted: #5b5668; --line: #dfdbe9; --accent: #6d28d9; --card: #ffffff;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif;
+  /* the phone (dark theme, as installed) */
+  --ph-bg: #000000; --ph-surface: #1A1C21; --ph-text: #F2F3F5; --ph-muted: #9AA0AA; --ph-line: #2B2E35;
+  --ph-accent: #7C3AED; --ph-pink: #E91E63; --ph-teal: #00BFA5; --ph-yellow: #FFC107;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
+main { max-width: 1180px; margin: 0 auto; display: grid; gap: 18px; }
+h1 { font-family: var(--display); font-size: 1.8rem; margin: 0; }
+.lede { color: var(--muted); margin: 0; max-width: 72ch; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 16px; }
+.opt { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 16px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.head { display: flex; gap: 10px; align-items: baseline; }
+.tag { font-family: var(--display); font-weight: 700; color: var(--accent); font-size: 1.15rem; }
+.name { font-weight: 600; }
+.desc { color: var(--muted); font-size: .88rem; margin: 0; }
+.h { font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* phone card */
+.phone { background: var(--ph-bg); border-radius: 16px; padding: 10px; }
+.day { background: var(--ph-surface); border-radius: 16px; padding: 10px 12px; display: grid; gap: 4px; color: var(--ph-text); }
+.ex { display: grid; gap: 6px; padding-top: 4px; }
+.exhead { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.exname { font-size: 14px; font-weight: 600; }
+.exline { font-size: 11px; color: var(--ph-muted); white-space: nowrap; }
+.bars { display: flex; gap: 3px; align-items: flex-end; }
+.col { display: flex; flex-direction: column; align-items: center; }
+.top { font-size: 10px; font-weight: 700; line-height: 1.3; }
+.bar { border-radius: 3px 3px 0 0; border: 1px solid var(--ph-line); display: flex; flex-direction: column; overflow: hidden; position: relative; box-sizing: border-box; }
+.fill { flex: 1; }
+.under { font-size: 9px; color: var(--ph-muted); line-height: 1.3; white-space: nowrap; }
+.in { position: absolute; left: 0; right: 0; bottom: 2px; text-align: center; font-size: 9px; font-weight: 700; line-height: 1; white-space: nowrap; letter-spacing: -.02em; }
+.in.v { bottom: 3px; left: 50%; right: auto; transform: translateX(-50%) rotate(-90deg); transform-origin: center; writing-mode: horizontal-tb; }
+.in.topin { top: 3px; bottom: auto; }
+.cap { height: 3px; }
+</style>
+
+<main>
+  <h1>Journal bars: where the weight goes</h1>
+  <p class="lede">The same gym day in every option: Overhead Press (a pyramid), Squat, Finger Pinch per side (L pink, R green) and Pull Up (no weight). Today every exercise keeps a line under its bars for the kg, even Pull Up where it stays empty. The options put the kg inside the bar and drop that line.</p>
+  <div class="grid" id="opts"></div>
+</main>
+
+<script>
+const ex = [
+  { name: "Overhead Press", sets: [[20,6],[25,5],[35,5],[40,3],[35,4]] },
+  { name: "Squat", sets: [[62.5,5],[80,5],[100,3],[112.5,2],[112.5,2],[112.5,2],[100,5]] },
+  { name: "Finger Pinch", sets: [[12,8,"L"],[12,8,"R"],[14,6,"L"],[14,6,"R"],[14,5,"L"],[14,5,"R"]] },
+  { name: "Pull Up", sets: [[null,5],[null,6],[null,7],[null,7],[null,5],[null,5]] },
+];
+const C = { accent: "#7C3AED", pink: "#E91E63", teal: "#00BFA5" };
+const fmt = kg => (kg % 1 ? kg.toFixed(1) : String(kg));
+
+// mode: "under" (now), "in" (horizontal inside, bottom), "v" (vertical inside), "change" (inside, only when the weight changes), "both" (reps and kg inside)
+function exercise(e, mode, minIn) {
+  const max = Math.max(...e.sets.map(s => s[1]));
+  const hasKg = e.sets.some(s => s[0] != null);
+  const top = e.sets.reduce((a, s) => s[0] != null && (!a || s[0] > a[0]) ? s : a, null);
+  const line = `${e.sets.length} sets` + (top ? ` · top ${fmt(top[0])} × ${top[1]}` : "");
+  const wide = mode === "in" || mode === "change" || mode === "both";
+  const w = hasKg && wide ? 30 : 24;
+  let prev = null;
+  const cols = e.sets.map(([kg, reps, side]) => {
+    const fill = side === "L" ? C.pink : side === "R" ? C.teal : C.accent;
+    const ink = side === "R" ? "#04221E" : "#FFFFFF";
+    let h = 6 + 40 * reps / max;
+    const showIn = kg != null && (mode === "in" || mode === "v" || mode === "both" || (mode === "change" && kg !== prev));
+    if (showIn) h = Math.max(h, mode === "v" ? (fmt(kg).length * 5.5 + 8) : mode === "both" ? 30 : minIn);
+    prev = kg;
+    const label = showIn ? `<span class="in ${mode === "v" ? "v" : ""}" style="color:${ink}">${fmt(kg)}</span>` : "";
+    const repsIn = mode === "both" ? `<span class="in topin" style="color:${ink}">${reps}</span>` : "";
+    const topTxt = mode === "both" ? "" : `<span class="top">${reps}</span>`;
+    const under = mode === "under" ? `<span class="under">${kg != null ? fmt(kg) : "&nbsp;"}</span>` : "";
+    return `<div class="col" style="width:${w}px">${topTxt}<div class="bar" style="width:100%;height:${h.toFixed(0)}px"><div class="fill" style="background:${fill}"></div>${label}${repsIn}</div>${under}</div>`;
+  }).join("");
+  return `<div class="ex"><div class="exhead"><span class="exname">${e.name}</span><span class="exline">${line}</span></div><div class="bars">${cols}</div></div>`;
+}
+
+const options = [
+  { id: "A", name: "Now", desc: "The kg on a line under every bar. Pull Up keeps the empty line too.", mode: "under" },
+  { id: "B", name: "Inside, at the foot of the bar", desc: "The kg written inside each bar at its bottom; bars with a weight are a little wider (30 instead of 24) and never shorter than the number. No line under the bars.", mode: "in", minIn: 16 },
+  { id: "C", name: "Inside, standing up", desc: "The kg written upward inside the bar, so the bars keep their width. Short sets get taller to fit the number.", mode: "v" },
+  { id: "D", name: "Inside, only when it changes", desc: "Like B, but the kg only on the first bar of each weight: 112.5 once for three sets in a row. Quieter, same information.", mode: "change", minIn: 16 },
+  { id: "E", name: "Reps and kg both inside", desc: "Nothing above or below: the reps at the top of the bar, the kg at its foot. The most compact, but every bar needs room for two numbers.", mode: "both" },
+];
+
+document.getElementById("opts").innerHTML = options.map(o => {
+  const card = ex.map(e => exercise(e, o.mode, o.minIn)).join("");
+  return `<section class="opt">
+    <div class="head"><span class="tag">${o.id}</span><span class="name">${o.name}</span></div>
+    <p class="desc">${o.desc}</p>
+    <div class="phone"><div class="day">${card}</div></div>
+  </section>`;
+}).join("");
+</script>

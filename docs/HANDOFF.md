@@ -2,42 +2,21 @@
 
 Updated 2026-11-23. Read [CLAUDE.md](../CLAUDE.md) for repo conventions and [DESIGN.md](DESIGN.md) for design history. The current navigation decision is recorded here.
 
-## To do first on the other PC (2026-11-25): the other PC's code wins, plus three changes from this one
+## Merge of both PCs: done on 2026-11-24 (no read-tree needed)
 
-**What happened.** The user changed Stats on the other PC, and many other things too. None of it reached GitHub.
-- On 2026-11-23, ChatGPT synced that PC. It started from `origin/main` and carried over only the Gym behavior.
-- The older work was saved in a **local** branch, `safety/intervals-before-sync-20261123-123433`, at commit `8fadd24`. It was never pushed.
-- Each PC has its own copy of the repo, and a commit reaches GitHub only with `git push`. So this PC cannot see `8fadd24`: `git ls-remote origin` lists only `main`, and `git cat-file -t 8fadd24` says "Not a valid object name".
-- Nothing was deleted. No commit since 2026-11-18 touched `ui/stats/` (the last one is `8dac65c`).
+The steps written on the other PC (make `8fadd24` the content of `main`, then cherry-pick) are **obsolete, do not run them**.
+This PC already had a full day of new work on top of `962b73a`, so instead its uncommitted work was stashed,
+`main` was fast-forwarded to `55321e0`, and the work was put back on top.
 
-**Only `main`.** The user wants one branch on GitHub, `main`: push no other branches and add nothing else. The method below works directly on `main` and needs no force push. The current `main` stays in the history, so nothing is lost even without backup branches.
+- **From the safety branch `8fadd24`.** Only Settings › "Back up and restore" / "Import from another app" and Merge exercises
+  were missing, and they were brought back by hand. Its Stats is older than the Stats screen rebuilt here (sections below), and its
+  database is v7 while `main` is v8, so nothing else is taken from it. Delete the local branch once the user agrees.
+- **From the other PC (24 Nov).** The variant row and Note · Delete · Undo at the bottom are kept. Its L / R rounds (`SideRounds`, `sideRounds`)
+  were removed: compared in [the rounds mockup](mockups/intervals-side-rounds-compare.html), the user chose this PC's U rounds in `SetBlocks`.
+- **The Journal table fix (cut-off Pinch label) is moot:** the table by load was removed here, only the bars are left.
+- Conflicts were only `JournalScreen.kt` (the removed table) and `GymRowsTest.kt` (the `loadRows` test dropped, `sideRounds` kept).
 
-**Steps on the other PC.** Go one at a time, and stop and ask the user if something does not match.
-1. **Look.** Run `git status`, `git stash list`, `git branch` and `git log --oneline -3 safety/intervals-before-sync-20261123-123433`. If there is uncommitted work, or a stash, ask the user before going on.
-2. **Bring `main` up to date.** Run `git switch main`, then `git pull --ff-only`. If it refuses, local `main` has commits GitHub lacks: ask the user, and never reset them away.
-3. **Make the other PC's code the content of `main`, as a normal commit.**
-   ```
-   git read-tree -u --reset safety/intervals-before-sync-20261123-123433   # every file as in 8fadd24
-   git checkout origin/main -- docs                                         # but keep this PC's HANDOFF and mockups
-   git commit -m "Back to the other PC's code (8fadd24)"
-   ```
-   `gradle/gradle-daemon-jvm.properties` stays local and uncommitted.
-4. **Add the three changes from 2026-11-24 on top**, in this order: `git cherry-pick d7e9235 2cb2b1b 314218f 15621fc`. If a pick conflicts, rewrite that change by hand on the other PC's code. Never take a whole file from one side.
-   1. **Journal table, set order (F + I).** Hold a box to see every set's "#n". Tap a bar or a box to outline that set in both views, and the exercise line reads "#4 of 11 · after … · before …". In `ui/journal/JournalScreen.kt`.
-   2. **Variant row (A5a).** On the set screen, the variants are one row above the log buttons, each with its last set. Past three the row scrolls. A tap switches and brings back that variant's last numbers. `lastOfVariant` in `core/GymLog.kt` with its test, and `VariantRow` in `GymLogScreen.kt`.
-   3. **L / R sets as rounds, with actions at the bottom (A + B).** One row per L + R pair, the note under the reps, and ⋯ picks the pair. While sets are selected, ✕ · Note · Delete replace the log buttons. Delete has no confirmation, only Undo for 6 s. The code:
-      - `sideRounds` in `core/GymRows.kt`
-      - `SideRounds` in `GymLogScreen.kt`
-      - `setsById` in `Daos.kt`
-      - `deleteSets` / `restoreSets` in `IntervalsRepository.kt`
-      - Undo in `AppViewModel.kt`
-      - their tests
-
-   4. **To fix after the merge: the load label in the Journal table is cut off.** On 24 Nov Pinch shows «medium ·» instead of «medium · 14 kg»: the label column of `LoadTable` in `JournalScreen.kt` is 70 dp wide and keeps only one line. Let the label wrap onto two lines, or widen the column only when needed. Check it on the phone with Pinch on 24 Nov.
-
-   Some of these build on code the other version may not have, such as the Journal bars and table (`3050788`) for change 1. In that case ask the user before bringing in anything more.
-5. **Check.** Run `./gradlew.bat :core:test :app:testDebugUnitTest :app:assembleDebug`, then try Stats and the three changes on the phone. Install only when Intervals is not on screen. Room: keep the other version's database migrations.
-6. **Publish.** Show the user the result first, then `git push`, a normal push. Then delete the local safety branch with `git branch -D safety/intervals-before-sync-20261123-123433`: its content is now in `main`. Only delete it after the user has seen the app working.
+**Back button (2026-11-24).** On Intervals or Gym with nothing open on top, Back goes to the Journal; only Back on the Journal leaves the app.
 
 ## Syncing work from both PCs
 
@@ -73,22 +52,84 @@ The user tried the diary of option 2 in the [month and diary mockup](mockups/int
 - **Picking.** Tapping a day selects it. Swiping the month selects its last trained day.
 - **Code.** The diary code (`Diary.kt`) is gone.
 
-## Journal day: bars and the table by load (installed 2026-11-23)
+## Journal day: bars only (2026-11-23)
 
-The user could not choose between ideas C2 and A2 in the [Journal day ideas](mockups/intervals-journal-day-ideas.html), so both are built.
+The table by load (A2) and its setting were removed; each exercise of the day shows only the bars (C2) from the
+[Journal day ideas](mockups/intervals-journal-day-ideas.html).
 
-- **Setting.** Settings > Workout > "Gym sets in the Journal" offers Bars, Table, or Both. The default is Both.
-- **Bars (C2).** There is one bar per set, in the order done. The height is always the reps (or the time).
-  - Band colors fill the bar.
-  - The side is a cap on top: L pink, R green.
-  - The kg are written under the bar. The reps are above it, in yellow when the set has a note.
-- **Table (A2).** The sets are grouped by load, lightest first, with the band dots as the label. L and R boxes are tinted pink and green.
-- **Set order (F + I from the [set number mockup](mockups/intervals-set-number.html)).** The user chose these two together for now and will decide later.
-  - The boxes are clean. A thin yellow strip under a box marks a note.
-  - **Hold a box:** every box shows its "#n" tab.
-  - **Tap a box or a bar:** that set is outlined in both views.
-  - While a box is held or a set is picked, the exercise's line reads "#4 of 11 · after 30 × 5 · before 37.5 × 5".
-- **Code.** The logic is `loadRows` and `dayBars` in `GymRows.kt`, with tests.
+- **Bars.** One bar per set, in the order done, always as high as the reps (or the time). Option **5 + N2 + P4** of the
+  [bar marks mockup](mockups/intervals-journal-bar-marks.html): plain bars are purple; a per-side set has **L** / **R**
+  written at the top inside the bar (no pink / green any more). With bands the bar is the band colors, striped like elastic
+  (section 5, D: so the purple band differs from a plain bar), with a light outline (black drawn dark grey). The kg sit inside at the foot, only on the first bar of each weight (option D of the
+  [bar weight mockup](mockups/intervals-journal-bar-weight.html)); nothing under the bars. Bars are 30 dp wide when the
+  exercise has weights, else 24.
+- **Notes and records.** A set with a note has its top-right corner folded; the note text shows in the exercise line
+  when the bar is tapped (the italic list of set notes is gone, the day note stays). A record set (`recordSetsOn`, the
+  same rule as the "N PR" count) has a small gold cup over its reps; the reps are no longer yellow.
+- **Tap a bar:** it is outlined and the exercise's line reads "#4 of 11 · after 30 × 5 · before 37.5 × 5", or "#3 of 8 · black · 3 · “last rep half”" when the set has a note; " · PR" on a record.
+- **Code.** `dayBars` in `GymRows.kt`, with tests.
+
+## Gym day screen: timeline (2026-11-23, not installed yet)
+
+The screen a Journal gym card opens (`DayPage` in `GymScreen.kt`) is option **E** of the
+[gym day ideas](mockups/intervals-gym-day-ideas.html): the old table per exercise (bands not shown, L / R on eight rows)
+is replaced by one timeline card. Every set in the order done under its exercise's name, with a pink summary on the right
+("4 rounds · black", "9 × 1 · 4 bands", "6 sets · 35 reps"); an L set and the R right after share one row; the band dot,
+load, reps in bold, the note; the rest before the set (or round) on the right, yellow over 5 min; a strip in the tag
+color on the left. Tapping opens the exercise to log or edit. The "last time" line is gone.
+
+## Log tab: the logged sets (2026-11-23, not installed yet)
+
+From the [logged sets ideas](mockups/intervals-log-sets-ideas.html) (`SetBlocks` in `GymLogScreen.kt`):
+- **W1**, exercises without sides: a block per load in the order done ("15 kg", "90 kg normal"); the load has one width
+  for all blocks so the squares line up; the rest before each set is under its square, yellow over 5 min.
+- **U**, per-side exercises: one row per round, L left and R right with a line between (the L and R right after each
+  other, in either order); a set without its other side leaves that half empty; "L 5 · R 7" above; the rest before the
+  round on the right. The day screen pairs the same way (`pairSides`) and its summary says "L 5 · R 7" when uneven.
+- A note is a folded corner on the square (pink border now only means selected). Tap to edit, hold to select, as before.
+
+## Exercise History (2026-11-23, not installed yet)
+
+Option **H2** of the [history ideas](mockups/intervals-history-ideas.html) (`ExerciseHistory` in `GymExerciseViews.kt`):
+each day the Journal's bars (`DayBars`, now `internal`, with the cup on records), the rest before each set under its
+bar (yellow over 5 min), a pink summary ("11 sets · 53 reps · top 40 × 3", "4 rounds", "L 5 · R 7") with ▲ / ▼ for
+the volume against the session before, and "⏱ 1 h 01 on this exercise · workout 2 h 38": the exercise time is the sum
+of the rests after its first set, the workout the sum of all rests of the day (the rest clock counts from the previous
+set, so this is first to last set). Days logged before the rest clock show no times.
+
+## Add exercise and New workout (2026-11-23, not installed yet)
+
+- **Add exercise** (`GymPickScreen`), option A of the [add exercise ideas](mockups/intervals-add-exercise-ideas.html)
+  with B's workouts on top: search and + New; Workouts (+ New); then chips Recent / All / each tag (in its Journal
+  color) filtering the exercises, each with its tags written under its name (option 3 of the [tag dots mockup](mockups/intervals-tag-dots.html)). Tap logs; hold selects several (numbered in the
+  order picked) and **Workout** opens a new workout with them. No tag making or editing here: that stays in the Gym list.
+- **New workout** (`EditGroupScreen`), option B of the [new workout ideas](mockups/intervals-new-workout-ideas.html):
+  no Tag / Workout switch, no set plans (decided while training), small color dots, drag ⋮⋮ to reorder, and the
+  exercises listed below to tick (with the tag chips). Old `planSets` / `planNote` stay in the data, unused here.
+
+## Restored after the sync (2026-11-23)
+
+From the pre-sync checkpoint `safety/intervals-before-sync-20261123-123433`: Settings has **Back up and restore** and
+**Import from another app** again (with dividers and accessible rows), and Edit exercise has **Merge another exercise
+into this** (similar names first; optionally as one of its variants; groups keep the target). The checkpoint's exercise
+notes and tag-chips-on-exercise were not brought back: tags are groups now.
+
+## Next features batch (2026-11-23, built, not installed yet)
+
+From the [next features mockup](mockups/intervals-next-features.html):
+- **1A, last time in the inputs.** `startValues` now starts from last time's set at the same place (3 sets today → last
+  time's 4th; per side, the Nth L from last time's Nth L), else today's last set. After each logged set the inputs move
+  on to the next one. No "from last time" line.
+- **2A + 2B, sets per tag.** `SetsPerTagCard` in Stats (Gym and Both): "This week" bars with a tick at the 3-week average
+  and the difference; "4 weeks" small charts per tag. An exercise counts for its first tag; untagged grouped.
+- **3A, presets.** + New in Intervals opens `NewWorkoutScreen`: Start empty, then sections (now only **Fingers**:
+  Repeaters 7/3, Max hangs 10 s, Density hangs; `core/Presets.kt`), each with its shape. A preset opens in the editor
+  to save as yours. Their Hang series log Edge (mm) and Load (kg).
+- **3B, set before the start.** A workout with log fields opens `SetupScreen` first (− / +, prefilled from last time);
+  the values show on the disc during that series ("20 mm · 5 kg") and prefill the Finished screen. Grip chips from the
+  mockup are not done: log fields are numbers only.
+- **3C, in the Journal.** A session card adds "▲ Load +2.5 kg · same Edge (Tue 10 Nov)" against the previous session of
+  the same workout (`valuesChange`).
 
 ## Rest timer (installed 2026-11-23, to try)
 
@@ -116,17 +157,26 @@ From the [set screen ideas](mockups/intervals-set-screen-ideas.html), the user c
   - The load appears once above its rounds, or in each half when the two sides differ. ⋯ selects the whole round.
   - With sets selected, ✕ · Note · Delete replace the log buttons (Update set below them for a single set). The pink bar on top is gone.
   - Delete has no confirmation: «Deleted … · Undo» for 6 s, which puts the rows back as they were (`restoreSets`).
-  - Seen on the phone: the rounds. Not yet seen: the bottom actions and Undo.
+  - Replaced on 2026-11-24 by this PC's U rounds (see the merge section at the top); the bottom actions and Undo stay.
 - **Pinch: size became variants (phone data, 2026-11-24).** Pinch (id 38) had a spec «size» (small · medium · large). It now has the variants medium · small · large and no spec. Today's set became variant medium. The older sets (until 14 Oct) have no variant written, so they count as medium: they were on a different pinch, and the user chose to keep them together. They are the only Pinch sets without a variant, so they can be split later. Backup on the phone: `databases/before-pinch.db`. Finger Pinch keeps «width» as a spec.
 - **Later.** D (START for timed sets).
 
-## Journal and Stats decision
+## Stats (2026-11-23, built, not installed yet)
 
-The installed app still uses the **Calendar / Stats** switch inside Journal. The user prefers option **B** in the [Stats mockups](mockups/intervals-journal-stats.html). The revised mockup gives the monthly summary a visible **Stats ›** action so its destination is clear.
+Built from the [Stats screen mockup](mockups/intervals-stats-screen.html), replacing the pending option B work:
+- **Way in.** The Journal's Calendar / Stats switch is gone. The month line ("15 sessions · 13 days trained · 210 gym
+  sets  Stats ›") is a button that opens Stats on that month (`Overlay.Stats`); Back returns to the same day.
+- **Stats screen** (`StatsScreen.kt`): ← back, Intervals / Gym / Both, Week / Month / Year with ‹ › to go back in time
+  (not past today). Everything is tappable: the tiles open lists (`Overlay.StatsList`, `StatsListScreen.kt`: interval
+  sessions, gym days, exercises by sets, records); the minutes bars open the Journal on that day or week (a year's month
+  bar opens that month in Stats); gym days per week bars open the Journal on that week's first gym day; records open the
+  exercise's Records tab (`Overlay.GymLog.tab`), most trained its History, most done intervals their sessions.
+- **Both** shows "Training per day" (option 2 of the [Both chart mockup](mockups/intervals-stats-both-chart.html)):
+  per day a blue block for a gym day and a pink one for interval sessions; a year shows per month the gym days and the
+  interval days. On the right: "13 days · 3.2 / week" (days trained in the period, up to today). Minutes stay under Intervals.
+- **Records** are now those set in the period, computed against the whole history (before: last 30 days against 12 weeks).
 
-The proposed Android change opens a separate Stats screen starting on the Journal month the user selected. **Back** returns to the same date and filter. The browser mockup implements and tests that flow with sample data. The native Stats route and historical-month scope are pending.
-
-The approved Journal design is option **A** in the [Journal concepts](mockups/intervals-journal-concepts.html). The [set-order mockup](mockups/intervals-chronological-log.html) shows the live set grouping. For earlier designs, see the [four-tab preview](mockups/intervals-navigation.html), [navigation comparison](mockups/intervals-navigation-options.html), and [Journal layout comparison](mockups/intervals-journal-options.html).
+The approved Journal design is option **A** in the [Journal concepts](mockups/intervals-journal-concepts.html).
 
 ## Verification
 

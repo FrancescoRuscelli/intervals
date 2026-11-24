@@ -1,0 +1,152 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Stats Screen</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: three phones in a row: the Journal with its way into Stats, the Stats screen (everything tappable), and where a tap leads */
+:root {
+  --bg: #f4f2fa; --fg: #18151f; --muted: #5b5668; --line: #dfdbe9; --accent: #6d28d9; --card: #ffffff;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif;
+  --ph-bg: #000; --ph-surface: #1A1C21; --ph-text: #F2F3F5; --ph-muted: #9AA0AA; --ph-soft: #C9CDD3; --ph-line: #2B2E35;
+  --ph-accent: #7C3AED; --ph-accent-text: #C4B1FF; --ph-tint: #2A2140; --ph-pink: #E91E63; --ph-yellow: #FFC107; --ph-teal: #00BFA5;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #0c0b10; --fg: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --card: #17151d; color-scheme: dark }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
+main { max-width: 1240px; margin: 0 auto; display: grid; gap: 14px; }
+h1 { font-family: var(--display); font-size: 1.8rem; margin: 0; }
+.lede { color: var(--muted); margin: 0; max-width: 82ch; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 16px; align-items: start; }
+.opt { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; display: grid; gap: 8px; min-width: 0; }
+.head { display: flex; gap: 10px; align-items: baseline; }
+.tag { font-family: var(--display); font-weight: 700; color: var(--accent); font-size: 1.1rem; }
+.name { font-weight: 600; }
+.desc { color: var(--muted); font-size: .86rem; margin: 0; }
+
+.phone { background: var(--ph-bg); border-radius: 22px; padding: 12px; color: var(--ph-text); font-size: 14px; height: 700px; overflow: auto; display: flex; flex-direction: column; gap: 10px; position: relative; }
+.phone > * { flex-shrink: 0; }
+.t { font-size: 26px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.t .back { font-size: 20px; color: var(--ph-text); }
+.sub { color: var(--ph-muted); font-size: 12.5px; }
+.tap { cursor: pointer; position: relative; }
+.tap:hover { outline: 1px solid #3a3d46; }
+.tap:active { transform: scale(.99); }
+.chev { color: var(--ph-accent-text); font-weight: 700; }
+.monthline { display: flex; justify-content: space-between; align-items: center; background: var(--ph-surface); border-radius: 14px; padding: 10px 12px; font-size: 13px; }
+.monthline b { font-variant-numeric: tabular-nums; }
+.statsbtn { color: var(--ph-accent-text); font-weight: 700; white-space: nowrap; padding-left: 8px; }
+.cal { background: var(--ph-surface); border-radius: 16px; padding: 10px; display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px 0; text-align: center; font-size: 13px; }
+.cal .h { color: var(--ph-muted); font-size: 11px; }
+.cal .d { padding: 4px 0; position: relative; }
+.cal .d.g::after { content: ""; position: absolute; left: 30%; right: 30%; bottom: 0; height: 3px; border-radius: 2px; background: #5B8DEF; }
+.cal .d.today { outline: 2px solid var(--ph-accent); border-radius: 50%; }
+.seg { display: flex; background: var(--ph-surface); border-radius: 12px; padding: 4px; gap: 4px; }
+.seg span { flex: 1; text-align: center; padding: 7px 0; border-radius: 9px; color: var(--ph-muted); font-weight: 600; font-size: 13px; cursor: pointer; }
+.seg span.on { background: var(--ph-accent); color: #fff; }
+.per { display: flex; align-items: center; justify-content: space-between; font-weight: 700; }
+.per span { color: var(--ph-accent-text); padding: 0 8px; cursor: pointer; }
+.tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.tile { background: var(--ph-surface); border-radius: 14px; padding: 10px; }
+.tile b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; }
+.tile small { color: var(--ph-muted); font-size: 11.5px; display: flex; justify-content: space-between; }
+.card { background: var(--ph-surface); border-radius: 16px; padding: 12px; display: grid; gap: 8px; }
+.ch { display: flex; justify-content: space-between; align-items: baseline; }
+.ch b { font-size: 14.5px; }
+.ch small { color: var(--ph-muted); font-size: 11.5px; }
+.bars { display: flex; align-items: flex-end; gap: 4px; height: 90px; border-bottom: 1px solid var(--ph-line); }
+.bars i { flex: 1; border-radius: 4px 4px 0 0; background: #4C3A80; cursor: pointer; }
+.bars i.cur { background: var(--ph-accent); }
+.bars i.sel { background: var(--ph-accent-text); }
+.bl { display: flex; color: var(--ph-muted); font-size: 10px; }
+.bl span { flex: 1; text-align: center; }
+.pick { font-size: 12px; color: var(--ph-accent-text); }
+.r { display: flex; align-items: center; gap: 10px; padding: 6px 2px; border-radius: 10px; }
+.cup { width: 28px; height: 28px; border-radius: 50%; background: #2E2410; display: grid; place-items: center; font-size: 14px; flex: none; }
+.r .n { flex: 1; min-width: 0; }
+.r .n b { display: block; font-size: 13.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.r .n small { color: var(--ph-muted); font-size: 11.5px; }
+.r .v { font-variant-numeric: tabular-nums; font-weight: 600; }
+.mt { display: grid; gap: 3px; padding: 4px 2px; border-radius: 10px; }
+.mt div:first-child { display: flex; justify-content: space-between; font-size: 13.5px; }
+.mt div:first-child span { color: var(--ph-muted); font-size: 12.5px; }
+.meter { height: 7px; border-radius: 4px; background: var(--ph-line); overflow: hidden; }
+.meter i { display: block; height: 100%; border-radius: 4px; }
+.toast { position: sticky; bottom: 0; margin-top: auto; background: #2F2547; color: var(--ph-accent-text); border-radius: 12px; padding: 8px 12px; font-size: 12.5px; opacity: 0; transition: opacity .2s; }
+.toast.show { opacity: 1; }
+.list .r { border-bottom: 1px solid var(--ph-line); border-radius: 0; padding: 10px 2px; }
+.strip { display: flex; gap: 2px; height: 6px; width: 70px; border-radius: 3px; overflow: hidden; }
+</style>
+
+<main>
+  <h1>Stats on its own screen, and everything tappable</h1>
+  <p class="lede">Stats leaves the Calendar / Stats switch: the Journal keeps only the calendar, and its month line ends with <b>Stats ›</b>, which opens Stats on that month (Back returns to the same day). In Stats every number, bar and row opens what it counts. Tap things in the middle phone: the purple line at the bottom says where each tap leads; the third phone shows one of them. Numbers are November's where I know them, the rest is sample.</p>
+  <div class="grid">
+    <section class="opt"><div class="head"><span class="tag">1</span><span class="name">Journal: the way in</span></div>
+      <p class="desc">No more Calendar / Stats switch on top. The month line is a button: tap anywhere on it (or Stats ›) to open Stats for the month shown.</p>
+      <div class="phone" id="j"></div></section>
+    <section class="opt"><div class="head"><span class="tag">2</span><span class="name">Stats</span></div>
+      <p class="desc">Its own screen with ← back. Intervals / Gym / Both, then Week / Month / Year with ‹ › to go back in time. Tiles, bars, records and the most trained all tappable.</p>
+      <div class="phone" id="s"></div></section>
+    <section class="opt"><div class="head"><span class="tag">3</span><span class="name">Where a tap leads: "Gym days"</span></div>
+      <p class="desc">Tapping the Gym days tile lists those days, newest first, each with its strip and summary; a day opens the Journal on it. Other taps: a record opens the exercise's Records tab, an exercise its History, a bar the Journal on that day or week.</p>
+      <div class="phone" id="l"></div></section>
+  </div>
+</main>
+
+<script>
+const days = [2,3,4,6,8,9,11,13,15,17,18,19,20];
+const toast = (id, t) => { const el = document.querySelector(`#${id} .toast`); el.textContent = "→ " + t; el.classList.add("show"); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove("show"), 2600); };
+
+document.getElementById("j").innerHTML = `
+  <div class="t">Journal</div>
+  <div class="per"><span>‹</span>November 2026<span>›</span></div>
+  <div class="monthline tap" data-go="Stats, November 2026"><span><b>15</b> sessions · <b>13</b> days · <b>210</b> gym sets</span><span class="statsbtn">Stats ›</span></div>
+  <div class="cal">${["Mo","Tu","We","Th","Fr","Sa","Su"].map(d => `<span class="h">${d}</span>`).join("")}${"<span></span>".repeat(6)}${Array.from({ length: 30 }, (_, i) => `<span class="d ${days.includes(i + 1) ? "g" : ""} ${i + 1 === 23 ? "today" : ""}">${i + 1}</span>`).join("")}</div>
+  <div class="sub">Today · No sessions today.</div>
+  <div class="toast"></div>`;
+
+const weeks = [2,3,2,4,3,3,2,3,4,3,3,1];
+document.getElementById("s").innerHTML = `
+  <div class="t"><span class="back">←</span>Stats</div>
+  <div class="seg"><span>Intervals</span><span>Gym</span><span class="on">Both</span></div>
+  <div class="seg"><span>Week</span><span class="on">Month</span><span>Year</span></div>
+  <div class="per"><span>‹</span>November 2026<span>›</span></div>
+  <div class="tiles">
+    <div class="tile tap" data-go="the 15 interval sessions of November, each opens its day"><b>15</b><small>Sessions <span class="chev">›</span></small></div>
+    <div class="tile tap" data-go="list of the 13 gym days (third phone)"><b>13</b><small>Gym days <span class="chev">›</span></small></div>
+    <div class="tile tap" data-go="every exercise done this month, by sets"><b>210</b><small>Gym sets <span class="chev">›</span></small></div>
+  </div>
+  <div class="card"><div class="ch"><b>Gym days per week</b><small>last 12 weeks · tap a bar</small></div>
+    <div class="bars">${weeks.map((w, i) => `<i class="tap ${i === weeks.length - 1 ? "cur" : ""}" style="height:${w * 22}%" data-go="the Journal on the week of ${["1 Sep","8 Sep","15 Sep","22 Sep","29 Sep","6 Oct","13 Oct","20 Oct","27 Oct","3 Nov","10 Nov","17 Nov"][i]} (${w} gym days)"></i>`).join("")}</div>
+    <div class="bl">${["1/9","","","22/9","","","13/10","","","3/11","",""].map(x => `<span>${x}</span>`).join("")}</div></div>
+  <div class="card"><div class="ch"><b>Recent records</b><small>last 30 days</small></div>
+    ${[["Overhead Press","heaviest · Fri 13 Nov","40 kg"],["Finger Pinch","longest hold · Wed 18 Nov","0:10"],["Pull Up","most reps · Fri 20 Nov","7"]].map(([n, s, v]) =>
+      `<div class="r tap" data-go="${n}: Records tab, the record marked"><span class="cup">🏆</span><span class="n"><b>${n}</b><small>${s}</small></span><span class="v">${v}</span><span class="chev">›</span></div>`).join("")}
+    <div class="pick tap" data-go="all records, newest first">All records ›</div></div>
+  <div class="card"><div class="ch"><b>Most trained</b><small>Sets · Days · Reps</small></div>
+    ${[["Squat",27,"#8BC34A"],["Overhead Press",22,"#FF8A50"],["Pull Up",17,"#5B8DEF"],["Finger Pinch",12,"#C8A97E"],["Muscle Up",9,"#5B8DEF"]].map(([n, v, c]) =>
+      `<div class="mt tap" data-go="${n}: History"><div>${n}<span>${v} sets ›</span></div><div class="meter"><i style="width:${v / 27 * 100}%;background:${c}"></i></div></div>`).join("")}</div>
+  <div class="card"><div class="ch"><b>Most done intervals</b><small>this month</small></div>
+    ${[["static submax hold","6× · 15m"],["Repeaters 7/3","4× · 1h 10m"]].map(([n, v]) => `<div class="r tap" data-go="${n}: its sessions, and Start"><span class="n"><b>${n}</b><small>${v}</small></span><span class="chev">›</span></div>`).join("")}</div>
+  <div class="toast"></div>`;
+
+const strip = cs => `<span class="strip">${cs.map(c => `<i style="flex:1;background:${c}"></i>`).join("")}</span>`;
+document.getElementById("l").innerHTML = `
+  <div class="t"><span class="back">←</span>Gym days</div>
+  <div class="sub">November 2026 · 13 days · 210 sets</div>
+  <div class="list">${[["Fri 20 Nov","Pull · 23 sets",["#5B8DEF","#5B8DEF","#5B8DEF"]],["Thu 19 Nov","Push · Arms · 23 sets",["#FF8A50","#90A4AE","#FF8A50"]],["Wed 18 Nov","Fingers · 12 sets",["#C8A97E"]],["Tue 17 Nov","Legs · 22 sets",["#8BC34A","#8BC34A"]],["Sun 15 Nov","Pull · 8 sets",["#5B8DEF"]],["Fri 13 Nov","Push · 18 sets",["#FF8A50","#FF8A50"]],["Wed 11 Nov","Legs · 21 sets",["#8BC34A","#8BC34A"]]].map(([d, s, cs]) =>
+    `<div class="r tap" data-go="the Journal on ${d}"><span class="n"><b>${d}</b><small>${s}</small></span>${strip(cs)}<span class="chev">›</span></div>`).join("")}</div>
+  <div class="toast"></div>`;
+
+document.addEventListener("click", ev => {
+  const t = ev.target.closest(".tap"); if (!t) return;
+  const ph = t.closest(".phone");
+  if (t.matches(".bars i")) { ph.querySelectorAll(".bars i").forEach(b => b.classList.remove("sel")); t.classList.add("sel"); }
+  toast(ph.id, t.dataset.go);
+});
+document.querySelectorAll(".seg span").forEach(s => s.addEventListener("click", () => { s.parentElement.querySelectorAll("span").forEach(x => x.classList.remove("on")); s.classList.add("on"); }));
+</script>
