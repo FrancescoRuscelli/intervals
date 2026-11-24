@@ -33,6 +33,8 @@ Updated 2026-11-23. Read [CLAUDE.md](../CLAUDE.md) for repo conventions and [DES
       - Undo in `AppViewModel.kt`
       - their tests
 
+   4. **To fix after the merge: the load label in the Journal table is cut off.** On 24 Nov Pinch shows «medium ·» instead of «medium · 14 kg»: the label column of `LoadTable` in `JournalScreen.kt` is 70 dp wide and keeps only one line. Let the label wrap onto two lines, or widen the column only when needed. Check it on the phone with Pinch on 24 Nov.
+
    Some of these build on code the other version may not have, such as the Journal bars and table (`3050788`) for change 1. In that case ask the user before bringing in anything more.
 5. **Check.** Run `./gradlew.bat :core:test :app:testDebugUnitTest :app:assembleDebug`, then try Stats and the three changes on the phone. Install only when Intervals is not on screen. Room: keep the other version's database migrations.
 6. **Publish.** Show the user the result first, then `git push`, a normal push. Then delete the local safety branch with `git branch -D safety/intervals-before-sync-20261123-123433`: its content is now in `main`. Only delete it after the user has seen the app working.
