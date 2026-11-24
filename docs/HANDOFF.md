@@ -115,6 +115,7 @@ From the [set screen ideas](mockups/intervals-set-screen-ideas.html), the user c
   - With sets selected, ✕ · Note · Delete replace the log buttons (Update set below them for a single set). The pink bar on top is gone.
   - Delete has no confirmation: «Deleted … · Undo» for 6 s, which puts the rows back as they were (`restoreSets`).
   - Seen on the phone: the rounds. Not yet seen: the bottom actions and Undo.
+- **Pinch: size became variants (phone data, 2026-11-24).** Pinch (id 38) had a spec «size» (small · medium · large). It now has the variants medium · small · large and no spec. Today's set became variant medium. The older sets (until 14 Oct) have no variant written, so they count as medium: they were on a different pinch, and the user chose to keep them together. They are the only Pinch sets without a variant, so they can be split later. Backup on the phone: `databases/before-pinch.db`. Finger Pinch keeps «width» as a spec.
 - **Later.** D (START for timed sets).
 
 ## Journal and Stats decision
