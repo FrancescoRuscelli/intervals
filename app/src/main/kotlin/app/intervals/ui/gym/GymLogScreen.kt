@@ -216,11 +216,15 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String, initialTab: In
     }
     BackHandler(enabled = selecting) { selectedIds = emptySet() }
     var openSpec by remember { mutableStateOf<app.intervals.core.Spec?>(null) }
+    var setupOpen by remember { mutableStateOf(false) }
+    // what stays the same for the session (grip, edge, a single choice) lives in the settings line up top (mockup intervals-grip-small.html, A3);
+    // only the bands (several choices at once) stay by the log button
+    val setup = ex.shownSpecs(v.specs, v.variant?.takeIf { it in ex.variants } ?: ex.variants.firstOrNull()).filter { !(it.isChoice && it.multiple) }
     val setButtons: @Composable () -> Unit = { Column {
         // the variants just above the button (mockup intervals-variant-switch.html, A5a): a tap switches and brings back that variant's numbers
         // the other groups (choices) under the variants, one row of chips each (mockup intervals-variant-groups.html, 2)
         val curVariant = v.variant?.takeIf { it in ex.variants } ?: ex.variants.firstOrNull()
-        val groups = ex.shownSpecs(v.specs, curVariant).filter { it.isChoice }
+        val groups = ex.shownSpecs(v.specs, curVariant).filter { it.isChoice && it.multiple }
         if (ex.variants.isNotEmpty()) {
             val cur = v.variant?.takeIf { it in ex.variants } ?: ex.variants.first()
             // no label over the variants: their names say what they are (mockup intervals-range-bands.html, B)
@@ -274,7 +278,7 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String, initialTab: In
             val timing = timerFrom != null
             val variant = ex.variants.takeIf { it.isNotEmpty() }?.let { vs -> v.variant?.takeIf { it in vs } ?: vs.first() }
             // the button says the combination: "Log set · first half · band"
-            val label = (listOfNotNull(variant) + groups.filter { !it.multiple }.mapNotNull { g -> v.specs[g.name] ?: g.choices.firstOrNull() }
+            val label = (listOfNotNull(variant) + setup.filter { it.isChoice }.mapNotNull { g -> v.specs[g.name] ?: g.choices.firstOrNull() }
                 .filterIndexed { _, c -> c != "none" }).joinToString(" · ").ifEmpty { null }
             LogButtons(ex.perSide, side, label, timing = timing && !bulk, blocked = timing || bulk) { chosen ->
                 vm.logSets(chosen.sides().map { s -> v.into(GymSet(exerciseId = ex.id, day = day, order = 0, side = s), exV) }, ex.restSec)
@@ -309,6 +313,26 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String, initialTab: In
             }
         }
         Box(Modifier.fillMaxWidth().height(1.dp).background(p.surface))
+        if (tab == 0 && setup.isNotEmpty()) {
+            Row(
+                Modifier.fillMaxWidth().alpha(if (bulk) 0.45f else 1f).clickable(enabled = !bulk, onClickLabel = "Change the set-up") { setupOpen = true }
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(buildAnnotatedString {
+                    setup.forEachIndexed { i, sp ->
+                        if (i > 0) append("  ·  ")
+                        val value = v.specs[sp.name]?.takeIf(String::isNotBlank) ?: sp.choices.firstOrNull().takeIf { sp.isChoice }
+                        withStyle(SpanStyle(color = p.muted)) { append(sp.name + " ") }
+                        withStyle(SpanStyle(color = p.text, fontWeight = FontWeight.SemiBold)) {
+                            append(value?.let { if (!sp.isChoice && sp.unit.isNotBlank()) "$it ${sp.unit}" else it } ?: "–")
+                        }
+                    }
+                }, fontSize = 14.sp, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                Icon(AppIcons.Edit, null, tint = p.muted, modifier = Modifier.padding(start = 6.dp).size(14.dp))
+            }
+            Box(Modifier.fillMaxWidth().height(1.dp).background(p.surface))
+        }
         // with variants or choice specs, History / Graph / Records can show one variant and / or one choice (mockup G19c;
         // records are kept per variant and spec, mockup intervals-ideas-from-other-apps.html, 6)
         var variantFilter by androidx.compose.runtime.saveable.rememberSaveable(exerciseId) { mutableStateOf<String?>(null) }
@@ -394,7 +418,6 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String, initialTab: In
                         Segmented(listOf("L", "R"), editSide?.let(sides::indexOf) ?: -1, listOf(p.pink, p.teal)) { editSide = sides[it] }
                     }
                     // measurements (numbers) as chips to tap; the choices are groups near the button
-                    if (ex.specs.any { !it.isChoice }) SpecChips(ex.specs.filter { !it.isChoice }, v.specs, enabled = !bulk) { openSpec = it }
                     // a quiet hint to go up (mockup intervals-ideas-from-other-apps.html, 1): gone once a set at that load is logged
                     if (!selecting && hint != null && v.weightKg < hint.toKg &&
                         list.none { (hintSide == null || it.side == hintSide) && (it.weightKg ?: Double.NEGATIVE_INFINITY) >= hint.toKg }
@@ -431,6 +454,20 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String, initialTab: In
         }
     }
 
+    if (setupOpen) {
+        AlertDialog(
+            onDismissRequest = { setupOpen = false },
+            title = { Text("Set up") },
+            text = {
+                SpecTiles(setup, v.specs, onType = { typingSpec = it }) { name, value ->
+                    change { it.copy(specs = if (value == null) it.specs - name else it.specs + (name to value)) }
+                    // one single choice: picking it is all there is to do
+                    if (setup.size == 1 && setup[0].isChoice) setupOpen = false
+                }
+            },
+            confirmButton = { TextButton(onClick = { setupOpen = false }) { Text("Done") } },
+        )
+    }
     openSpec?.let { sp ->
         AlertDialog(
             onDismissRequest = { openSpec = null },
@@ -900,7 +937,8 @@ private fun SpecTiles(
                         // "several" (e.g. bands): tap = on / off, long press = one more; else one choice, tap again to clear
                         val n = if (sp.multiple) sp.counts(values[sp.name]).firstOrNull { it.first == c }?.second ?: 0 else if (values[sp.name] == c) 1 else 0
                         val on = n > 0
-                        val color = sp.colors[c]?.let { Color(it) }
+                        // a color only for bands (several at once); a single choice is its name
+                        val color = sp.colors[c]?.takeIf { sp.multiple }?.let { Color(it) }
                         Row(
                             Modifier.clip(RoundedCornerShape(12.dp)).background(if (on) p.accent else p.bg)
                                 .combinedClickable(
@@ -1042,7 +1080,7 @@ private fun GroupLabel(name: String) {
 @Composable
 private fun GroupChips(g: app.intervals.core.Spec, value: String?, onChange: (String?) -> Unit) {
     val p = LocalPalette.current
-    val dots = g.choices.isNotEmpty() && g.choices.all { it in g.colors }
+    val dots = g.multiple && g.choices.isNotEmpty() && g.choices.all { it in g.colors }
     // a group of colors is one slim line: its name at the left, the dots after it (mockup intervals-range-bands.html, B)
     val content: @Composable () -> Unit = {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(if (dots) 8.dp else 6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {

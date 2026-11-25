@@ -122,7 +122,7 @@ fun loadBlocks(sets: List<GymSet>, ex: Exercise): List<LoadBlock> {
 }
 
 /** The colors of a set's colored specs (e.g. its bands), one per band; empty when none. */
-fun GymSet.specColors(ex: Exercise): List<Long> = ex.specs.filter { it.colors.isNotEmpty() }.flatMap { sp ->
+fun GymSet.specColors(ex: Exercise): List<Long> = ex.specs.filter { it.multiple && it.colors.isNotEmpty() }.flatMap { sp ->
     specs[sp.name]?.let { v -> if (sp.multiple) sp.counts(v).flatMap { (c, n) -> List(n) { sp.colors[c] } } else listOf(sp.colors[v]) }.orEmpty()
 }.filterNotNull()
 
