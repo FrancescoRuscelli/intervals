@@ -31,7 +31,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -52,6 +51,7 @@ import app.intervals.core.variantOf
 import app.intervals.core.lastOfVariant
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import kotlinx.coroutines.delay
 import androidx.compose.runtime.LaunchedEffect
@@ -156,7 +156,7 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String, initialTab: In
     var measured by remember(exerciseId) { mutableStateOf(false) }
     var typingSpec by remember { mutableStateOf<app.intervals.core.Spec?>(null) }
     var tab by androidx.compose.runtime.saveable.rememberSaveable(exerciseId) { mutableStateOf(initialTab) }
-    val logScroll = rememberLazyListState()
+    val logScroll = rememberScrollState()
 
     // start from today's last set, else from last time; the side after the last one done
     LaunchedEffect(sets != null, lastTime != null) {
@@ -213,12 +213,9 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String, initialTab: In
     fun tapSet(set: GymSet) {
         if (set.id in selectedIds) select(selectedIds - set.id)
         else select(selectedIds + set.id)
-        if (!selecting) logScroll.requestScrollToItem(0)
     }
     BackHandler(enabled = selecting) { selectedIds = emptySet() }
     var openSpec by remember { mutableStateOf<app.intervals.core.Spec?>(null) }
-    // trial: compare the log buttons fixed at the bottom with the buttons after the numbers
-    val buttonsAtBottom = vm.settings.collectAsStateWithLifecycle().value.logButtonsAtBottom
     val setButtons: @Composable () -> Unit = { Column {
         // the variants just above the button (mockup intervals-variant-switch.html, A5a): a tap switches and brings back that variant's numbers
         // the other groups (choices) under the variants, one row of chips each (mockup intervals-variant-groups.html, 2)
@@ -362,80 +359,76 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String, initialTab: In
         val ctx = androidx.compose.ui.platform.LocalContext.current
         val hintPrefs = remember { ctx.getSharedPreferences("hints", android.content.Context.MODE_PRIVATE) }
         var dismissedHints by remember { mutableStateOf(hintPrefs.getStringSet("dismissed", emptySet()).orEmpty().toSet()) }
-        if (tab == 0) LazyColumn(
-            Modifier.weight(1f), state = logScroll, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            // a new set picks its side with the log buttons; editing a set keeps L / R here
-            if (ex.perSide && edit != null) item {
-                val sides = listOf(Side.LEFT, Side.RIGHT)
-                Segmented(listOf("L", "R"), editSide?.let(sides::indexOf) ?: -1, listOf(p.pink, p.teal)) { editSide = sides[it] }
-            }
-            // measurements (numbers) as tiles to tap; the choices are groups near the button
-            if (ex.specs.any { !it.isChoice }) item {
-                SpecChips(ex.specs.filter { !it.isChoice }, v.specs, enabled = !bulk) { openSpec = it }
-            }
-            item {
-                val tiles = listOf(GymField.WEIGHT, GymField.REPS, GymField.DISTANCE).filter { it in exV.fields }
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    tiles.forEach { f ->
-                        val (label, text, unit) = when (f) {
-                            GymField.WEIGHT -> Triple("Weight", formatKg(v.weightKg), "kg")
-                            GymField.REPS -> Triple("Reps", "${v.reps}", "")
-                            else -> Triple("Distance", formatKg(v.distance), "")
-                        }
-                        StepTile(label, text, unit, Modifier.weight(1f), enabled = !bulk,
-                            onTap = { typing = f },
-                            onMinus = { change { it.step(f, ex, -1) } },
-                            onPlus = { change { it.step(f, ex, +1) } })
-                    }
+        // the sets scroll on their own, the last one at the bottom; the numbers sit in a fixed panel under them (mockup intervals-fixed-numbers.html, C)
+        if (tab == 0) {
+            LaunchedEffect(list.size) { logScroll.scrollTo(logScroll.maxValue) }
+            LaunchedEffect(logScroll.maxValue) { if (!selecting) logScroll.scrollTo(logScroll.maxValue) }
+            Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(logScroll).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (list.isNotEmpty()) {
+                    val hintText = if (selecting) "TAP TO ADD OR REMOVE SETS" else "TAP TO EDIT · HOLD TO SELECT"
+                    Text("SETS · ${list.size} · $hintText", color = p.muted, fontSize = 13.sp, letterSpacing = 0.6.sp, fontWeight = FontWeight.SemiBold)
+                    val hold = { set: GymSet -> if (set.id !in selectedIds) select(selectedIds + set.id) }
+                    SetBlocks(list, ex, selectedIds, selecting, ::tapSet, hold)
                 }
             }
-            // a quiet hint to go up (mockup intervals-ideas-from-other-apps.html, 1): gone once a set at that load is logged
-            if (!selecting && hint != null && v.weightKg < hint.toKg &&
-                list.none { (hintSide == null || it.side == hintSide) && (it.weightKg ?: Double.NEGATIVE_INFINITY) >= hint.toKg }
-                && hintKey(ex.id, hintSide, hintVariant, hint) !in dismissedHints
-            ) item {
-                // swipe it away (left or right) if you don't want it: it stays away for this exercise, side and weight
-                SwipeAway(onGone = {
-                    val k = hintKey(ex.id, hintSide, hintVariant, hint)
-                    dismissedHints = dismissedHints + k
-                    hintPrefs.edit().putStringSet("dismissed", dismissedHints).apply()
-                }) { LoadHintRow(hint, hintSide) { change { it.copy(weightKg = hint.toKg) } } }
-            }
-            if (GymField.TIME in exV.fields) item {
-                if (selecting) {
-                    StepTile("Time", formatTime(v.timeSec), "", Modifier.fillMaxWidth(), enabled = !bulk,
-                        onTap = { typing = GymField.TIME },
-                        onMinus = { change { it.step(GymField.TIME, ex, -1) } },
-                        onPlus = { change { it.step(GymField.TIME, ex, +1) } })
-                } else {
-                    val sideNow = when (side) { SideChoice.LEFT -> Side.LEFT; SideChoice.RIGHT -> Side.RIGHT; else -> null }
-                    val last = lastTime.orEmpty().let { l -> (sideNow?.let { sd -> l.firstOrNull { it.side == sd } } ?: l.firstOrNull())?.timeSec }
+            val running = timerFrom != null && !selecting
+            Column(
+                Modifier.fillMaxWidth().background(p.bg).border(1.dp, p.surface).padding(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                val sideNow = when (side) { SideChoice.LEFT -> Side.LEFT; SideChoice.RIGHT -> Side.RIGHT; else -> null }
+                val lastSec = lastTime.orEmpty().let { l -> (sideNow?.let { sd -> l.firstOrNull { it.side == sd } } ?: l.firstOrNull())?.timeSec }
+                val lastText = lastSec?.let { "last " + formatTime(it) + when (sideNow) { Side.LEFT -> " on the left"; Side.RIGHT -> " on the right"; null -> "" } }
+                val onStart = { timerFrom = android.os.SystemClock.elapsedRealtime(); measured = false }
+                if (running) {
+                    // while holding, the big clock and STOP as before: the list does not matter now
                     TimerCard(
-                        seconds = v.timeSec, startedAt = timerFrom, measured = measured, side = sideNow,
-                        lastText = last?.let { "last time " + formatTime(it) + when (sideNow) { Side.LEFT -> " on the left"; Side.RIGHT -> " on the right"; null -> "" } },
-                        onType = { typing = GymField.TIME },
-                        onStart = { timerFrom = android.os.SystemClock.elapsedRealtime(); measured = false },
+                        seconds = v.timeSec, startedAt = timerFrom, measured = measured, side = sideNow, lastText = lastText,
+                        onType = { typing = GymField.TIME }, onStart = onStart,
                         onStop = { ms -> change { it.copy(timeSec = ((ms + 500) / 1000).toInt()) }; timerFrom = null; measured = true },
                         onNudge = { d -> change { it.copy(timeSec = (it.timeSec + d).coerceAtLeast(0)) } },
                     )
+                } else {
+                    // a set being edited keeps L / R here; a new set picks its side with the log buttons
+                    if (ex.perSide && edit != null) {
+                        val sides = listOf(Side.LEFT, Side.RIGHT)
+                        Segmented(listOf("L", "R"), editSide?.let(sides::indexOf) ?: -1, listOf(p.pink, p.teal)) { editSide = sides[it] }
+                    }
+                    // measurements (numbers) as chips to tap; the choices are groups near the button
+                    if (ex.specs.any { !it.isChoice }) SpecChips(ex.specs.filter { !it.isChoice }, v.specs, enabled = !bulk) { openSpec = it }
+                    // a quiet hint to go up (mockup intervals-ideas-from-other-apps.html, 1): gone once a set at that load is logged
+                    if (!selecting && hint != null && v.weightKg < hint.toKg &&
+                        list.none { (hintSide == null || it.side == hintSide) && (it.weightKg ?: Double.NEGATIVE_INFINITY) >= hint.toKg }
+                        && hintKey(ex.id, hintSide, hintVariant, hint) !in dismissedHints
+                    ) {
+                        // swipe it away (left or right) if you don't want it: it stays away for this exercise, side and weight
+                        SwipeAway(onGone = {
+                            val k = hintKey(ex.id, hintSide, hintVariant, hint)
+                            dismissedHints = dismissedHints + k
+                            hintPrefs.edit().putStringSet("dismissed", dismissedHints).apply()
+                        }) { LoadHintRow(hint, hintSide) { change { it.copy(weightKg = hint.toKg) } } }
+                    }
+                    val fields = listOf(GymField.WEIGHT, GymField.REPS, GymField.DISTANCE).filter { it in exV.fields }
+                    if (fields.isNotEmpty()) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        fields.forEach { f ->
+                            val (label, text) = when (f) {
+                                GymField.WEIGHT -> "kg" to formatKg(v.weightKg)
+                                GymField.REPS -> "reps" to "${v.reps}"
+                                else -> "distance" to formatKg(v.distance)
+                            }
+                            NumCell(label, text, Modifier.weight(1f), enabled = !bulk, onTap = { typing = f },
+                                onMinus = { change { it.step(f, ex, -1) } }, onPlus = { change { it.step(f, ex, +1) } })
+                        }
+                    }
+                    if (GymField.TIME in exV.fields) {
+                        if (selecting) NumCell("time", formatTime(v.timeSec), Modifier.fillMaxWidth(), enabled = !bulk, onTap = { typing = GymField.TIME },
+                            onMinus = { change { it.step(GymField.TIME, ex, -1) } }, onPlus = { change { it.step(GymField.TIME, ex, +1) } })
+                        else TimeRow(v.timeSec, measured, lastText, onType = { typing = GymField.TIME }, onStart = onStart,
+                            onNudge = { d -> change { it.copy(timeSec = (it.timeSec + d).coerceAtLeast(0)) } })
+                    }
+                    setButtons()
                 }
             }
-            if (!buttonsAtBottom) item { setButtons() }
-
-            if (list.isNotEmpty()) item {
-                val hint = if (selecting) "TAP TO ADD OR REMOVE SETS" else "TAP TO EDIT · HOLD TO SELECT"
-                Text("SETS · ${list.size} · $hint", color = p.muted, fontSize = 13.sp, letterSpacing = 0.6.sp, fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(top = 4.dp))
-            }
-            if (list.isNotEmpty()) item {
-                val hold = { set: GymSet -> if (set.id !in selectedIds) select(selectedIds + set.id) }
-                SetBlocks(list, ex, selectedIds, selecting, ::tapSet, hold)
-            }
-        }
-        // the buttons fixed at the bottom, under the thumb (mockup intervals-set-screen-ideas.html, B1)
-        if (tab == 0 && buttonsAtBottom) {
-            Box(Modifier.fillMaxWidth().background(p.bg).padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 12.dp)) { setButtons() }
         }
     }
 
@@ -500,6 +493,55 @@ internal fun shortDay(day: String): String {
     val d = LocalDate.parse(day)
     val pattern = if (d.year == LocalDate.now().year) "EEE d MMM" else "d MMM yyyy"
     return d.format(java.time.format.DateTimeFormatter.ofPattern(pattern, java.util.Locale.ENGLISH))
+}
+
+/** One number of the fixed panel: − value +, the value tapped to type it (mockup intervals-fixed-numbers.html, C). */
+@Composable
+private fun NumCell(label: String, value: String, modifier: Modifier, enabled: Boolean, onTap: () -> Unit, onMinus: () -> Unit, onPlus: () -> Unit) {
+    val p = LocalPalette.current
+    Row(
+        modifier.alpha(if (enabled) 1f else 0.45f).clip(RoundedCornerShape(14.dp)).background(p.surface).padding(4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        StepButton(AppIcons.Minus, "$label less", enabled, onMinus)
+        Column(Modifier.weight(1f).heightIn(min = 48.dp).clickable(enabled = enabled, onClickLabel = "Type $label", onClick = onTap),
+            horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+            Text(label, color = p.muted, fontSize = 11.sp, maxLines = 1)
+            Text(value, color = p.text, fontSize = if (value.length <= 5) 26.sp else 21.sp, style = NumberStyle, maxLines = 1, softWrap = false)
+        }
+        StepButton(AppIcons.Plus, "$label more", enabled, onPlus)
+    }
+}
+
+@Composable
+private fun StepButton(icon: androidx.compose.ui.graphics.vector.ImageVector, desc: String, enabled: Boolean, onClick: () -> Unit) {
+    val p = LocalPalette.current
+    Box(Modifier.size(48.dp).clip(RoundedCornerShape(11.dp)).background(p.tint).clickable(enabled = enabled, onClickLabel = desc, onClick = onClick),
+        contentAlignment = Alignment.Center) { Icon(icon, desc, tint = p.accentText, modifier = Modifier.size(20.dp)) }
+}
+
+/** The time in the fixed panel when not holding: ready = START; measured = − 1 s, + 1 s and time again. Tap the time to type it. */
+@Composable
+private fun TimeRow(seconds: Int, measured: Boolean, lastText: String?, onType: () -> Unit, onStart: () -> Unit, onNudge: (Int) -> Unit) {
+    val p = LocalPalette.current
+    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(p.surface).padding(start = 12.dp, top = 4.dp, end = 4.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(Modifier.weight(1f).heightIn(min = 48.dp).clickable(onClickLabel = "Type the time", onClick = onType), verticalArrangement = Arrangement.Center) {
+            Text(if (measured) "time · measured" else "time" + (lastText?.let { " · $it" } ?: ""), color = p.muted, fontSize = 11.sp, maxLines = 1)
+            Text(formatTime(seconds), color = if (measured) p.text else p.soft, fontSize = 26.sp, style = NumberStyle, maxLines = 1)
+        }
+        if (measured) {
+            listOf("−1" to -1, "+1" to 1).forEach { (label, d) ->
+                Box(Modifier.size(48.dp).clip(RoundedCornerShape(11.dp)).background(p.tint).clickable(onClickLabel = "$label second") { onNudge(d) },
+                    contentAlignment = Alignment.Center) { Text(label, color = p.accentText, fontSize = 15.sp, fontWeight = FontWeight.Bold) }
+            }
+            Box(Modifier.height(48.dp).clip(RoundedCornerShape(11.dp)).background(p.bg).clickable(onClickLabel = "Time again", onClick = onStart).padding(horizontal = 10.dp),
+                contentAlignment = Alignment.Center) { Text("Again", color = p.soft, fontSize = 13.sp, fontWeight = FontWeight.SemiBold) }
+        } else {
+            Box(Modifier.height(48.dp).clip(RoundedCornerShape(11.dp)).background(p.teal).clickable(onClickLabel = "Start the timer", onClick = onStart).padding(horizontal = 20.dp),
+                contentAlignment = Alignment.Center) { Text("START", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp) }
+        }
+    }
 }
 
 @Composable
