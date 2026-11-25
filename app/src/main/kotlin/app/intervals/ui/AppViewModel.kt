@@ -665,6 +665,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     suspend fun lastSets(exerciseId: Long, day: String): List<GymSet> = repo.lastSets(exerciseId, day)
 
+    /** The numbers and side on each set screen ("id|day") as last left, so coming back finds them unchanged.
+     *  shortcut: kept in memory only, lost if Android closes the app; save them if that turns out to matter. */
+    val gymDrafts = mutableMapOf<String, Pair<GymSet, app.intervals.core.SideChoice?>>()
+
     /** The FitNotes import waiting for the user to press Import. */
     var gymImport by mutableStateOf<GymImportPreview?>(null)
         private set

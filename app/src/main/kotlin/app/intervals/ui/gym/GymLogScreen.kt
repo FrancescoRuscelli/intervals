@@ -141,8 +141,12 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String, initialTab: In
     val lastTime by produceState<List<GymSet>?>(null, exerciseId, day) { value = vm.lastSets(exerciseId, day) }
     val allSets by remember(exerciseId) { vm.exerciseAll(exerciseId) }.collectAsStateWithLifecycle(emptyList())
 
-    var values by remember(exerciseId) { mutableStateOf<Values?>(null) }
-    var side by remember(exerciseId) { mutableStateOf<SideChoice?>(null) }
+    // coming back to the same exercise and day finds the numbers and side as they were left
+    val draftKey = "$exerciseId|$day"
+    val draft = remember(draftKey) { vm.gymDrafts[draftKey] }
+    var values by remember(exerciseId) { mutableStateOf(draft?.first?.toValues()) }
+    var side by remember(exerciseId) { mutableStateOf(draft?.second) }
+    var keepDraft by remember(draftKey) { mutableStateOf(draft != null) }
     var editValues by remember(exerciseId, day) { mutableStateOf(Values()) }
     var editSide by remember(exerciseId, day) { mutableStateOf<Side?>(null) }
     var selectedIds by remember(exerciseId, day) { mutableStateOf(emptySet<Long>()) }
@@ -183,12 +187,20 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String, initialTab: In
     }
     // each side starts from its own last set: switching to L brings back the last L values, R the last R
     LaunchedEffect(side) {
+        // not on the way back in: the numbers left here stay
+        if (keepDraft) { keepDraft = false; return@LaunchedEffect }
         val today = sets ?: return@LaunchedEffect
         val last = lastTime ?: return@LaunchedEffect
         val s = when (side) { SideChoice.LEFT -> Side.LEFT; SideChoice.RIGHT -> Side.RIGHT; else -> return@LaunchedEffect }
         // with variants, the side's last set in the variant in use
         val variant = ex.variants.takeIf { it.isNotEmpty() }?.let { vs -> values?.variant?.takeIf { it in vs } ?: vs.first() }
         (variant?.let { lastOfVariant(allSets, ex, it, s) } ?: startValues(today, last, s))?.let { values = it.toValues() }
+    }
+    LaunchedEffect(values, side) {
+        values?.let { vl ->
+            vm.gymDrafts[draftKey] = GymSet(exerciseId = exerciseId, day = day, order = 0, weightKg = vl.weightKg, reps = vl.reps, timeSec = vl.timeSec,
+                distance = vl.distance, specs = vl.specs, variant = vl.variant) to side
+        }
     }
     val list = sets.orEmpty()
     val selectedSets = list.filter { it.id in selectedIds }
