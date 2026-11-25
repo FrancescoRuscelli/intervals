@@ -23,6 +23,24 @@ fun lastOfVariant(all: List<GymSet>, ex: Exercise, variant: String, side: Side? 
     return side?.let { sd -> mine.lastOrNull { it.side == sd } } ?: mine.lastOrNull()
 }
 
+/** What all [sets] share (mockup intervals-bulk-change.html): their variant if the same, and the spec values all of them have. */
+fun commonChoices(sets: List<GymSet>, ex: Exercise): Pair<String?, Map<String, String>> {
+    val variant = sets.map { it.variantOf(ex) }.distinct().singleOrNull()
+    val specs = sets.flatMap { it.specs.keys }.distinct()
+        .mapNotNull { k -> sets.map { it.specs[k] }.distinct().singleOrNull()?.let { k to it } }.toMap()
+    return variant to specs
+}
+
+/** [sets] with only what changed from [before] to [after] put on each (variant, specs); weight, reps, side, note and rest stay. */
+fun applyChoices(sets: List<GymSet>, before: Pair<String?, Map<String, String>>, after: Pair<String?, Map<String, String>>): List<GymSet> {
+    val changed = (before.second.keys + after.second.keys).filter { before.second[it] != after.second[it] }
+    return sets.map { set ->
+        var specs = set.specs
+        changed.forEach { k -> specs = after.second[k]?.let { specs + (k to it) } ?: (specs - k) }
+        set.copy(variant = if (after.first != before.first && after.first != null) after.first else set.variant, specs = specs)
+    }
+}
+
 /** After a set on one side, the next is on the other; "both" stays both. */
 fun SideChoice.afterSet(): SideChoice = when (this) {
     SideChoice.LEFT -> SideChoice.RIGHT

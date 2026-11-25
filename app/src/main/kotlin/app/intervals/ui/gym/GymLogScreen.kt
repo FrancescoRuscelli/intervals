@@ -49,6 +49,8 @@ import app.intervals.core.boxText
 import app.intervals.core.loadText
 import app.intervals.core.variantOf
 import app.intervals.core.lastOfVariant
+import app.intervals.core.commonChoices
+import app.intervals.core.applyChoices
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -207,11 +209,18 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String, initialTab: In
     val selecting = selectedSets.isNotEmpty()
     val bulk = selectedSets.size > 1
     val edit = selectedSets.singleOrNull()
-    val v = if (edit != null) editValues else values ?: Values()
+    // several sets: their shared variant and choices, and what is picked for all of them (mockup intervals-bulk-change.html)
+    val bulkBase = remember(selectedSets, ex) { if (bulk) commonChoices(selectedSets, ex) else null }
+    var bulkValues by remember(selectedIds) { mutableStateOf<Values?>(null) }
+    val bulkShown = bulkBase?.let { (vr, sp) -> bulkValues ?: Values(specs = sp, variant = vr) }
+    val bulkChanged = bulkBase != null && bulkValues != null && (bulkValues!!.variant to bulkValues!!.specs) != bulkBase
+    var updated by remember(exerciseId, day) { mutableStateOf(emptyList<GymSet>()) }
+    LaunchedEffect(updated) { if (updated.isNotEmpty()) { kotlinx.coroutines.delay(6000); updated = emptyList() } }
+    val v = if (edit != null) editValues else bulkShown ?: values ?: Values()
     // what the chosen variant records (mockup intervals-variant-fields.html, 3): a hold shows the timer, pull-ups the reps
     val exV = ex.forVariant(v.variant?.takeIf { it in ex.variants } ?: ex.variants.firstOrNull())
     fun change(f: (Values) -> Values) {
-        if (edit != null) editValues = f(v) else values = f(v)
+        if (edit != null) editValues = f(v) else if (bulk) bulkValues = f(v) else values = f(v)
     }
     fun select(ids: Set<Long>) {
         if (ids.size == 1) {
@@ -238,9 +247,11 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String, initialTab: In
         val curVariant = v.variant?.takeIf { it in ex.variants } ?: ex.variants.firstOrNull()
         val groups = ex.shownSpecs(v.specs, curVariant).filter { it.isChoice && it.multiple }
         if (ex.variants.isNotEmpty()) {
-            val cur = v.variant?.takeIf { it in ex.variants } ?: ex.variants.first()
+            // several sets with different variants: none lit until one is picked for all
+            val cur = v.variant?.takeIf { it in ex.variants } ?: if (bulk) "" else ex.variants.first()
             // no label over the variants: their names say what they are (mockup intervals-range-bands.html, B)
-            VariantRow(ex.variants, cur, enabled = !bulk) { picked ->
+            VariantRow(ex.variants, cur, enabled = true) { picked ->
+                if (bulk) { change { it.copy(variant = picked) }; return@VariantRow }
                 val side1 = when (side) { SideChoice.LEFT -> Side.LEFT; SideChoice.RIGHT -> Side.RIGHT; else -> null }
                 // editing a set changes only its variant; a new set takes the variant's own last numbers
                 if (edit != null) change { it.copy(variant = picked) }
@@ -248,7 +259,7 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String, initialTab: In
             }
             Spacer(Modifier.height(8.dp))
         }
-        if (groups.isNotEmpty() && !bulk) {
+        if (groups.isNotEmpty()) {
             groups.forEach { g ->
                 GroupChips(g, v.specs[g.name]) { value ->
                     change { it.copy(specs = if (value == null) it.specs - g.name else it.specs + (g.name to value)) }
@@ -265,13 +276,28 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String, initialTab: In
                 Box(Modifier.size(54.dp).clip(shape).background(p.surface).clickable(onClickLabel = "Cancel selection") { selectedIds = emptySet() },
                     contentAlignment = Alignment.Center) { Icon(AppIcons.Close, "Cancel selection", tint = p.text) }
                 BigButton("Note", p.surface, p.text, { noteTargets = selectedSets }, Modifier.weight(1f))
-                BigButton("Delete", p.surface, p.dangerText, {
+                // something picked for all of them: Update takes Delete's place
+                if (bulkChanged) BigButton("Update ${selectedSets.size} sets", p.pink, Color.White, {
+                    val after = bulkValues!!
+                    updated = selectedSets
+                    applyChoices(selectedSets, bulkBase!!, after.variant to after.specs).forEach(vm::updateGymSet)
+                    selectedIds = emptySet()
+                }, Modifier.weight(1.4f))
+                else BigButton("Delete", p.surface, p.dangerText, {
                     deleted = selectedSets
                     vm.deleteGymSets(selectedSets.map { it.id })
                     selectedIds = emptySet()
                 }, Modifier.weight(1f))
             }
             if (edit != null) Spacer(Modifier.height(8.dp))
+        } else if (updated.isNotEmpty()) {
+            Row(Modifier.fillMaxWidth().padding(bottom = 8.dp).clip(RoundedCornerShape(12.dp)).background(p.surface).padding(start = 12.dp),
+                verticalAlignment = Alignment.CenterVertically) {
+                Text("Updated ${updated.size} sets", color = p.text, fontSize = 14.sp, maxLines = 1,
+                    modifier = Modifier.weight(1f).semantics { liveRegion = LiveRegionMode.Polite })
+                // puts each set back as it was before the update
+                TextButton(onClick = { updated.forEach(vm::updateGymSet); updated = emptyList() }) { Text("Undo", color = p.accentText, fontWeight = FontWeight.Bold) }
+            }
         } else if (deleted.isNotEmpty()) {
             // no confirmation on delete: Undo for a few seconds instead
             Row(Modifier.fillMaxWidth().padding(bottom = 8.dp).clip(RoundedCornerShape(12.dp)).background(p.surface).padding(start = 12.dp),
@@ -327,7 +353,7 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String, initialTab: In
         Box(Modifier.fillMaxWidth().height(1.dp).background(p.surface))
         if (tab == 0 && setup.isNotEmpty()) {
             Row(
-                Modifier.fillMaxWidth().alpha(if (bulk) 0.45f else 1f).clickable(enabled = !bulk, onClickLabel = "Change the set-up") { setupOpen = true }
+                Modifier.fillMaxWidth().clickable(onClickLabel = "Change the set-up") { setupOpen = true }
                     .padding(horizontal = 16.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {

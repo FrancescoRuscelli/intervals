@@ -40,6 +40,32 @@ class GymLogTest {
     }
 
     @Test
+    fun severalSetsChangeOnlyWhatWasChanged() {
+        // Muscle Up: three sets logged with the black band were done with the red one
+        val mu = Exercise(13, "Muscle Up", listOf(GymField.REPS), specs = listOf(BANDS_SPEC))
+        val a = GymSet(id = 1, exerciseId = 13, day = "2026-11-20", order = 5, reps = 1, restSec = 90, note = "ok", specs = mapOf("Bands" to "black"))
+        val sets = listOf(a, a.copy(id = 2, reps = 2, restSec = null, note = ""), a.copy(id = 3))
+        val before = commonChoices(sets, mu)
+        assertEquals(mapOf("Bands" to "black"), before.second)
+        val after = applyChoices(sets, before, before.first to mapOf("Bands" to "red"))
+        assertEquals(listOf("red", "red", "red"), after.map { it.specs["Bands"] })
+        // everything else stays
+        assertEquals(sets.map { it.copy(specs = mapOf("Bands" to "red")) }, after)
+        // different bands: nothing shared, and an untouched choice keeps each set's own
+        val mixed = listOf(a, a.copy(id = 4, specs = mapOf("Bands" to "purple")))
+        val m = commonChoices(mixed, mu)
+        assertEquals(emptyMap<String, String>(), m.second)
+        assertEquals(mixed, applyChoices(mixed, m, m))
+        // a variant picked for all
+        val squat = Exercise(1, "Squat", listOf(GymField.WEIGHT, GymField.REPS), variants = listOf("deep", "normal"))
+        val sq = listOf(set(70.0).copy(variant = "deep"), set(90.0).copy(variant = "normal"))
+        val c = commonChoices(sq, squat)
+        assertEquals(null, c.first)
+        assertEquals(listOf("normal", "normal"), applyChoices(sq, c, "normal" to c.second).map { it.variant })
+        assertEquals(listOf(70.0, 90.0), applyChoices(sq, c, "normal" to c.second).map { it.weightKg })
+    }
+
+    @Test
     fun sidesAlternateAndBothWritesTwo() {
         assertEquals(SideChoice.RIGHT, SideChoice.LEFT.afterSet())
         assertEquals(SideChoice.BOTH, SideChoice.BOTH.afterSet())
