@@ -372,8 +372,9 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String, initialTab: In
                 }
             }
             val running = timerFrom != null && !selecting
+            Box(Modifier.fillMaxWidth().height(1.dp).background(p.surface))
             Column(
-                Modifier.fillMaxWidth().background(p.bg).border(1.dp, p.surface).padding(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 12.dp),
+                Modifier.fillMaxWidth().background(p.bg).padding(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 val sideNow = when (side) { SideChoice.LEFT -> Side.LEFT; SideChoice.RIGHT -> Side.RIGHT; else -> null }
