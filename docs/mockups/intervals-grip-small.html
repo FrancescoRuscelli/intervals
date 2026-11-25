@@ -186,7 +186,9 @@ tr.pick td { background: var(--accent-soft); }
   <section class="concept" id="concept" aria-live="polite"></section>
   <section class="reco">
     <h2>Cosa farei</h2>
-    <p><b>A</b>: accanto al nome dell'esercizio, in alto. È il posto di quello che «resta così» per tutta la seduta, non ruba spazio al pannello e si vede sempre.
+    <p><b>A</b> o <b>A3</b>. A se le impostazioni sono una o due; A3 se crescono (presa, tacca, altezza…), perché resta una riga sola qualunque sia il numero.
+      A2 è la più leggera ma ci sta un pulsantino solo.</p>
+    <p style="margin-top:8px"><b>A</b>: accanto al nome dell'esercizio, in alto. È il posto di quello che «resta così» per tutta la seduta, non ruba spazio al pannello e si vede sempre.
       Con più impostazioni (grip, tacca) diventano più pulsantini uno accanto all'altro sotto il nome.</p>
   </section>
 </div>
@@ -211,6 +213,19 @@ const C = [
       ['<b>Primo tocco:</b> il menu; il secondo sceglie thumb.', screen(head(`<div style="margin-top:3px">${mini()}</div>`), strip + time + vpn() + log, '<div class="scrim" style="opacity:.4"></div>' + menu('left:44px;top:66px'))]],
     pro: ['Il pannello non cresce.', 'Posto chiaro per quello che vale per tutta la seduta.', 'Con più impostazioni: più pulsantini in fila.'],
     con: ['Lontano dal pollice (ma lo tocchi di rado).'] },
+  { k: 'A2', name: 'Sulla riga del titolo, a destra', short: 'A2 · Accanto al titolo',
+    idea: 'Il pulsantino sta sulla stessa riga di «Pinch», a destra, prima della matita. Non aggiunge nessuna riga: lo schermo resta identico a oggi.',
+    shots: [['<b>Nel titolo:</b> «Pinch» a sinistra, «grip normal ▾» a destra.', screen(head().replace('<span class="m">✎</span>', `${mini()}<span class="m" style="margin-left:6px">✎</span>`), strip + time + vpn() + log)]],
+    pro: ['Zero spazio in più.', 'Lontano dalle scelte rapide.'], con: ['Con un nome lungo («Resistance Band One Arm Pull Up») il titolo va su due righe.', 'Ci sta un pulsantino solo; con due impostazioni no.'] },
+  { k: 'A3', name: 'Una riga «impostazioni» sotto le schede', short: 'A3 · Riga impostazioni',
+    idea: 'Sotto Log · History · Graph · Records, una riga di testo sottile: «grip normal · tacca 20 mm ✎». Tocchi la riga e si apre un pannello con tutte le impostazioni che restano per la seduta.',
+    shots: [['<b>Una riga di testo:</b> tutte le impostazioni fisse insieme.', screen(head() + `<div style="padding:6px 12px;border-bottom:1px solid var(--ph-line);font:600 11px var(--text);color:var(--ph-muted)">grip <b style="color:var(--ph-ink)">normal</b> ✎</div>`, strip + time + vpn() + log)],
+      ['<b>Tocchi la riga:</b> un pannello con le impostazioni, poi si chiude.', screen(head() + `<div style="padding:6px 12px;border-bottom:1px solid var(--ph-line);font:600 11px var(--text);color:var(--ph-muted)">grip <b style="color:var(--ph-ink)">normal</b> ✎</div>`, strip + time + vpn() + log, '<div class="scrim"></div><div class="sheet"><div class="grab"></div><div class="t" style="font-size:15px">Set up</div><span class="m">grip</span><div class="vpn"><span class="on">normal</span><span>thumb</span></div><span class="hint">Resta così per le prossime serie.</span></div>')]],
+    pro: ['Un posto solo per tutte le impostazioni, quante che siano.', 'Si legge come una frase.'], con: ['Una riga sottile in più in alto.'] },
+  { k: 'A4', name: 'Dentro il titolo', short: 'A4 · Nel titolo',
+    idea: 'Il titolo diventa «Pinch · normal grip», con la seconda parte più chiara e sottolineata a puntini. Tocchi lì e scegli. Nessun pulsante.',
+    shots: [['<b>Nel nome:</b> «Pinch · normal grip».', screen(head().replace('font-size:19px">Pinch</div>', 'font-size:19px">Pinch <span style="font-size:13px;color:var(--ph-muted);border-bottom:1px dotted var(--ph-muted)">· normal grip</span></div>'), strip + time + vpn() + log)]],
+    pro: ['Il più pulito di tutti.'], con: ['Non sembra toccabile: va scoperto.'] },
   { k: 'B', name: 'In cima al pannello, a destra', short: 'B · Nel pannello',
     idea: 'Il pulsantino sta sopra la striscia kg / reps, allineato a destra. Vicino ai numeri, piccolo.',
     shots: [['<b>Sopra i numeri:</b> «grip normal ▾» a destra.', screen(head(), `<div style="display:flex;justify-content:flex-end;margin-bottom:-2px">${mini()}</div>` + strip + time + vpn() + log)],
@@ -226,7 +241,7 @@ const box = document.getElementById('concept');
 let current = 0;
 function render() {
   const c = C[current];
-  sw.innerHTML = C.map((x, i) => `<button type="button" aria-pressed="${i === current}" data-i="${i}"><span class="k">${x.k}</span>${x.short.replace(/^[A-Z] · /, '')}</button>`).join('');
+  sw.innerHTML = C.map((x, i) => `<button type="button" aria-pressed="${i === current}" data-i="${i}"><span class="k">${x.k}</span>${x.short.replace(/^[A-Z][0-9]? · /, '')}</button>`).join('');
   box.innerHTML = `<h2>${c.k} · ${c.name}</h2><p class="idea">${c.idea}</p>
     <div class="phones">${c.shots.map(([cap, ph]) => `<figure>${ph}<figcaption>${cap}</figcaption></figure>`).join('')}</div>
     <div class="notes"><div class="note pro"><h3>A favore</h3><ul>${c.pro.map((x) => `<li>${x}</li>`).join('')}</ul></div>
