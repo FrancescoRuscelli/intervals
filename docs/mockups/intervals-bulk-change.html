@@ -1,0 +1,218 @@
+<title>Bulk Set Changes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: an idea switcher, then the set screen of that idea (and a second state), side by side, then pros / cons. */
+:root {
+  --bg: #f4f2fa; --surface: #ffffff; --ink: #18151f; --muted: #5b5668; --line: #dfdbe9; --accent: #6d28d9; --accent-soft: #ece4fd;
+  --good: #0f7a5c; --warn: #9a4a00;
+  /* the phones always use the app's own dark look */
+  --ph-bg: #000000; --ph-card: #1a1c21; --ph-card2: #111216; --ph-line: #23262c; --ph-ink: #f2f3f5; --ph-muted: #9aa0aa; --ph-faint: #6e747e;
+  --ph-accent: #7c3aed; --ph-accent-ink: #c4b1ff; --ph-tint: #2a2340; --ph-pink: #e91e63; --ph-teal: #00bfa5; --ph-yellow: #ffc107;
+  --display: "Space Grotesk", Inter, system-ui, sans-serif; --text: Inter, system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0b10; --surface: #17151d; --ink: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --accent-soft: #241d38;
+  --good: #4fd1a5; --warn: #ffb35c; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0c0b10; --surface: #17151d; --ink: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --accent-soft: #241d38;
+  --good: #4fd1a5; --warn: #ffb35c; color-scheme: dark }
+
+body { background: var(--bg); color: var(--ink); font-family: var(--text); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 48px; }
+.wrap { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+h1 { font-family: var(--display); font-size: clamp(28px, 5vw, 40px); line-height: 1.1; margin: 0; text-wrap: balance; letter-spacing: -0.5px; }
+.lead { margin: 6px 0 0; color: var(--muted); max-width: 68ch; }
+.switch { display: flex; flex-wrap: wrap; gap: 8px; }
+.switch button { font: 600 14px var(--text); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
+  padding: 9px 14px; cursor: pointer; display: flex; gap: 8px; align-items: center; }
+.switch button .k { font-family: var(--display); color: var(--accent); }
+.switch button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.switch button[aria-pressed="true"] .k { color: #fff; }
+.switch button:focus-visible, .phone button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.concept h2 { font-family: var(--display); font-size: 26px; margin: 0; letter-spacing: -0.3px; }
+.concept .idea { margin: 4px 0 0; color: var(--muted); max-width: 70ch; }
+.phones { display: flex; gap: 22px; overflow-x: auto; padding: 6px 2px 14px; scroll-snap-type: x mandatory; }
+figure { margin: 0; display: flex; flex-direction: column; gap: 8px; scroll-snap-align: start; }
+figcaption { font-size: 13px; color: var(--muted); max-width: 300px; }
+figcaption b { color: var(--ink); }
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.note { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; min-width: 0; }
+.note h3 { margin: 0 0 6px; font-size: 13px; letter-spacing: 0.6px; text-transform: uppercase; }
+.note.pro h3 { color: var(--good); } .note.con h3 { color: var(--warn); }
+.note ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.compare { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 14px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+thead th { font-size: 12px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted); }
+td.n { font-family: var(--display); font-variant-numeric: tabular-nums; font-weight: 600; }
+tr.pick td { background: var(--accent-soft); }
+.reco { background: var(--accent-soft); border-radius: 14px; padding: 16px 18px; }
+.reco h2 { font-family: var(--display); margin: 0 0 6px; font-size: 22px; }
+.reco p { margin: 0; max-width: 75ch; }
+
+/* ---- phone ---- */
+.phone { width: 300px; height: 620px; flex: none; background: var(--ph-bg); color: var(--ph-ink); border-radius: 34px; border: 8px solid #1e1d24;
+  box-sizing: border-box; position: relative; overflow: hidden; display: flex; flex-direction: column; font-size: 13px; line-height: 1.35;
+  box-shadow: 0 10px 30px rgba(20, 10, 40, 0.18); }
+.phone .body { flex: 1; overflow: hidden; padding: 14px 12px 10px; display: flex; flex-direction: column; gap: 9px; }
+.phone .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.phone .h { font-family: var(--display); font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+.phone .sub { color: var(--ph-muted); font-size: 11.5px; }
+.phone .card { background: var(--ph-card); border-radius: 14px; padding: 10px 11px; display: flex; flex-direction: column; gap: 5px; }
+.phone .card.dim { background: var(--ph-card2); }
+.phone .card.hi { background: #1c1828; border: 2px solid var(--ph-accent); }
+.phone .row { display: flex; align-items: center; gap: 8px; }
+.phone .grow { flex: 1; min-width: 0; }
+.phone .t { font-weight: 700; font-size: 13.5px; }
+.phone .m { color: var(--ph-muted); font-size: 11.5px; }
+.phone .num { font-family: var(--display); font-variant-numeric: tabular-nums; font-weight: 700; }
+.phone .big { font-family: var(--display); font-weight: 700; font-size: 44px; line-height: 1; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+.phone button { font: 700 13px var(--text); border: 0; border-radius: 12px; cursor: pointer; }
+.phone .btn { background: var(--ph-accent); color: #fff; height: 42px; width: 100%; }
+.phone .btn.soft { background: var(--ph-tint); color: var(--ph-accent-ink); }
+.phone .btn.teal { background: var(--ph-teal); color: #04241f; }
+.phone .btn.pink { background: var(--ph-pink); }
+.phone .pill { padding: 3px 9px; border-radius: 999px; background: var(--ph-tint); color: var(--ph-accent-ink); font-size: 11px; font-weight: 700; white-space: nowrap; }
+.phone .pill.pink { background: rgba(233, 30, 99, 0.18); color: #ff8ab3; }
+.phone .pill.teal { background: rgba(0, 191, 165, 0.16); color: #5eead4; }
+.phone .pill.yellow { background: rgba(255, 193, 7, 0.16); color: #ffd666; }
+.phone .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.phone .chev { color: var(--ph-faint); font-size: 18px; }
+.phone .tabs { display: flex; border-top: 1px solid var(--ph-line); background: #0b0c0f; padding: 6px 4px 10px; }
+.phone .tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--ph-faint); font-size: 10.5px; font-weight: 600; }
+.phone .tab i { width: 30px; height: 22px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-style: normal; font-size: 13px; }
+.phone .tab.on { color: var(--ph-accent-ink); } .phone .tab.on i { background: var(--ph-tint); }
+.phone .tab.fab i { width: 48px; height: 48px; border-radius: 24px; margin-top: -22px; background: var(--ph-accent); color: #fff; font-size: 24px; box-shadow: 0 4px 14px rgba(124, 58, 237, 0.5); }
+.phone .mini { margin: 0 8px 6px; background: #1c1828; border: 1px solid #3b2f63; border-radius: 16px; padding: 8px 10px; display: flex; align-items: center; gap: 9px; }
+.phone .ring { width: 34px; height: 34px; border-radius: 50%; flex: none; background: conic-gradient(var(--ph-teal) 0 62%, #2a2d34 0); display: flex; align-items: center; justify-content: center; }
+.phone .ring span { width: 26px; height: 26px; border-radius: 50%; background: #1c1828; display: flex; align-items: center; justify-content: center; font: 700 9px var(--display); color: #5eead4; }
+.phone .sheet { position: absolute; inset: auto 0 0 0; background: #15161b; border-radius: 22px 22px 0 0; padding: 10px 12px 14px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 -10px 30px rgba(0,0,0,0.6); }
+.phone .grab { width: 38px; height: 4px; border-radius: 2px; background: #3a3d45; align-self: center; }
+.phone .scrim { position: absolute; inset: 0; background: rgba(0,0,0,0.55); }
+.phone .seg { display: flex; background: var(--ph-card); border-radius: 12px; padding: 3px; }
+.phone .seg span { flex: 1; text-align: center; padding: 7px 0; border-radius: 9px; font-weight: 700; color: var(--ph-muted); font-size: 12px; }
+.phone .seg span.on { background: var(--ph-accent); color: #fff; }
+.phone .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.phone .week div { background: var(--ph-card2); border-radius: 10px; padding: 5px 0; text-align: center; font-size: 10px; color: var(--ph-muted); display: flex; flex-direction: column; gap: 3px; align-items: center; }
+.phone .week div b { font-family: var(--display); color: var(--ph-ink); font-size: 13px; }
+.phone .week div.today { outline: 2px solid var(--ph-accent); }
+.phone .bar { height: 5px; border-radius: 3px; width: 70%; }
+.phone .boxes { display: flex; flex-wrap: wrap; gap: 4px; }
+.phone .boxes span { min-width: 22px; height: 22px; padding: 0 5px; box-sizing: border-box; border-radius: 6px; border: 1px solid #2a2d34; display: inline-flex; align-items: center; justify-content: center; font: 600 11.5px var(--display); }
+.phone .search { background: var(--ph-card); border-radius: 12px; padding: 9px 11px; color: var(--ph-faint); }
+.phone .tile { flex: 1; background: var(--ph-card); border-radius: 16px; padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.phone .tile .big { font-size: 34px; }
+.phone .pm { display: flex; gap: 6px; width: 100%; } .phone .pm button { flex: 1; height: 34px; background: var(--ph-tint); color: var(--ph-accent-ink); font-size: 18px; }
+@media (prefers-reduced-motion: no-preference) { .concept { animation: in 220ms ease-out; } @keyframes in { from { opacity: 0.4; transform: translateY(6px); } } }
+.phone .dock { border-top: 1px solid var(--ph-line); background: #0b0c0f; padding: 8px 10px 12px; display: flex; flex-direction: column; gap: 7px; }
+.phone .logbtn { height: 52px; border-radius: 14px; background: var(--ph-accent); color: #fff; font: 700 14px var(--text); display: flex; align-items: center; justify-content: center; gap: 8px; flex: 1; }
+.phone .logbtn.l { background: var(--ph-pink); } .phone .logbtn.r { background: var(--ph-teal); color: #04241f; }
+.phone .logbtn.off { background: var(--ph-card); color: var(--ph-muted); border: 1px solid var(--ph-line); }
+.phone .hdr { display: flex; align-items: center; gap: 8px; }
+.phone .hdr .back { color: var(--ph-muted); font-size: 20px; }
+.phone .tabsx { display: flex; gap: 14px; justify-content: center; font-size: 12px; font-weight: 700; color: var(--ph-faint); }
+.phone .tabsx .on { color: var(--ph-accent-ink); border-bottom: 2px solid var(--ph-accent); padding-bottom: 3px; }
+.phone .lbl { font-size: 10.5px; letter-spacing: 0.6px; font-weight: 700; color: var(--ph-muted); }
+.phone .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.phone .chip { padding: 6px 10px; border-radius: 10px; background: var(--ph-card); font-weight: 700; font-size: 12px; color: var(--ph-ink); }
+.phone .chip.on { background: var(--ph-accent); color: #fff; }
+.phone .chip.ghost { background: transparent; border: 1px dashed #3a3d45; color: var(--ph-muted); }
+.phone .seg span.l.on { background: var(--ph-pink); } .phone .seg span.r.on { background: var(--ph-teal); color: #04241f; }
+.phone .timer { background: var(--ph-card); border-radius: 16px; padding: 10px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.phone .timer .big { font-size: 40px; }
+.phone .go { height: 46px; width: 100%; border-radius: 14px; background: var(--ph-pink); color: #fff; font: 800 15px var(--text); display: flex; align-items: center; justify-content: center; letter-spacing: 1px; }
+.phone .sentence { background: #1c1828; border: 2px solid var(--ph-accent); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.phone .tok { display: inline-flex; align-items: baseline; gap: 3px; padding: 4px 9px; border-radius: 10px; background: var(--ph-tint); color: var(--ph-accent-ink); font: 700 17px var(--display); }
+.phone .tok small { font: 600 10px var(--text); color: var(--ph-muted); }
+.phone .tok.l { background: rgba(233, 30, 99, 0.2); color: #ff8ab3; }
+.phone .hint { font-size: 11px; color: var(--ph-faint); }
+.phone .set { display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--ph-muted); }
+.phone .set b { color: var(--ph-ink); font-family: var(--display); }
+.phone .side { width: 18px; height: 18px; border-radius: 6px; font: 800 10px var(--text); display: inline-flex; align-items: center; justify-content: center; }
+.phone .side.l { background: rgba(233, 30, 99, 0.25); color: #ff8ab3; } .phone .side.r { background: rgba(0, 191, 165, 0.22); color: #5eead4; }
+.phone .vp { display: flex; gap: 6px; }
+.phone .vp span { flex: 1; border-radius: 12px; background: var(--ph-card); border: 1px solid var(--ph-line); padding: 5px 4px; display: flex; flex-direction: column; align-items: center; font: 700 12.5px var(--text); color: var(--ph-ink); }
+.phone .vp span small { font: 600 9.5px var(--display); color: var(--ph-muted); }
+.phone .vp span.on { background: var(--ph-accent); border-color: var(--ph-accent); color: #fff; }
+.phone .vp span.on small { color: #e6dcff; }
+.phone .scrollzone { flex: 1; overflow: hidden; position: relative; display: flex; flex-direction: column; gap: 6px; padding: 0 2px; }
+.phone .scrollzone.fadeT::before, .phone .scrollzone.fadeB::after { content: ""; position: absolute; left: 0; right: 0; height: 26px; z-index: 2; pointer-events: none; }
+.phone .scrollzone.fadeT::before { top: 0; background: linear-gradient(#16181d, transparent); }
+.phone .scrollzone.fadeB::after { bottom: 0; background: linear-gradient(transparent, #16181d); }
+.phone .blk { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: 11.5px; color: var(--ph-muted); background: var(--ph-card); border: 1px solid var(--ph-line); border-radius: 10px; padding: 5px 7px; }
+.phone .blk b { color: var(--ph-ink); font: 700 12px var(--display); }
+.phone .blk em { font-style: normal; font-weight: 700; padding: 1px 6px; border-radius: 6px; background: var(--ph-tint); color: var(--ph-accent-ink); font-size: 10.5px; }
+.phone .panel { background: #0b0c0f; border-top: 1px solid var(--ph-line); padding: 8px 10px 10px; display: flex; flex-direction: column; gap: 7px; }
+.phone .panel.top { border-top: 0; border-bottom: 1px solid var(--ph-line); padding: 6px 10px 8px; background: transparent; }
+.phone .strip { display: flex; gap: 8px; }
+.phone .num { flex: 1; background: var(--ph-card); border-radius: 14px; display: flex; align-items: center; justify-content: space-between; padding: 4px; }
+.phone .num button { width: 38px; height: 38px; border-radius: 10px; background: var(--ph-tint); color: var(--ph-accent-ink); font-size: 18px; }
+.phone .num .mid { display: flex; flex-direction: column; align-items: center; line-height: 1.05; }
+.phone .num .mid small { font: 600 9.5px var(--text); color: var(--ph-muted); }
+.phone .num .mid b { font: 700 24px var(--display); color: var(--ph-ink); }
+.phone .handle { align-self: center; width: 34px; height: 4px; border-radius: 2px; background: #3a3d45; }
+.phone .hintx { font-size: 11px; color: #5eead4; }
+.phone .sr { display: flex; align-items: center; gap: 6px; background: var(--ph-card); border: 1px solid var(--ph-line); border-radius: 10px; padding: 5px 7px; font: 600 11px var(--display); color: var(--ph-muted); }
+.phone .sr .bx { min-width: 24px; height: 24px; border-radius: 7px; background: #000; border: 1px solid #2a2d34; display: inline-flex; align-items: center; justify-content: center; color: var(--ph-ink); font: 700 12px var(--display); }
+.phone .sr.sel { border-color: var(--ph-pink); background: #2a1420; }
+.phone .sr.sel .bx { background: #4a1a33; border-color: var(--ph-pink); }
+.phone .bd { width: 11px; height: 11px; border-radius: 6px; display: inline-block; border: 1px solid rgba(255,255,255,.35); }
+.phone .bands { display: flex; align-items: center; gap: 10px; }
+.phone .bands .lb { width: 44px; font: 700 10px var(--text); letter-spacing: .6px; color: var(--ph-muted); }
+.phone .bdot { width: 30px; height: 30px; border-radius: 15px; border: 1px solid rgba(255,255,255,.35); box-sizing: border-box; }
+.phone .bdot.on { outline: 2.5px solid #fff; outline-offset: 2px; }
+.phone .dim { opacity: .4; }
+.phone .acts { display: flex; gap: 6px; }
+.phone .acts div { flex: 1; height: 46px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font: 700 13px var(--text); background: var(--ph-card); color: var(--ph-ink); border: 1px solid var(--ph-line); }
+.phone .acts .x { flex: 0 0 46px; }
+.phone .acts .del { color: #ff8a80; }
+.phone .acts .up { background: var(--ph-pink); border-color: var(--ph-pink); color: #fff; flex: 1.4; }
+.phone .vpn { display: flex; gap: 6px; }
+.phone .vpn span { flex: 1; height: 38px; border-radius: 12px; background: var(--ph-card); border: 1px solid var(--ph-line); display: flex; align-items: center; justify-content: center; font: 700 12.5px var(--text); color: var(--ph-ink); }
+.phone .vpn span.on { background: var(--ph-accent); border-color: var(--ph-accent); color: #fff; }
+.phone .vpn span.mixed { border-style: dashed; }
+.phone .toast { background: #2a2d34; border-radius: 12px; padding: 8px 10px; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ph-ink); }
+.phone .toast .grow { flex: 1; }
+.phone .toast .act { font-weight: 800; color: var(--ph-accent-ink); padding: 4px 8px; border-radius: 8px; background: var(--ph-tint); }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Cambiare elastici e variante a più set insieme</h1>
+    <p class="lead">Solo idee, l'app non è cambiata. Oggi, con più set selezionati, puoi solo mettere una nota o cancellare. Qui, con più set selezionati,
+      le scelte (elastici, variante, presa) restano accese: tocchi quello che vuoi cambiare e compare «Update 3 sets», che cambia <b>solo quello</b> su tutti.
+      Peso, reps, lato, note e riposi di ogni set restano com'erano. Esempio: il tuo Muscle Up del 20, tre set segnati col nero che in realtà erano col rosso.</p>
+  </header>
+  <section class="concept" id="concept" aria-live="polite"></section>
+  <section class="reco">
+    <h2>Da decidere</h2>
+    <p><b>Set con elastici diversi tra loro.</b> All'inizio nessun elastico è acceso se i set selezionati ne hanno di diversi (qui tutti e tre hanno il nero, quindi il nero è acceso).
+      Quello che scegli diventa l'elastico di tutti, al posto del loro. Se non tocchi gli elastici, ognuno tiene il suo.</p>
+  </section>
+</div>
+
+<script>
+const phone = (inner) => `<div class="phone" role="img" style="display:flex;flex-direction:column">${inner}</div>`;
+const head = `<div style="padding:10px 10px 0;display:flex;flex-direction:column;gap:6px"><div class="hdr"><span class="back">‹</span><div class="grow"><div class="h" style="font-size:19px">Muscle Up</div></div><span class="m">✎</span></div>
+  <div class="tabsx"><span class="on">Log</span><span>History</span><span>Graph</span><span>Records</span></div></div>`;
+const B = { purple: '#8e44d8', black: '#16181c', red: '#e53935', yellow: '#ffc107', green: '#43a047' };
+const list = (bands, sel) => `<span class="lbl">SETS · 9 · TAP TO ADD OR REMOVE SETS</span>` + bands.map((b, i) =>
+  `<div class="sr${sel.includes(i) ? ' sel' : ''}"><span style="width:12px">${i + 1}</span><i class="bd" style="background:${B[b] || 'transparent'}"></i><span class="bx">1</span>${b === 'none' ? '<span>no band</span>' : ''}</div>`).join('');
+const nums = `<div class="strip dim"><div class="num"><button aria-label="less">−</button><span class="mid"><small>reps</small><b>1</b></span><button aria-label="more">+</button></div></div>`;
+const bandsRow = (on) => `<div class="bands"><span class="lb">BANDS</span>${['green', 'purple', 'black', 'red', 'yellow'].map((b) => `<span class="bdot${on.includes(b) ? ' on' : ''}" style="background:${B[b]}"></span>`).join('')}</div>`;
+const acts = (up) => `<span class="hint" style="text-align:center">3 selected · tap sets to add or remove them</span><div class="acts"><div class="x">✕</div><div>Note</div>${up ? '<div class="up">Update 3 sets</div>' : '<div class="del">Delete</div>'}</div>`;
+const before = ['purple', 'black', 'red', 'yellow', 'none', 'purple', 'purple', 'black', 'black'];
+const shots = [
+  ['<b>Tre set selezionati</b> (6, 8 e 9). Reps spento, perché ognuno ha il suo. Gli elastici restano accesi: tutti e tre hanno il nero.',
+    phone(head + `<div class="scrollzone" style="padding:8px 10px;justify-content:flex-end">${list(['purple', 'black', 'red', 'yellow', 'none', 'black', 'purple', 'black', 'black'], [5, 7, 8])}</div><div class="panel">${nums}${bandsRow(['black'])}${acts(false)}</div>`)],
+  ['<b>Tocchi il rosso e togli il nero:</b> compare «Update 3 sets» al posto di Delete.',
+    phone(head + `<div class="scrollzone" style="padding:8px 10px;justify-content:flex-end">${list(['purple', 'black', 'red', 'yellow', 'none', 'black', 'purple', 'black', 'black'], [5, 7, 8])}</div><div class="panel">${nums}${bandsRow(['red'])}${acts(true)}</div>`)],
+  ['<b>Update:</b> i tre set ora hanno il rosso; reps e riposi sono quelli di prima. Per qualche secondo c\'è Undo.',
+    phone(head + `<div class="scrollzone" style="padding:8px 10px;justify-content:flex-end">${list(['purple', 'black', 'red', 'yellow', 'none', 'red', 'purple', 'red', 'red'], [])}</div><div class="panel"><div class="toast"><span class="grow">Updated 3 sets · red</span><span class="act">Undo</span></div><div class="strip"><div class="num"><button aria-label="less">−</button><span class="mid"><small>reps</small><b>1</b></span><button aria-label="more">+</button></div></div>${bandsRow(['red'])}<div class="row"><div class="logbtn" style="height:44px">Log set</div></div></div>`)],
+  ['<b>Con le varianti</b> (Pinch): selezioni quattro giri, cioè 8 set, e tocchi «small». Cambia solo la variante, peso e reps restano.',
+    phone(head.replace('>Muscle Up<', '>Pinch<') + `<div class="scrollzone" style="padding:8px 10px;justify-content:flex-end">${['10 kg', '12 kg', '14 kg', '14 kg', '15 kg'].map((k, i) => `<div class="sr${i > 0 ? ' sel' : ''}"><span style="width:12px">${i + 5}</span><span>L ${k}</span><span class="bx">1</span><span>R ${k}</span><span class="bx">1</span></div>`).join('')}</div><div class="panel"><div class="strip dim"><div class="num"><button aria-label="less">−</button><span class="mid"><small>kg</small><b>14</b></span><button aria-label="more">+</button></div><div class="num"><button aria-label="less">−</button><span class="mid"><small>reps</small><b>1</b></span><button aria-label="more">+</button></div></div><div class="vpn"><span>medium</span><span class="on">small</span><span>large</span></div>${acts(true).replace('3 selected', '8 selected').replace('Update 3 sets', 'Update 8 sets')}</div>`)],
+];
+document.getElementById('concept').innerHTML = `<div class="phones">${shots.map(([cap, ph]) => `<figure>${ph}<figcaption>${cap}</figcaption></figure>`).join('')}</div>`;
+document.querySelectorAll('.phone').forEach((p, i) => p.setAttribute('aria-label', `Bulk change, screen ${i + 1}`));
+</script>
