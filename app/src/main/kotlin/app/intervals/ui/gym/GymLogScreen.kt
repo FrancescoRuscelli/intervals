@@ -223,10 +223,8 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String, initialTab: In
         val groups = ex.shownSpecs(v.specs, curVariant).filter { it.isChoice }
         if (ex.variants.isNotEmpty()) {
             val cur = v.variant?.takeIf { it in ex.variants } ?: ex.variants.first()
-            // the last set of each variant, as that variant records it (90° hold: its time), without the variant's name
-            val plain = remember(ex) { ex.copy(specs = emptyList()) }
             // no label over the variants: their names say what they are (mockup intervals-range-bands.html, B)
-            VariantRow(ex.variants, cur, { vn -> lastOfVariant(allSets, ex, vn)?.let { l -> l.copy(weightKg = l.weightKg?.takeIf { it != 0.0 }) }?.summary(plain)?.removePrefix("$vn · ") ?: "—" }, enabled = !bulk) { picked ->
+            VariantRow(ex.variants, cur, enabled = !bulk) { picked ->
                 val side1 = when (side) { SideChoice.LEFT -> Side.LEFT; SideChoice.RIGHT -> Side.RIGHT; else -> null }
                 // editing a set changes only its variant; a new set takes the variant's own last numbers
                 if (edit != null) change { it.copy(variant = picked) }
@@ -756,7 +754,7 @@ private fun NumberDialog(title: String, initial: String, decimal: Boolean, onDis
 
 /** The exercise's variants in one row, each with its last set under the name; past three the row scrolls, the fourth cut to show it goes on. */
 @Composable
-private fun VariantRow(variants: List<String>, current: String, last: (String) -> String, enabled: Boolean, onPick: (String) -> Unit) {
+private fun VariantRow(variants: List<String>, current: String, enabled: Boolean, onPick: (String) -> Unit) {
     val p = LocalPalette.current
     val state = androidx.compose.foundation.lazy.rememberLazyListState()
     // keep the variant in use on screen
@@ -776,10 +774,10 @@ private fun VariantRow(variants: List<String>, current: String, last: (String) -
                     Modifier.width(w).heightIn(min = 48.dp).clip(shape).background(if (on) p.accent else p.surface).border(1.dp, if (on) p.accent else p.line, shape)
                         .semantics { selected = on }.clickable(enabled = enabled, onClickLabel = "Switch to $name") { onPick(name) }
                         .padding(horizontal = 4.dp, vertical = 6.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
+                    horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
                 ) {
+                    // only the name: the numbers are already in the panel above (fewer numbers, less clutter)
                     Text(name, color = if (on) p.onAccent else p.text, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-                    Text(last(name), color = if (on) p.onAccent.copy(alpha = 0.8f) else p.muted, fontSize = 11.sp, maxLines = 1)
                 }
             }
         }
