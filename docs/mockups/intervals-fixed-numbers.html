@@ -202,6 +202,7 @@ const blocks = (order) => {
 
 const fp = `<span class="lbl" style="padding:2px 2px 0">SETS · 12 · MEDIUM</span>` + [['10 kg', 'L 0:10', 'R 0:10'], ['10 kg', 'L 0:10', 'R 0:10'], ['12 kg', 'L 0:10', 'R 0:10'], ['14 kg', 'L 0:05', 'R 0:10'], ['16 kg', '', 'R 0:08'], ['16 kg', '', 'R 0:07'], ['16 kg', '', 'R 0:05'], ['14 kg', 'L 0:05', '']].map(([l, a, b]) => `<div class="blk"><b>${l}</b>${[a, b].filter(Boolean).map((x) => `<span class="boxes"><span>${x}</span></span>`).join('')}</div>`).join('');
 
+const stripFP = `<div class="strip"><div class="num"><button aria-label="less">−</button><span class="mid"><small>kg</small><b>12</b></span><button aria-label="more">+</button></div><div class="num"><button aria-label="less">−</button><span class="mid"><small>reps</small><b>1</b></span><button aria-label="more">+</button></div></div>`;
 const C = [
   { k: '0', name: 'Com\'è oggi', short: 'Oggi',
     idea: 'Una lista unica: numeri, poi i set. In basso fissi solo varianti e Log.',
@@ -240,6 +241,16 @@ const C = [
     pro: ['I numeri sempre in vista e sotto il pollice.', 'Più spazio per i set che in A e B (circa metà schermo).', 'Tutto quello che tocchi a ogni serie in un posto solo.'],
     con: ['Numeri più piccoli di oggi (24 px invece di 34).', 'Il timer va ripensato per stare nella striscia.'],
     row: ['in basso, compatti', '≈ 1/2', 'sì', 'medio'] },
+  { k: 'Ct', name: 'C con il timer', short: 'C · timer',
+    idea: 'Negli esercizi a tempo il pannello cambia altezza secondo cosa stai facendo. Pronto: una riga in più, il tempo con START. In tenuta: il pannello sale e copre la lista, perché mentre tieni non serve; tempo enorme e STOP largo. Fermato: torna basso, con il tempo misurato, − 1 s / + 1 s, e i pulsanti Log.',
+    shots: [
+      ['<b>Pronto:</b> kg e reps nella striscia, sotto il tempo con «last 0:10» e START.', phone(header.replace('>Squat<', '>Finger Pinch<') + `<div class="scrollzone fadeT" style="padding:8px 10px;justify-content:flex-end">${fp}</div><div class="panel">${stripFP}<div class="num" style="padding:4px 4px 4px 12px"><span class="mid" style="align-items:flex-start"><small>time · last 0:10 on the left</small><b>0:00</b></span><button style="width:auto;padding:0 18px;height:42px;background:var(--ph-teal);color:#04241f;font-size:14px;font-weight:800">START</button></div><div class="row" style="gap:6px"><div class="logbtn l" style="height:46px">Log L</div><div class="logbtn off" style="flex:.7;height:46px">L + R</div><div class="logbtn off" style="height:46px">Log R</div></div></div>`)],
+      ['<b>In tenuta:</b> il pannello copre la lista; tempo grande, STOP largo, Restart piccolo. Lo schermo resta acceso.', phone(header.replace('>Squat<', '>Finger Pinch<') + `<div class="scrollzone" style="padding:8px 10px;justify-content:flex-end;opacity:.25">${fp}</div><div class="panel" style="flex:0 0 62%;justify-content:center;background:rgba(233,30,99,.10);border-top:2px solid var(--ph-pink)"><span class="m" style="text-align:center">Holding · left · 12 kg · last 0:10</span><div style="text-align:center;font:700 64px var(--display);color:var(--ph-ink)">0:07<span style="font-size:28px;color:var(--ph-pink)">.4</span></div><div class="row" style="gap:8px"><div class="logbtn off" style="flex:.5;height:60px">Restart</div><div class="logbtn l" style="height:60px;font-size:20px;letter-spacing:1px">STOP</div></div></div>`)],
+      ['<b>Fermato:</b> torna basso con 0:09 misurato, − 1 s / + 1 s, e Log L acceso.', phone(header.replace('>Squat<', '>Finger Pinch<') + `<div class="scrollzone fadeT" style="padding:8px 10px;justify-content:flex-end">${fp}</div><div class="panel">${stripFP}<div class="num" style="padding:4px 4px 4px 12px"><span class="mid" style="align-items:flex-start"><small>time · measured</small><b>0:09</b></span><span style="display:flex;gap:6px"><button>−1</button><button>+1</button><button aria-label="time again" style="font-size:15px">↻</button></span></div><div class="row" style="gap:6px"><div class="logbtn l" style="height:46px">Log L</div><div class="logbtn off" style="flex:.7;height:46px">L + R</div><div class="logbtn off" style="height:46px">Log R</div></div></div>`)],
+    ],
+    pro: ['Pronto e fermato restano bassi: la lista si vede.', 'Mentre tieni, il tempo e STOP sono grandi come oggi.', 'Il flusso di oggi non cambia: START, STOP, aggiusti, Log.'],
+    con: ['Durante la tenuta la lista è coperta (non la guardi comunque).', 'Con peso, reps e tempo il pannello ha due righe di numeri.'],
+    row: ['in basso; in tenuta sale', '≈ 1/2, in tenuta coperta', 'sì', 'medio'] },
 ];
 
 const sw = document.getElementById('switch');
@@ -247,7 +258,7 @@ const box = document.getElementById('concept');
 let current = 3;
 function render() {
   const c = C[current];
-  sw.innerHTML = C.map((x, i) => `<button type="button" aria-pressed="${i === current}" data-i="${i}"><span class="k">${x.k}</span>${x.short.replace(/^[A-Z] · /, '')}</button>`).join('');
+  sw.innerHTML = C.map((x, i) => `<button type="button" aria-pressed="${i === current}" data-i="${i}"><span class="k">${x.k}</span>${x.short.replace(/^[A-Z]t? · /, '')}</button>`).join('');
   box.innerHTML = `
     <h2>${c.k} · ${c.name}</h2>
     <p class="idea">${c.idea}</p>
@@ -264,6 +275,6 @@ sw.addEventListener('click', (e) => {
   current = +b.dataset.i;
   render();
 });
-document.getElementById('cmp').innerHTML = C.map((c) => `<tr class="${c.k === 'C' ? 'pick' : ''}"><td><b>${c.k} · ${c.name}</b></td>${c.row.map((x) => `<td>${x}</td>`).join('')}</tr>`).join('');
+document.getElementById('cmp').innerHTML = C.map((c) => `<tr class="${['C', 'Ct'].includes(c.k) ? 'pick' : ''}"><td><b>${c.k} · ${c.name}</b></td>${c.row.map((x) => `<td>${x}</td>`).join('')}</tr>`).join('');
 render();
 </script>
