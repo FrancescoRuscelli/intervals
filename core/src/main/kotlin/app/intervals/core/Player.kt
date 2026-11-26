@@ -142,6 +142,9 @@ fun isRestName(name: String): Boolean {
 }
 
 /** What the voice says when a segment starts. */
+/** [spoken] as an old master says it: the order turned around. */
+fun Segment.spokenByMaster(): String = "${spoken()}, now you must."
+
 fun Segment.spoken(): String = when (kind) {
     SegmentKind.WARMUP -> "Warm up"
     SegmentKind.CHANGE_SIDE -> "Change side"

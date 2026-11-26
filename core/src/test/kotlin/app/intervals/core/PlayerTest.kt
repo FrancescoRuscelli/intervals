@@ -88,6 +88,7 @@ class PlayerTest {
     fun spokenWords() {
         val seg = Segment(SegmentKind.SERIES, "hang", 5, 0, SeriesIcon.JUMP, 1, 0, Side.LEFT)
         assertEquals("hang, left", seg.spoken())
+        assertEquals("hang, left, now you must.", seg.spokenByMaster())
         assertEquals("Change side", seg.copy(kind = SegmentKind.CHANGE_SIDE).spoken())
     }
 }
