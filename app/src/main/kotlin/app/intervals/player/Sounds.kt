@@ -24,7 +24,8 @@ class Sounds(context: Context, private val volume: Float, private val duck: Bool
     }
     private val tones = runCatching { ToneGenerator(AudioManager.STREAM_MUSIC, (volume * 100).toInt().coerceIn(1, 100)) }.getOrNull()
     private val attrs = AudioAttributes.Builder()
-        .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+        // like a navigator: media volume, still heard on silent (sonification is muted then, so the voice was never heard)
+        .setUsage(AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE)
         .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
         .build()
     private val focus = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK).setAudioAttributes(attrs).build()
