@@ -320,7 +320,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         if (ia.player != null) return
         if (saved.workout.blocks.isEmpty()) { message = "Add a series first"; return }
         val s = settings.value
-        val sounds = Sounds(getApplication(), s.volume, s.duckMusic, s.voiceLanguage, s.endSound, s.masterVoice)
+        val sounds = Sounds(getApplication(), s.volume, s.duckMusic, s.voiceLanguage, s.endSound)
         lateinit var c: PlayerController
         c = PlayerController(saved, s, sounds, ia.appScope, onEnd = { completed, elapsed, rounds, startedAt ->
             ia.appScope.launch {

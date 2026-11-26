@@ -16,15 +16,13 @@ import java.util.Locale
  * Voice and beeps of the player. Text-to-speech starts when the player opens and is released when it closes.
  * Other apps' music is lowered only while a cue plays (if [duck]).
  */
-class Sounds(context: Context, private val volume: Float, private val duck: Boolean, language: String, endSound: String? = null, private val master: Boolean = false) {
+class Sounds(context: Context, private val volume: Float, private val duck: Boolean, language: String, endSound: String? = null) {
     private val audio = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     private val handler = Handler(Looper.getMainLooper())
     private var ttsReady = false
     private val tts: TextToSpeech = TextToSpeech(context.applicationContext) { status ->
         ttsReady = status == TextToSpeech.SUCCESS
         if (ttsReady) tts.language = Locale.forLanguageTag(language)
-        // old master: a little higher and slower
-        if (ttsReady && master) { tts.setPitch(1.25f); tts.setSpeechRate(0.75f) }
     }
     private val tones = runCatching { ToneGenerator(AudioManager.STREAM_MUSIC, (volume * 100).toInt().coerceIn(1, 100)) }.getOrNull()
     private val attrs = AudioAttributes.Builder()
@@ -96,7 +94,7 @@ class Sounds(context: Context, private val volume: Float, private val duck: Bool
     fun finished() {
         duckFor(2500)
         tones?.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 600)
-        if (ttsReady) tts.speak(if (master) "Done, you are. Strong, you have become." else "Well done", TextToSpeech.QUEUE_ADD, null, "done")
+        if (ttsReady) tts.speak("Well done", TextToSpeech.QUEUE_ADD, null, "done")
     }
 
     fun close() {

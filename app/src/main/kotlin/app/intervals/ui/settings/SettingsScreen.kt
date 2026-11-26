@@ -94,7 +94,6 @@ fun SettingsScreen(vm: AppViewModel) {
 
         Group("Sound") {
             SwitchRow("Say the series names", "Voice, in English", s.sayNames) { v -> set { it.copy(sayNames = v) } }
-            SwitchRow("Old master voice", "Slower, a little higher: «Hang, now you must»", s.masterVoice) { v -> set { it.copy(masterVoice = v) } }
             SwitchRow("Beep the last 3 seconds", null, s.beepLast3) { v -> set { it.copy(beepLast3 = v) } }
             // the phone's own sound picker, as Hybrid Interval Timer does
             val pickSound = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->

@@ -12,7 +12,6 @@ import app.intervals.core.Cue
 import app.intervals.core.PlayerPlan
 import app.intervals.core.SavedWorkout
 import app.intervals.core.spoken
-import app.intervals.core.spokenByMaster
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -131,7 +130,7 @@ class PlayerController(
             val c = cues[nextCue++]
             if (now - c.atSec * 1000L > 1500 || muted) continue
             when (val cue = c.cue) {
-                is Cue.Start -> sounds.say(if (settings.masterVoice) cue.segment.spokenByMaster() else cue.segment.spoken())
+                is Cue.Start -> sounds.say(cue.segment.spoken())
                 is Cue.Beep -> sounds.beep(cue.n)
                 Cue.SegmentDone -> sounds.segmentDone()
                 Cue.Finished -> sounds.finished()

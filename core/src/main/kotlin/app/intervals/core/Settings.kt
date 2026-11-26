@@ -32,8 +32,6 @@ data class AppSettings(
     val lockControls: Boolean = false,
     /** A phone sound (content:// uri) at the end of each segment, like Hybrid Interval Timer; null = the app's own tone. */
     val endSound: String? = null,
-    /** The voice as an old master: slower, a little higher, words turned around ("Hang, now you must"). */
-    val masterVoice: Boolean = false,
 ) {
     init {
         require(volume in 0f..1f) { "volume must be in 0..1" }
