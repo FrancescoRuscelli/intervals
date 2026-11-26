@@ -105,6 +105,12 @@ function beep(t, f, len, type = 'sine', gain = 0.5) {
   o.connect(g).connect(ctx.destination); o.start(t); o.stop(t + len + 0.02);
 }
 const BELL = [[1, 1, 2.2], [2.76, 0.5, 1.2], [5.4, 0.3, 0.7], [8.93, 0.15, 0.4]];
+// HIIT Interval Training, measured from its files: triangle waves at a steady 0.69 volume, cut off clean
+const tri = (t, f, len) => beep(t, f, len, 'triangle', 0.69);
+const like = [
+  ['X1', 'Come HIIT, fine parte (acuto)', 'Onda triangolare a 1308 Hz per 0,715 s, volume fermo. Con 3-2-1 usa anche i loro bip del conto alla rovescia.', (t) => tri(t, 1308, 0.715)],
+  ['X2', 'Come HIIT, fine parte (medio)', 'Uguale ma a 998 Hz: l’altra app ne ha due, forse uno per fine lavoro e uno per fine riposo.', (t) => tri(t, 998, 0.715)],
+];
 const made = [
   ['A', 'Campana da boxe', 'Un colpo di campana metallica che risuona.', (t) => strike(t, 820, BELL)],
   ['B', 'Campana da boxe, doppia', 'Due colpi veloci: «din-din».', (t) => { strike(t, 820, BELL); strike(t + 0.22, 820, BELL); }],
@@ -127,6 +133,7 @@ async function fileSound(name, t) {
   src.connect(g).connect(ctx.destination); src.start(Math.max(t, ctx.currentTime));
 }
 const all = [
+  ...like.map((m) => [...m, 'x']),
   ...files.map((f, i) => [String(i + 1), f.replace(/_0*/, ' ').replace(/([a-z])([A-Z])/g, '$1 $2'), 'Kenney, CC0.', (t) => fileSound(f, t), 'k']),
   ...made.map((m) => [...m, 'm']),
 ];
@@ -134,12 +141,14 @@ async function play(i, withCount) {
   ac(); if (ctx.state === 'suspended') await ctx.resume();
   let t = ctx.currentTime + 0.05;
   // the app's countdown today: two short beeps and a longer, higher one
-  if (withCount) { beep(t, 1000, 0.15); beep(t + 1, 1000, 0.15); beep(t + 2, 1250, 0.3); t += 3; }
+  if (withCount && all[i][4] === 'x') { tri(t, 1714, 0.11); tri(t + 1, 1714, 0.11); tri(t + 2, 1714, 0.11); t += 3; }
+  else if (withCount) { beep(t, 1000, 0.15); beep(t + 1, 1000, 0.15); beep(t + 2, 1250, 0.3); t += 3; }
   all[i][3](t);
 }
 const card = ([k, h, p], i) => `<article class="snd"><h3><span class="k">${k}</span>${h}</h3><p>${p}</p>
    <div class="bt"><button class="main" data-i="${i}" data-c="0">▶ Solo fine</button><button data-i="${i}" data-c="1">▶ Con 3-2-1</button></div></article>`;
-document.getElementById('list').innerHTML = '<h2>File liberi (Kenney)</h2>' + all.map((x, i) => x[4] === 'k' ? card(x, i) : '').join('')
+document.getElementById('list').innerHTML = '<h2>Come HIIT Interval Training (rifatti dalle misure dei loro file)</h2>' + all.map((x, i) => x[4] === 'x' ? card(x, i) : '').join('')
+  + '<h2>File liberi (Kenney)</h2>' + all.map((x, i) => x[4] === 'k' ? card(x, i) : '').join('')
   + '<h2>Rifatti da me, come nelle altre app</h2>' + all.map((x, i) => x[4] === 'm' ? card(x, i) : '').join('');
 document.querySelectorAll('.snd button').forEach((b) => b.addEventListener('click', () => play(+b.dataset.i, b.dataset.c === '1')));
 </script>
