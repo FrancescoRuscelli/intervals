@@ -30,6 +30,8 @@ data class AppSettings(
     /** Player: small "3/6" (work series) and "2/4" (rounds) chips on the rings. */
     val showCounters: Boolean = true,
     val lockControls: Boolean = false,
+    /** A phone sound (content:// uri) at the end of each segment, like Hybrid Interval Timer; null = the app's own tone. */
+    val endSound: String? = null,
 ) {
     init {
         require(volume in 0f..1f) { "volume must be in 0..1" }

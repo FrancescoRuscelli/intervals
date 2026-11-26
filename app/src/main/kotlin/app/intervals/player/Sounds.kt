@@ -16,7 +16,7 @@ import java.util.Locale
  * Voice and beeps of the player. Text-to-speech starts when the player opens and is released when it closes.
  * Other apps' music is lowered only while a cue plays (if [duck]).
  */
-class Sounds(context: Context, private val volume: Float, private val duck: Boolean, language: String) {
+class Sounds(context: Context, private val volume: Float, private val duck: Boolean, language: String, endSound: String? = null) {
     private val audio = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     private val handler = Handler(Looper.getMainLooper())
     private var ttsReady = false
@@ -47,6 +47,12 @@ class Sounds(context: Context, private val volume: Float, private val duck: Bool
             .also { it.write(pcm, 0, n) }
     }.getOrNull()
 
+    // the phone sound picked in Settings, on the media volume like the voice
+    private val phoneSound = endSound?.let { u ->
+        runCatching { android.media.RingtoneManager.getRingtone(context, android.net.Uri.parse(u))?.apply { audioAttributes = attrs; volume = this@Sounds.volume } }.getOrNull()
+    }
+    private val stopPhoneSound = Runnable { runCatching { phoneSound?.stop() } }
+
     init {
         tts.setAudioAttributes(attrs)
     }
@@ -74,8 +80,14 @@ class Sounds(context: Context, private val volume: Float, private val duck: Bool
 
     /** A segment is over (each hang, rest, round rest): a long, clean tone, unlike the countdown beeps. */
     fun segmentDone() {
+        duckFor(1500)
+        phoneSound?.let { r ->
+            runCatching { r.stop(); r.play() }
+            // a long ringtone is cut: only its start marks the end of the set
+            handler.removeCallbacks(stopPhoneSound); handler.postDelayed(stopPhoneSound, 2500)
+            return
+        }
         val t = endTone ?: return
-        duckFor(1200)
         runCatching { t.stop(); t.reloadStaticData(); t.play() }
     }
 
@@ -92,5 +104,6 @@ class Sounds(context: Context, private val volume: Float, private val duck: Bool
         tts.shutdown()
         tones?.release()
         endTone?.release()
+        runCatching { phoneSound?.stop() }
     }
 }

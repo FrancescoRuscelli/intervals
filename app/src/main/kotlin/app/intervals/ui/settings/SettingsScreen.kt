@@ -95,6 +95,21 @@ fun SettingsScreen(vm: AppViewModel) {
         Group("Sound") {
             SwitchRow("Say the series names", "Voice, in English", s.sayNames) { v -> set { it.copy(sayNames = v) } }
             SwitchRow("Beep the last 3 seconds", null, s.beepLast3) { v -> set { it.copy(beepLast3 = v) } }
+            // the phone's own sound picker, as Hybrid Interval Timer does
+            val pickSound = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
+                @Suppress("DEPRECATION") val uri = r.data?.getParcelableExtra<android.net.Uri>(android.media.RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+                if (r.resultCode == android.app.Activity.RESULT_OK && uri != null) set { it.copy(endSound = uri.toString()) }
+            }
+            val soundName = remember(s.endSound) { s.endSound?.let { u -> runCatching { android.media.RingtoneManager.getRingtone(context, android.net.Uri.parse(u))?.getTitle(context) }.getOrNull() } }
+            ActionRow("End-of-set sound", soundName ?: "The app's own tone · tap to pick a phone sound") {
+                pickSound.launch(android.content.Intent(android.media.RingtoneManager.ACTION_RINGTONE_PICKER)
+                    .putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_TYPE, android.media.RingtoneManager.TYPE_ALL)
+                    .putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_TITLE, "End-of-set sound")
+                    .putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+                    .putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, false)
+                    .putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, s.endSound?.let(android.net.Uri::parse)))
+            }
+            if (s.endSound != null) ActionRow("Back to the app's own tone", "Instead of ${soundName ?: "the phone sound"}") { set { it.copy(endSound = null) } }
             SwitchRow("Lower music during cues", "Other apps get quieter for a moment", s.duckMusic) { v -> set { it.copy(duckMusic = v) } }
             Row(Modifier.fillMaxWidth().height(56.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("Volume", color = p.text, fontSize = 15.sp, modifier = Modifier.width(80.dp))
