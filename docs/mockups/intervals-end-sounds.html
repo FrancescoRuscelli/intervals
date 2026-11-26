@@ -133,6 +133,7 @@ async function fileSound(name, t) {
   src.connect(g).connect(ctx.destination); src.start(Math.max(t, ctx.currentTime));
 }
 const all = [
+  ['Z', 'Il suono di Hybrid (fallbackring di Android)', 'Il suono di riserva che Android suona quando il file chiesto non esiste: quasi certamente è quello che senti in Hybrid. Fa parte di Android (licenza Apache), si può mettere nell’app.', (t) => fileSound('fallbackring', t), 'z'],
   ...like.map((m) => [...m, 'x']),
   ...files.map((f, i) => [String(i + 1), f.replace(/_0*/, ' ').replace(/([a-z])([A-Z])/g, '$1 $2'), 'Kenney, CC0.', (t) => fileSound(f, t), 'k']),
   ...made.map((m) => [...m, 'm']),
@@ -147,7 +148,8 @@ async function play(i, withCount) {
 }
 const card = ([k, h, p], i) => `<article class="snd"><h3><span class="k">${k}</span>${h}</h3><p>${p}</p>
    <div class="bt"><button class="main" data-i="${i}" data-c="0">▶ Solo fine</button><button data-i="${i}" data-c="1">▶ Con 3-2-1</button></div></article>`;
-document.getElementById('list').innerHTML = '<h2>Come HIIT Interval Training (rifatti dalle misure dei loro file)</h2>' + all.map((x, i) => x[4] === 'x' ? card(x, i) : '').join('')
+document.getElementById('list').innerHTML = '<h2>Probabilmente quello di Hybrid</h2>' + all.map((x, i) => x[4] === 'z' ? card(x, i) : '').join('')
+  + '<h2>Come HIIT Interval Training (rifatti dalle misure dei loro file)</h2>' + all.map((x, i) => x[4] === 'x' ? card(x, i) : '').join('')
   + '<h2>File liberi (Kenney)</h2>' + all.map((x, i) => x[4] === 'k' ? card(x, i) : '').join('')
   + '<h2>Rifatti da me, come nelle altre app</h2>' + all.map((x, i) => x[4] === 'm' ? card(x, i) : '').join('');
 document.querySelectorAll('.snd button').forEach((b) => b.addEventListener('click', () => play(+b.dataset.i, b.dataset.c === '1')));
