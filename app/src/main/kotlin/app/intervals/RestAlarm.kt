@@ -23,7 +23,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 object RestAlarm {
     /**
      * Normal importance (the old "rest" channel was low: Android put it under Silent, with no icon and nothing on the lock
-     * screen). No sound of its own: the buzz at the target is the vibration below.
+     * screen). No sound of its own: the buzz and sound at the target are played in [buzz].
      */
     private const val CHANNEL = "rest_clock"
     private const val OLD_CHANNEL = "rest"
@@ -92,7 +92,9 @@ object RestAlarm {
         } else {
             @Suppress("DEPRECATION") context.getSystemService(Vibrator::class.java)
         }
-        vibrator?.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 300, 150, 300), -1))
+        // three buzzes and the phone's notification sound (silent when the phone is on silent)
+        vibrator?.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 400, 200, 400, 200, 400), -1))
+        runCatching { android.media.RingtoneManager.getRingtone(context, android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_NOTIFICATION))?.play() }
         notify(context, r, System.currentTimeMillis() - (SystemClock.elapsedRealtime() - r.startedAt), ready = true)
     }
 
