@@ -27,8 +27,8 @@ sealed interface Cue {
     data class Start(val segment: Segment) : Cue
     /** Beep with n seconds left (3, 2, 1). */
     data class Beep(val n: Int) : Cue
-    /** A round is over and another follows (the last one gets [Finished]). */
-    data object RoundDone : Cue
+    /** A segment is over and another follows (the last one gets [Finished]). */
+    data object SegmentDone : Cue
     data object Finished : Cue
 }
 
@@ -86,10 +86,9 @@ class PlayerPlan(val workout: Workout) {
             if (sayNames && (own?.sayName ?: true)) add(TimedCue(s.startSec, Cue.Start(s)))
             if (beeps && (own?.beepLast3 ?: true)) {
                 for (n in 3 downTo 1) if (s.durationSec > n) add(TimedCue(s.endSec - n, Cue.Beep(n)))
+                if (s.endSec < totalSec) add(TimedCue(s.endSec, Cue.SegmentDone))
             }
         }
-        if (beeps) segs.filter { it.kind != SegmentKind.ROUND_REST && it.kind != SegmentKind.WARMUP }.groupBy { it.round }.values
-            .map { r -> r.maxOf { it.endSec } }.filter { it < totalSec }.forEach { add(TimedCue(it, Cue.RoundDone)) }
         add(TimedCue(totalSec, Cue.Finished))
     }.sortedBy { it.atSec }
 

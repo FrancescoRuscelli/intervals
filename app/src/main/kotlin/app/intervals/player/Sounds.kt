@@ -56,8 +56,8 @@ class Sounds(context: Context, private val volume: Float, private val duck: Bool
         if (n == 1) tones?.startTone(ToneGenerator.TONE_PROP_BEEP2, 300) else tones?.startTone(ToneGenerator.TONE_PROP_BEEP, 150)
     }
 
-    /** A round is over: a two-note chime, unlike the countdown beeps. */
-    fun roundDone() {
+    /** A segment is over (each hang, rest, round rest): a two-note chime, unlike the countdown beeps. */
+    fun segmentDone() {
         duckFor(1200)
         tones?.startTone(ToneGenerator.TONE_PROP_ACK, 500)
     }

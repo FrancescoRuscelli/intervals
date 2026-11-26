@@ -132,7 +132,7 @@ class PlayerController(
             when (val cue = c.cue) {
                 is Cue.Start -> sounds.say(cue.segment.spoken())
                 is Cue.Beep -> sounds.beep(cue.n)
-                Cue.RoundDone -> sounds.roundDone()
+                Cue.SegmentDone -> sounds.segmentDone()
                 Cue.Finished -> sounds.finished()
             }
         }
