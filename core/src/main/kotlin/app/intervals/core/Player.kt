@@ -82,8 +82,7 @@ class PlayerPlan(val workout: Workout) {
         for (s in segs) {
             val own = byName[s.name].takeIf { s.kind == SegmentKind.SERIES }
             if (sayNames && (own?.sayName ?: true)) add(TimedCue(s.startSec, Cue.Start(s)))
-            // 3 s or less: no countdown, the beeps ran over the names before and after
-            if (beeps && s.durationSec > 3 && (own?.beepLast3 ?: true)) {
+            if (beeps && (own?.beepLast3 ?: true)) {
                 for (n in 3 downTo 1) if (s.durationSec > n) add(TimedCue(s.endSec - n, Cue.Beep(n)))
             }
         }
