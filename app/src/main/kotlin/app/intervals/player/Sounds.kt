@@ -56,6 +56,12 @@ class Sounds(context: Context, private val volume: Float, private val duck: Bool
         if (n == 1) tones?.startTone(ToneGenerator.TONE_PROP_BEEP2, 300) else tones?.startTone(ToneGenerator.TONE_PROP_BEEP, 150)
     }
 
+    /** A round is over: a two-note chime, unlike the countdown beeps. */
+    fun roundDone() {
+        duckFor(1200)
+        tones?.startTone(ToneGenerator.TONE_PROP_ACK, 500)
+    }
+
     fun finished() {
         duckFor(2500)
         tones?.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 600)

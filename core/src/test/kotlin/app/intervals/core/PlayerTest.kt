@@ -64,6 +64,8 @@ class PlayerTest {
         assertEquals(Cue.Finished, cues.last().cue)
         // hang 5 s from 3 to 8: beeps at 5, 6, 7
         assertTrue(cues.containsAll(listOf(TimedCue(5, Cue.Beep(3)), TimedCue(6, Cue.Beep(2)), TimedCue(7, Cue.Beep(1)))))
+        // round 1 ends at 12 (warm-up 3 + hang 5 + rest 4); the last round only gets Finished
+        assertEquals(listOf(12), cues.filter { it.cue == Cue.RoundDone }.map { it.atSec })
         val quiet = plan.cues(sayNames = false, beeps = false)
         assertEquals(listOf(Cue.Finished), quiet.map { it.cue })
     }
