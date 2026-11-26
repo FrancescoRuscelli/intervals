@@ -65,54 +65,81 @@ tr.pick td { background: var(--accent-soft); }
 .snd button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .snd.now { border-color: var(--warn); }
 .vol { display: flex; align-items: center; gap: 10px; margin-top: 12px; color: var(--muted); font-size: 14px; }
+.list h2 { grid-column: 1 / -1; margin: 10px 0 0; font: 700 18px var(--display); color: var(--ink); }
 </style>
 
 <div class="wrap">
   <header>
     <h1>Suoni di fine set</h1>
     <p class="lead">Ascolta e scegli. «Solo fine» fa sentire solo il suono; «Con 3-2-1» lo mette dopo i bip del conto alla rovescia, come in un allenamento.
-      Dal computer suonano diversi che dal telefono: meglio aprire la pagina sul telefono, con il volume dei media alto.</p>
+      Meglio aprire la pagina sul telefono, con il volume dei media alto: dalle casse del computer suonano diversi.</p>
     <label class="vol">Volume <input type="range" id="vol" min="0.1" max="1" step="0.05" value="0.8" aria-label="Volume"></label>
   </header>
   <section class="list" id="list" aria-label="Sounds"></section>
   <section class="reco">
-    <h2>Da sapere</h2>
-    <p><b>B</b> e <b>C</b> sono fatti con le misure dei suoni dell'altra app (Interval Timer): 0,7 secondi a volume pieno, 1300 Hz o 1000 Hz. Non ho copiato i loro file, li ho rifatti.
-      <b>A</b> è quello installato adesso, che sfuma presto: per questo ti sembra poco chiaro.</p>
+    <h2>Da dove vengono</h2>
+    <p><b>1–12</b> sono file veri del pacchetto «Interface Sounds» di Kenney, con licenza CC0: si possono mettere nell'app senza chiedere niente a nessuno.
+      <b>A–H</b> li ho rifatti io come i suoni più comuni nelle app di intervalli (campana da boxe, campana tibetana, fischietto, bip da orologio), perché i loro file non sono liberi.
+      Quelli di prima erano toni piatti; questi si spengono come un suono vero.</p>
   </section>
 </div>
 
 <script>
 let ctx;
 const vol = () => +document.getElementById('vol').value;
-// one tone: freq (or [from, to] for a slide), start, length, wave shape, fade-out share
-function tone(t0, f, len, type = 'sine', fade = 0.08, gain = 1) {
-  const o = ctx.createOscillator(), g = ctx.createGain();
-  o.type = type;
-  if (Array.isArray(f)) { o.frequency.setValueAtTime(f[0], t0); o.frequency.linearRampToValueAtTime(f[1], t0 + len); } else o.frequency.value = f;
-  const v = vol() * gain * (type === 'sine' ? 0.8 : 0.35);
-  g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(v, t0 + 0.01);
-  g.gain.setValueAtTime(v, t0 + len * (1 - fade)); g.gain.linearRampToValueAtTime(0, t0 + len);
-  o.connect(g).connect(ctx.destination); o.start(t0); o.stop(t0 + len + 0.02);
+const ac = () => (ctx = ctx || new (window.AudioContext || window.webkitAudioContext)());
+// a struck sound: partials [ratio, loudness, decay s] on a base frequency, quick attack, exponential fade
+function strike(t, base, partials, gain = 0.5) {
+  partials.forEach(([r, a, d]) => {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.frequency.value = base * r;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol() * gain * a, t + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    o.connect(g).connect(ctx.destination); o.start(t); o.stop(t + d + 0.05);
+  });
 }
-const sounds = [
-  ['A', 'Quello di adesso', 'Un tono di 0,8 s a 880 Hz che sfuma quasi subito.', (t) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.value = 880; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol() * 0.8, t + 0.01); g.gain.linearRampToValueAtTime(0.0001, t + 0.8); o.connect(g).connect(ctx.destination); o.start(t); o.stop(t + 0.82); }, true],
-  ['B', 'Come l\'altra app, acuto', 'Pieno e fermo per 0,7 s, 1300 Hz.', (t) => tone(t, 1300, 0.7, 'sine', 0.06)],
-  ['C', 'Come l\'altra app, medio', 'Pieno e fermo per 0,7 s, 1000 Hz.', (t) => tone(t, 1000, 0.7, 'sine', 0.06)],
-  ['D', 'Lungo e grave', 'Pieno per 1 s a 660 Hz: si sente meno acuto, più «gong».', (t) => tone(t, 660, 1.0, 'sine', 0.3)],
-  ['E', 'Due note in salita', '0,3 s a 880 Hz, poi 0,5 s a 1320 Hz.', (t) => { tone(t, 880, 0.3, 'sine', 0.1); tone(t + 0.3, 1320, 0.5, 'sine', 0.2); }],
-  ['F', 'Fischietto', 'Un tono che sale da 900 a 1500 Hz in 0,6 s.', (t) => tone(t, [900, 1500], 0.6, 'sine', 0.1)],
-  ['G', 'Tre colpi', 'Tre bip veloci da 0,12 s a 1200 Hz.', (t) => { for (let i = 0; i < 3; i++) tone(t + i * 0.18, 1200, 0.12, 'sine', 0.2); }],
-  ['H', 'Ronzio da palestra', 'Un buzzer quadrato di 0,7 s a 520 Hz, come i timer da muro.', (t) => tone(t, 520, 0.7, 'square', 0.05)],
+function beep(t, f, len, type = 'sine', gain = 0.5) {
+  const o = ctx.createOscillator(), g = ctx.createGain(); o.type = type; o.frequency.value = f;
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol() * gain, t + 0.005);
+  g.gain.setValueAtTime(vol() * gain, t + len - 0.02); g.gain.linearRampToValueAtTime(0, t + len);
+  o.connect(g).connect(ctx.destination); o.start(t); o.stop(t + len + 0.02);
+}
+const BELL = [[1, 1, 2.2], [2.76, 0.5, 1.2], [5.4, 0.3, 0.7], [8.93, 0.15, 0.4]];
+const made = [
+  ['A', 'Campana da boxe', 'Un colpo di campana metallica che risuona.', (t) => strike(t, 820, BELL)],
+  ['B', 'Campana da boxe, doppia', 'Due colpi veloci: «din-din».', (t) => { strike(t, 820, BELL); strike(t + 0.22, 820, BELL); }],
+  ['C', 'Campana tibetana', 'Morbida e lunga, con un leggero battimento.', (t) => { strike(t, 440, [[1, 0.8, 3], [1.006, 0.6, 3], [2.7, 0.25, 1.5], [5.2, 0.08, 0.8]], 0.45); }],
+  ['D', 'Ding di marimba', 'Legno, breve e caldo.', (t) => strike(t, 660, [[1, 1, 0.6], [4, 0.25, 0.15], [10, 0.05, 0.05]], 0.6)],
+  ['E', 'Din-don', 'Due note di campanello, la seconda più bassa.', (t) => { strike(t, 1318, [[1, 1, 1.2], [2, 0.2, 0.5], [3, 0.1, 0.3]], 0.4); strike(t + 0.35, 1046, [[1, 1, 1.5], [2, 0.2, 0.6], [3, 0.1, 0.3]], 0.4); }],
+  ['F', 'Bip da orologio', 'Due bip acuti e secchi, come un cronometro digitale.', (t) => { beep(t, 3000, 0.09, 'square', 0.12); beep(t + 0.15, 3000, 0.09, 'square', 0.12); }],
+  ['G', 'Fischietto', 'Un fischio da arbitro, mezzo secondo.', (t) => {
+    const o = ctx.createOscillator(), lfo = ctx.createOscillator(), lg = ctx.createGain(), g = ctx.createGain();
+    o.frequency.value = 2600; lfo.frequency.value = 28; lg.gain.value = 120; lfo.connect(lg).connect(o.frequency);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol() * 0.3, t + 0.03); g.gain.setValueAtTime(vol() * 0.3, t + 0.5); g.gain.linearRampToValueAtTime(0, t + 0.6);
+    o.connect(g).connect(ctx.destination); o.start(t); lfo.start(t); o.stop(t + 0.62); lfo.stop(t + 0.62); }],
+  ['H', 'Accordo in salita', 'Tre note veloci che salgono: «fatto!».', (t) => [523, 659, 784].forEach((f, i) => strike(t + i * 0.09, f, [[1, 1, 0.9], [2, 0.2, 0.4]], 0.35))],
 ];
-function play(fn, withCount) {
-  ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
-  let t = ctx.currentTime + 0.05;
-  if (withCount) { tone(t, 1000, 0.15); tone(t + 1, 1000, 0.15); tone(t + 2, 1250, 0.3); t += 3; }
-  fn(t);
+const files = ['confirmation_001', 'confirmation_002', 'confirmation_004', 'glass_001', 'glass_002', 'glass_005', 'bong_001', 'pluck_001', 'tone1', 'twoTone1', 'threeTone1', 'highUp'];
+const buffers = {};
+async function fileSound(name, t) {
+  if (!buffers[name]) buffers[name] = await ctx.decodeAudioData(await (await fetch(`end-sounds/${name}.ogg`)).arrayBuffer());
+  const src = ctx.createBufferSource(), g = ctx.createGain(); src.buffer = buffers[name]; g.gain.value = vol() * 1.4;
+  src.connect(g).connect(ctx.destination); src.start(Math.max(t, ctx.currentTime));
 }
-document.getElementById('list').innerHTML = sounds.map(([k, h, p, , now], i) =>
-  `<article class="snd${now ? ' now' : ''}"><h3><span class="k">${k}</span>${h}</h3><p>${p}${now ? ' <b>Installato ora.</b>' : ''}</p>
-   <div class="bt"><button class="main" data-i="${i}" data-c="0">▶ Solo fine</button><button data-i="${i}" data-c="1">▶ Con 3-2-1</button></div></article>`).join('');
-document.querySelectorAll('.snd button').forEach((b) => b.addEventListener('click', () => play(sounds[+b.dataset.i][3], b.dataset.c === '1')));
+const all = [
+  ...files.map((f, i) => [String(i + 1), f.replace(/_0*/, ' ').replace(/([a-z])([A-Z])/g, '$1 $2'), 'Kenney, CC0.', (t) => fileSound(f, t), 'k']),
+  ...made.map((m) => [...m, 'm']),
+];
+async function play(i, withCount) {
+  ac(); if (ctx.state === 'suspended') await ctx.resume();
+  let t = ctx.currentTime + 0.05;
+  // the app's countdown today: two short beeps and a longer, higher one
+  if (withCount) { beep(t, 1000, 0.15); beep(t + 1, 1000, 0.15); beep(t + 2, 1250, 0.3); t += 3; }
+  all[i][3](t);
+}
+const card = ([k, h, p], i) => `<article class="snd"><h3><span class="k">${k}</span>${h}</h3><p>${p}</p>
+   <div class="bt"><button class="main" data-i="${i}" data-c="0">▶ Solo fine</button><button data-i="${i}" data-c="1">▶ Con 3-2-1</button></div></article>`;
+document.getElementById('list').innerHTML = '<h2>File liberi (Kenney)</h2>' + all.map((x, i) => x[4] === 'k' ? card(x, i) : '').join('')
+  + '<h2>Rifatti da me, come nelle altre app</h2>' + all.map((x, i) => x[4] === 'm' ? card(x, i) : '').join('');
+document.querySelectorAll('.snd button').forEach((b) => b.addEventListener('click', () => play(+b.dataset.i, b.dataset.c === '1')));
 </script>
