@@ -3,9 +3,7 @@ package app.intervals.player
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
-import android.media.AudioFormat
 import android.media.AudioManager
-import android.media.AudioTrack
 import android.media.ToneGenerator
 import android.os.Handler
 import android.os.Looper
@@ -33,22 +31,8 @@ class Sounds(context: Context, private val volume: Float, private val duck: Bool
     private val focus = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK).setAudioAttributes(attrs).build()
     private val release = Runnable { audio.abandonAudioFocusRequest(focus) }
 
-    // 880 Hz for 0.8 s, quick fade in and a long fade out: the Android tones are short or sound like a phone
-    private val endTone = runCatching {
-        val rate = 44100
-        val n = rate * 8 / 10
-        val pcm = ShortArray(n) { i ->
-            val env = minOf(1.0, i / (rate * 0.01), (n - i).toDouble() / (n * 0.6))
-            (Math.sin(2 * Math.PI * 880 * i / rate) * env * volume * Short.MAX_VALUE * 0.8).toInt().toShort()
-        }
-        AudioTrack.Builder().setAudioAttributes(attrs)
-            .setAudioFormat(AudioFormat.Builder().setEncoding(AudioFormat.ENCODING_PCM_16BIT).setSampleRate(rate).setChannelMask(AudioFormat.CHANNEL_OUT_MONO).build())
-            .setTransferMode(AudioTrack.MODE_STATIC).setBufferSizeInBytes(n * 2).build()
-            .also { it.write(pcm, 0, n) }
-    }.getOrNull()
-
-    // the phone sound picked in Settings, on the media volume like the voice
-    private val phoneSound = endSound?.let { u ->
+    // the phone sound picked in Settings, or the app's own: Android's fallback ring (AOSP, Apache 2.0), the one Hybrid Interval Timer plays
+    private val phoneSound = (endSound ?: "android.resource://${context.packageName}/${app.intervals.R.raw.end_tone}").let { u ->
         runCatching { android.media.RingtoneManager.getRingtone(context, android.net.Uri.parse(u))?.apply { audioAttributes = attrs; volume = this@Sounds.volume } }.getOrNull()
     }
     private val stopPhoneSound = Runnable { runCatching { phoneSound?.stop() } }
@@ -78,17 +62,14 @@ class Sounds(context: Context, private val volume: Float, private val duck: Bool
         if (n == 1) tones?.startTone(ToneGenerator.TONE_PROP_BEEP2, 300) else tones?.startTone(ToneGenerator.TONE_PROP_BEEP, 150)
     }
 
-    /** A segment is over (each hang, rest, round rest): a long, clean tone, unlike the countdown beeps. */
+    /** A segment is over (each hang, rest, round rest): the end sound, unlike the countdown beeps. */
     fun segmentDone() {
         duckFor(1500)
         phoneSound?.let { r ->
             runCatching { r.stop(); r.play() }
             // a long ringtone is cut: only its start marks the end of the set
             handler.removeCallbacks(stopPhoneSound); handler.postDelayed(stopPhoneSound, 2500)
-            return
         }
-        val t = endTone ?: return
-        runCatching { t.stop(); t.reloadStaticData(); t.play() }
     }
 
     fun finished() {
@@ -103,7 +84,6 @@ class Sounds(context: Context, private val volume: Float, private val duck: Bool
         tts.stop()
         tts.shutdown()
         tones?.release()
-        endTone?.release()
         runCatching { phoneSound?.stop() }
     }
 }
