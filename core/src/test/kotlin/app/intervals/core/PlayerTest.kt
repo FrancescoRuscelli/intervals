@@ -64,6 +64,8 @@ class PlayerTest {
         assertEquals(Cue.Finished, cues.last().cue)
         // hang 5 s from 3 to 8: beeps at 5, 6, 7
         assertTrue(cues.containsAll(listOf(TimedCue(5, Cue.Beep(3)), TimedCue(6, Cue.Beep(2)), TimedCue(7, Cue.Beep(1)))))
+        // the 3 s warm-up has no countdown
+        assertTrue(cues.none { it.cue is Cue.Beep && it.atSec < 3 })
         val quiet = plan.cues(sayNames = false, beeps = false)
         assertEquals(listOf(Cue.Finished), quiet.map { it.cue })
     }
