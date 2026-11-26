@@ -1,0 +1,118 @@
+<title>End Of Set Sounds</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: an idea switcher, then the set screen of that idea (and a second state), side by side, then pros / cons. */
+:root {
+  --bg: #f4f2fa; --surface: #ffffff; --ink: #18151f; --muted: #5b5668; --line: #dfdbe9; --accent: #6d28d9; --accent-soft: #ece4fd;
+  --good: #0f7a5c; --warn: #9a4a00;
+  /* the phones always use the app's own dark look */
+  --ph-bg: #000000; --ph-card: #1a1c21; --ph-card2: #111216; --ph-line: #23262c; --ph-ink: #f2f3f5; --ph-muted: #9aa0aa; --ph-faint: #6e747e;
+  --ph-accent: #7c3aed; --ph-accent-ink: #c4b1ff; --ph-tint: #2a2340; --ph-pink: #e91e63; --ph-teal: #00bfa5; --ph-yellow: #ffc107;
+  --display: "Space Grotesk", Inter, system-ui, sans-serif; --text: Inter, system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0b10; --surface: #17151d; --ink: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --accent-soft: #241d38;
+  --good: #4fd1a5; --warn: #ffb35c; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0c0b10; --surface: #17151d; --ink: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --accent-soft: #241d38;
+  --good: #4fd1a5; --warn: #ffb35c; color-scheme: dark }
+
+body { background: var(--bg); color: var(--ink); font-family: var(--text); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 48px; }
+.wrap { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+h1 { font-family: var(--display); font-size: clamp(28px, 5vw, 40px); line-height: 1.1; margin: 0; text-wrap: balance; letter-spacing: -0.5px; }
+.lead { margin: 6px 0 0; color: var(--muted); max-width: 68ch; }
+.switch { display: flex; flex-wrap: wrap; gap: 8px; }
+.switch button { font: 600 14px var(--text); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
+  padding: 9px 14px; cursor: pointer; display: flex; gap: 8px; align-items: center; }
+.switch button .k { font-family: var(--display); color: var(--accent); }
+.switch button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.switch button[aria-pressed="true"] .k { color: #fff; }
+.switch button:focus-visible, .phone button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.concept h2 { font-family: var(--display); font-size: 26px; margin: 0; letter-spacing: -0.3px; }
+.concept .idea { margin: 4px 0 0; color: var(--muted); max-width: 70ch; }
+figure { margin: 0; display: flex; flex-direction: column; gap: 8px; scroll-snap-align: start; }
+figcaption { font-size: 13px; color: var(--muted); max-width: 300px; }
+figcaption b { color: var(--ink); }
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.note { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; min-width: 0; }
+.note h3 { margin: 0 0 6px; font-size: 13px; letter-spacing: 0.6px; text-transform: uppercase; }
+.note.pro h3 { color: var(--good); } .note.con h3 { color: var(--warn); }
+.note ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.compare { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 14px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+thead th { font-size: 12px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted); }
+td.n { font-family: var(--display); font-variant-numeric: tabular-nums; font-weight: 600; }
+tr.pick td { background: var(--accent-soft); }
+.reco { background: var(--accent-soft); border-radius: 14px; padding: 16px 18px; }
+.reco h2 { font-family: var(--display); margin: 0 0 6px; font-size: 22px; }
+.reco p { margin: 0; max-width: 75ch; }
+
+/* ---- phone ---- */
+  box-sizing: border-box; position: relative; overflow: hidden; display: flex; flex-direction: column; font-size: 13px; line-height: 1.35;
+  box-shadow: 0 10px 30px rgba(20, 10, 40, 0.18); }
+@media (prefers-reduced-motion: no-preference) { .concept { animation: in 220ms ease-out; } @keyframes in { from { opacity: 0.4; transform: translateY(6px); } } }
+.list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-top: 16px; }
+.snd { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.snd h3 { margin: 0; font: 700 16px var(--display); color: var(--ink); display: flex; gap: 8px; align-items: center; }
+.snd h3 .k { background: var(--accent-soft); color: var(--accent); border-radius: 8px; padding: 1px 8px; font-size: 13px; }
+.snd p { margin: 0; color: var(--muted); font-size: 13.5px; line-height: 1.45; }
+.snd .bt { display: flex; gap: 8px; flex-wrap: wrap; }
+.snd button { font: 700 13.5px var(--text); border-radius: 10px; padding: 9px 12px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; min-height: 40px; }
+.snd button.main { background: var(--accent); border-color: var(--accent); color: #fff; }
+.snd button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.snd.now { border-color: var(--warn); }
+.vol { display: flex; align-items: center; gap: 10px; margin-top: 12px; color: var(--muted); font-size: 14px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Suoni di fine set</h1>
+    <p class="lead">Ascolta e scegli. «Solo fine» fa sentire solo il suono; «Con 3-2-1» lo mette dopo i bip del conto alla rovescia, come in un allenamento.
+      Dal computer suonano diversi che dal telefono: meglio aprire la pagina sul telefono, con il volume dei media alto.</p>
+    <label class="vol">Volume <input type="range" id="vol" min="0.1" max="1" step="0.05" value="0.8" aria-label="Volume"></label>
+  </header>
+  <section class="list" id="list" aria-label="Sounds"></section>
+  <section class="reco">
+    <h2>Da sapere</h2>
+    <p><b>B</b> e <b>C</b> sono fatti con le misure dei suoni dell'altra app (Interval Timer): 0,7 secondi a volume pieno, 1300 Hz o 1000 Hz. Non ho copiato i loro file, li ho rifatti.
+      <b>A</b> è quello installato adesso, che sfuma presto: per questo ti sembra poco chiaro.</p>
+  </section>
+</div>
+
+<script>
+let ctx;
+const vol = () => +document.getElementById('vol').value;
+// one tone: freq (or [from, to] for a slide), start, length, wave shape, fade-out share
+function tone(t0, f, len, type = 'sine', fade = 0.08, gain = 1) {
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = type;
+  if (Array.isArray(f)) { o.frequency.setValueAtTime(f[0], t0); o.frequency.linearRampToValueAtTime(f[1], t0 + len); } else o.frequency.value = f;
+  const v = vol() * gain * (type === 'sine' ? 0.8 : 0.35);
+  g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(v, t0 + 0.01);
+  g.gain.setValueAtTime(v, t0 + len * (1 - fade)); g.gain.linearRampToValueAtTime(0, t0 + len);
+  o.connect(g).connect(ctx.destination); o.start(t0); o.stop(t0 + len + 0.02);
+}
+const sounds = [
+  ['A', 'Quello di adesso', 'Un tono di 0,8 s a 880 Hz che sfuma quasi subito.', (t) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.value = 880; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol() * 0.8, t + 0.01); g.gain.linearRampToValueAtTime(0.0001, t + 0.8); o.connect(g).connect(ctx.destination); o.start(t); o.stop(t + 0.82); }, true],
+  ['B', 'Come l\'altra app, acuto', 'Pieno e fermo per 0,7 s, 1300 Hz.', (t) => tone(t, 1300, 0.7, 'sine', 0.06)],
+  ['C', 'Come l\'altra app, medio', 'Pieno e fermo per 0,7 s, 1000 Hz.', (t) => tone(t, 1000, 0.7, 'sine', 0.06)],
+  ['D', 'Lungo e grave', 'Pieno per 1 s a 660 Hz: si sente meno acuto, più «gong».', (t) => tone(t, 660, 1.0, 'sine', 0.3)],
+  ['E', 'Due note in salita', '0,3 s a 880 Hz, poi 0,5 s a 1320 Hz.', (t) => { tone(t, 880, 0.3, 'sine', 0.1); tone(t + 0.3, 1320, 0.5, 'sine', 0.2); }],
+  ['F', 'Fischietto', 'Un tono che sale da 900 a 1500 Hz in 0,6 s.', (t) => tone(t, [900, 1500], 0.6, 'sine', 0.1)],
+  ['G', 'Tre colpi', 'Tre bip veloci da 0,12 s a 1200 Hz.', (t) => { for (let i = 0; i < 3; i++) tone(t + i * 0.18, 1200, 0.12, 'sine', 0.2); }],
+  ['H', 'Ronzio da palestra', 'Un buzzer quadrato di 0,7 s a 520 Hz, come i timer da muro.', (t) => tone(t, 520, 0.7, 'square', 0.05)],
+];
+function play(fn, withCount) {
+  ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+  let t = ctx.currentTime + 0.05;
+  if (withCount) { tone(t, 1000, 0.15); tone(t + 1, 1000, 0.15); tone(t + 2, 1250, 0.3); t += 3; }
+  fn(t);
+}
+document.getElementById('list').innerHTML = sounds.map(([k, h, p, , now], i) =>
+  `<article class="snd${now ? ' now' : ''}"><h3><span class="k">${k}</span>${h}</h3><p>${p}${now ? ' <b>Installato ora.</b>' : ''}</p>
+   <div class="bt"><button class="main" data-i="${i}" data-c="0">▶ Solo fine</button><button data-i="${i}" data-c="1">▶ Con 3-2-1</button></div></article>`).join('');
+document.querySelectorAll('.snd button').forEach((b) => b.addEventListener('click', () => play(sounds[+b.dataset.i][3], b.dataset.c === '1')));
+</script>
