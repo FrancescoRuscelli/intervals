@@ -134,7 +134,9 @@ fun PlayerScreen(c: PlayerController, keepScreenOn: Boolean, spinLevel: Int = 0,
                     c.saved.workout.name, color = p.text, fontSize = 16.sp, fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center, modifier = Modifier.weight(1f),
                 )
-                Spacer(Modifier.width(48.dp))
+                IconButton(onClick = { c.muted = !c.muted }) {
+                    Icon(if (c.muted) AppIcons.SoundOff else AppIcons.Sound, if (c.muted) "Sound off, tap to turn on" else "Sound on, tap to mute", tint = if (c.muted) p.soft else p.text)
+                }
             }
         }
         // the whole workout's time left, big, like the old app

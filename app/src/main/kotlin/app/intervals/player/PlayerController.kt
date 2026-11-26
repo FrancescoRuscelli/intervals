@@ -72,6 +72,8 @@ class PlayerController(
         private set
     /** Waiting to start: the opening animation is playing. */
     val starting: Boolean get() = opening
+    /** Speaker tapped in the player: no voice and no beeps until tapped again (this workout only). */
+    var muted by mutableStateOf(false)
     var paused by mutableStateOf(false)
         private set
     var pauseSeconds by mutableIntStateOf(0)
@@ -126,7 +128,7 @@ class PlayerController(
         // cues more than 1.5 s late (after a jump) are skipped, not played in a burst
         while (nextCue < cues.size && cues[nextCue].atSec * 1000L <= now) {
             val c = cues[nextCue++]
-            if (now - c.atSec * 1000L > 1500) continue
+            if (now - c.atSec * 1000L > 1500 || muted) continue
             when (val cue = c.cue) {
                 is Cue.Start -> sounds.say(cue.segment.spoken())
                 is Cue.Beep -> sounds.beep(cue.n)

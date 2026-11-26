@@ -38,6 +38,8 @@ object AppIcons {
     val Search = stroke("M11 4a7 7 0 1 0 0 14a7 7 0 0 0 0-14M20 20l-3.5-3.5")
     val Plus = stroke("M12 5v14M5 12h14", 2.4f)
     val Minus = stroke("M5 12h14", 2.4f)
+    val Sound = stroke("M4 9h4l5-4v14l-5-4H4zM16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12")
+    val SoundOff = stroke("M4 9h4l5-4v14l-5-4H4zM16 9l6 6M22 9l-6 6")
     val Close = stroke("M6 6l12 12M18 6L6 18")
     val Back = stroke("M15 5l-7 7 7 7", 2.2f)
     val Check = stroke("M5 12.5l4.5 4.5L19 7.5", 2.8f)
