@@ -39,8 +39,7 @@ data class TimedCue(val atSec: Int, val cue: Cue)
  * The pure part of the player: what is on screen at [elapsedMs] and which cues play when.
  * The app only keeps the clock (pauses excluded) and asks this.
  */
-class PlayerPlan(val workout: Workout) {
-    val timeline: Timeline = workout.timeline()
+class PlayerPlan(val workout: Workout, val timeline: Timeline = workout.timeline()) {
     val totalSec: Int = timeline.totalSec
     private val segs = timeline.segments
 
@@ -106,6 +105,26 @@ class PlayerPlan(val workout: Workout) {
         return st.segment.endSec * 1000L
     }
 
+    /**
+     * The same plan with segment [index] [deltaSec] longer (shorter if negative), everything after it moved.
+     * It never gets shorter than the time already run in it plus 1 s (at [elapsedMs]); null if nothing changes.
+     */
+    fun withLonger(index: Int, deltaSec: Int, elapsedMs: Long): PlayerPlan? {
+        val s = segs.getOrNull(index) ?: return null
+        val into = ((elapsedMs / 1000L) - s.startSec).toInt().coerceAtLeast(0)
+        val d = (s.durationSec + deltaSec).coerceAtLeast(into + 1)
+        val change = d - s.durationSec
+        if (change == 0) return null
+        val out = segs.mapIndexed { i, x ->
+            when {
+                i == index -> x.copy(durationSec = d)
+                i > index -> x.copy(startSec = x.startSec + change)
+                else -> x
+            }
+        }
+        return PlayerPlan(workout, Timeline(out))
+    }
+
     /** Segments of [round] (warm-up excluded): what the outer ring of the disc draws. */
     fun roundSegments(round: Int): List<Segment> = segs.filter { it.round == round && it.kind != SegmentKind.WARMUP }
 
@@ -122,6 +141,10 @@ class PlayerPlan(val workout: Workout) {
         return if (work.isEmpty() || k == 0) null else k to work.size
     }
 
+    /** A pause you can make longer or shorter while it runs: a rest series, change side or the rest between rounds. */
+    fun isRest(seg: Segment): Boolean = seg.kind == SegmentKind.ROUND_REST || seg.kind == SegmentKind.CHANGE_SIDE ||
+        (seg.kind == SegmentKind.SERIES && isRestName(seg.name))
+
     /** True for a work series: one you can let go of (not a rest, change side, round rest or warm-up). */
     fun isWork(seg: Segment): Boolean = seg.kind == SegmentKind.SERIES && !isRestName(seg.name)
 
@@ -134,6 +157,10 @@ class PlayerPlan(val workout: Workout) {
         return if (st.segment.kind == SegmentKind.ROUND_REST) st.round else st.round - 1
     }
 }
+
+/** The step for making a rest of [durationSec] longer or shorter: about a tenth of it, as 1, 2, 5, 10, 15, 30 or 60 s. */
+fun restStepSec(durationSec: Int): Int =
+    listOf(1, 2, 5, 10, 15, 30, 60).minBy { kotlin.math.abs(it - durationSec / 10.0) }
 
 /** A series that is a pause, not work: its name says rest or change (e.g. "rest", "big rest", "change"). */
 fun isRestName(name: String): Boolean {

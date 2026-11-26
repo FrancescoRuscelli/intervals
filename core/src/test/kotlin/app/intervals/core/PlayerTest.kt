@@ -13,6 +13,37 @@ class PlayerTest {
     private val plan = PlayerPlan(w)
 
     @Test
+    fun roundRestCanBeMadeLongerOrShorter() {
+        val i = plan.timeline.segments.indexOfFirst { it.kind == SegmentKind.ROUND_REST } // 12..22
+        val longer = plan.withLonger(i, 15, 14_000)!!
+        assertEquals(46, longer.totalSec)
+        assertEquals(25, longer.timeline.segments[i].durationSec)
+        assertEquals(37, longer.timeline.segments[i + 1].startSec)
+        assertEquals(23, longer.stateAt(14_000)!!.secLeft)
+        // shorter, but never under what already ran (2 s) + 1
+        val shorter = plan.withLonger(i, -15, 14_000)!!
+        assertEquals(3, shorter.timeline.segments[i].durationSec)
+        assertEquals(24, shorter.totalSec)
+        assertNull(shorter.withLonger(i, -15, 14_000))
+        assertTrue(longer.cues(true, true).any { it.atSec == 37 && it.cue is Cue.Start })
+    }
+
+    @Test
+    fun restStepIsAboutATenth() {
+        assertEquals(listOf(1, 2, 5, 5, 10, 10, 15, 30), listOf(10, 20, 45, 60, 90, 120, 180, 300).map(::restStepSec))
+    }
+
+    @Test
+    fun restSeriesAreRestsToo() {
+        val segs = plan.timeline.segments
+        assertEquals(listOf(false, false, true, true, false, true), segs.map { plan.isRest(it) }) // warm-up, hang, rest, round rest, hang, rest
+        val i = segs.indexOfFirst { it.name == "rest" } // 8..12, only this time
+        val p2 = plan.withLonger(i, 5, 9_000)!!
+        assertEquals(9, p2.timeline.segments[i].durationSec)
+        assertEquals(4, p2.timeline.segments.last().durationSec)
+    }
+
+    @Test
     fun workCountSkipsRestsAndCountsBothSidesOnce() {
         // hang, rest x3 (last rest skipped), then a per-side pull (left, change, right)
         val pull = Series("pull", 6, 0xFF7C3AED, perSide = PerSide(changeSec = 3))

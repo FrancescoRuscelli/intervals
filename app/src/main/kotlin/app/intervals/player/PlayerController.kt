@@ -63,8 +63,10 @@ class PlayerController(
     /** True while the player screen is visible: then the clock ticks at every whole second (the rings animate per frame on their own). */
     @Volatile var uiVisible = true
     private var lastIndex = -1
-    val plan = PlayerPlan(saved.workout)
-    private val cues = plan.cues(settings.sayNames, settings.beepLast3)
+    /** Replaced when the rest between rounds is made longer or shorter (mockup intervals-gestures.html, D). */
+    var plan by mutableStateOf(PlayerPlan(saved.workout))
+        private set
+    private var cues = plan.cues(settings.sayNames, settings.beepLast3)
     private var nextCue = 0
 
     /** True during the opening animation: nothing runs yet. */
@@ -153,6 +155,36 @@ class PlayerController(
         }
         onChange()
     }
+
+    // the plan as the workout was saved: the step of a rest comes from its own length, not from what it was changed to
+    private val savedPlan = plan
+
+    /** The step for the rest running now (see [app.intervals.core.restStepSec]), or 0 when no rest is running. */
+    fun restStep(): Int {
+        val st = plan.stateAt(elapsedMs) ?: return 0
+        if (!plan.isRest(st.segment)) return 0
+        val d = savedPlan.timeline.segments.getOrNull(st.index)?.durationSec ?: st.segment.durationSec
+        return app.intervals.core.restStepSec(d)
+    }
+
+    /** During a rest (rest series, change side, rest between rounds): [deltaSec] more or less, this time only. Returns the seconds really changed. */
+    fun changeRest(deltaSec: Int): Int {
+        if (starting || ended) return 0
+        val now = elapsedMs
+        val st = plan.stateAt(now) ?: return 0
+        if (!plan.isRest(st.segment)) return 0
+        val longer = plan.withLonger(st.index, deltaSec, now) ?: return 0
+        val change = longer.totalSec - plan.totalSec
+        plan = longer
+        cues = longer.cues(settings.sayNames, settings.beepLast3)
+        nextCue = cues.indexOfFirst { it.atSec * 1000L > now }.let { if (it < 0) cues.size else it }
+        tick = now
+        onChange()
+        return change
+    }
+
+    /** Back to [ms] (Undo after a swipe on the disc). */
+    fun seek(ms: Long) { if (!starting && !ended) jumpTo(ms) }
 
     private fun jumpTo(ms: Long) {
         baseMs = ms.coerceIn(0, plan.totalSec * 1000L)

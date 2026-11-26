@@ -2,6 +2,18 @@ package app.intervals.player
 
 import androidx.compose.animation.core.animateFloat
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.activity.compose.BackHandler
@@ -37,6 +49,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
@@ -94,9 +107,22 @@ import app.intervals.ui.NumberStyle
 private val DoneGrey = Color(0xFF3A3E46)
 
 @Composable
-fun PlayerScreen(c: PlayerController, keepScreenOn: Boolean, spinLevel: Int = 0, showCounters: Boolean = true, onClose: () -> Unit) {
+fun PlayerScreen(c: PlayerController, keepScreenOn: Boolean, spinLevel: Int = 0, showCounters: Boolean = true, swipeDisc: Boolean = false, onClose: () -> Unit) {
     val p = LocalPalette.current
     var askStop by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val haptic = LocalHapticFeedback.current
+    // a short message at the bottom, with Undo when it can be taken back
+    var notice by remember { mutableStateOf<Notice?>(null) }
+    LaunchedEffect(notice) { if (notice != null) { delay(4000); notice = null } }
+    // hold ✕ for 1 s to stop, no question (mockup intervals-gestures.html, C)
+    val stopHold = remember { Animatable(0f) }
+    // swipe the disc for the next / previous series (B, a setting); drag up / down in the rest between rounds for ±15 s (D)
+    val swipeX = remember { Animatable(0f) }
+    var restDrag by remember { mutableFloatStateOf(0f) }
+    var restChange by remember { mutableIntStateOf(0) }
+    var restDragging by remember { mutableStateOf(false) }
+    var restSteps by remember { mutableIntStateOf(0) }
     val view = LocalView.current
     DisposableEffect(keepScreenOn) {
         view.keepScreenOn = keepScreenOn
@@ -129,7 +155,20 @@ fun PlayerScreen(c: PlayerController, keepScreenOn: Boolean, spinLevel: Int = 0,
         val landscape = maxWidth > maxHeight
         val title: @Composable () -> Unit = {
             Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = { askStop = true }) { Icon(AppIcons.Close, "Stop", tint = p.text) }
+                StopButton(stopHold.value, onPress = {
+                    val t0 = System.currentTimeMillis()
+                    val job = scope.launch {
+                        stopHold.animateTo(1f, tween(1000, easing = LinearEasing))
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        c.stop()
+                    }
+                    val released = tryAwaitRelease()
+                    if (stopHold.value < 1f) {
+                        job.cancel()
+                        scope.launch { stopHold.animateTo(0f, tween(150)) }
+                        if (released && System.currentTimeMillis() - t0 < 350) askStop = true
+                    }
+                }, onTap = { askStop = true })
                 Text(
                     c.saved.workout.name, color = p.text, fontSize = 16.sp, fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center, modifier = Modifier.weight(1f),
@@ -141,13 +180,76 @@ fun PlayerScreen(c: PlayerController, keepScreenOn: Boolean, spinLevel: Int = 0,
         }
         // the whole workout's time left, big, like the old app
         val timeLeft: @Composable (androidx.compose.ui.unit.TextUnit) -> Unit = { size ->
-            if (st != null) Text(
+            if (stopHold.value > 0f) Text(
+                "Keep holding to stop", color = p.dangerText, fontSize = (size.value * 0.42f).sp, fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().height(with(LocalDensity.current) { size.toDp() * 1.2f }).wrapContentHeight(),
+            ) else if (st != null) Text(
                 mmss(if (c.celebrating) 0 else st.totalLeftSec), color = p.soft, style = NumberStyle, fontSize = size, fontWeight = FontWeight.Light,
                 textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(),
             )
         }
+        val inRest = st != null && c.plan.isRest(st.segment) && !c.celebrating
+        val gestures = Modifier
+            .then(if (swipeDisc) Modifier.pointerInput(c) {
+                detectHorizontalDragGestures(
+                    onDragEnd = {
+                        val x = swipeX.value
+                        if (kotlin.math.abs(x) > size.width * 0.22f && !c.starting && !c.celebrating) {
+                            val before = c.elapsedMs
+                            if (x > 0) c.next() else c.previous()
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            val now = c.plan.stateAt(c.elapsedMs)
+                            notice = Notice(
+                                if (x > 0) "Skipped to ${now?.let(::label)?.lowercase() ?: "the end"}" else "Back to ${now?.let(::label)?.lowercase() ?: "the start"}",
+                            ) { c.seek(before) }
+                        }
+                        scope.launch { swipeX.animateTo(0f, spring(dampingRatio = 0.7f)) }
+                    },
+                    onDragCancel = { scope.launch { swipeX.animateTo(0f) } },
+                ) { change, dx ->
+                    change.consume()
+                    scope.launch { swipeX.snapTo(swipeX.value + dx) }
+                }
+            } else Modifier)
+            .pointerInput(c) {
+                val step = 36.dp.toPx()
+                detectVerticalDragGestures(
+                    onDragStart = { restDrag = 0f; restChange = 0; restSteps = 0; restDragging = true },
+                    onDragEnd = {
+                        restDragging = false
+                        if (restChange != 0) notice = Notice("Rest ${if (restChange > 0) "+" else "−"}${kotlin.math.abs(restChange)} s this time", null)
+                    },
+                    onDragCancel = { restDragging = false },
+                ) { change, dy ->
+                    if (c.plan.stateAt(c.elapsedMs)?.segment?.let(c.plan::isRest) != true || c.celebrating) return@detectVerticalDragGestures
+                    change.consume()
+                    restDrag -= dy
+                    // about a tenth of the rest per step; after 5 steps in one drag, twice that
+                    fun stepSec() = c.restStep() * if (restSteps >= 5) 2 else 1
+                    fun apply(sign: Int) = c.changeRest(sign * stepSec()).let { if (it != 0) { restChange += it; restSteps++; haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove) } }
+                    while (restDrag >= step) { restDrag -= step; apply(1) }
+                    while (restDrag <= -step) { restDrag += step; apply(-1) }
+                }
+            }
+            .semantics {
+                customActions = buildList {
+                    if (swipeDisc) {
+                        add(CustomAccessibilityAction("Next series") { c.next(); true })
+                        add(CustomAccessibilityAction("Previous series") { c.previous(); true })
+                    }
+                    if (inRest) {
+                        val sec = c.restStep()
+                        add(CustomAccessibilityAction("$sec seconds more rest") { c.changeRest(sec) != 0 })
+                        add(CustomAccessibilityAction("$sec seconds less rest") { c.changeRest(-sec) != 0 })
+                    }
+                }
+            }
+            .graphicsLayer {
+                translationX = swipeX.value
+                alpha = 1f - (kotlin.math.abs(swipeX.value) / (size.width * 0.9f)).coerceIn(0f, 0.6f)
+            }
         val disc: @Composable (Modifier) -> Unit = { m ->
-            BoxWithConstraints(m, contentAlignment = Alignment.Center) {
+            BoxWithConstraints(m.then(gestures), contentAlignment = Alignment.Center) {
                 val diameter = (minOf(maxWidth, maxHeight) - 32.dp).coerceAtLeast(0.dp)
                 if (st != null) {
                     val color = st.segment.playerColor(p.teal)
@@ -158,6 +260,18 @@ fun PlayerScreen(c: PlayerController, keepScreenOn: Boolean, spinLevel: Int = 0,
                         CountdownDigit(st.secLeft, outside = color, inside = ink, fontSize = fontSize, discSize = diameter - 108.dp)
                     }
                 }
+                // holding ✕: a red ring fills around the disc
+                if (stopHold.value > 0f) Canvas(Modifier.size(diameter)) {
+                    val w = 6.dp.toPx()
+                    drawArc(p.dangerText.copy(alpha = 0.25f), 0f, 360f, false, Offset(w / 2, w / 2), Size(size.width - w, size.height - w), style = Stroke(w))
+                    drawArc(p.dangerText, -90f, 360f * stopHold.value, false, Offset(w / 2, w / 2), Size(size.width - w, size.height - w), style = Stroke(w, cap = StrokeCap.Round))
+                }
+                // dragging the rest: how much was added or taken off so far
+                if (restDragging && restChange != 0) Text(
+                    "${if (restChange > 0) "+" else "−"}${kotlin.math.abs(restChange)} s",
+                    color = Color(0xFF04241F), style = NumberStyle, fontSize = 18.sp, fontWeight = FontWeight.Bold,
+                    modifier = Modifier.align(Alignment.TopCenter).padding(top = 8.dp).clip(RoundedCornerShape(16.dp)).background(p.teal).padding(horizontal = 14.dp, vertical = 4.dp),
+                )
             }
         }
         // the rest between rounds: the next round's values, the clock keeps running (mockup ideas, 12)
@@ -185,13 +299,24 @@ fun PlayerScreen(c: PlayerController, keepScreenOn: Boolean, spinLevel: Int = 0,
             // Keep the disc in place when the navigation buttons disappear for the coin flip.
             if (c.celebrating) Spacer(Modifier.height(92.dp)) else Controls(c, st)
         }
+        notice?.let { n ->
+            Row(
+                Modifier.align(Alignment.BottomCenter).padding(start = 16.dp, end = 16.dp, bottom = 96.dp).fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp)).background(p.surface).border(1.dp, p.line, RoundedCornerShape(14.dp))
+                    .padding(start = 14.dp, end = 4.dp, top = 4.dp, bottom = 4.dp).heightIn(min = 44.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(n.text, color = p.text, fontSize = 14.sp, modifier = Modifier.weight(1f))
+                n.undo?.let { u -> TextButton(onClick = { u(); notice = null }) { Text("Undo", color = p.accentText, fontWeight = FontWeight.Bold) } }
+            }
+        }
     }
 
     if (askStop) {
         AlertDialog(
             onDismissRequest = { askStop = false },
             title = { Text("Stop the workout?") },
-            text = { Text("Next you can save it to the journal (as stopped) or discard it.") },
+            text = { Text("Next you can save it to the journal (as stopped) or discard it.\n\nTip: hold ✕ for a second to stop without this question.") },
             confirmButton = { TextButton(onClick = { askStop = false; c.stop() }) { Text("Stop", color = p.dangerText) } },
             dismissButton = { TextButton(onClick = { askStop = false }) { Text("Keep going") } },
         )
@@ -464,6 +589,25 @@ private fun DrawScope.drawRoundsRing(c: PlayerController, st: PlayState, t: Doub
                 if (left > 0.5f) drawArc(accent, start + full - left, left, false, tl, sz, style = Stroke(w, cap = StrokeCap.Round))
             }
         }
+    }
+}
+
+private class Notice(val text: String, val undo: (() -> Unit)?)
+
+/** ✕: tap = "Stop the workout?"; hold 1 s = stop, a red ring fills around it (and around the disc). */
+@Composable
+private fun StopButton(progress: Float, onPress: suspend androidx.compose.foundation.gestures.PressGestureScope.(Offset) -> Unit, onTap: () -> Unit) {
+    val p = LocalPalette.current
+    Box(
+        Modifier.size(48.dp).clip(CircleShape)
+            .semantics { role = Role.Button; onClick(label = "Stop") { onTap(); true } }
+            .pointerInput(Unit) { detectTapGestures(onPress = onPress) },
+        contentAlignment = Alignment.Center,
+    ) {
+        if (progress > 0f) Canvas(Modifier.size(40.dp)) {
+            drawArc(p.dangerText, -90f, 360f * progress, false, style = Stroke(3.dp.toPx(), cap = StrokeCap.Round))
+        }
+        Icon(AppIcons.Close, null, tint = if (progress > 0f) p.dangerText else p.text)
     }
 }
 

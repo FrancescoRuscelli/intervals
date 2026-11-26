@@ -1,5 +1,15 @@
 package app.intervals.ui.gym
 
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.customActions
+import kotlinx.coroutines.launch
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import app.intervals.core.loadText
@@ -428,7 +438,9 @@ fun GymLogScreen(vm: AppViewModel, exerciseId: Long, day: String, initialTab: In
                     val hintText = if (selecting) "TAP TO ADD OR REMOVE SETS" else "TAP TO EDIT · HOLD TO SELECT"
                     Text("SETS · ${list.size} · $hintText", color = p.muted, fontSize = 13.sp, letterSpacing = 0.6.sp, fontWeight = FontWeight.SemiBold)
                     val hold = { set: GymSet -> if (set.id !in selectedIds) select(selectedIds + set.id) }
-                    SetBlocks(list, ex, selectedIds, selecting, ::tapSet, hold)
+                    SetBlocks(list, ex, selectedIds, selecting, ::tapSet, hold,
+                        onAgain = { again -> vm.logSets(again.map { it.copy(id = 0, note = "", restSec = null) }, ex.restSec) },
+                        onDelete = { gone -> deleted = gone; vm.deleteGymSets(gone.map { it.id }) })
                 }
             }
             val running = timerFrom != null && !selecting
@@ -578,9 +590,29 @@ private fun NumCell(label: String, value: String, modifier: Modifier, enabled: B
         verticalAlignment = Alignment.CenterVertically,
     ) {
         StepButton(AppIcons.Minus, "$label less", enabled, onMinus)
-        Column(Modifier.weight(1f).heightIn(min = 48.dp).clickable(enabled = enabled, onClickLabel = "Type $label", onClick = onTap),
+        // drag sideways on the number: one step every 22 dp, a tick each (mockup intervals-gestures.html, F)
+        val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+        var dragging by remember { mutableStateOf(false) }
+        var acc by remember { mutableStateOf(0f) }
+        val less by androidx.compose.runtime.rememberUpdatedState(onMinus)
+        val more by androidx.compose.runtime.rememberUpdatedState(onPlus)
+        Column(Modifier.weight(1f).heightIn(min = 48.dp).clip(RoundedCornerShape(10.dp))
+            .then(if (dragging) Modifier.border(2.dp, p.accent, RoundedCornerShape(10.dp)) else Modifier)
+            .clickable(enabled = enabled, onClickLabel = "Type $label", onClick = onTap)
+            .then(if (!enabled) Modifier else Modifier.pointerInput(Unit) {
+                val step = 22.dp.toPx()
+                detectHorizontalDragGestures(
+                    onDragStart = { dragging = true; acc = 0f },
+                    onDragEnd = { dragging = false }, onDragCancel = { dragging = false },
+                ) { change, dx ->
+                    change.consume()
+                    acc += dx
+                    while (acc >= step) { acc -= step; more(); haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove) }
+                    while (acc <= -step) { acc += step; less(); haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove) }
+                }
+            }),
             horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-            Text(label, color = p.muted, fontSize = 11.sp, maxLines = 1)
+            Text(if (dragging) "← less · more →" else label, color = if (dragging) p.accentText else p.muted, fontSize = 11.sp, maxLines = 1)
             Text(value, color = p.text, fontSize = if (value.length <= 5) 26.sp else 21.sp, style = NumberStyle, maxLines = 1, softWrap = false)
         }
         StepButton(AppIcons.Plus, "$label more", enabled, onPlus)
@@ -590,7 +622,24 @@ private fun NumCell(label: String, value: String, modifier: Modifier, enabled: B
 @Composable
 private fun StepButton(icon: androidx.compose.ui.graphics.vector.ImageVector, desc: String, enabled: Boolean, onClick: () -> Unit) {
     val p = LocalPalette.current
-    Box(Modifier.size(48.dp).clip(RoundedCornerShape(11.dp)).background(p.tint).clickable(enabled = enabled, onClickLabel = desc, onClick = onClick),
+    // hold to repeat: one step at once, then faster and faster (mockup intervals-gestures.html, F)
+    val click by androidx.compose.runtime.rememberUpdatedState(onClick)
+    val scope = rememberCoroutineScope()
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+    Box(Modifier.size(48.dp).clip(RoundedCornerShape(11.dp)).background(p.tint)
+        .semantics { role = androidx.compose.ui.semantics.Role.Button; onClick(label = desc) { if (enabled) click(); enabled } }
+        .then(if (!enabled) Modifier else Modifier.pointerInput(Unit) {
+            detectTapGestures(onPress = {
+                click()
+                val job = scope.launch {
+                    kotlinx.coroutines.delay(400)
+                    var wait = 160L
+                    while (true) { click(); haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove); kotlinx.coroutines.delay(wait); wait = (wait * 0.85).toLong().coerceAtLeast(45) }
+                }
+                tryAwaitRelease()
+                job.cancel()
+            })
+        }),
         contentAlignment = Alignment.Center) { Icon(icon, desc, tint = p.accentText, modifier = Modifier.size(20.dp)) }
 }
 
@@ -657,6 +706,7 @@ private fun StepTile(
 private fun SetBlocks(
     sets: List<GymSet>, ex: Exercise, markedIds: Set<Long>, selecting: Boolean,
     onTap: (GymSet) -> Unit, onHold: (GymSet) -> Unit,
+    onAgain: (List<GymSet>) -> Unit = {}, onDelete: (List<GymSet>) -> Unit = {},
 ) {
     val p = LocalPalette.current
     val measurer = rememberTextMeasurer()
@@ -678,7 +728,10 @@ private fun SetBlocks(
                     .border(1.dp, p.line, RoundedCornerShape(12.dp)).padding(horizontal = 8.dp, vertical = 4.dp),
             ) {
                 rows.forEachIndexed { i, row ->
-                    Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+                    // a line is a round (L and R): swipe → does it again, ← deletes it (mockup intervals-gestures.html, E1)
+                    val round = row.sortedBy { it.order }
+                    SwipeLine(!selecting, "Again · round ${i + 1}", "Delete round ${i + 1}", { onAgain(round) }, { onDelete(round) }) {
+                    Row(Modifier.fillMaxWidth().background(p.surface).padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text("${i + 1}", color = p.muted, fontSize = 11.sp, style = NumberStyle, modifier = Modifier.width(18.dp))
                         listOf(Side.LEFT, Side.RIGHT).forEachIndexed { k, side ->
                             if (k == 1) Box(Modifier.padding(horizontal = 6.dp).width(1.dp).height(32.dp).background(p.line))
@@ -698,6 +751,7 @@ private fun SetBlocks(
                         Text(rest?.let(::formatTime).orEmpty(), color = if ((rest ?: 0) > 300) p.recordText else p.muted, fontSize = 10.sp,
                             style = NumberStyle, textAlign = TextAlign.End, modifier = Modifier.width(36.dp))
                     }
+                    }
                 }
             }
         }
@@ -711,6 +765,10 @@ private fun SetBlocks(
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         blocks.forEach { block ->
             val variant = block.sets.first().variantOf(ex)
+            // swipe the line → one more like its last set, ← deletes its last set (mockup intervals-gestures.html, E1)
+            val last = block.sets.maxBy { it.order }
+            SwipeLine(!selecting, "Again · ${last.summary(ex)}", "Delete ${last.summary(ex)}", { onAgain(listOf(last)) }, { onDelete(listOf(last)) },
+                shape = RoundedCornerShape(12.dp)) {
             Row(
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(p.surface)
                     .border(1.dp, p.line, RoundedCornerShape(12.dp)).padding(8.dp),
@@ -730,6 +788,7 @@ private fun SetBlocks(
                 FlowRow(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     block.sets.forEach { square(it, true) }
                 }
+            }
             }
         }
     }
@@ -1181,6 +1240,65 @@ private fun ColorDots(colors: List<Long>) {
 
 /** What a swiped-away load hint is remembered by: exercise, side, variant and the weight it suggested. */
 private fun hintKey(exerciseId: Long, side: Side?, variant: String?, hint: LoadHint) = "$exerciseId|${side ?: ""}|${variant ?: ""}|${hint.toKg}"
+
+/**
+ * A line of sets: swipe → to do it again, ← to delete it. The line follows the finger; past a third of its width it
+ * fires (with a buzz) and springs back. TalkBack gets the same two actions.
+ */
+@Composable
+private fun SwipeLine(
+    enabled: Boolean, againLabel: String, deleteLabel: String, onAgain: () -> Unit, onDelete: () -> Unit,
+    shape: androidx.compose.ui.graphics.Shape = RoundedCornerShape(8.dp), content: @Composable () -> Unit,
+) {
+    val p = LocalPalette.current
+    val scope = rememberCoroutineScope()
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+    val x = remember { androidx.compose.animation.core.Animatable(0f) }
+    var width by remember { mutableStateOf(1) }
+    val again by androidx.compose.runtime.rememberUpdatedState(onAgain)
+    val delete by androidx.compose.runtime.rememberUpdatedState(onDelete)
+    val armed = kotlin.math.abs(x.value) > width / 3f
+    var wasArmed by remember { mutableStateOf(false) }
+    LaunchedEffect(armed) { if (armed && !wasArmed) haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove); wasArmed = armed }
+    Box(
+        Modifier.fillMaxWidth().clip(shape).onSizeChanged { width = it.width.coerceAtLeast(1) }
+            .semantics {
+                if (enabled) customActions = listOf(
+                    androidx.compose.ui.semantics.CustomAccessibilityAction(againLabel) { onAgain(); true },
+                    androidx.compose.ui.semantics.CustomAccessibilityAction(deleteLabel) { onDelete(); true },
+                )
+            }
+            .then(if (!enabled) Modifier else Modifier.pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onDragEnd = {
+                        val v = x.value
+                        if (kotlin.math.abs(v) > size.width / 3f) {
+                            haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                            if (v > 0) again() else delete()
+                        }
+                        scope.launch { x.animateTo(0f, androidx.compose.animation.core.spring(dampingRatio = 0.8f)) }
+                    },
+                    onDragCancel = { scope.launch { x.animateTo(0f) } },
+                ) { change, dx ->
+                    change.consume()
+                    scope.launch { x.snapTo((x.value + dx).coerceIn(-size.width * 0.6f, size.width * 0.6f)) }
+                }
+            }),
+    ) {
+        if (x.value != 0f) {
+            val toRight = x.value > 0
+            Row(
+                Modifier.matchParentSize().background(if (toRight) p.teal.copy(alpha = if (armed) 0.35f else 0.18f) else p.dangerText.copy(alpha = if (armed) 0.3f else 0.15f))
+                    .padding(horizontal = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = if (toRight) Arrangement.Start else Arrangement.End,
+            ) {
+                Text(if (toRight) "↻ $againLabel" else "$deleteLabel 🗑", color = if (toRight) p.text else p.dangerText, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+            }
+        }
+        Box(Modifier.graphicsLayer { translationX = x.value }) { content() }
+    }
+}
 
 /** A row you can swipe away to either side. */
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)

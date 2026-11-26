@@ -1,0 +1,361 @@
+<title>Gesture Shortcuts</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: an idea switcher, then the set screen of that idea (and a second state), side by side, then pros / cons. */
+:root {
+  --bg: #f4f2fa; --surface: #ffffff; --ink: #18151f; --muted: #5b5668; --line: #dfdbe9; --accent: #6d28d9; --accent-soft: #ece4fd;
+  --good: #0f7a5c; --warn: #9a4a00;
+  /* the phones always use the app's own dark look */
+  --ph-bg: #000000; --ph-card: #1a1c21; --ph-card2: #111216; --ph-line: #23262c; --ph-ink: #f2f3f5; --ph-muted: #9aa0aa; --ph-faint: #6e747e;
+  --ph-accent: #7c3aed; --ph-accent-ink: #c4b1ff; --ph-tint: #2a2340; --ph-pink: #e91e63; --ph-teal: #00bfa5; --ph-yellow: #ffc107;
+  --display: "Space Grotesk", Inter, system-ui, sans-serif; --text: Inter, system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0b10; --surface: #17151d; --ink: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --accent-soft: #241d38;
+  --good: #4fd1a5; --warn: #ffb35c; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0c0b10; --surface: #17151d; --ink: #f1eff6; --muted: #a7a1b5; --line: #2b2836; --accent: #a78bfa; --accent-soft: #241d38;
+  --good: #4fd1a5; --warn: #ffb35c; color-scheme: dark }
+
+body { background: var(--bg); color: var(--ink); font-family: var(--text); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 48px; }
+.wrap { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+h1 { font-family: var(--display); font-size: clamp(28px, 5vw, 40px); line-height: 1.1; margin: 0; text-wrap: balance; letter-spacing: -0.5px; }
+.lead { margin: 6px 0 0; color: var(--muted); max-width: 68ch; }
+.switch { display: flex; flex-wrap: wrap; gap: 8px; }
+.switch button { font: 600 14px var(--text); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
+  padding: 9px 14px; cursor: pointer; display: flex; gap: 8px; align-items: center; }
+.switch button .k { font-family: var(--display); color: var(--accent); }
+.switch button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.switch button[aria-pressed="true"] .k { color: #fff; }
+.switch button:focus-visible, .phone button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.concept h2 { font-family: var(--display); font-size: 26px; margin: 0; letter-spacing: -0.3px; }
+.concept .idea { margin: 4px 0 0; color: var(--muted); max-width: 70ch; }
+.phones { display: flex; gap: 22px; overflow-x: auto; padding: 6px 2px 14px; scroll-snap-type: x mandatory; }
+figure { margin: 0; display: flex; flex-direction: column; gap: 8px; scroll-snap-align: start; }
+figcaption { font-size: 13px; color: var(--muted); max-width: 300px; }
+figcaption b { color: var(--ink); }
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.note { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; min-width: 0; }
+.note h3 { margin: 0 0 6px; font-size: 13px; letter-spacing: 0.6px; text-transform: uppercase; }
+.note.pro h3 { color: var(--good); } .note.con h3 { color: var(--warn); }
+.note ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.compare { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 14px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+thead th { font-size: 12px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted); }
+td.n { font-family: var(--display); font-variant-numeric: tabular-nums; font-weight: 600; }
+tr.pick td { background: var(--accent-soft); }
+.reco { background: var(--accent-soft); border-radius: 14px; padding: 16px 18px; }
+.reco h2 { font-family: var(--display); margin: 0 0 6px; font-size: 22px; }
+.reco p { margin: 0; max-width: 75ch; }
+
+/* ---- phone ---- */
+.phone { width: 300px; height: 620px; flex: none; background: var(--ph-bg); color: var(--ph-ink); border-radius: 34px; border: 8px solid #1e1d24;
+  box-sizing: border-box; position: relative; overflow: hidden; display: flex; flex-direction: column; font-size: 13px; line-height: 1.35;
+  box-shadow: 0 10px 30px rgba(20, 10, 40, 0.18); }
+.phone .body { flex: 1; overflow: hidden; padding: 14px 12px 10px; display: flex; flex-direction: column; gap: 9px; }
+.phone .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.phone .h { font-family: var(--display); font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+.phone .sub { color: var(--ph-muted); font-size: 11.5px; }
+.phone .card { background: var(--ph-card); border-radius: 14px; padding: 10px 11px; display: flex; flex-direction: column; gap: 5px; }
+.phone .card.dim { background: var(--ph-card2); }
+.phone .card.hi { background: #1c1828; border: 2px solid var(--ph-accent); }
+.phone .row { display: flex; align-items: center; gap: 8px; }
+.phone .grow { flex: 1; min-width: 0; }
+.phone .t { font-weight: 700; font-size: 13.5px; }
+.phone .m { color: var(--ph-muted); font-size: 11.5px; }
+.phone .num { font-family: var(--display); font-variant-numeric: tabular-nums; font-weight: 700; }
+.phone .big { font-family: var(--display); font-weight: 700; font-size: 44px; line-height: 1; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+.phone button { font: 700 13px var(--text); border: 0; border-radius: 12px; cursor: pointer; }
+.phone .btn { background: var(--ph-accent); color: #fff; height: 42px; width: 100%; }
+.phone .btn.soft { background: var(--ph-tint); color: var(--ph-accent-ink); }
+.phone .btn.teal { background: var(--ph-teal); color: #04241f; }
+.phone .btn.pink { background: var(--ph-pink); }
+.phone .pill { padding: 3px 9px; border-radius: 999px; background: var(--ph-tint); color: var(--ph-accent-ink); font-size: 11px; font-weight: 700; white-space: nowrap; }
+.phone .pill.pink { background: rgba(233, 30, 99, 0.18); color: #ff8ab3; }
+.phone .pill.teal { background: rgba(0, 191, 165, 0.16); color: #5eead4; }
+.phone .pill.yellow { background: rgba(255, 193, 7, 0.16); color: #ffd666; }
+.phone .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.phone .chev { color: var(--ph-faint); font-size: 18px; }
+.phone .tabs { display: flex; border-top: 1px solid var(--ph-line); background: #0b0c0f; padding: 6px 4px 10px; }
+.phone .tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--ph-faint); font-size: 10.5px; font-weight: 600; }
+.phone .tab i { width: 30px; height: 22px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-style: normal; font-size: 13px; }
+.phone .tab.on { color: var(--ph-accent-ink); } .phone .tab.on i { background: var(--ph-tint); }
+.phone .tab.fab i { width: 48px; height: 48px; border-radius: 24px; margin-top: -22px; background: var(--ph-accent); color: #fff; font-size: 24px; box-shadow: 0 4px 14px rgba(124, 58, 237, 0.5); }
+.phone .mini { margin: 0 8px 6px; background: #1c1828; border: 1px solid #3b2f63; border-radius: 16px; padding: 8px 10px; display: flex; align-items: center; gap: 9px; }
+.phone .ring { width: 34px; height: 34px; border-radius: 50%; flex: none; background: conic-gradient(var(--ph-teal) 0 62%, #2a2d34 0); display: flex; align-items: center; justify-content: center; }
+.phone .ring span { width: 26px; height: 26px; border-radius: 50%; background: #1c1828; display: flex; align-items: center; justify-content: center; font: 700 9px var(--display); color: #5eead4; }
+.phone .sheet { position: absolute; inset: auto 0 0 0; background: #15161b; border-radius: 22px 22px 0 0; padding: 10px 12px 14px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 -10px 30px rgba(0,0,0,0.6); }
+.phone .grab { width: 38px; height: 4px; border-radius: 2px; background: #3a3d45; align-self: center; }
+.phone .scrim { position: absolute; inset: 0; background: rgba(0,0,0,0.55); }
+.phone .seg { display: flex; background: var(--ph-card); border-radius: 12px; padding: 3px; }
+.phone .seg span { flex: 1; text-align: center; padding: 7px 0; border-radius: 9px; font-weight: 700; color: var(--ph-muted); font-size: 12px; }
+.phone .seg span.on { background: var(--ph-accent); color: #fff; }
+.phone .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.phone .week div { background: var(--ph-card2); border-radius: 10px; padding: 5px 0; text-align: center; font-size: 10px; color: var(--ph-muted); display: flex; flex-direction: column; gap: 3px; align-items: center; }
+.phone .week div b { font-family: var(--display); color: var(--ph-ink); font-size: 13px; }
+.phone .week div.today { outline: 2px solid var(--ph-accent); }
+.phone .bar { height: 5px; border-radius: 3px; width: 70%; }
+.phone .boxes { display: flex; flex-wrap: wrap; gap: 4px; }
+.phone .boxes span { min-width: 22px; height: 22px; padding: 0 5px; box-sizing: border-box; border-radius: 6px; border: 1px solid #2a2d34; display: inline-flex; align-items: center; justify-content: center; font: 600 11.5px var(--display); }
+.phone .search { background: var(--ph-card); border-radius: 12px; padding: 9px 11px; color: var(--ph-faint); }
+.phone .tile { flex: 1; background: var(--ph-card); border-radius: 16px; padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.phone .tile .big { font-size: 34px; }
+.phone .pm { display: flex; gap: 6px; width: 100%; } .phone .pm button { flex: 1; height: 34px; background: var(--ph-tint); color: var(--ph-accent-ink); font-size: 18px; }
+@media (prefers-reduced-motion: no-preference) { .concept { animation: in 220ms ease-out; } @keyframes in { from { opacity: 0.4; transform: translateY(6px); } } }
+.phone .dock { border-top: 1px solid var(--ph-line); background: #0b0c0f; padding: 8px 10px 12px; display: flex; flex-direction: column; gap: 7px; }
+.phone .logbtn { height: 52px; border-radius: 14px; background: var(--ph-accent); color: #fff; font: 700 14px var(--text); display: flex; align-items: center; justify-content: center; gap: 8px; flex: 1; }
+.phone .logbtn.l { background: var(--ph-pink); } .phone .logbtn.r { background: var(--ph-teal); color: #04241f; }
+.phone .logbtn.off { background: var(--ph-card); color: var(--ph-muted); border: 1px solid var(--ph-line); }
+.phone .hdr { display: flex; align-items: center; gap: 8px; }
+.phone .hdr .back { color: var(--ph-muted); font-size: 20px; }
+.phone .tabsx { display: flex; gap: 14px; justify-content: center; font-size: 12px; font-weight: 700; color: var(--ph-faint); }
+.phone .tabsx .on { color: var(--ph-accent-ink); border-bottom: 2px solid var(--ph-accent); padding-bottom: 3px; }
+.phone .lbl { font-size: 10.5px; letter-spacing: 0.6px; font-weight: 700; color: var(--ph-muted); }
+.phone .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.phone .chip { padding: 6px 10px; border-radius: 10px; background: var(--ph-card); font-weight: 700; font-size: 12px; color: var(--ph-ink); }
+.phone .chip.on { background: var(--ph-accent); color: #fff; }
+.phone .chip.ghost { background: transparent; border: 1px dashed #3a3d45; color: var(--ph-muted); }
+.phone .seg span.l.on { background: var(--ph-pink); } .phone .seg span.r.on { background: var(--ph-teal); color: #04241f; }
+.phone .timer { background: var(--ph-card); border-radius: 16px; padding: 10px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.phone .timer .big { font-size: 40px; }
+.phone .go { height: 46px; width: 100%; border-radius: 14px; background: var(--ph-pink); color: #fff; font: 800 15px var(--text); display: flex; align-items: center; justify-content: center; letter-spacing: 1px; }
+.phone .sentence { background: #1c1828; border: 2px solid var(--ph-accent); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.phone .tok { display: inline-flex; align-items: baseline; gap: 3px; padding: 4px 9px; border-radius: 10px; background: var(--ph-tint); color: var(--ph-accent-ink); font: 700 17px var(--display); }
+.phone .tok small { font: 600 10px var(--text); color: var(--ph-muted); }
+.phone .tok.l { background: rgba(233, 30, 99, 0.2); color: #ff8ab3; }
+.phone .hint { font-size: 11px; color: var(--ph-faint); }
+.phone .set { display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--ph-muted); }
+.phone .set b { color: var(--ph-ink); font-family: var(--display); }
+.phone .side { width: 18px; height: 18px; border-radius: 6px; font: 800 10px var(--text); display: inline-flex; align-items: center; justify-content: center; }
+.phone .side.l { background: rgba(233, 30, 99, 0.25); color: #ff8ab3; } .phone .side.r { background: rgba(0, 191, 165, 0.22); color: #5eead4; }
+.pl { padding: 10px 12px 14px; display: flex; flex-direction: column; height: 100%; box-sizing: border-box; }
+.pl .bar { display: flex; align-items: center; gap: 4px; color: var(--ph-ink); }
+.pl .bar .ic { flex: 0 0 34px; width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; border-radius: 17px; font-size: 16px; }
+.pl .bar .ic.hi { background: var(--ph-tint); color: var(--ph-accent-ink); outline: 2px solid var(--ph-accent); }
+.pl .bar .nm { flex: 1; min-width: 0; text-align: center; font: 600 13px var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl .tl { text-align: center; font: 300 34px var(--display); color: var(--ph-muted); margin-top: 6px; }
+.pl .disc { margin: 10px auto; width: 190px; height: 190px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; }
+.pl .disc b { font: 700 64px var(--display); line-height: 1; }
+.pl .disc span { font: 600 14px var(--text); }
+.pl .info { text-align: center; color: var(--ph-muted); font: 500 12px var(--text); }
+.pl .ctr { margin-top: auto; display: flex; justify-content: center; align-items: center; gap: 16px; }
+.pl .ctr .c { width: 48px; height: 48px; border-radius: 24px; background: var(--ph-card); display: flex; align-items: center; justify-content: center; color: var(--ph-ink); font-size: 20px; position: relative; }
+.pl .ctr .c.press { outline: 3px solid var(--ph-accent); }
+.pl .ctr .lg { width: 100px; height: 42px; border-radius: 21px; border: 2px solid #ff8a80; color: #ff8a80; display: flex; align-items: center; justify-content: center; font: 700 13px var(--text); }
+.pl .pop { position: absolute; bottom: 58px; left: -14px; white-space: nowrap; background: #2a2d34; color: var(--ph-ink); border-radius: 12px; padding: 7px 10px; font: 700 12px var(--text); box-shadow: 0 4px 14px rgba(0,0,0,.5); }
+.pl .hold { text-align: center; font: 500 10.5px var(--text); color: var(--ph-faint); margin-top: 6px; }
+.pl .rv { background: var(--ph-card); border-radius: 14px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.pl .rv .t { font: 700 11px var(--text); letter-spacing: .5px; color: var(--ph-muted); }
+.pl .rv .redo { height: 40px; border-radius: 12px; border: 1px solid var(--ph-line); background: var(--ph-card2); display: flex; align-items: center; justify-content: center; gap: 6px; color: var(--ph-ink); font: 700 13px var(--text); }
+.pl .toast { background: #2a2d34; border-radius: 12px; padding: 8px 10px; display: flex; align-items: center; gap: 8px; font: 500 12px var(--text); color: var(--ph-ink); margin-top: 8px; }
+.pl .toast .act { margin-left: auto; font-weight: 800; color: var(--ph-accent-ink); }
+/* ---- gestures ---- */
+.pw { position: relative; flex: none; }
+.vk { position: absolute; right: -5px; width: 5px; border-radius: 0 3px 3px 0; background: #3a3946; }
+.vk.up { top: 150px; height: 46px; } .vk.dn { top: 202px; height: 46px; }
+.vk.on { background: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.vlab { position: absolute; right: -2px; transform: translateX(100%); padding-left: 8px; font: 700 11px var(--text); color: var(--accent); white-space: nowrap; }
+.finger { position: absolute; width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,.28); border: 2px solid rgba(255,255,255,.75); pointer-events: none; z-index: 3; }
+.trail { position: absolute; height: 4px; border-radius: 2px; background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.6)); z-index: 2; }
+.trail.v { width: 4px; height: auto; background: linear-gradient(0deg, rgba(255,255,255,0), rgba(255,255,255,.6)); }
+.pl .disc { position: relative; }
+.peek { position: absolute; top: 50%; right: -70px; width: 120px; height: 120px; margin-top: -60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-direction: column; color: #04241f; font: 700 12px var(--text); opacity: .75; }
+.peek.l { right: auto; left: -70px; color: #fff; }
+.discwrap { position: relative; height: 210px; overflow: hidden; margin: 0 -12px; }
+.discwrap .disc { position: absolute; left: 50%; top: 10px; margin: 0 0 0 -95px; }
+.holdring { margin: 6px auto; width: 206px; height: 206px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: conic-gradient(#ff8a80 0 68%, #2a2d34 0); }
+.holdring .disc { margin: 0; width: 190px; height: 190px; }
+.osd { position: absolute; top: 46px; left: 50%; transform: translateX(-50%); background: #2a2d34; color: var(--ph-ink); border-radius: 14px; padding: 8px 12px; font: 700 12.5px var(--text); white-space: nowrap; box-shadow: 0 6px 18px rgba(0,0,0,.6); z-index: 4; display: flex; gap: 7px; align-items: center; }
+.osd small { font: 500 11px var(--text); color: var(--ph-muted); }
+.plus { position: absolute; top: 120px; left: 50%; transform: translateX(-50%); background: var(--ph-teal); color: #04241f; border-radius: 999px; padding: 4px 12px; font: 800 14px var(--display); z-index: 4; }
+.blk { background: var(--ph-card); border-radius: 14px; overflow: hidden; }
+.blk .bh { display: flex; justify-content: space-between; padding: 8px 11px 4px; font-size: 11.5px; color: var(--ph-muted); }
+.blk .bh b { font: 700 15px var(--display); color: var(--ph-ink); }
+.srow { position: relative; height: 38px; }
+.srow .under { position: absolute; inset: 0; display: flex; align-items: center; padding: 0 12px; font: 800 12px var(--text); }
+.srow .under.again { background: #0d3b34; color: #5eead4; }
+.srow .under.del { background: #3b1218; color: #ff8a80; justify-content: flex-end; }
+.srow .over { position: absolute; inset: 0; background: var(--ph-card); display: flex; align-items: center; gap: 8px; padding: 0 11px; border-top: 1px solid var(--ph-line); }
+.srow .over b { font: 700 15px var(--display); }
+.srow .over .n { width: 18px; color: var(--ph-faint); font: 600 11px var(--display); }
+.ruler { position: relative; height: 54px; background: var(--ph-card2); border-radius: 12px; overflow: hidden; }
+.ruler .ticks { position: absolute; inset: 0; display: flex; justify-content: space-between; align-items: flex-end; padding: 0 6px 6px; }
+.ruler .ticks span { display: flex; flex-direction: column; align-items: center; gap: 3px; font: 600 10px var(--display); color: var(--ph-faint); }
+.ruler .ticks span::before { content: ""; width: 2px; height: 12px; background: #3a3d45; border-radius: 1px; }
+.ruler .ticks span.on { color: var(--ph-accent-ink); } .ruler .ticks span.on::before { background: var(--ph-accent); height: 22px; }
+.home { position: absolute; inset: 0; background: radial-gradient(120% 80% at 30% 10%, #2a2340, #0b0c0f 70%); padding: 18px 14px; display: flex; flex-direction: column; gap: 12px; }
+.home .apps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px 8px; margin-top: auto; }
+.home .app { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; color: var(--ph-muted); }
+.home .app i { width: 46px; height: 46px; border-radius: 50%; background: #23262c; display: block; }
+.home .app.me i { background: var(--ph-accent); display: flex; align-items: center; justify-content: center; font-style: normal; color: #fff; font: 800 18px var(--display); outline: 3px solid rgba(255,255,255,.35); }
+.menu { position: absolute; left: 14px; right: 60px; bottom: 132px; background: #1f2127; border-radius: 18px; padding: 6px; box-shadow: 0 10px 30px rgba(0,0,0,.7); z-index: 4; }
+.menu div { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; font-weight: 600; }
+.menu div i { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-style: normal; font-size: 11px; background: var(--ph-tint); color: var(--ph-accent-ink); }
+.shade { position: absolute; inset: 0; background: #0f1014; padding: 16px 10px; display: flex; flex-direction: column; gap: 10px; }
+.shade .clock { font: 300 40px var(--display); color: var(--ph-ink); padding-left: 4px; }
+.notif { background: #1f2127; border-radius: 20px; padding: 12px; display: flex; flex-direction: column; gap: 9px; }
+.notif .acts { display: flex; gap: 6px; }
+.notif .acts span { flex: 1; text-align: center; padding: 8px 0; border-radius: 999px; background: var(--ph-tint); color: var(--ph-accent-ink); font: 700 12px var(--text); }
+.notif .pb { height: 4px; border-radius: 2px; background: #2a2d34; overflow: hidden; } .notif .pb i { display: block; height: 100%; width: 58%; background: #e53935; }
+.gesture { display: inline-flex; gap: 6px; align-items: center; font: 700 12px var(--text); color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 3px 10px; margin-bottom: 2px; }
+.where { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+.where code { font-size: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 1px 5px; }
+</style>
+
+<style>
+.lb { background: var(--ph-card); border: 1px solid var(--ph-line); border-radius: 12px; padding: 7px 8px; display: flex; gap: 8px; align-items: flex-start; position: relative; overflow: hidden; }
+.lb .ld { width: 52px; flex: none; min-height: 34px; display: flex; align-items: center; font: 700 14px var(--display); }
+.lb .sq { display: flex; flex-wrap: wrap; gap: 5px; flex: 1; }
+.bx { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.bx b { min-width: 32px; height: 32px; box-sizing: border-box; border-radius: 9px; border: 1px solid var(--ph-line); background: #000; display: flex; align-items: center; justify-content: center; font: 700 14px var(--display); position: relative; }
+.bx small { font: 600 9px var(--display); color: var(--ph-muted); }
+.bx.new b { border: 2px solid var(--ph-teal); color: #5eead4; }
+.bx.gone b { border-color: #ff8a80; color: #ff8a80; text-decoration: line-through; opacity: .7; }
+.bx.ghost b { border: 1px dashed #4a4d55; color: var(--ph-muted); background: transparent; }
+.bx.lift b { transform: translate(14px, -4px) rotate(4deg); box-shadow: 0 6px 14px rgba(0,0,0,.7); border-color: var(--ph-teal); }
+.lb.slide > .inner { display: flex; gap: 8px; flex: 1; transform: translateX(var(--x)); background: var(--ph-card); position: relative; z-index: 1; }
+.lb .under { position: absolute; inset: 0; display: flex; align-items: center; padding: 0 10px; font: 800 11.5px var(--text); }
+.lb .under.again { background: #0d3b34; color: #5eead4; }
+.lb .under.del { background: #3b1218; color: #ff8a80; justify-content: flex-end; }
+.sides { background: var(--ph-card); border: 1px solid var(--ph-line); border-radius: 12px; padding: 4px 8px; display: flex; flex-direction: column; }
+.sr { display: flex; align-items: center; gap: 6px; padding: 3px 0; position: relative; }
+.sr .rn { width: 12px; color: var(--ph-faint); font: 600 10px var(--display); }
+.sr .half { flex: 1; display: flex; align-items: center; gap: 5px; }
+.sr .sep { width: 1px; height: 28px; background: var(--ph-line); }
+.sr .kg { font-size: 11px; color: var(--ph-muted); }
+.sr.newrow { outline: 2px solid var(--ph-teal); border-radius: 8px; }
+.setrow { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--ph-line); }
+.sw { width: 40px; height: 24px; border-radius: 12px; background: var(--ph-accent); position: relative; flex: none; }
+.sw::after { content: ""; position: absolute; right: 3px; top: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; }
+.sw.off { background: #3a3d45; } .sw.off::after { right: auto; left: 3px; background: #9aa0aa; }
+.state { display: inline-block; font: 700 11px var(--text); border-radius: 999px; padding: 2px 9px; margin-left: 6px; vertical-align: 2px; }
+.state.yes { background: var(--accent-soft); color: var(--good); } .state.try { background: var(--accent-soft); color: var(--warn); } .state.ask { background: var(--accent-soft); color: var(--accent); }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Gesti: swipe e tieni premuto</h1>
+    <p class="lead">Solo idee, l'app non è cambiata. Ogni gesto è una scorciatoia: il tasto che c'è oggi resta, e lo stesso comando c'è anche per TalkBack. Ogni gesto dà una piccola vibrazione quando scatta.
+      Versione 2: tolti i tasti del volume; B diventa un'opzione in Settings; per E, tre modi di gestire più set sulla stessa riga.</p>
+  </header>
+  <div class="switch" role="group" aria-label="Idea">
+    <button aria-pressed="true" data-i="0"><span class="k">B</span>Swipe sul disco</button>
+    <button aria-pressed="false" data-i="1"><span class="k">C</span>Tieni premuto per fermare</button>
+    <button aria-pressed="false" data-i="2"><span class="k">D</span>Trascina il riposo</button>
+    <button aria-pressed="false" data-i="3"><span class="k">E1</span>Swipe la riga</button>
+    <button aria-pressed="false" data-i="4"><span class="k">E2</span>Swipe il quadratino</button>
+    <button aria-pressed="false" data-i="5"><span class="k">E3</span>Quadratino +</button>
+    <button aria-pressed="false" data-i="6"><span class="k">F</span>Trascina il peso</button>
+  </div>
+  <section class="concept" id="concept" aria-live="polite"></section>
+
+  <div class="compare">
+    <table>
+      <thead><tr><th>Per E: più set sulla stessa riga</th><th>Cosa tocchi</th><th>Swipe →</th><th>Swipe ←</th><th>Con i lati (L | R)</th><th>Pro</th><th>Contro</th></tr></thead>
+      <tbody>
+        <tr class="pick"><td><b>E1</b> Swipe la riga</td><td>Tutta la riga del carico</td><td>Un set uguale all'ultimo della riga</td><td>Cancella l'ultimo della riga</td><td>La riga è un round: rifà o cancella L e R</td><td>Bersaglio grande, si fa anche con le dita sporche</td><td>Agisce solo sull'ultimo set della riga</td></tr>
+        <tr><td><b>E2</b> Swipe il quadratino</td><td>Un solo set</td><td>Copia quel set</td><td>Cancella quel set</td><td>Uguale: un quadratino, un set</td><td>Scegli esattamente quale</td><td>Il quadratino è piccolo (44 dp), si confonde col tocco</td></tr>
+        <tr><td><b>E3</b> Quadratino +</td><td>Un + in fondo alla riga</td><td colspan="2">Nessuno swipe: tocchi + e aggiunge un set uguale all'ultimo</td><td>Un + in fondo, rifà il round</td><td>Si vede, niente da imparare</td><td>Un quadratino in più per ogni riga; cancellare resta nel dialogo</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <section class="reco">
+    <h2>Il mio consiglio</h2>
+    <p>Per E: <b>E1</b>. Il gesto prende tutta la riga, quindi non serve mira, e «l'ultimo della riga» è quasi sempre quello che vuoi rifare o togliere: hai appena fatto 40 × 8 e ne fai un altro uguale.
+      Se vuoi copiare o cancellare un set in mezzo, c'è già il tocco sul quadratino. Con i lati la riga è un round (L e R), e lo swipe rifà o cancella il round intero.
+      <b>B</b> parte spento: lo accendi da Settings › Player.</p>
+  </section>
+</div>
+
+<script>
+const phone = (inner, label) => `<div class="pw"><div class="phone" role="img" aria-label="${label}">${inner}</div></div>`;
+const bar = () => `<div class="bar"><span class="ic">✕</span><span class="nm">hangboard 70%</span><span class="ic">🔊</span></div>`;
+const disc = (col, n, name, style) => `<div class="disc" style="background:${col};${style || ''}"><b>${n}</b><span>${name}</span></div>`;
+const ctr = () => `<div class="ctr"><div class="c">‹</div><div class="lg">Let go</div><div class="c">›</div></div>`;
+const toast = (t, act) => `<div class="toast">${t}<span class="act">${act || 'Undo'}</span></div>`;
+const info = (t) => `<div class="info">${t || 'round 2 of 4 · hang 3 of 4'}</div>`;
+const finger = (x, y) => `<span class="finger" style="left:${x}px;top:${y}px"></span>`;
+const trailH = (x, y, w) => `<span class="trail" style="left:${x}px;top:${y}px;width:${w}px"></span>`;
+const trailV = (x, y, h) => `<span class="trail v" style="left:${x}px;top:${y}px;height:${h}px"></span>`;
+
+// gym log: blocks by load, a square per set with the rest under it
+const gymTop = (name, sub) => `<div class="hdr"><span class="back">←</span><div class="grow"><div class="t">${name}</div><div class="m">${sub}</div></div><span class="pill teal">rest 1:12</span></div>`;
+const nums = (w, r, extra) => `<div class="card"><div class="row"><span class="tok">${w}<small>kg</small></span><span class="tok">${r}<small>reps</small></span><span class="grow"></span>${extra || '<span class="pill">deep</span>'}</div></div>`;
+const bx = (r, rest, cls) => `<span class="bx ${cls || ''}"><b>${r}</b><small>${rest || '&nbsp;'}</small></span>`;
+const line = (load, boxes, opt) => {
+  opt = opt || {};
+  const inner = `<span class="ld">${load}</span><span class="sq">${boxes}</span>`;
+  if (!opt.x) return `<div class="lb">${inner}</div>`;
+  return `<div class="lb slide" style="--x:${opt.x}px">${opt.under}<div class="inner">${inner}</div></div>`;
+};
+const squat = (l40, l50) => line('40 kg', l40) + line('50 kg', l50 || bx(6, '2:05') + bx(5, '2:20'));
+const std40 = bx(8, '') + bx(8, '1:30') + bx(7, '1:45');
+const dock = (t) => `<div class="dock"><div class="row"><div class="logbtn">${t || 'Log set'}</div></div></div>`;
+const half = (s, kg, r, cls) => `<span class="half"><span class="side ${s.toLowerCase()}">${s}</span><span class="kg">${kg}</span>${bx(r, '', cls)}</span>`;
+const sr = (n, l, r, rest, cls) => `<div class="sr ${cls || ''}"><span class="rn">${n}</span>${l}<span class="sep"></span>${r}<span class="m" style="width:30px;text-align:right;font-size:10px">${rest || ''}</span></div>`;
+const sideTop = gymTop('One-arm row', 'per side · next L');
+const sideNums = nums('22', '10', '<span class="seg" style="width:96px"><span class="l on">L</span><span>R</span></span>');
+
+const ideas = [
+  { st: '<span class="state yes">sì, in Settings</span>', g: 'Swipe ← = serie dopo · swipe → = serie prima · spento di base', w: '<code>PlayerScreen.kt</code> sul disco; l\'interruttore in <code>SettingsScreen.kt</code> sotto Player.', s: [
+    ['<b>Mentre trascini</b> il disco segue il dito e dietro si vede la serie dopo. Se lasci prima di metà, torna dov\'era. Lasciato oltre metà, parte il riposo e c\'è Undo.',
+      phone(`<div class="pl">${bar()}<div class="tl">06:40</div><div class="discwrap">${disc('#e53935', 4, 'hang', 'transform:translateX(-56px)')}<div class="peek" style="background:#00bfa5;right:-40px">rest<br>0:10</div>${trailH(150, 112, 90)}${finger(130, 94)}</div>${info()}${ctr()}</div>`, 'B, swiping')],
+    ['<b>In Settings › Player</b>, spento di base: chi non lo vuole non salta una serie per sbaglio con le dita piene di magnesite.',
+      phone(`<div class="body"><div class="hdr"><span class="back">←</span><div class="h">Settings</div></div><div class="lbl">PLAYER</div>
+        <div class="setrow"><div class="grow"><div class="t">Swipe the disc</div><div class="m">← next series · → previous</div></div><span class="sw"></span></div>
+        <div class="setrow"><div class="grow"><div class="t">Hold ✕ to stop</div><div class="m">no "Stop?" question</div></div><span class="sw"></span></div>
+        <div class="setrow"><div class="grow"><div class="t">Countdown beeps</div><div class="m">3 · 2 · 1</div></div><span class="sw"></span></div>
+        <div class="setrow"><div class="grow"><div class="t">End-of-set sound</div><div class="m">Android fallback ring</div></div><span class="chev">›</span></div></div>`, 'B, settings')],
+  ] },
+  { st: '<span class="state yes">sì</span>', g: 'Tieni premuto ✕ (o il disco) per 1 secondo = stop', w: '<code>PlayerScreen.kt</code>: al posto del dialogo «Stop? / Keep going».', s: [
+    ['<b>Tenendo premuto</b> un anello rosso si riempie intorno al disco. Se lasci prima, non succede niente e il tempo continua.',
+      phone(`<div class="pl">${bar()}<div class="tl">06:40</div><div class="holdring">${disc('#e53935', 4, 'hang')}</div><div class="info" style="color:#ff8a80">keep holding to stop</div>${ctr()}${finger(4, 4)}</div>`, 'C, holding')],
+    ['<b>Anello pieno</b>: si va alla schermata Finished come oggi, dove scegli se salvarlo come fermato o buttarlo.',
+      phone(`<div class="pl">${bar()}<div class="body" style="padding:10px 0;gap:10px"><div class="h">Stopped</div><div class="sub">hangboard 70% · round 2 of 4 · 06:40</div><div class="card"><div class="row"><span class="dot" style="background:var(--ph-yellow)"></span><div class="grow t">Saved as stopped</div></div><div class="m">Load L +10 · R +8</div></div><button class="btn">Save to journal</button><button class="btn soft">Discard</button></div></div>`, 'C, stopped')],
+  ] },
+  { st: '<span class="state yes">sì</span>', g: 'Nel riposo: trascina su = +15 s · giù = −15 s', w: '<code>PlayerScreen.kt</code> sul tempo del riposo tra i round; vale solo per questo round.', s: [
+    ['<b>Trascinando su</b> dal tempo, ogni scatto aggiunge 15 secondi, con una vibrazione per scatto.',
+      phone(`<div class="pl">${bar()}<div class="tl">07:58</div><div style="position:relative">${disc('#ffc107', '0:48', 'round rest', 'color:#2a1f00')}<span class="plus">+15 s</span>${trailV(136, 96, 80)}${finger(119, 70)}</div><div class="rv"><span class="t">NEXT · ROUND 3 OF 4</span><div class="m">Load L +10 · R +8</div></div>${ctr()}</div>`, 'D, dragging')],
+    ['<b>Lasciato</b>: il riposo ora è 1:03. Il totale in alto si allunga di 15 secondi.',
+      phone(`<div class="pl">${bar()}<div class="tl">08:13</div>${disc('#ffc107', '1:03', 'round rest', 'color:#2a1f00')}<div class="rv"><span class="t">NEXT · ROUND 3 OF 4</span><div class="m">Load L +10 · R +8</div></div>${ctr()}${toast('Rest +15 s this round')}</div>`, 'D, released')],
+  ] },
+  { st: '<span class="state ask">da scegliere</span>', g: 'Swipe → sulla riga = un set uguale all\'ultimo · ← = cancella l\'ultimo', w: '<code>GymLogScreen.kt</code>, <code>SetBlocks</code>: il gesto è sulla riga intera; tocco e tieni premuto sui quadratini restano come oggi.', s: [
+    ['<b>Swipe a destra sulla riga 40 kg</b>: sotto compare «Again 40 × 7» (l\'ultimo della riga). Lasciando, il set si aggiunge in fondo alla riga e il riposo riparte.',
+      phone(`<div class="body">${gymTop('Squat', 'deep · today 5 sets')}${nums('40', '7')}${line('40 kg', std40, { x: 70, under: '<div class="under again">↻ Again<br>40 × 7</div>' })}${line('50 kg', bx(6, '2:05') + bx(5, '2:20'))}<div style="position:relative;height:0">${finger(200, -118)}</div></div>${dock()}`, 'E1, swiping right')],
+    ['<b>Fatto</b>: il nuovo quadratino ha il bordo verde per un attimo. Swipe a sinistra invece cancella il 7, con Undo.',
+      phone(`<div class="body">${gymTop('Squat', 'deep · today 6 sets')}${nums('40', '7')}${squat(std40 + bx(7, '0:00', 'new'))}${toast('Added 40 × 7')}</div>${dock()}`, 'E1, added')],
+    ['<b>Con i lati</b> la riga è un round (L e R): swipe a destra rifà il round con gli stessi numeri, a sinistra cancella il round intero.',
+      phone(`<div class="body">${sideTop}${sideNums}<div class="m">L 3 · R 3 · 3 rounds</div><div class="sides">${sr(1, half('L', '22 kg', 10), half('R', '22 kg', 10), '')}${sr(2, half('L', '22 kg', 10), half('R', '22 kg', 9), '1:30')}${sr(3, half('L', '22 kg', 9), half('R', '22 kg', 9), '1:40')}${sr(4, half('L', '22 kg', 9, 'new'), half('R', '22 kg', 9, 'new'), '0:00', 'newrow')}</div>${toast('Round 4 like round 3')}</div>${dock('Log L')}`, 'E1, per side')],
+  ] },
+  { st: '<span class="state ask">da scegliere</span>', g: 'Swipe sul quadratino: → copia quel set · ← cancella quel set', w: '<code>GymLogScreen.kt</code>, <code>SetSquare</code>: il gesto è sul singolo set.', s: [
+    ['<b>Trascini il primo 8 verso destra</b>: si stacca e dietro resta il suo posto. Lasciato, una copia va in fondo alla riga.',
+      phone(`<div class="body">${gymTop('Squat', 'deep · today 5 sets')}${nums('40', '7')}${squat(bx(8, '', 'lift') + bx(8, '1:30') + bx(7, '1:45'))}<div style="position:relative;height:0">${finger(80, -124)}</div><div class="hint">a square is 44 dp: short swipe, easy to mix up with a tap</div></div>${dock()}`, 'E2, dragging a square')],
+    ['<b>Fatto</b>: 40 × 8 in fondo. Swipe a sinistra su un quadratino lo cancella, anche se è in mezzo alla riga.',
+      phone(`<div class="body">${gymTop('Squat', 'deep · today 6 sets')}${nums('40', '7')}${squat(std40 + bx(8, '0:00', 'new'))}${toast('Copied 40 × 8')}</div>${dock()}`, 'E2, copied')],
+  ] },
+  { st: '<span class="state ask">da scegliere</span>', g: 'Nessuno swipe: un quadratino + in fondo a ogni riga', w: '<code>GymLogScreen.kt</code>, <code>SetBlocks</code>: un quadratino tratteggiato dopo l\'ultimo.', s: [
+    ['<b>In fondo a ogni riga</b> c\'è un + tratteggiato. Toccandolo si aggiunge un set uguale all\'ultimo della riga.',
+      phone(`<div class="body">${gymTop('Squat', 'deep · today 5 sets')}${nums('40', '7')}${squat(std40 + bx('+', '', 'ghost'), bx(6, '2:05') + bx(5, '2:20') + bx('+', '', 'ghost'))}</div>${dock()}`, 'E3, plus squares')],
+    ['<b>Con i lati</b> il + sta sotto l\'ultimo round e lo rifà. Per cancellare si tocca il quadratino, come oggi.',
+      phone(`<div class="body">${sideTop}${sideNums}<div class="m">L 3 · R 3 · 3 rounds</div><div class="sides">${sr(1, half('L', '22 kg', 10), half('R', '22 kg', 10), '')}${sr(2, half('L', '22 kg', 10), half('R', '22 kg', 9), '1:30')}${sr(3, half('L', '22 kg', 9), half('R', '22 kg', 9), '1:40')}<div class="sr"><span class="rn"></span><span class="half">${bx('+ round like 3', '', 'ghost')}</span></div></div></div>${dock('Log L')}`, 'E3, per side')],
+  ] },
+  { st: '<span class="state try">da provare</span>', g: 'Trascina ↔ sul peso o sulle reps · tieni premuto ± per correre', w: '<code>GymExerciseViews.kt</code>, sui numeri sopra al tasto Log; il passo è quello dell\'esercizio (qui 1.25 kg).', s: [
+    ['<b>Trascinando di lato</b> sul peso esce un righello: ogni tacca è un passo, con una vibrazione per tacca.',
+      phone(`<div class="body">${gymTop('Squat', 'deep · today 4 sets')}<div class="card"><div class="row"><span class="tok" style="outline:2px solid var(--ph-accent)">42.5<small>kg</small></span><span class="tok">8<small>reps</small></span></div><div class="ruler"><div class="ticks"><span>40</span><span>41.25</span><span class="on">42.5</span><span>43.75</span><span>45</span></div>${trailH(60, 14, 70)}${finger(118, -2)}</div></div><div class="hint">← less · more →</div></div>${dock()}`, 'F, scrubbing')],
+    ['<b>Tieni premuto +</b>: il numero sale da solo, prima piano poi più veloce. Lasci quando sei arrivato.',
+      phone(`<div class="body">${gymTop('Squat', 'deep · today 4 sets')}<div class="card"><div class="row"><span class="tok">47.5<small>kg</small></span><span class="tok">8<small>reps</small></span></div><div class="pm"><button>−</button><button style="outline:3px solid var(--ph-accent)">+</button></div><div class="hint">holding + · 1.25 kg each step</div></div></div>${dock()}`, 'F, holding plus')],
+  ] },
+];
+function show(i) {
+  document.querySelectorAll('.switch button').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.i === i)));
+  const it = ideas[i];
+  document.getElementById('concept').innerHTML = `<span class="gesture">${it.g}</span>${it.st}<p class="where">Dove: ${it.w}</p>` +
+    `<div class="phones">${it.s.map(([cap, ph]) => `<figure>${ph}<figcaption>${cap}</figcaption></figure>`).join('')}</div>`;
+}
+document.querySelectorAll('.switch button').forEach((b) => b.addEventListener('click', () => show(+b.dataset.i)));
+show(3);
+</script>

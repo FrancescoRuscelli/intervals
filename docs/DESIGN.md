@@ -199,6 +199,21 @@ Replaces FitNotes. Same look as the rest of the app, as simple as possible.
   first L), R from the last R; switching side on the log screen reloads that side's values.
 - Not wanted (from your FitNotes data, never used): routines, body weight, measurements, goals, plate calculator.
 
+## Gestures (2026-11-26, mockup `docs/mockups/intervals-gestures.html`, built to try: B C D E1 F)
+
+Every gesture is a shortcut: the button that exists today stays, TalkBack gets the same action, a small vibration when it fires.
+- **No volume-button remote** (rejected).
+- **B Swipe the disc** in the Player: → next series, ← previous (turned around after trying it), Undo after a skip. An option in Settings › Player, **off** by default.
+- **C Hold ✕ 1 s to stop**: a red ring fills around ✕ and the disc. A short tap on ✕ (and Back) still asks "Stop the workout?",
+  whose text now gives the tip.
+- **D Drag up / down on the disc during any rest** (rest series, change side, rest between rounds), this time only.
+  Step = about a tenth of the rest as saved, as 1, 2, 5, 10, 15, 30 or 60 s (`restStepSec`: 10 s → 1, 1 min → 5, 2 min → 10,
+  5 min → 30); after 5 steps in one drag the step doubles. (First built for the rest between rounds only, ±15 s.)
+- **E Swipe on logged sets**: built as **E1** to try: swipe a load line → one more set like its last, ← deletes its last (Undo);
+  per side a line is a round (L + R), so the swipe repeats or deletes the round. Other options were E2 (swipe a single square)
+  and E3 (a dashed + square at the end of each line).
+- **F Drag the weight / reps** sideways (a ruler, one step per tick), hold ± to repeat: to try.
+
 ## Energy efficiency (agreed goal: very efficient)
 
 - Pure black in dark mode; screen kept on only during a workout.

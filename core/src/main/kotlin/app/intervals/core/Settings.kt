@@ -30,6 +30,8 @@ data class AppSettings(
     /** Player: small "3/6" (work series) and "2/4" (rounds) chips on the rings. */
     val showCounters: Boolean = true,
     val lockControls: Boolean = false,
+    /** Player: swipe the disc right for the next series, left for the previous one (off by default). */
+    val swipeDisc: Boolean = false,
     /** A phone sound (content:// uri) at the end of each segment, like Hybrid Interval Timer; null = the app's own tone. */
     val endSound: String? = null,
 ) {
